@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar, Clock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import Sidebar from '@/components/ui/sidebar';
+import { Sidebar } from '@/components/ui/sidebar';
 
 const AgendaPage = () => {
   const [activeTab, setActiveTab] = useState('compromissos');

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Sidebar from "@/components/ui/sidebar";
+import { Sidebar } from "@/components/ui/sidebar";
 
 const ClientesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
