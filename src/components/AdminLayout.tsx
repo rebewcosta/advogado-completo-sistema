@@ -2,6 +2,7 @@
 import React from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
+import { Toaster } from "@/components/ui/toaster";
 
 type AdminLayoutProps = {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         <div className="flex-1 overflow-auto">
           {children}
         </div>
+        <Toaster />
       </div>
     </SidebarProvider>
   );

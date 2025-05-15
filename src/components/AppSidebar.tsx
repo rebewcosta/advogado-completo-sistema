@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +26,23 @@ import {
 } from 'lucide-react';
 
 export const AppSidebar = () => {
+  const location = useLocation();
+
+  // Define menu items
+  const menuItems = [
+    { path: "/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/clientes", icon: Users, label: "Clientes" },
+    { path: "/processos", icon: FileText, label: "Processos" },
+    { path: "/agenda", icon: Calendar, label: "Agenda" },
+    { path: "/financeiro", icon: DollarSign, label: "Financeiro" },
+    { path: "/documentos", icon: FileArchive, label: "Documentos" },
+    { path: "/relatorios", icon: BarChart2, label: "Relatórios" },
+  ];
+
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
     <Sidebar>
       <SidebarHeader>
@@ -38,62 +55,20 @@ export const AppSidebar = () => {
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Dashboard">
-                  <Link to="/dashboard">
-                    <Home className="w-5 h-5" />
-                    <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Clientes">
-                  <Link to="/clientes">
-                    <Users className="w-5 h-5" />
-                    <span>Clientes</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Processos">
-                  <Link to="/processos">
-                    <FileText className="w-5 h-5" />
-                    <span>Processos</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Agenda">
-                  <Link to="/agenda">
-                    <Calendar className="w-5 h-5" />
-                    <span>Agenda</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Financeiro">
-                  <Link to="/financeiro">
-                    <DollarSign className="w-5 h-5" />
-                    <span>Financeiro</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Documentos">
-                  <Link to="/documentos">
-                    <FileArchive className="w-5 h-5" />
-                    <span>Documentos</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Relatórios">
-                  <Link to="/relatorios">
-                    <BarChart2 className="w-5 h-5" />
-                    <span>Relatórios</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton 
+                    asChild 
+                    tooltip={item.label}
+                    isActive={isActive(item.path)}
+                  >
+                    <Link to={item.path}>
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -101,7 +76,11 @@ export const AppSidebar = () => {
       <SidebarFooter>
         <SidebarGroup>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Configurações">
+            <SidebarMenuButton 
+              asChild 
+              tooltip="Configurações"
+              isActive={isActive("/configuracoes")}
+            >
               <Link to="/configuracoes">
                 <Settings className="w-5 h-5" />
                 <span>Configurações</span>
