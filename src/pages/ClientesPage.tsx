@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -29,8 +28,16 @@ const ClientesPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showClientDetails, setShowClientDetails] = useState(false);
   
-  // Inicializando com array vazio - sem clientes
-  const [clients, setClients] = useState<any[]>([]);
+  // Inicializando com array vazio - persistindo usando localStorage
+  const [clients, setClients] = useState<any[]>(() => {
+    const savedClients = localStorage.getItem('clients');
+    return savedClients ? JSON.parse(savedClients) : [];
+  });
+
+  // Efeito para atualizar localStorage quando os clientes mudam
+  useEffect(() => {
+    localStorage.setItem('clients', JSON.stringify(clients));
+  }, [clients]);
 
   // Filter clients based on search term
   const filteredClients = clients.filter(client =>
@@ -59,7 +66,7 @@ const ClientesPage = () => {
       // Add new client
       const newClient = {
         ...clientData,
-        id: clients.length + 1,
+        id: Date.now(), // Usar timestamp para garantir IDs únicos
         processos: 0,
         status: "Ativo"
       };

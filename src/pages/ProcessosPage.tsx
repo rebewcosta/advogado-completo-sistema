@@ -30,10 +30,18 @@ const ProcessosPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   
-  // Lista de processos vazia
-  const processes: Process[] = [];
+  // Lista de processos vazia inicialmente - persistida no localStorage para não perder ao navegar
+  const [processes, setProcesses] = useState<Process[]>(() => {
+    const savedProcesses = localStorage.getItem('processes');
+    return savedProcesses ? JSON.parse(savedProcesses) : [];
+  });
 
-  // Filter processes based on search term (kept for future functionality)
+  // Salvar processos no localStorage sempre que houver mudanças
+  React.useEffect(() => {
+    localStorage.setItem('processes', JSON.stringify(processes));
+  }, [processes]);
+
+  // Filter processes based on search term
   const filteredProcesses = processes.filter(process =>
     process.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
     process.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||

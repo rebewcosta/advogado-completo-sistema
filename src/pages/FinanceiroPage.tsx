@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { 
@@ -20,28 +20,25 @@ import {
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
-// Mock data for financial transactions
-const mockTransactions = [
-  { id: 1, tipo: "Receita", descricao: "Honorários - João Silva", valor: 2500.00, categoria: "Honorários", data: "2023-06-10", status: "Pago", cliente: "João Silva" },
-  { id: 2, tipo: "Receita", descricao: "Honorários - Processo Empresa ABC", valor: 5000.00, categoria: "Honorários", data: "2023-06-05", status: "Pendente", cliente: "Empresa ABC Ltda" },
-  { id: 3, tipo: "Despesa", descricao: "Aluguel do escritório", valor: 3000.00, categoria: "Infraestrutura", data: "2023-06-01", status: "Pago", cliente: "" },
-  { id: 4, tipo: "Despesa", descricao: "Assinatura Software Jurídico", valor: 200.00, categoria: "Software", data: "2023-06-05", status: "Pago", cliente: "" },
-  { id: 5, tipo: "Receita", descricao: "Consulta Jurídica - Maria Oliveira", valor: 500.00, categoria: "Consultas", data: "2023-06-12", status: "Pago", cliente: "Maria Oliveira" },
-  { id: 6, tipo: "Despesa", descricao: "Material de escritório", valor: 150.00, categoria: "Suprimentos", data: "2023-06-08", status: "Pago", cliente: "" },
-  { id: 7, tipo: "Receita", descricao: "Honorários - Roberto Costa", valor: 1800.00, categoria: "Honorários", data: "2023-06-15", status: "Pendente", cliente: "Roberto Costa" },
-  { id: 8, tipo: "Despesa", descricao: "Conta de energia", valor: 350.00, categoria: "Infraestrutura", data: "2023-06-10", status: "Pago", cliente: "" },
-];
-
 const FinanceiroPage = () => {
-  const [transactions, setTransactions] = useState(mockTransactions);
+  const [transactions, setTransactions] = useState<any[]>(() => {
+    const savedTransactions = localStorage.getItem('transactions');
+    return savedTransactions ? JSON.parse(savedTransactions) : [];
+  });
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState<any>(null);
   const { toast } = useToast();
   
+  // Save transactions to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('transactions', JSON.stringify(transactions));
+  }, [transactions]);
+
   const filteredTransactions = transactions.filter(transaction =>
-    transaction.descricao.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.cliente.toLowerCase().includes(searchTerm.toLowerCase())
+    transaction.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    transaction.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Calculate totals
@@ -93,7 +90,7 @@ const FinanceiroPage = () => {
       // Add new transaction
       setTransactions([...transactions, {
         ...transactionData,
-        id: transactions.length + 1
+        id: Date.now() // Use timestamp for unique ID
       }]);
       toast({
         title: "Transação adicionada",
@@ -138,7 +135,7 @@ const FinanceiroPage = () => {
               </div>
               <p className="text-2xl font-bold">R$ {receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               <p className="text-sm text-gray-500 mt-2">
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">+{
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{
                   transactions.filter(t => t.tipo === "Receita").length
                 } transações</span>
               </p>
