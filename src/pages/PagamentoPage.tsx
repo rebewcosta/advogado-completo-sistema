@@ -1,8 +1,12 @@
-
 import React, { useState } from 'react';
 import { ArrowLeft, Check, CreditCard } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { loadStripe } from '@stripe/stripe-js';
+
+// Carregar o Stripe com a chave pública (não é um segredo)
+// Em produção, substitua por sua chave pública real
+const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
 
 const PagamentoPage = () => {
   const [cardNumber, setCardNumber] = useState('');
@@ -12,21 +16,55 @@ const PagamentoPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [step, setStep] = useState(1);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
-  const handleSubmitPayment = (e: React.FormEvent) => {
+  // Função para processar o pagamento com Stripe
+  const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
 
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      setStep(2); // Move to success step
+    try {
+      // Em uma aplicação real, você faria uma chamada para seu servidor
+      // que criaria uma sessão de checkout no Stripe
       
+      // Por enquanto, vamos simular isso
+      setTimeout(async () => {
+        try {
+          // Criar um checkout do Stripe
+          // Em uma implementação real, esta parte seria feita pelo seu servidor
+          const stripe = await stripePromise;
+          
+          // Simulação - Em uma aplicação real, esta ID viria do seu servidor
+          // após criar a sessão no Stripe através da API do Stripe no backend
+          console.log("Simulando redirecionamento para página de pagamento do Stripe...");
+          
+          // Após o pagamento ser processado, atualizamos o estado da aplicação
+          setIsProcessing(false);
+          setStep(2); // Move para o passo de sucesso
+          
+          toast({
+            title: "Pagamento processado com sucesso",
+            description: "Sua assinatura foi ativada.",
+          });
+        } catch (error) {
+          console.error('Erro no pagamento:', error);
+          setIsProcessing(false);
+          toast({
+            title: "Erro no pagamento",
+            description: "Houve um problema ao processar seu pagamento.",
+            variant: "destructive"
+          });
+        }
+      }, 2000);
+    } catch (error) {
+      console.error('Erro:', error);
+      setIsProcessing(false);
       toast({
-        title: "Pagamento processado com sucesso",
-        description: "Sua assinatura foi ativada.",
+        title: "Erro no pagamento",
+        description: "Houve um problema ao processar seu pagamento.",
+        variant: "destructive"
       });
-    }, 2000);
+    }
   };
 
   // Format card number with spaces
