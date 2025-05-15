@@ -28,6 +28,9 @@ serve(async (req) => {
       );
     }
 
+    // Determinar se estamos em produção baseado no modo recebido
+    const isProduction = modo === 'production';
+    
     // Log para debug
     console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
     
@@ -41,7 +44,7 @@ serve(async (req) => {
       );
     }
     
-    console.log("Iniciando Stripe com a chave configurada");
+    console.log(`Iniciando Stripe no modo ${isProduction ? 'PRODUÇÃO' : 'TESTE'}`);
     
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
@@ -49,10 +52,10 @@ serve(async (req) => {
 
     console.log("Criando sessão de checkout...");
     
-    // Criar a sessão de checkout diretamente sem verificar cliente existente
+    // Criar a sessão de checkout
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
-      customer_email: emailCliente, // Usar email do cliente diretamente
+      customer_email: emailCliente,
       line_items: [
         {
           price_data: {

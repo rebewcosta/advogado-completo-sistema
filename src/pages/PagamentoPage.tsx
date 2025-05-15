@@ -31,6 +31,7 @@ const PagamentoPage = () => {
     
     // Log para debug
     console.log("PagamentoPage carregada. URL params:", Object.fromEntries(params.entries()));
+    console.log("Ambiente:", process.env.NODE_ENV === 'production' ? 'PRODUÇÃO' : 'DESENVOLVIMENTO');
   }, [location, toast]);
 
   return (
@@ -50,6 +51,15 @@ const PagamentoPage = () => {
               <p className="mt-2 text-gray-600">
                 Complete seu pagamento para ativar sua conta
               </p>
+              {process.env.NODE_ENV === 'production' ? (
+                <div className="mt-2 inline-block px-4 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
+                  Ambiente de Produção
+                </div>
+              ) : (
+                <div className="mt-2 inline-block px-4 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">
+                  Ambiente de Teste
+                </div>
+              )}
             </div>
             
             {isTestEnvironment && <TestEnvironmentWarning />}
