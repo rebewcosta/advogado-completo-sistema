@@ -23,6 +23,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Lista de e-mails com acesso especial gratuito
+// Esta lista pode ser expandida conforme necessário
+const specialAccessEmails = [
+  "teste@sisjusgestao.com.br",
+  // Adicione mais e-mails conforme necessário
+];
+
 // Função principal que é executada quando a edge function é chamada
 Deno.serve(async (req) => {
   // Tratar requisições OPTIONS (CORS preflight)
@@ -47,6 +54,27 @@ Deno.serve(async (req) => {
     
     if (userError || !user) {
       throw new Error("Usuário não autenticado");
+    }
+    
+    // Verificar se o usuário tem acesso especial por e-mail
+    if (user.email && specialAccessEmails.includes(user.email)) {
+      // Retornar resposta simulando assinatura ativa para usuários especiais
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          subscription_status: "active",
+          current_period_end: oneYearFromNow.toISOString(),
+          message: "Acesso especial ativo",
+          special_access: true
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
     }
     
     // Obter informações do usuário
@@ -100,7 +128,7 @@ Deno.serve(async (req) => {
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 500,
+        status: 200,
       }
     );
   }

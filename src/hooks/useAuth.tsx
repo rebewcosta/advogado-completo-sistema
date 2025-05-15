@@ -11,6 +11,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, userData: any) => Promise<void>;
   signOut: () => Promise<void>;
+  createSpecialAccount: (email: string, password: string, userData: any) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -96,6 +97,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Nova função para criar contas especiais (apenas para uso administrativo)
+  const createSpecialAccount = async (email: string, password: string, userData: any) => {
+    try {
+      // Verificar se o usuário atual é administrador (opcional)
+      // Esta verificação pode ser melhorada com um sistema de papéis
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            ...userData,
+            special_access: true
+          }
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Conta especial criada!",
+        description: `Uma conta com acesso especial foi criada para ${email}.`,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar conta especial",
+        description: error.message || "Ocorreu um erro ao tentar criar conta especial.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   const value = {
     session,
     user,
@@ -103,6 +137,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    createSpecialAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
