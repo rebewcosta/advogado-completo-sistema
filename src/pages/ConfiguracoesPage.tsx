@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/tabs";
 import { useAuth } from '@/hooks/useAuth';
 import Footer from '@/components/Footer';
+import { supabase } from '@/integrations/supabase/client';
 
 const ConfiguracoesPage = () => {
   const { toast } = useToast();
@@ -69,17 +70,118 @@ const ConfiguracoesPage = () => {
     ipRestriction: false,
   });
 
-  const handleSave = () => {
+  // Estado para alteração de senha
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+
+  // Estado para controlar carregamento do botão de senha
+  const [changingPassword, setChangingPassword] = useState(false);
+
+  const handleSave = async () => {
     setSaving(true);
     
-    // Simulando salvamento
-    setTimeout(() => {
-      setSaving(false);
+    try {
+      // Atualizar metadados do usuário com as configurações do escritório
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          nome: profileSettings.name,
+          telefone: profileSettings.phone,
+          oab: profileSettings.oab,
+          empresa: officeSettings.companyName,
+          cnpj: officeSettings.cnpj,
+          endereco: officeSettings.address,
+          website: officeSettings.website
+        }
+      });
+      
+      if (error) throw error;
+      
       toast({
         title: "Configurações salvas",
         description: "Suas configurações foram atualizadas com sucesso.",
       });
-    }, 1000);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar configurações",
+        description: error.message || "Ocorreu um erro ao tentar salvar suas configurações.",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  const handleChangePassword = async () => {
+    // Validações básicas
+    if (!passwordData.currentPassword) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Digite sua senha atual.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (!passwordData.newPassword) {
+      toast({
+        title: "Campo obrigatório",
+        description: "Digite sua nova senha.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Senhas não conferem",
+        description: "A nova senha e a confirmação devem ser iguais.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Senha muito curta",
+        description: "A senha deve ter pelo menos 6 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setChangingPassword(true);
+    
+    try {
+      // Atualizar senha usando a API do Supabase
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword
+      });
+      
+      if (error) throw error;
+      
+      // Limpar campos de senha
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: ""
+      });
+      
+      toast({
+        title: "Senha alterada",
+        description: "Sua senha foi atualizada com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao alterar senha",
+        description: error.message || "Ocorreu um erro ao tentar alterar sua senha.",
+        variant: "destructive",
+      });
+    } finally {
+      setChangingPassword(false);
+    }
   };
 
   return (
@@ -146,6 +248,7 @@ const ConfiguracoesPage = () => {
                       type="email"
                       value={profileSettings.email}
                       onChange={(e) => setProfileSettings({...profileSettings, email: e.target.value})}
+                      readOnly
                     />
                   </div>
                   <div className="space-y-2">
@@ -374,9 +477,51 @@ const ConfiguracoesPage = () => {
                 
                 <Separator />
                 
-                <div className="pt-2">
-                  <Button variant="outline" className="w-full md:w-auto">
-                    Alterar senha
+                <div className="space-y-4">
+                  <h3 className="text-lg font-medium">Alteração de Senha</h3>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="currentPassword">Senha atual</Label>
+                    <Input 
+                      id="currentPassword" 
+                      type="password" 
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">Nova senha</Label>
+                    <Input 
+                      id="newPassword" 
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+                    <Input 
+                      id="confirmPassword" 
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                    />
+                  </div>
+                  
+                  <Button 
+                    onClick={handleChangePassword} 
+                    disabled={changingPassword}
+                  >
+                    {changingPassword ? (
+                      <>
+                        <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full"></div>
+                        Alterando...
+                      </>
+                    ) : (
+                      'Alterar senha'
+                    )}
                   </Button>
                 </div>
               </CardContent>
