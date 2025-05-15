@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 const CriarContaEspecial = () => {
   const [email, setEmail] = useState('');
@@ -16,7 +17,8 @@ const CriarContaEspecial = () => {
   const [skipConfirmation, setSkipConfirmation] = useState(true);
   const [createdAccounts, setCreatedAccounts] = useState<Array<{email: string, nome: string, date: string}>>([]);
   
-  const { createSpecialAccount } = useAuth();
+  const { createSpecialAccount, checkEmailExists } = useAuth();
+  const { toast } = useToast();
   
   // Lista de emails especiais predefinidos
   const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com', 'focolaresce@gmail.com'];
@@ -39,6 +41,19 @@ const CriarContaEspecial = () => {
     setIsLoading(true);
     
     try {
+      // Verificar se o email já existe
+      const emailExists = await checkEmailExists(presetEmail);
+      
+      if (emailExists) {
+        toast({
+          title: "Email já cadastrado",
+          description: `O email ${presetEmail} já está sendo usado por outra conta.`,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       await createSpecialAccount(presetEmail, presetPassword, { 
         nome: presetNome, 
         special_access: true,
@@ -55,6 +70,11 @@ const CriarContaEspecial = () => {
         }
       ]);
       
+      toast({
+        title: "Conta especial criada com sucesso",
+        description: `Uma conta com acesso especial foi criada para ${presetEmail}.`,
+      });
+      
     } catch (error) {
       console.error('Erro ao criar conta especial:', error);
     } finally {
@@ -67,6 +87,19 @@ const CriarContaEspecial = () => {
     setIsLoading(true);
     
     try {
+      // Verificar se o email já existe
+      const emailExists = await checkEmailExists(email);
+      
+      if (emailExists) {
+        toast({
+          title: "Email já cadastrado",
+          description: `O email ${email} já está sendo usado por outra conta.`,
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       await createSpecialAccount(email, password, { 
         nome, 
         special_access: true,
@@ -87,6 +120,11 @@ const CriarContaEspecial = () => {
       setEmail('');
       setNome('');
       setPassword('');
+      
+      toast({
+        title: "Conta especial criada com sucesso",
+        description: `Uma conta com acesso especial foi criada para ${email}.`,
+      });
     } catch (error) {
       console.error('Erro ao criar conta especial:', error);
     } finally {

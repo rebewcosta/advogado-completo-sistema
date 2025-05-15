@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +19,7 @@ const RegisterForm = ({ onSubmitStart, onSubmitEnd }: RegisterFormProps) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp, checkEmailExists } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,7 +38,21 @@ const RegisterForm = ({ onSubmitStart, onSubmitEnd }: RegisterFormProps) => {
     onSubmitStart();
 
     try {
-      // Remover a configuração de emailSender personalizada
+      // Verificar se o email já existe
+      const emailExists = await checkEmailExists(email);
+      
+      if (emailExists) {
+        toast({
+          title: "Email já cadastrado",
+          description: "Este email já está sendo usado por outra conta.",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        onSubmitEnd();
+        return;
+      }
+      
+      // Prosseguir com o cadastro se o email não existir
       await signUp(email, password, { 
         nome, 
         emailRedirectTo: window.location.origin + "/login"

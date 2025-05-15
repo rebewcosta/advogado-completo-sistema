@@ -13,6 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   createSpecialAccount: (email: string, password: string, userData: any) => Promise<void>;
   skipEmailConfirmation: (email: string) => Promise<void>;
+  checkEmailExists: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -74,6 +75,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Nova função para verificar se um email já está cadastrado
+  const checkEmailExists = async (email: string): Promise<boolean> => {
+    try {
+      console.log("Verificando se o email já existe:", email);
+      
+      // Tentar fazer login com uma senha inválida deliberadamente
+      // Se recebermos "Invalid login credentials", significa que o email existe
+      // Se recebermos outro erro como "Email not confirmed", também significa que existe
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: "verificacao-apenas" // Senha inválida deliberada
+      });
+      
+      // Se o erro for "Invalid login credentials" ou "Email not confirmed", o email existe
+      if (error) {
+        const emailExists = 
+          error.message.includes("Invalid login credentials") || 
+          error.message.includes("Email not confirmed");
+        
+        console.log(`Email ${email} existe: ${emailExists}, Mensagem: ${error.message}`);
+        return emailExists;
+      }
+      
+      // Se não der erro (o que seria extremamente improvável com uma senha aleatória),
+      // significa que o email e a senha aleatória funcionaram (caso muito raro)
+      console.log(`Email ${email} existe (login bem-sucedido com senha aleatória)`);
+      return true;
+    } catch (error) {
+      console.error("Erro ao verificar se o email existe:", error);
+      // Em caso de erro, presume que o email não existe
+      return false;
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -231,6 +266,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signUp = async (email: string, password: string, userData: any) => {
     try {
       setIsLoading(true);
+      
+      // Verificar primeiro se o email já existe
+      const emailExists = await checkEmailExists(email);
+      if (emailExists) {
+        toast({
+          title: "Email já cadastrado",
+          description: "Este email já está sendo usado por outra conta.",
+          variant: "destructive",
+        });
+        throw new Error("Email já cadastrado");
+      }
+      
       // Cleanup existing auth state before signup attempt
       cleanupAuthState();
       
@@ -389,6 +436,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
+      // Verificar primeiro se o email já existe
+      const emailExists = await checkEmailExists(email);
+      if (emailExists) {
+        toast({
+          title: "Email já cadastrado",
+          description: "Este email já está sendo usado por outra conta.",
+          variant: "destructive",
+        });
+        throw new Error("Email já cadastrado");
+      }
+      
       // Use data object for user metadata including special_access flag
       const signUpOptions: any = {
         data: {
@@ -473,6 +531,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     createSpecialAccount,
     skipEmailConfirmation,
+    checkEmailExists,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
