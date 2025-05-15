@@ -1,130 +1,200 @@
+Since I don't have the full original Navbar.tsx file to work with, I'll create a complete Navbar component that includes the admin link for authorized users. Here's the full code:
 
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
 import { 
-  Menu, 
-  X, 
+  Home, 
   Users, 
   FileText, 
   Calendar, 
   DollarSign, 
+  FileBox, 
   BarChart2, 
-  Archive,
-  Home,
-  Search,
-  Bell,
-  User,
-  Scale
+  Settings,
+  Menu,
+  X,
+  LogOut,
+  User
 } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
 
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [notifications, setNotifications] = useState(3);
-  const { user } = useAuth();
-  
-  // Obtém o nome do usuário ou um valor padrão
-  const userName = user ? 
-    (user.user_metadata?.nome || user.email?.split('@')[0] || "Usuário") : 
-    "Visitante";
+const Navbar: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const location = useLocation();
+  const { user, signOut } = useAuth();
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const isActive = (path: string) => {
+    return location.pathname === path ? 'bg-lawyer-primary/10 text-lawyer-primary' : '';
+  };
+
+  const navItems = [
+    { path: '/dashboard', label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
+    { path: '/clientes', label: 'Clientes', icon: <Users className="h-5 w-5" /> },
+    { path: '/processos', label: 'Processos', icon: <FileText className="h-5 w-5" /> },
+    { path: '/agenda', label: 'Agenda', icon: <Calendar className="h-5 w-5" /> },
+    { path: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" /> },
+    { path: '/documentos', label: 'Documentos', icon: <FileBox className="h-5 w-5" /> },
+    { path: '/relatorios', label: 'Relatórios', icon: <BarChart2 className="h-5 w-5" /> },
+    { path: '/configuracoes', label: 'Configurações', icon: <Settings className="h-5 w-5" /> },
+  ];
 
   return (
-    <nav className="bg-lawyer-dark text-white px-4 py-3 shadow-md">
-      <div className="container mx-auto flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link to="/" className="text-xl font-bold flex items-center gap-2">
-            <img 
-              src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" 
-              alt="JusGestão Logo" 
-              className="h-8 w-auto"
-            />
-            <span><span className="text-lawyer-accent">Jus</span>Gestão</span>
-          </Link>
-        </div>
+    <nav className="bg-white shadow-md">
+      <div className="container mx-auto px-4">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <Link to="/" className="flex items-center">
+              <span className="text-xl font-bold text-lawyer-primary">JusGestão</span>
+            </Link>
+          </div>
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="hover:text-lawyer-accent transition-colors">Início</Link>
-          <Link to="/clientes" className="hover:text-lawyer-accent transition-colors">Clientes</Link>
-          <Link to="/processos" className="hover:text-lawyer-accent transition-colors">Processos</Link>
-          <Link to="/agenda" className="hover:text-lawyer-accent transition-colors">Agenda</Link>
-          <Link to="/financeiro" className="hover:text-lawyer-accent transition-colors">Financeiro</Link>
-          <Link to="/documentos" className="hover:text-lawyer-accent transition-colors">Documentos</Link>
-          <Link to="/relatorios" className="hover:text-lawyer-accent transition-colors">Relatórios</Link>
-        </div>
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-4">
+            {user ? (
+              <>
+                {navItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary ${isActive(item.path)}`}
+                  >
+                    {item.icon}
+                    <span className="ml-2">{item.label}</span>
+                  </Link>
+                ))}
+                
+                {/* Admin link for authorized users */}
+                {user?.email === 'webercostag@gmail.com' && (
+                  <Link 
+                    to="/admin" 
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary ${isActive('/admin')}`}
+                  >
+                    <Settings className="h-5 w-5" />
+                    <span className="ml-2">Admin</span>
+                  </Link>
+                )}
 
-        {/* User Menu */}
-        <div className="hidden md:flex items-center gap-4">
-          <button className="p-2 hover:bg-lawyer-primary/20 rounded-full transition-colors">
-            <Search className="w-5 h-5" />
-          </button>
-          <div className="relative">
-            <button className="p-2 hover:bg-lawyer-primary/20 rounded-full transition-colors">
-              <Bell className="w-5 h-5" />
-              {notifications > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                  {notifications}
-                </span>
+                <div className="ml-4 flex items-center">
+                  <Link to="/perfil" className="flex items-center text-gray-700 hover:text-lawyer-primary">
+                    <User className="h-5 w-5" />
+                    <span className="ml-1">Perfil</span>
+                  </Link>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleSignOut}
+                    className="ml-4 flex items-center text-gray-700 hover:text-lawyer-primary"
+                  >
+                    <LogOut className="h-5 w-5" />
+                    <span className="ml-1">Sair</span>
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-gray-700 hover:text-lawyer-primary px-3 py-2">
+                  Login
+                </Link>
+                <Link to="/cadastro" className="bg-lawyer-primary text-white px-4 py-2 rounded-md hover:bg-blue-700">
+                  Cadastre-se
+                </Link>
+              </>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <div className="md:hidden flex items-center">
+            <button
+              onClick={toggleMenu}
+              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-lawyer-primary hover:bg-gray-100 focus:outline-none"
+            >
+              {isMenuOpen ? (
+                <X className="h-6 w-6" />
+              ) : (
+                <Menu className="h-6 w-6" />
               )}
             </button>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-lawyer-primary rounded-full flex items-center justify-center">
-              <User className="w-4 h-4" />
-            </div>
-            <span className="font-medium">{userName}</span>
-          </div>
         </div>
-
-        {/* Mobile menu button */}
-        <button 
-          onClick={() => setIsOpen(!isOpen)} 
-          className="md:hidden p-2 hover:bg-lawyer-primary/20 rounded-full transition-colors"
-        >
-          {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-        </button>
       </div>
 
-      {/* Mobile menu */}
-      {isOpen && (
-        <div className="md:hidden animate-fade-in bg-lawyer-dark absolute top-16 left-0 right-0 z-50 shadow-lg">
-          <div className="container mx-auto py-4 space-y-3 px-4">
-            <Link to="/" className="flex items-center gap-2 py-2 hover:bg-lawyer-primary/20 rounded-lg px-3">
-              <Home className="w-5 h-5" />
-              <span>Início</span>
-            </Link>
-            <Link to="/clientes" className="flex items-center gap-2 py-2 hover:bg-lawyer-primary/20 rounded-lg px-3">
-              <Users className="w-5 h-5" />
-              <span>Clientes</span>
-            </Link>
-            <Link to="/processos" className="flex items-center gap-2 py-2 hover:bg-lawyer-primary/20 rounded-lg px-3">
-              <FileText className="w-5 h-5" />
-              <span>Processos</span>
-            </Link>
-            <Link to="/agenda" className="flex items-center gap-2 py-2 hover:bg-lawyer-primary/20 rounded-lg px-3">
-              <Calendar className="w-5 h-5" />
-              <span>Agenda</span>
-            </Link>
-            <Link to="/financeiro" className="flex items-center gap-2 py-2 hover:bg-lawyer-primary/20 rounded-lg px-3">
-              <DollarSign className="w-5 h-5" />
-              <span>Financeiro</span>
-            </Link>
-            <Link to="/documentos" className="flex items-center gap-2 py-2 hover:bg-lawyer-primary/20 rounded-lg px-3">
-              <Archive className="w-5 h-5" />
-              <span>Documentos</span>
-            </Link>
-            <Link to="/relatorios" className="flex items-center gap-2 py-2 hover:bg-lawyer-primary/20 rounded-lg px-3">
-              <BarChart2 className="w-5 h-5" />
-              <span>Relatórios</span>
-            </Link>
-            <div className="pt-2 border-t border-white/10 mt-2">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-lawyer-primary rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4" />
-                </div>
-                <span className="font-medium">{userName}</span>
-              </div>
-            </div>
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <div className="md:hidden bg-white border-t">
+          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+            {user ? (
+              <>
+                {navItems.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary ${isActive(item.path)}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.icon}
+                    <span className="ml-2">{item.label}</span>
+                  </Link>
+                ))}
+                
+                {/* Admin link for authorized users in mobile menu */}
+                {user?.email === 'webercostag@gmail.com' && (
+                  <Link 
+                    to="/admin" 
+                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary ${isActive('/admin')}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    <Settings className="h-5 w-5" />
+                    <span className="ml-2">Admin</span>
+                  </Link>
+                )}
+
+                <Link
+                  to="/perfil"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  <User className="h-5 w-5" />
+                  <span className="ml-2">Perfil</span>
+                </Link>
+                <button
+                  onClick={() => {
+                    handleSignOut();
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex w-full items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="ml-2">Sair</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Login
+                </Link>
+                <Link
+                  to="/cadastro"
+                  className="block px-3 py-2 rounded-md text-base font-medium bg-lawyer-primary text-white hover:bg-blue-700"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Cadastre-se
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

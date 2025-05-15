@@ -6,12 +6,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Spinner } from '@/components/ui/spinner';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { CheckCircle } from 'lucide-react';
 
 const CriarContaEspecial: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [nome, setNome] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
   
   const { createSpecialAccount } = useAuth();
   const { toast } = useToast();
@@ -30,6 +33,7 @@ const CriarContaEspecial: React.FC = () => {
     
     try {
       setIsLoading(true);
+      setSuccess(false);
       
       // Dados do usuário para a conta especial
       const userData = {
@@ -45,6 +49,9 @@ const CriarContaEspecial: React.FC = () => {
         description: `Conta especial para ${email} foi criada.`
       });
       
+      // Mostrar mensagem de sucesso
+      setSuccess(true);
+      
       // Limpar os campos do formulário
       setEmail('');
       setPassword('');
@@ -52,6 +59,11 @@ const CriarContaEspecial: React.FC = () => {
       
     } catch (error: any) {
       console.error("Erro ao criar conta especial:", error);
+      toast({
+        title: "Erro ao criar conta especial",
+        description: error.message || "Ocorreu um erro ao tentar criar a conta especial.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -66,6 +78,16 @@ const CriarContaEspecial: React.FC = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {success && (
+          <Alert className="mb-6 bg-green-50 border-green-200">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <AlertTitle className="text-green-700">Conta criada com sucesso!</AlertTitle>
+            <AlertDescription className="text-green-600">
+              O usuário agora pode fazer login com o email e senha fornecidos.
+            </AlertDescription>
+          </Alert>
+        )}
+      
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="nome" className="text-sm font-medium">

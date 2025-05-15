@@ -18,20 +18,17 @@ import TermosPrivacidadePage from './pages/TermosPrivacidadePage';
 import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
 import SuportePage from './pages/SuportePage';
 import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
+import AdminPage from './pages/AdminPage';
 import './App.css';
 
 import { AuthProvider } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
 import { Toaster } from '@/components/ui/toaster';
-import CreateUserAccount from './components/admin/CreateUserAccount';
 
 function App() {
   return (
     <AuthProvider>
-      {/* Componente temporário para criar a conta especial */}
-      <CreateUserAccount />
-      
       <Router>
         <Routes>
           {/* Rotas públicas */}
@@ -54,6 +51,7 @@ function App() {
             {/* Rotas que não requerem verificação de assinatura */}
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/perfil" element={<PerfilUsuarioPage />} />
+            <Route path="/admin" element={<AdminPage />} />
             
             {/* Rotas que requerem verificação de assinatura */}
             <Route element={<VerificarAssinatura>
