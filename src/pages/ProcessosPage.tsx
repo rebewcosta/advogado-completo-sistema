@@ -15,17 +15,102 @@ import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from "@/hooks/use-toast";
 
+// Interface para tipagem dos processos
+interface Process {
+  id: string;
+  numero: string;
+  cliente: string;
+  tipo: string;
+  vara: string;
+  status: 'Em andamento' | 'Concluído' | 'Suspenso';
+  prazo: string;
+}
+
 const ProcessosPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   
-  // Lista vazia de processos
-  const processes = [];
+  // Lista de processos mock
+  const processes: Process[] = [
+    {
+      id: "proc-1",
+      numero: "0001234-56.2023.8.26.0000",
+      cliente: "Empresa ABC Ltda",
+      tipo: "Cível",
+      vara: "2ª Vara Cível",
+      status: "Em andamento",
+      prazo: "15/07/2025",
+    },
+    {
+      id: "proc-2",
+      numero: "0002345-67.2023.8.26.0000",
+      cliente: "João Silva",
+      tipo: "Trabalhista",
+      vara: "5ª Vara do Trabalho",
+      status: "Em andamento",
+      prazo: "22/06/2025",
+    },
+    {
+      id: "proc-3",
+      numero: "0003456-78.2023.8.26.0000",
+      cliente: "Maria Oliveira",
+      tipo: "Família",
+      vara: "1ª Vara de Família",
+      status: "Em andamento",
+      prazo: "30/06/2025",
+    },
+    {
+      id: "proc-4",
+      numero: "0004567-89.2023.8.26.0000",
+      cliente: "Pedro Santos",
+      tipo: "Tributário",
+      vara: "Vara da Fazenda Pública",
+      status: "Em andamento",
+      prazo: "10/07/2025",
+    },
+    {
+      id: "proc-5",
+      numero: "0005678-90.2023.8.26.0000",
+      cliente: "Empresa XYZ S.A.",
+      tipo: "Criminal",
+      vara: "3ª Vara Criminal",
+      status: "Em andamento",
+      prazo: "05/07/2025",
+    },
+    {
+      id: "proc-6",
+      numero: "0006789-01.2023.8.26.0000",
+      cliente: "Empresa ABC Ltda",
+      tipo: "Trabalhista",
+      vara: "2ª Vara do Trabalho",
+      status: "Em andamento",
+      prazo: "18/06/2025",
+    },
+    {
+      id: "proc-7",
+      numero: "0007890-12.2022.8.26.0000",
+      cliente: "João Silva",
+      tipo: "Cível",
+      vara: "4ª Vara Cível",
+      status: "Concluído",
+      prazo: "Concluído em 10/05/2025",
+    },
+    {
+      id: "proc-8",
+      numero: "0008901-23.2022.8.26.0000",
+      cliente: "Maria Oliveira",
+      tipo: "Cível",
+      vara: "1ª Vara Cível",
+      status: "Concluído",
+      prazo: "Concluído em 05/05/2025",
+    }
+  ];
 
   // Filter processes based on search term
   const filteredProcesses = processes.filter(process =>
-    process.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    process.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
+    process.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    process.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    process.tipo.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleViewProcess = (id) => {

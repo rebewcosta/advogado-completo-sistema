@@ -1,316 +1,566 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import AdminLayout from '@/components/AdminLayout';
+import { Button } from "@/components/ui/button";
+import { Calendar } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar } from '@/components/ui/calendar';
-import AdminLayout from '@/components/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/hooks/use-toast';
-import { CalendarDays, Plus, Clock, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
-import { AgendaEventForm } from '@/components/AgendaEventForm';
-import { AgendaEventDetail } from '@/components/AgendaEventDetail';
+import { Calendar as CalendarIcon } from "lucide-react"
+import { DatePicker } from "@/components/ui/date-picker"
+import { useToast } from "@/hooks/use-toast";
+import { MoreVertical, Pencil, Trash2, UserRound } from 'lucide-react';
 
-// Tipos para os eventos da agenda
-export type EventPriority = 'baixa' | 'média' | 'alta';
-
-export type AgendaEvent = {
-  id: string;
-  title: string;
-  description: string;
-  dateTime: Date;
-  duration: number; // em minutos
-  location?: string;
-  clientName?: string;
-  processNumber?: string; 
-  priority: EventPriority;
-};
-
-const AgendaPage = () => {
-  const [date, setDate] = useState<Date>(new Date());
-  const [events, setEvents] = useState<AgendaEvent[]>(MOCK_EVENTS);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
-  const { toast } = useToast();
-  
-  // Filtrar eventos para o dia selecionado
-  const selectedDateEvents = events.filter(
-    event => format(event.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-  ).sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
-
-  // Exibir notificações para eventos próximos quando a página carrega
-  useEffect(() => {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    // Encontrar eventos para hoje e amanhã que são de alta prioridade
-    const urgentEvents = events.filter(event => {
-      const eventDate = new Date(event.dateTime);
-      const isToday = format(eventDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-      const isTomorrow = format(eventDate, 'yyyy-MM-dd') === format(tomorrow, 'yyyy-MM-dd');
-      return (isToday || isTomorrow) && event.priority === 'alta';
-    });
-    
-    // Notificar sobre eventos urgentes
-    if (urgentEvents.length > 0) {
-      urgentEvents.forEach(event => {
-        const timeUntil = event.dateTime.getTime() - today.getTime();
-        const hoursUntil = Math.floor(timeUntil / (1000 * 60 * 60));
-        
-        if (hoursUntil < 24) {
-          toast({
-            title: "Compromisso importante em breve!",
-            description: `${event.title} - ${format(event.dateTime, 'PPp', { locale: ptBR })}`,
-            variant: "destructive",
-          });
-        }
-      });
-    }
-    
-    // Verificar prazos vencendo
-    const deadlineEvents = events.filter(event => {
-      const eventDate = new Date(event.dateTime);
-      const isToday = format(eventDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-      return isToday && event.title.toLowerCase().includes('prazo');
-    });
-    
-    if (deadlineEvents.length > 0) {
-      deadlineEvents.forEach(event => {
-        toast({
-          title: "Prazo vence hoje!",
-          description: `${event.title} - ${format(event.dateTime, 'HH:mm', { locale: ptBR })}`,
-          variant: "destructive",
-        });
-      });
-    }
-  }, [events, toast]);
-
-  // Função para adicionar um novo evento
-  const handleAddEvent = (event: Omit<AgendaEvent, 'id'>) => {
-    const newEvent: AgendaEvent = {
-      ...event,
-      id: `event-${Date.now()}`,
-    };
-    
-    setEvents([...events, newEvent]);
-    setIsFormOpen(false);
-    toast({
-      title: 'Evento adicionado',
-      description: `${event.title} adicionado para ${format(event.dateTime, 'PPpp', { locale: ptBR })}`,
-    });
-  };
-
-  // Função para visualizar detalhes de um evento
-  const handleViewEvent = (event: AgendaEvent) => {
-    setSelectedEvent(event);
-  };
-
-  // Função para deletar um evento
-  const handleDeleteEvent = (eventId: string) => {
-    setEvents(events.filter(event => event.id !== eventId));
-    setSelectedEvent(null);
-    toast({
-      title: 'Evento removido',
-      description: 'O compromisso foi removido da agenda',
-    });
-  };
-
-  // Função para fechar o formulário
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-  };
-
-  // Função para fechar a visualização de detalhes
-  const handleCloseDetail = () => {
-    setSelectedEvent(null);
-  };
-
-  // Formatação do mês atual para exibição
-  const formattedMonth = format(date, 'MMMM yyyy', { locale: ptBR });
-  
-  // Navegar para o mês anterior
-  const goToPreviousMonth = () => {
-    const previousMonth = new Date(date);
-    previousMonth.setMonth(date.getMonth() - 1);
-    setDate(previousMonth);
-  };
-  
-  // Navegar para o mês seguinte
-  const goToNextMonth = () => {
-    const nextMonth = new Date(date);
-    nextMonth.setMonth(date.getMonth() + 1);
-    setDate(nextMonth);
-  };
-
-  return (
-    <AdminLayout>
-      <div className="p-8 max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-2xl font-bold">Agenda</h1>
-          <Button onClick={() => setIsFormOpen(true)} className="bg-lawyer-primary hover:bg-lawyer-primary/90">
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Compromisso
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Calendário */}
-          <Card className="col-span-1">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between mb-2">
-                <Button variant="ghost" size="sm" onClick={goToPreviousMonth}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <CardTitle className="text-center capitalize">{formattedMonth}</CardTitle>
-                <Button variant="ghost" size="sm" onClick={goToNextMonth}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
-                className="rounded-md border p-3 pointer-events-auto"
-                showOutsideDays
-              />
-            </CardContent>
-          </Card>
-          
-          {/* Lista de Compromissos */}
-          <Card className="col-span-1 lg:col-span-2">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <CalendarDays className="mr-2 h-5 w-5" />
-                Compromissos de {format(date, 'PPP', { locale: ptBR })}
-              </CardTitle>
-              <CardDescription>
-                {selectedDateEvents.length > 0 
-                  ? `${selectedDateEvents.length} compromisso(s) agendado(s) para hoje`
-                  : 'Nenhum compromisso agendado para este dia'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedDateEvents.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Horário</TableHead>
-                      <TableHead>Compromisso</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Prioridade</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {selectedDateEvents.map((event) => (
-                      <TableRow key={event.id} onClick={() => handleViewEvent(event)} className="cursor-pointer hover:bg-muted/60">
-                        <TableCell className="font-medium">
-                          <div className="flex items-center">
-                            <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
-                            {format(event.dateTime, 'HH:mm')}
-                          </div>
-                        </TableCell>
-                        <TableCell>{event.title}</TableCell>
-                        <TableCell>{event.clientName || '-'}</TableCell>
-                        <TableCell>
-                          <div className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            event.priority === 'alta' ? 'bg-red-100 text-red-800' :
-                            event.priority === 'média' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-green-100 text-green-800'
-                          }`}>
-                            {event.priority}
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="py-6 text-center text-muted-foreground">
-                  <CalendarDays className="mx-auto h-12 w-12 text-muted-foreground/50 mb-2" />
-                  <p>Nenhum compromisso para este dia</p>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsFormOpen(true)}
-                    className="mt-4"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Adicionar compromisso
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-      
-      {/* Modal para adicionar novo evento */}
-      {isFormOpen && (
-        <AgendaEventForm 
-          onClose={handleCloseForm} 
-          onSave={handleAddEvent} 
-          initialDate={date}
-        />
-      )}
-      
-      {/* Modal para visualizar detalhes */}
-      {selectedEvent && (
-        <AgendaEventDetail
-          event={selectedEvent}
-          onClose={handleCloseDetail}
-          onDelete={handleDeleteEvent}
-        />
-      )}
-    </AdminLayout>
-  );
-};
-
-// Dados de exemplo para a agenda
-const MOCK_EVENTS: AgendaEvent[] = [
+// Mock data for events
+const mockEvents = [
   {
     id: '1',
-    title: 'Audiência - Caso Silva',
-    description: 'Audiência de conciliação para o processo 12345-67.2023.8.26.0000',
-    dateTime: new Date(new Date().setHours(10, 0, 0, 0)),
-    duration: 90,
-    location: 'Fórum Central - Sala 302',
-    clientName: 'Maria Silva',
-    processNumber: '12345-67.2023.8.26.0000',
-    priority: 'alta',
+    title: 'Audiência - João Silva',
+    description: 'Preparar documentos e testemunhas para audiência.',
+    date: new Date('2024-07-15'),
+    time: '10:00',
+    location: 'Fórum Central',
+    type: 'Audiência',
+    status: 'Agendado',
+    cliente: 'João Silva',
+    createdAt: new Date('2023-06-10'),
   },
   {
     id: '2',
     title: 'Reunião com cliente',
-    description: 'Reunião para discutir estratégia processual',
-    dateTime: new Date(new Date().setHours(14, 30, 0, 0)),
-    duration: 60,
-    clientName: 'João Pereira',
-    processNumber: '98765-43.2023.8.26.0000',
-    priority: 'média',
+    description: 'Discutir andamento do processo e próximos passos.',
+    date: new Date('2024-07-20'),
+    time: '14:30',
+    location: 'Escritório',
+    type: 'Reunião',
+    status: 'Agendado',
+    cliente: 'Maria Oliveira',
+    createdAt: new Date('2023-06-12'),
   },
   {
     id: '3',
     title: 'Prazo final - Recurso',
-    description: 'Entregar recurso de apelação',
-    dateTime: new Date(new Date().setHours(16, 0, 0, 0)),
-    duration: 30,
-    clientName: 'Carlos Oliveira',
-    processNumber: '54321-98.2023.8.26.0000',
-    priority: 'alta',
+    description: 'Elaborar e protocolar recurso.',
+    date: new Date('2024-07-25'),
+    time: '18:00',
+    location: 'Tribunal de Justiça',
+    type: 'Prazo',
+    status: 'Pendente',
+    cliente: 'Empresa ABC Ltda',
+    createdAt: new Date('2023-06-15'),
   },
   {
     id: '4',
-    title: 'Entrevista com testemunha',
-    description: 'Coleta de depoimento preliminar',
-    dateTime: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(9, 0, 0, 0),
-    duration: 120,
-    clientName: 'Ana Santos',
-    processNumber: '13579-24.2023.8.26.0000',
-    priority: 'média',
+    title: 'Análise de contrato',
+    description: 'Revisar e emitir parecer sobre contrato.',
+    date: new Date('2024-08-01'),
+    time: '09:00',
+    location: 'Escritório',
+    type: 'Tarefa',
+    status: 'Em andamento',
+    cliente: 'Pedro Santos',
+    createdAt: new Date('2023-06-18'),
+  },
+  {
+    id: '5',
+    title: 'Depoimento testemunha',
+    description: 'Preparar e acompanhar depoimento.',
+    date: new Date('2024-08-05'),
+    time: '15:00',
+    location: 'Fórum Criminal',
+    type: 'Audiência',
+    status: 'Agendado',
+    cliente: 'Roberto Costa',
+    createdAt: new Date('2023-06-20'),
+  },
+  {
+    id: '6',
+    title: 'Elaboração de petição inicial',
+    description: 'Redigir e revisar petição inicial.',
+    date: new Date('2024-08-10'),
+    time: '11:00',
+    location: 'Escritório',
+    type: 'Tarefa',
+    status: 'Pendente',
+    cliente: 'Carla Souza',
+    createdAt: new Date('2023-06-22'),
+  },
+  {
+    id: '7',
+    title: 'Reunião de alinhamento',
+    description: 'Alinhar estratégias com a equipe.',
+    date: new Date('2024-08-15'),
+    time: '16:00',
+    location: 'Sala de Reuniões',
+    type: 'Reunião',
+    status: 'Agendado',
+    cliente: 'Equipe Interna',
+    createdAt: new Date('2023-06-25'),
+  },
+  {
+    id: '8',
+    title: 'Contestação - Caso XYZ',
+    description: 'Preparar e protocolar contestação.',
+    date: new Date('2024-08-20'),
+    time: '17:00',
+    location: 'Tribunal Regional do Trabalho',
+    type: 'Prazo',
+    status: 'Pendente',
+    cliente: 'Empresa XYZ S.A.',
+    createdAt: new Date('2023-06-28'),
+  },
+  {
+    id: '9',
+    title: 'Consulta jurídica',
+    description: 'Atender e orientar novo cliente.',
+    date: new Date('2024-08-25'),
+    time: '14:00',
+    location: 'Escritório',
+    type: 'Reunião',
+    status: 'Agendado',
+    cliente: 'Novo Cliente',
+    createdAt: new Date('2023-07-01'),
+  },
+  {
+    id: '10',
+    title: 'Audiência de conciliação',
+    description: 'Participar de audiência de conciliação.',
+    date: new Date('2024-08-30'),
+    time: '09:30',
+    location: 'Centro de Conciliação',
+    type: 'Audiência',
+    status: 'Agendado',
+    cliente: 'Antônio Pereira',
+    createdAt: new Date('2023-07-05'),
   },
 ];
+
+// Event interface
+interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  time: string;
+  location: string;
+  type: string;
+  status: string;
+  cliente: string;
+  createdAt: Date;
+}
+
+const AgendaPage = () => {
+  const [events, setEvents] = useState<Event[]>(mockEvents);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [isNewEventDialogOpen, setIsNewEventDialogOpen] = useState(false);
+  const [isEditEventDialogOpen, setIsEditEventDialogOpen] = useState(false);
+  const [newEvent, setNewEvent] = useState<Omit<Event, 'id' | 'createdAt'>>({
+    title: '',
+    description: '',
+    date: new Date(),
+    time: '09:00',
+    location: '',
+    type: 'Reunião',
+    status: 'Agendado',
+    cliente: '',
+  });
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const { toast } = useToast();
+
+  // Filter events by selected date
+  const filteredEvents = events.filter(event => {
+    if (!selectedDate) return true;
+    return event.date.toDateString() === selectedDate.toDateString();
+  });
+
+  // Function to handle event creation
+  const handleCreateEvent = () => {
+    const newEventWithId: Event = {
+      id: String(Date.now()),
+      ...newEvent,
+      createdAt: new Date(),
+    };
+    setEvents([...events, newEventWithId]);
+    setNewEvent({
+      title: '',
+      description: '',
+      date: new Date(),
+      time: '09:00',
+      location: '',
+      type: 'Reunião',
+      status: 'Agendado',
+      cliente: '',
+    });
+    setIsNewEventDialogOpen(false);
+    toast({
+      title: "Evento criado",
+      description: "Novo evento adicionado à agenda.",
+    });
+  };
+
+  // Function to handle event update
+  const handleUpdateEvent = () => {
+    if (!selectedEvent) return;
+
+    const updatedEvents = events.map(event => {
+      if (event.id === selectedEvent.id) {
+        return {
+          ...selectedEvent,
+          date: selectedEvent.date,
+        };
+      }
+      return event;
+    });
+
+    setEvents(updatedEvents);
+    setSelectedEvent(null);
+    setIsEditEventDialogOpen(false);
+    toast({
+      title: "Evento atualizado",
+      description: "Evento atualizado com sucesso.",
+    });
+  };
+
+  // Function to handle event deletion
+  const handleDeleteEvent = (id: string) => {
+    setEvents(events.filter(event => event.id !== id));
+    toast({
+      title: "Evento excluído",
+      description: "Evento removido da agenda.",
+    });
+  };
+
+  // Function to format date
+  const formatDate = (date: Date): string => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(date);
+  };
+
+  return (
+    <AdminLayout>
+      <div className="p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-3xl font-bold">Agenda</h1>
+          <Button onClick={() => setIsNewEventDialogOpen(true)}>
+            <Calendar className="mr-2 h-4 w-4" />
+            Novo Evento
+          </Button>
+        </div>
+
+        <div className="mb-4">
+          <DatePicker
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            locale={ptBR}
+            className="rounded-md border shadow-sm"
+          />
+        </div>
+
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Título</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Hora</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredEvents.map(event => (
+                <TableRow key={event.id}>
+                  <TableCell className="font-medium">{event.title}</TableCell>
+                  <TableCell>{formatDate(event.date)}</TableCell>
+                  <TableCell>{event.time}</TableCell>
+                  <TableCell>{event.cliente}</TableCell>
+                  <TableCell>{event.type}</TableCell>
+                  <TableCell>{event.status}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => {
+                          setSelectedEvent(event);
+                          setIsEditEventDialogOpen(true);
+                        }}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          <span>Editar</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteEvent(event.id)} className="text-red-600">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Excluir</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filteredEvents.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-4">
+                    Nenhum evento para este dia.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* New Event Dialog */}
+        <Dialog open={isNewEventDialogOpen} onOpenChange={setIsNewEventDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Novo Evento</DialogTitle>
+              <DialogDescription>
+                Adicione um novo evento à sua agenda.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="title" className="text-right">
+                  Título
+                </Label>
+                <Input
+                  id="title"
+                  value={newEvent.title}
+                  onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="date" className="text-right">
+                  Data
+                </Label>
+                <DatePicker
+                  id="date"
+                  mode="single"
+                  selected={newEvent.date}
+                  onSelect={(date) => setNewEvent({ ...newEvent, date: date || new Date() })}
+                  locale={ptBR}
+                  className="col-span-3 rounded-md border shadow-sm"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="time" className="text-right">
+                  Hora
+                </Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={newEvent.time}
+                  onChange={(e) => setNewEvent({ ...newEvent, time: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="cliente" className="text-right">
+                  Cliente
+                </Label>
+                <Input
+                  id="cliente"
+                  value={newEvent.cliente}
+                  onChange={(e) => setNewEvent({ ...newEvent, cliente: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="type" className="text-right">
+                  Tipo
+                </Label>
+                <Input
+                  id="type"
+                  value={newEvent.type}
+                  onChange={(e) => setNewEvent({ ...newEvent, type: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="status" className="text-right">
+                  Status
+                </Label>
+                <Input
+                  id="status"
+                  value={newEvent.status}
+                  onChange={(e) => setNewEvent({ ...newEvent, status: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="description" className="text-right mt-2">
+                  Descrição
+                </Label>
+                <Textarea
+                  id="description"
+                  value={newEvent.description}
+                  onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="location" className="text-right">
+                  Localização
+                </Label>
+                <Input
+                  id="location"
+                  value={newEvent.location}
+                  onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
+                  className="col-span-3"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" onClick={handleCreateEvent}>Criar Evento</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Event Dialog */}
+        <Dialog open={isEditEventDialogOpen} onOpenChange={setIsEditEventDialogOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Editar Evento</DialogTitle>
+              <DialogDescription>
+                Edite os detalhes do evento selecionado.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedEvent && (
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="title" className="text-right">
+                    Título
+                  </Label>
+                  <Input
+                    id="title"
+                    value={selectedEvent.title}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="date" className="text-right">
+                    Data
+                  </Label>
+                  <DatePicker
+                    id="date"
+                    mode="single"
+                    selected={selectedEvent.date}
+                    onSelect={(date) => setSelectedEvent({ ...selectedEvent, date: date || new Date() })}
+                    locale={ptBR}
+                    className="col-span-3 rounded-md border shadow-sm"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="time" className="text-right">
+                    Hora
+                  </Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={selectedEvent.time}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, time: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="cliente" className="text-right">
+                    Cliente
+                  </Label>
+                  <Input
+                    id="cliente"
+                    value={selectedEvent.cliente}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, cliente: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="type" className="text-right">
+                    Tipo
+                  </Label>
+                  <Input
+                    id="type"
+                    value={selectedEvent.type}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, type: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Input
+                    id="status"
+                    value={selectedEvent.status}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, status: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-start gap-4">
+                  <Label htmlFor="description" className="text-right mt-2">
+                    Descrição
+                  </Label>
+                  <Textarea
+                    id="description"
+                    value={selectedEvent.description}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, description: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+                 <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="location" className="text-right">
+                    Localização
+                  </Label>
+                  <Input
+                    id="location"
+                    value={selectedEvent.location}
+                    onChange={(e) => setSelectedEvent({ ...selectedEvent, location: e.target.value })}
+                    className="col-span-3"
+                  />
+                </div>
+              </div>
+            )}
+            <div className="flex justify-end">
+              <Button type="submit" onClick={handleUpdateEvent}>Atualizar Evento</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </AdminLayout>
+  );
+};
 
 export default AgendaPage;
