@@ -11,6 +11,7 @@ import FinanceiroPage from './pages/FinanceiroPage';
 import DocumentosPage from './pages/DocumentosPage';
 import RelatoriosPage from './pages/RelatoriosPage';
 import PagamentoPage from './pages/PagamentoPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import ConfiguracoesPage from './pages/ConfiguracoesPage';
 import NotFound from './pages/NotFound';
 import TermosPrivacidadePage from './pages/TermosPrivacidadePage';
@@ -19,6 +20,7 @@ import './App.css';
 
 import { AuthProvider } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
+import VerificarAssinatura from './components/VerificarAssinatura';
 import { Toaster } from '@/components/ui/toaster';
 
 function App() {
@@ -35,21 +37,37 @@ function App() {
             <Route path="/cadastro" element={<CadastroPage />} />
           </Route>
           
-          {/* Rota de pagamento - acessível sem proteção */}
+          {/* Rotas de pagamento */}
           <Route path="/pagamento" element={<PagamentoPage />} />
+          <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
           <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
           
           {/* Rotas protegidas - requerem autenticação */}
           <Route element={<ProtectedRoute />}>
+            {/* Rotas que não requerem verificação de assinatura */}
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/clientes" element={<ClientesPage />} />
-            <Route path="/processos" element={<ProcessosPage />} />
-            <Route path="/agenda" element={<AgendaPage />} />
-            <Route path="/financeiro" element={<FinanceiroPage />} />
-            <Route path="/documentos" element={<DocumentosPage />} />
-            <Route path="/relatorios" element={<RelatoriosPage />} />
-            <Route path="/configuracoes" element={<ConfiguracoesPage />} />
             <Route path="/perfil" element={<PerfilUsuarioPage />} />
+            
+            {/* Rotas que requerem verificação de assinatura */}
+            <Route element={<VerificarAssinatura>
+              <Routes>
+                <Route path="/clientes" element={<ClientesPage />} />
+                <Route path="/processos" element={<ProcessosPage />} />
+                <Route path="/agenda" element={<AgendaPage />} />
+                <Route path="/financeiro" element={<FinanceiroPage />} />
+                <Route path="/documentos" element={<DocumentosPage />} />
+                <Route path="/relatorios" element={<RelatoriosPage />} />
+                <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+              </Routes>
+            </VerificarAssinatura>}>
+              <Route path="/clientes" element={null} />
+              <Route path="/processos" element={null} />
+              <Route path="/agenda" element={null} />
+              <Route path="/financeiro" element={null} />
+              <Route path="/documentos" element={null} />
+              <Route path="/relatorios" element={null} />
+              <Route path="/configuracoes" element={null} />
+            </Route>
           </Route>
           
           <Route path="*" element={<NotFound />} />

@@ -11,6 +11,7 @@ import { abrirPortalCliente } from '@/services/stripe';
 interface AssinaturaInfo {
   status: 'ativa' | 'pendente' | 'inativa';
   dataProximoFaturamento?: string;
+  plano?: string;
 }
 
 const GerenciarAssinatura = () => {
@@ -22,18 +23,33 @@ const GerenciarAssinatura = () => {
   const verificarAssinatura = async () => {
     setIsLoading(true);
     try {
-      const { data: session } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (session.session) {
-        // Simulando dados de assinatura - em produção, você consultaria uma API
-        // Em um ambiente real, você consultaria o banco de dados ou uma API do Stripe
-        const dataAtual = new Date();
-        const proximaCobranca = new Date(dataAtual);
-        proximaCobranca.setMonth(proximaCobranca.getMonth() + 1);
+      if (!session) {
+        setAssinaturaInfo({
+          status: 'inativa'
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      // Consultar a edge function para verificar o status da assinatura
+      const { data, error } = await supabase.functions.invoke('verificar-assinatura');
+      
+      if (error) {
+        console.error('Erro ao verificar assinatura:', error);
+        throw new Error(error.message || "Erro ao verificar assinatura");
+      }
+      
+      if (data?.subscribed) {
+        const dataFaturamento = data.subscription_end 
+          ? new Date(data.subscription_end).toLocaleDateString('pt-BR') 
+          : undefined;
         
         setAssinaturaInfo({
           status: 'ativa',
-          dataProximoFaturamento: proximaCobranca.toLocaleDateString('pt-BR')
+          dataProximoFaturamento: dataFaturamento,
+          plano: data.subscription_tier || 'Plano JusGestão'
         });
       } else {
         setAssinaturaInfo({
@@ -46,6 +62,10 @@ const GerenciarAssinatura = () => {
         title: 'Erro ao verificar assinatura',
         description: 'Não foi possível verificar o status da sua assinatura.',
         variant: 'destructive'
+      });
+      
+      setAssinaturaInfo({
+        status: 'pendente'
       });
     } finally {
       setIsLoading(false);
@@ -120,6 +140,7 @@ const GerenciarAssinatura = () => {
           <StatusAssinatura 
             status={assinaturaInfo.status} 
             dataProximoFaturamento={assinaturaInfo.dataProximoFaturamento}
+            plano={assinaturaInfo.plano}
           />
           
           <div className="mt-6">

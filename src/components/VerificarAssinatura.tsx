@@ -3,9 +3,16 @@ import React, { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from './ui/spinner';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface VerificarAssinaturaProps {
   children: React.ReactNode;
+}
+
+interface AssinaturaStatus {
+  status: 'ativa' | 'pendente' | 'inativa';
+  dataProximoFaturamento?: string;
 }
 
 const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) => {
@@ -13,9 +20,10 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
   const [isAssinante, setIsAssinante] = useState(false);
   const { user } = useAuth();
   const location = useLocation();
+  const { toast } = useToast();
 
   // Lista de rotas que não requerem assinatura ativa, mas requerem autenticação
-  const rotasPermitidas = ['/dashboard', '/perfil'];
+  const rotasPermitidas = ['/dashboard', '/perfil', '/pagamento'];
 
   useEffect(() => {
     const verificarAssinatura = async () => {
@@ -25,21 +33,47 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
       }
 
       try {
-        // Simular verificação de assinatura
-        // Em uma implementação real, você consultaria o banco de dados ou uma API
-        setTimeout(() => {
-          setIsAssinante(true);
+        setIsLoading(true);
+        
+        // Consultar o status da assinatura através da edge function
+        const { data, error } = await supabase.functions.invoke('verificar-assinatura');
+        
+        if (error) {
+          console.error('Erro ao verificar assinatura:', error);
+          toast({
+            title: "Erro ao verificar assinatura",
+            description: "Não foi possível verificar o status da sua assinatura. Você será redirecionado para a página de perfil.",
+            variant: "destructive"
+          });
+          setIsAssinante(false);
           setIsLoading(false);
-        }, 1000);
+          return;
+        }
+        
+        // Verificar se o usuário tem uma assinatura ativa
+        setIsAssinante(data?.subscribed || false);
+        
+        if (data?.subscribed) {
+          console.log('Assinatura ativa detectada:', data);
+        } else {
+          console.log('Assinatura inativa ou não encontrada');
+        }
+        
+        setIsLoading(false);
       } catch (error) {
         console.error('Erro ao verificar assinatura:', error);
+        toast({
+          title: "Erro ao verificar assinatura",
+          description: "Ocorreu um erro ao verificar sua assinatura. Você será redirecionado para a página de perfil.",
+          variant: "destructive"
+        });
         setIsAssinante(false);
         setIsLoading(false);
       }
     };
 
     verificarAssinatura();
-  }, [user]);
+  }, [user, toast]);
 
   // Verificar se a rota atual está na lista de rotas permitidas
   const rotaAtualPermitida = rotasPermitidas.some(rota => 

@@ -52,7 +52,7 @@ serve(async (req) => {
 
     console.log("Criando sessão de checkout...");
     
-    // Criar a sessão de checkout
+    // Criar a sessão de checkout com redireciomento para a página de sucesso
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       customer_email: emailCliente,
@@ -72,7 +72,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription", // Modo de assinatura
-      success_url: `${req.headers.get("origin")}/pagamento?success=true`,
+      success_url: `${req.headers.get("origin")}/pagamento-sucesso`,
       cancel_url: `${req.headers.get("origin")}/pagamento?canceled=true`,
     });
 

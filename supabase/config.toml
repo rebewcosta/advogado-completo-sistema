@@ -6,3 +6,9 @@ verify_jwt = false
 
 [functions.criar-portal-cliente]
 verify_jwt = false
+
+[functions.verificar-assinatura]
+verify_jwt = false
+
+[functions.webhook-stripe]
+verify_jwt = false
