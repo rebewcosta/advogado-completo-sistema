@@ -60,6 +60,29 @@ Deno.serve(async (req) => {
     
     console.log("Verificando acesso para usuário:", user.email);
     
+    // Verificação detalhada para o email webercostag@gmail.com
+    if (user.email === "webercostag@gmail.com") {
+      console.log("Acesso especial concedido para webercostag@gmail.com (verificação exata)");
+      
+      // Retornar resposta simulando assinatura ativa para este usuário específico
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          subscription_status: "active",
+          current_period_end: oneYearFromNow.toISOString(),
+          message: "Acesso especial ativo para webercostag@gmail.com",
+          special_access: true
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+    
     // Verificar se o usuário tem acesso especial por e-mail
     if (user.email && specialAccessEmails.includes(user.email)) {
       console.log("Acesso especial concedido para:", user.email);

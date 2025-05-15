@@ -42,6 +42,15 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
         // Verificar se o email está na lista de acesso especial
         const hasSpecialEmail = user.email && specialEmails.includes(user.email);
         console.log("Email está na lista de acesso especial:", hasSpecialEmail);
+        console.log("Email do usuário:", user.email);
+        
+        // Verificar precisamente se o email é webercostag@gmail.com
+        if (user.email === "webercostag@gmail.com") {
+          console.log("Email exato webercostag@gmail.com detectado!");
+          setIsAssinante(true);
+          setIsLoading(false);
+          return;
+        }
         
         // Conceder acesso se tiver special_access nos metadados ou email especial
         if (hasSpecialAccess || hasSpecialEmail) {
