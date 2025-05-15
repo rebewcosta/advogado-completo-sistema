@@ -9,7 +9,6 @@ const CadastroPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [tipoPlano, setTipoPlano] = useState('profissional');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -32,12 +31,12 @@ const CadastroPage = () => {
       setIsLoading(false);
       toast({
         title: "Cadastro realizado com sucesso",
-        description: "Você será redirecionado para o login.",
+        description: "Você será redirecionado para o pagamento.",
       });
       
-      // Redirect to login after successful registration
+      // Redirect to payment page after successful registration
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = '/pagamento';
       }, 1500);
     }, 1500);
   };
@@ -129,63 +128,12 @@ const CadastroPage = () => {
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Escolha seu plano
-                </label>
-                <div className="mt-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div 
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${tipoPlano === 'iniciante' ? 'ring-2 ring-lawyer-primary' : 'hover:border-lawyer-primary'}`}
-                    onClick={() => setTipoPlano('iniciante')}
-                  >
-                    <div className="flex items-center mb-2">
-                      <input
-                        type="radio"
-                        name="plan"
-                        checked={tipoPlano === 'iniciante'}
-                        onChange={() => setTipoPlano('iniciante')}
-                        className="h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
-                      />
-                      <label className="ml-2 font-medium">Iniciante</label>
-                    </div>
-                    <p className="text-xl font-bold mb-1">R$ 99<span className="text-sm font-normal text-gray-500">/mês</span></p>
-                    <p className="text-sm text-gray-600">Ideal para advogados autônomos</p>
-                  </div>
-                  
-                  <div 
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${tipoPlano === 'profissional' ? 'ring-2 ring-lawyer-primary' : 'hover:border-lawyer-primary'}`}
-                    onClick={() => setTipoPlano('profissional')}
-                  >
-                    <div className="flex items-center mb-2">
-                      <input
-                        type="radio"
-                        name="plan"
-                        checked={tipoPlano === 'profissional'}
-                        onChange={() => setTipoPlano('profissional')}
-                        className="h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
-                      />
-                      <label className="ml-2 font-medium">Profissional</label>
-                    </div>
-                    <p className="text-xl font-bold mb-1">R$ 199<span className="text-sm font-normal text-gray-500">/mês</span></p>
-                    <p className="text-sm text-gray-600">Para escritórios em crescimento</p>
-                  </div>
-                  
-                  <div 
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${tipoPlano === 'empresarial' ? 'ring-2 ring-lawyer-primary' : 'hover:border-lawyer-primary'}`}
-                    onClick={() => setTipoPlano('empresarial')}
-                  >
-                    <div className="flex items-center mb-2">
-                      <input
-                        type="radio"
-                        name="plan"
-                        checked={tipoPlano === 'empresarial'}
-                        onChange={() => setTipoPlano('empresarial')}
-                        className="h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
-                      />
-                      <label className="ml-2 font-medium">Empresarial</label>
-                    </div>
-                    <p className="text-xl font-bold mb-1">R$ 349<span className="text-sm font-normal text-gray-500">/mês</span></p>
-                    <p className="text-sm text-gray-600">Para escritórios médios e grandes</p>
-                  </div>
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
+                  <h4 className="font-medium text-blue-800 mb-2">Plano Mensal - R$ 127,00/mês</h4>
+                  <p className="text-sm text-blue-700">
+                    Acesso completo a todas as funcionalidades do sistema JusGestão.
+                    Você será direcionado para a página de pagamento após o cadastro.
+                  </p>
                 </div>
               </div>
               

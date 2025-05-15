@@ -5,74 +5,41 @@ import { Check } from 'lucide-react';
 const PricingSection = () => {
   const plans = [
     {
-      name: "Iniciante",
-      price: "R$ 99",
+      name: "Acesso Mensal",
+      price: "R$ 127",
       period: "/mês",
-      description: "Ideal para advogados autônomos",
-      features: [
-        "Até 50 clientes",
-        "Até 100 processos",
-        "Agenda e compromissos",
-        "Controle financeiro básico",
-        "Armazenamento de 5GB",
-        "Suporte por email"
-      ],
-      cta: "Começar grátis",
-      popular: false
-    },
-    {
-      name: "Profissional",
-      price: "R$ 199",
-      period: "/mês",
-      description: "Perfeito para escritórios em crescimento",
-      features: [
-        "Até 200 clientes",
-        "Processos ilimitados",
-        "Agenda compartilhada",
-        "Relatórios avançados",
-        "Controle financeiro completo",
-        "Armazenamento de 20GB",
-        "Suporte prioritário"
-      ],
-      cta: "Assinar agora",
-      popular: true
-    },
-    {
-      name: "Empresarial",
-      price: "R$ 349",
-      period: "/mês",
-      description: "Para escritórios de médio e grande porte",
+      description: "Acesso completo ao sistema JusGestão",
       features: [
         "Clientes ilimitados",
         "Processos ilimitados",
-        "Controle de produtividade",
-        "Relatórios personalizados",
-        "Integração com sistemas",
-        "Armazenamento de 50GB",
-        "Suporte 24/7",
-        "API para integrações"
+        "Agenda e compromissos",
+        "Controle financeiro completo",
+        "Armazenamento de documentos",
+        "Relatórios avançados",
+        "Suporte por email",
+        "Atualizações gratuitas"
       ],
-      cta: "Entrar em contato",
-      popular: false
+      cta: "Começar agora",
+      popular: true
     }
   ];
 
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
-        <h2 className="section-title">Planos e Preços</h2>
+        <h2 className="section-title">Plano de Acesso</h2>
         <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
-          Escolha o plano que melhor atende às necessidades do seu escritório de advocacia e comece a otimizar sua gestão hoje mesmo.
+          Comece a otimizar a gestão do seu escritório de advocacia hoje mesmo com nosso sistema completo.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="flex justify-center">
           {plans.map((plan, index) => (
             <div 
               key={index} 
-              className={`bg-white rounded-lg overflow-hidden shadow-md transition-all hover:shadow-xl ${plan.popular ? 'ring-2 ring-lawyer-primary relative' : ''}`}
+              className={`bg-white rounded-lg overflow-hidden shadow-md transition-all hover:shadow-xl max-w-md ${plan.popular ? 'ring-2 ring-lawyer-primary relative' : ''}`}
             >
               {plan.popular && (
                 <div className="bg-lawyer-primary text-white text-sm font-semibold py-1 px-4 absolute top-0 right-0 rounded-bl">
-                  Mais popular
+                  Recomendado
                 </div>
               )}
               <div className="p-6">
@@ -106,7 +73,7 @@ const PricingSection = () => {
           ))}
         </div>
         <div className="mt-12 text-center">
-          <p className="text-gray-600 mb-4">Precisa de um plano personalizado para seu escritório?</p>
+          <p className="text-gray-600 mb-4">Tem alguma dúvida sobre nosso plano?</p>
           <button className="btn-primary mx-auto">
             Entre em contato
           </button>
