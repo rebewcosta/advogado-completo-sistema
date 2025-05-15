@@ -1,3 +1,4 @@
+
 // Este arquivo é um edge function do Supabase para verificar o status da assinatura de um usuário
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@13.5.0?dts";
@@ -26,7 +27,7 @@ const corsHeaders = {
 // Esta lista pode ser expandida conforme necessário
 const specialAccessEmails = [
   "teste@sisjusgestao.com.br",
-  "webercostag@gmail.com", // Adicionado novo email para acesso especial
+  "webercostag@gmail.com", 
   // Adicione mais e-mails conforme necessário
 ];
 
@@ -53,11 +54,21 @@ Deno.serve(async (req) => {
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
     if (userError || !user) {
+      console.error("Erro ao verificar usuário:", userError);
       throw new Error("Usuário não autenticado");
     }
     
+    console.log("Verificando acesso para usuário:", user.email);
+    
     // Verificar se o usuário tem acesso especial por e-mail
     if (user.email && specialAccessEmails.includes(user.email)) {
+      console.log("Acesso especial concedido para:", user.email);
+      
+      // Verificar também user metadata para special_access
+      const hasSpecialAccessMetadata = user.user_metadata?.special_access === true;
+      console.log("Metadados do usuário:", JSON.stringify(user.user_metadata));
+      console.log("Special access nos metadados:", hasSpecialAccessMetadata);
+      
       // Retornar resposta simulando assinatura ativa para usuários especiais
       const oneYearFromNow = new Date();
       oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
@@ -77,11 +88,35 @@ Deno.serve(async (req) => {
       );
     }
     
+    // Verificar se user.user_metadata contém special_access = true
+    if (user.user_metadata && user.user_metadata.special_access === true) {
+      console.log("Acesso especial encontrado nos metadados para:", user.email);
+      
+      // Retornar resposta simulando assinatura ativa para usuários com special_access
+      const oneYearFromNow = new Date();
+      oneYearFromNow.setFullYear(oneYearFromNow.getFullYear() + 1);
+      
+      return new Response(
+        JSON.stringify({
+          subscribed: true,
+          subscription_status: "active",
+          current_period_end: oneYearFromNow.toISOString(),
+          message: "Acesso especial ativo via metadados",
+          special_access: true
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        }
+      );
+    }
+    
     // Obter informações do usuário
     const { subscription_id: subscriptionId } = user.user_metadata || {};
     
     // Verificar se o usuário tem uma assinatura
     if (!subscriptionId) {
+      console.log("Nenhuma assinatura encontrada para:", user.email);
       return new Response(
         JSON.stringify({ 
           subscribed: false,

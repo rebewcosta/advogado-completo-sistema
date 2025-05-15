@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Getting existing session:", session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       setIsLoading(false);
@@ -44,23 +46,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      setIsLoading(true);
+      console.log("Attempting to sign in:", email);
+      
+      // Cleanup existing auth state before signin attempt
+      cleanupAuthState();
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
       if (error) throw error;
+      
+      console.log("Sign in successful:", data.user?.email);
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Bem-vindo de volta!",
+      });
+      
+      return;
     } catch (error: any) {
+      console.error("Sign in error:", error.message);
       toast({
         title: "Erro ao entrar",
         description: error.message || "Ocorreu um erro ao tentar entrar.",
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, userData: any) => {
     try {
+      setIsLoading(true);
+      // Cleanup existing auth state before signup attempt
+      cleanupAuthState();
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
@@ -80,13 +104,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setIsLoading(true);
+      // Cleanup auth state before signout
+      cleanupAuthState();
+      
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Force refresh the page after signout to ensure clean state
+      window.location.href = '/';
     } catch (error: any) {
       toast({
         title: "Erro ao sair",
@@ -94,14 +127,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
   };
 
   // Nova função para criar contas especiais (apenas para uso administrativo)
   const createSpecialAccount = async (email: string, password: string, userData: any) => {
     try {
-      // Verificar se o usuário atual é administrador (opcional)
-      // Esta verificação pode ser melhorada com um sistema de papéis
+      setIsLoading(true);
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -127,7 +161,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  // Função para limpar o estado de autenticação
+  const cleanupAuthState = () => {
+    // Remove all Supabase auth keys from localStorage
+    Object.keys(localStorage).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        localStorage.removeItem(key);
+      }
+    });
+    
+    // Remove from sessionStorage if in use
+    Object.keys(sessionStorage || {}).forEach((key) => {
+      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        sessionStorage.removeItem(key);
+      }
+    });
   };
 
   const value = {

@@ -35,6 +35,26 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
       try {
         setIsLoading(true);
         
+        console.log("Verificando assinatura para usuário:", user.email);
+        
+        // Verificar se o usuário tem special_access nos metadados
+        const hasSpecialAccess = user.user_metadata?.special_access === true;
+        if (hasSpecialAccess) {
+          console.log("Acesso especial encontrado nos metadados");
+          setIsAssinante(true);
+          setIsLoading(false);
+          return;
+        }
+        
+        // Verificar se o email está na lista de acesso especial
+        const specialEmails = ["webercostag@gmail.com", "teste@sisjusgestao.com.br"];
+        if (user.email && specialEmails.includes(user.email)) {
+          console.log("Email com acesso especial detectado");
+          setIsAssinante(true);
+          setIsLoading(false);
+          return;
+        }
+        
         // Consultar o status da assinatura através da edge function
         const { data, error } = await supabase.functions.invoke('verificar-assinatura');
         
@@ -49,6 +69,8 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
           setIsLoading(false);
           return;
         }
+        
+        console.log("Resposta da verificação:", data);
         
         // Verificar se o usuário tem uma assinatura ativa
         setIsAssinante(data?.subscribed || false);

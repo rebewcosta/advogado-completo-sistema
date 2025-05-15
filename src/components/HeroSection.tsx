@@ -22,48 +22,16 @@ const HeroSection = () => {
           </div>
           <div className="md:w-1/2 flex justify-center">
             <div className="bg-lawyer-primary/10 p-8 rounded-lg border border-lawyer-primary/30 shadow-lg shadow-lawyer-primary/20 w-full max-w-md">
-              <form className="space-y-4">
+              <div className="space-y-4">
                 <h2 className="text-2xl font-bold mb-4">Acesso ao Sistema</h2>
-                <div>
-                  <label htmlFor="email" className="block text-sm font-medium mb-1">Email</label>
-                  <input 
-                    type="email" 
-                    id="email" 
-                    className="w-full px-4 py-2 rounded-md bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-lawyer-accent text-white"
-                    placeholder="seu@email.com"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium mb-1">Senha</label>
-                  <input 
-                    type="password" 
-                    id="password" 
-                    className="w-full px-4 py-2 rounded-md bg-white/10 border border-white/20 focus:outline-none focus:ring-2 focus:ring-lawyer-accent text-white"
-                    placeholder="••••••••"
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <input 
-                      id="remember" 
-                      type="checkbox" 
-                      className="h-4 w-4 rounded border-white/20 text-lawyer-accent focus:ring-lawyer-accent"
-                    />
-                    <label htmlFor="remember" className="ml-2 block text-sm">Lembrar-me</label>
-                  </div>
-                  <a href="#" className="text-sm text-lawyer-accent hover:underline">Esqueceu a senha?</a>
-                </div>
-                <button 
-                  type="submit" 
-                  className="w-full bg-lawyer-primary text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                >
-                  Entrar
-                </button>
-                <div className="text-center text-sm">
+                <Link to="/login" className="w-full bg-lawyer-primary text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center">
+                  Entrar no Sistema
+                </Link>
+                <div className="text-center text-sm mt-4">
                   <span>Não tem uma conta? </span>
                   <Link to="/cadastro" className="text-lawyer-accent hover:underline">Cadastre-se</Link>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         </div>

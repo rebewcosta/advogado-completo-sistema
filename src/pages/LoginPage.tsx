@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -12,23 +12,37 @@ const LoginPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn } = useAuth();
+  const { signIn, user } = useAuth();
   
   const from = (location.state as any)?.from?.pathname || "/dashboard";
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, from]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email || !password) {
+      toast({
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha o email e senha.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       await signIn(email, password);
-      toast({
-        title: "Login realizado com sucesso",
-        description: "Você será redirecionado para o dashboard.",
-      });
       navigate(from, { replace: true });
     } catch (error) {
+      console.error("Login error:", error);
       // Erro já tratado no hook useAuth
+    } finally {
       setIsLoading(false);
     }
   };
