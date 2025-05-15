@@ -76,36 +76,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Nova função para verificar se um email já está cadastrado
+  // Função corrigida para verificar se um email já está cadastrado
   const checkEmailExists = async (email: string): Promise<boolean> => {
     try {
       console.log("Verificando se o email já existe:", email);
       
-      // Tentar fazer login com uma senha inválida deliberadamente
-      // Se recebermos "Invalid login credentials", significa que o email existe
-      // Se recebermos outro erro como "Email not confirmed", também significa que existe
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: "verificacao-apenas" // Senha inválida deliberada
+      // Método correto: consultar diretamente se o email existe
+      const { data, error } = await supabase.auth.admin.listUsers({
+        filter: {
+          email: email.trim()
+        }
       });
       
-      // Se o erro for "Invalid login credentials" ou "Email not confirmed", o email existe
+      // Se houver erro ou dados, verificamos se há usuários que correspondem ao email
       if (error) {
-        const emailExists = 
-          error.message.includes("Invalid login credentials") || 
-          error.message.includes("Email not confirmed");
+        console.log("Erro ao verificar email:", error.message);
         
-        console.log(`Email ${email} existe: ${emailExists}, Mensagem: ${error.message}`);
-        return emailExists;
+        // Método alternativo: tentamos usar a recuperação de senha
+        // Se retornar sucesso, significa que o email existe
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/login`,
+        });
+        
+        if (!resetError) {
+          // Se não houver erro na recuperação de senha, o email existe
+          console.log(`Email ${email} existe (verificado via reset de senha)`);
+          return true;
+        }
+        
+        // Se o erro for sobre formato de email inválido, não significa que o email existe ou não
+        if (resetError.message.includes("Email format is invalid")) {
+          return false;
+        }
+        
+        // Para outros erros não relacionados a email não encontrado, assumimos que o email não existe
+        // pois é melhor deixar o usuário tentar se registrar e obter um erro claro
+        return false;
       }
       
-      // Se não der erro (o que seria extremamente improvável com uma senha aleatória),
-      // significa que o email e a senha aleatória funcionaram (caso muito raro)
-      console.log(`Email ${email} existe (login bem-sucedido com senha aleatória)`);
-      return true;
+      // Se conseguimos obter dados e há usuários, o email existe
+      if (data?.users && data.users.length > 0) {
+        console.log(`Email ${email} existe (encontrado ${data.users.length} usuários)`);
+        return true;
+      }
+      
+      console.log(`Email ${email} não existe`);
+      return false;
     } catch (error) {
       console.error("Erro ao verificar se o email existe:", error);
-      // Em caso de erro, presume que o email não existe
+      // Em caso de erro durante a verificação, assumimos que o email não existe
+      // para permitir que o usuário tente se registrar
       return false;
     }
   };
@@ -267,7 +287,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setIsLoading(true);
       
-      // Verificar primeiro se o email já existe
+      // Verificar primeiro se o email já existe - usamos nova implementação mais confiável
       const emailExists = await checkEmailExists(email);
       if (emailExists) {
         toast({

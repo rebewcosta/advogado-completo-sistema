@@ -19,7 +19,7 @@ const RegisterForm = ({ onSubmitStart, onSubmitEnd }: RegisterFormProps) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signUp, checkEmailExists } = useAuth();
+  const { signUp } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,33 +38,14 @@ const RegisterForm = ({ onSubmitStart, onSubmitEnd }: RegisterFormProps) => {
     onSubmitStart();
 
     try {
-      // Verificar se o email já existe
-      const emailExists = await checkEmailExists(email);
-      
-      if (emailExists) {
-        toast({
-          title: "Email já cadastrado",
-          description: "Este email já está sendo usado por outra conta.",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        onSubmitEnd();
-        return;
-      }
-      
-      // Prosseguir com o cadastro se o email não existir
+      // Prosseguir com o cadastro diretamente
+      // A função signUp já verifica se o email existe internamente
       await signUp(email, password, { 
         nome, 
         emailRedirectTo: window.location.origin + "/login"
       });
       
-      toast({
-        title: "Cadastro realizado com sucesso",
-        description: "Você será redirecionado para o pagamento.",
-      });
-      
-      // Redirect to payment page after successful registration
-      navigate('/pagamento');
+      // A navegação é feita dentro do signUp após o sucesso
     } catch (error) {
       // Erro já tratado no hook useAuth
       setIsSubmitting(false);
