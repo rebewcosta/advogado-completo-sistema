@@ -4,8 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 
 // Carrega o Stripe com a chave pública
-// Substitua pela chave pública real do Stripe (essa é segura para ser exposta no frontend)
-const stripePromise = loadStripe('pk_test_51JDfUhCo82R3GVdGoUZ9LMGKs1l8g2VCOCHfFFXECAHzV3d8DrlYOOHHapBNCtPkRrZizDTAYpW0CdTWfnF4dxZs00YDDLBKm7');
+// Em produção, substitua pela chave pública real do seu Stripe
+const stripePromise = loadStripe(
+  process.env.NODE_ENV === 'production'
+    ? 'pk_live_51JDfUhCo82R3GVdGoUZ9LMGKs1l8g2VCOCHfFFXECAHzV3d8DrlYOOHHapBNCtPkRrZizDTAYpW0CdTWfnF4dxZs00YDDLBKm7'
+    : 'pk_test_51JDfUhCo82R3GVdGoUZ9LMGKs1l8g2VCOCHfFFXECAHzV3d8DrlYOOHHapBNCtPkRrZizDTAYpW0CdTWfnF4dxZs00YDDLBKm7'
+);
 
 interface DadosPagamento {
   nomePlano: string;
@@ -21,12 +25,17 @@ export const iniciarCheckout = async ({
   try {
     console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente });
     
+    // Indicador de ambiente para o usuário
+    const ambiente = process.env.NODE_ENV === 'production' ? 'produção' : 'teste';
+    console.log(`Executando em ambiente de ${ambiente}`);
+    
     // Chama a edge function do Supabase para criar uma sessão de checkout
     const { data, error } = await supabase.functions.invoke('criar-sessao-checkout', {
       body: {
         nomePlano,
         valor,
         emailCliente,
+        modo: process.env.NODE_ENV === 'production' ? 'production' : 'test'
       }
     });
 

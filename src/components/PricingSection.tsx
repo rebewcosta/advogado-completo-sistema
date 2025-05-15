@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, Info } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const PricingSection = () => {
@@ -29,6 +29,8 @@ const PricingSection = () => {
     window.open("https://wa.me/5588999981618", "_blank");
   };
 
+  const isTestEnvironment = process.env.NODE_ENV !== 'production';
+
   return (
     <section id="pricing" className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -36,6 +38,17 @@ const PricingSection = () => {
         <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
           Comece a otimizar a gestão do seu escritório de advocacia hoje mesmo com nosso sistema completo.
         </p>
+        
+        {isTestEnvironment && (
+          <div className="max-w-md mx-auto mb-8 p-4 bg-yellow-100 rounded-lg border border-yellow-200 flex items-start">
+            <Info className="text-yellow-600 mr-3 mt-0.5 flex-shrink-0" size={20} />
+            <p className="text-sm text-yellow-800">
+              Ambiente de <strong>TESTE</strong> - Os pagamentos processados aqui não serão cobrados realmente. 
+              Use cartões de teste para simular pagamentos.
+            </p>
+          </div>
+        )}
+        
         <div className="flex justify-center">
           {plans.map((plan, index) => (
             <div 

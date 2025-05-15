@@ -17,7 +17,7 @@ serve(async (req) => {
 
   try {
     // Obter os dados do corpo da solicitação
-    const { nomePlano, valor, emailCliente } = await req.json();
+    const { nomePlano, valor, emailCliente, modo = 'test' } = await req.json();
     
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
@@ -28,7 +28,7 @@ serve(async (req) => {
     }
 
     // Log para debug
-    console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}`);
+    console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
     
     // Inicializar o Stripe com a chave secreta (armazenada como variável de ambiente)
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
