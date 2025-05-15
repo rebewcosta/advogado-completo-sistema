@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { iniciarCheckout } from '@/services/stripe';
 
@@ -99,18 +101,18 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   return (
     <form onSubmit={handleSubmitPayment}>
       <div className="space-y-6">
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
             Seu Email
-          </label>
-          <input
+          </Label>
+          <Input
             type="email"
             id="email"
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary sm:text-sm"
             placeholder="seu.email@exemplo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            className="w-full"
           />
         </div>
         
@@ -129,7 +131,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                 Processando...
               </span>
             ) : (
-              'Pagar com Stripe - R$ 127,00'
+              <span className="flex items-center">
+                <CreditCard className="mr-2 h-5 w-5" /> 
+                Pagar com Stripe - R$ 127,00
+              </span>
             )}
           </Button>
         </div>
