@@ -13,7 +13,7 @@ const Footer: React.FC<FooterProps> = ({ companyName, address, cnpj, website }) 
   const hasCompanyInfo = companyName || address || cnpj || website;
   
   return (
-    <footer className="bg-lawyer-dark text-white py-8 mt-auto">
+    <footer className="bg-lawyer-dark text-white py-8 mt-auto w-full">
       <div className="container mx-auto px-4">
         {hasCompanyInfo ? (
           <div className="mb-6 text-center border-b border-gray-700 pb-4">
@@ -39,7 +39,7 @@ const Footer: React.FC<FooterProps> = ({ companyName, address, cnpj, website }) 
               Sistema completo para gerenciamento de escritórios de advocacia
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
             <div>
               <h3 className="text-lg font-medium mb-2">Recursos</h3>
               <ul className="text-gray-300 text-sm space-y-1">
