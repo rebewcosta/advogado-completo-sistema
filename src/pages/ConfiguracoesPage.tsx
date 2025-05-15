@@ -2,14 +2,10 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { 
-  Settings, 
   User, 
   Building, 
   Bell, 
   Shield, 
-  Palette, 
-  Database, 
-  HardDrive,
   Save
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -18,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { useTheme } from "@/contexts/ThemeContext";
 import {
   Card,
   CardContent,
@@ -33,38 +28,29 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { useAuth } from '@/hooks/useAuth';
+import Footer from '@/components/Footer';
 
 const ConfiguracoesPage = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("perfil");
   const [saving, setSaving] = useState(false);
+  const { user } = useAuth();
   
-  // Use o contexto de tema
-  const { 
-    darkMode, 
-    compactMode, 
-    fontSize, 
-    accentColor, 
-    toggleDarkMode, 
-    toggleCompactMode, 
-    setFontSize, 
-    setAccentColor 
-  } = useTheme();
-
   // Estado para configurações de perfil
   const [profileSettings, setProfileSettings] = useState({
-    name: "Escritório de Advocacia Silva & Associados",
-    email: "contato@silvaeassociados.adv.br",
-    phone: "(11) 99999-9999",
-    oab: "123456/SP",
+    name: user?.user_metadata?.nome || "",
+    email: user?.email || "",
+    phone: user?.user_metadata?.telefone || "",
+    oab: user?.user_metadata?.oab || "",
   });
 
   // Estado para configurações do escritório
   const [officeSettings, setOfficeSettings] = useState({
-    companyName: "Silva & Associados Advocacia",
-    cnpj: "12.345.678/0001-90",
-    address: "Av. Paulista, 1000 - Bela Vista, São Paulo - SP",
-    website: "www.silvaeassociados.adv.br",
+    companyName: user?.user_metadata?.empresa || "Meu Escritório de Advocacia",
+    cnpj: user?.user_metadata?.cnpj || "",
+    address: user?.user_metadata?.endereco || "",
+    website: user?.user_metadata?.website || "",
   });
 
   // Estado para configurações de notificações
@@ -131,14 +117,6 @@ const ConfiguracoesPage = () => {
             <TabsTrigger value="seguranca" className="flex items-center">
               <Shield className="h-4 w-4 mr-2" />
               Segurança
-            </TabsTrigger>
-            <TabsTrigger value="aparencia" className="flex items-center">
-              <Palette className="h-4 w-4 mr-2" />
-              Aparência
-            </TabsTrigger>
-            <TabsTrigger value="sistema" className="flex items-center">
-              <Database className="h-4 w-4 mr-2" />
-              Sistema
             </TabsTrigger>
           </TabsList>
 
@@ -404,151 +382,14 @@ const ConfiguracoesPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          
-          {/* Aparência */}
-          <TabsContent value="aparencia">
-            <Card>
-              <CardHeader>
-                <CardTitle>Personalização</CardTitle>
-                <CardDescription>
-                  Customize a aparência do sistema
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6 card-content">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Modo Escuro</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Ative o tema escuro para menor fadiga visual
-                    </p>
-                  </div>
-                  <Switch 
-                    checked={darkMode}
-                    onCheckedChange={toggleDarkMode}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Modo Compacto</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Reduz o espaçamento para exibir mais informações
-                    </p>
-                  </div>
-                  <Switch 
-                    checked={compactMode}
-                    onCheckedChange={toggleCompactMode}
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-2">
-                  <Label>Tamanho da Fonte</Label>
-                  <div className="flex space-x-2 pt-2">
-                    {[["small", "Pequeno"], ["medium", "Médio"], ["large", "Grande"]].map(([size, label]) => (
-                      <Button 
-                        key={size}
-                        variant={fontSize === size ? "default" : "outline"}
-                        className="flex-1"
-                        onClick={() => setFontSize(size as "small" | "medium" | "large")}
-                      >
-                        {label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-2">
-                  <Label>Cor de Destaque</Label>
-                  <div className="grid grid-cols-6 gap-2 pt-2">
-                    {["#9b87f5", "#4F46E5", "#0EA5E9", "#10B981", "#F97316", "#EC4899"].map((color) => (
-                      <button
-                        key={color}
-                        className={`h-8 rounded-full ${accentColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => setAccentColor(color as any)}
-                        aria-label={`Cor ${color}`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          {/* Sistema */}
-          <TabsContent value="sistema">
-            <Card>
-              <CardHeader>
-                <CardTitle>Configurações do Sistema</CardTitle>
-                <CardDescription>
-                  Gerencie o banco de dados e armazenamento
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Armazenamento</Label>
-                  <div className="bg-gray-100 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Uso de armazenamento</span>
-                      <span className="text-sm">45% (450 MB / 1 GB)</span>
-                    </div>
-                    <div className="w-full h-2 bg-gray-200 rounded-full">
-                      <div className="w-[45%] h-2 bg-blue-500 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-4">
-                  <Label>Gerenciamento de Dados</Label>
-                  <div className="flex flex-col space-y-2 md:space-y-0 md:flex-row md:space-x-2">
-                    <Button variant="outline" className="flex-1">
-                      <HardDrive className="mr-2 h-4 w-4" />
-                      Backup de Dados
-                    </Button>
-                    <Button variant="outline" className="flex-1">
-                      <Database className="mr-2 h-4 w-4" />
-                      Restaurar Backup
-                    </Button>
-                  </div>
-                </div>
-                
-                <Separator />
-                
-                <div className="space-y-2">
-                  <Label>Informações do Sistema</Label>
-                  <div className="text-sm space-y-1">
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Versão</span>
-                      <span>1.0.0</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Última atualização</span>
-                      <span>15/05/2025</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Data de instalação</span>
-                      <span>01/01/2025</span>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline" className="ml-auto">
-                  Verificar atualizações
-                </Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
         </Tabs>
       </div>
+      <Footer 
+        companyName={officeSettings.companyName} 
+        address={officeSettings.address}
+        cnpj={officeSettings.cnpj}
+        website={officeSettings.website}
+      />
     </AdminLayout>
   );
 };

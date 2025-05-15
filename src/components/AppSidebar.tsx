@@ -90,9 +90,9 @@ export const AppSidebar = () => {
 
   return (
     <Sidebar>
-      <SidebarHeader>
+      <SidebarHeader className="bg-lawyer-dark">
         <div className="px-3 py-4 flex justify-between items-center">
-          <Link to="/dashboard" className="text-lg font-bold flex items-center gap-2">
+          <Link to="/dashboard" className="text-lg font-bold flex items-center gap-2 text-white">
             <img 
               src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" 
               alt="JusGestão Logo" 
@@ -102,9 +102,9 @@ export const AppSidebar = () => {
           </Link>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent className="bg-lawyer-dark text-white">
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-400">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -113,8 +113,9 @@ export const AppSidebar = () => {
                     asChild 
                     tooltip={item.label}
                     isActive={isActive(item.path)}
+                    className="px-1"
                   >
-                    <Link to={item.path}>
+                    <Link to={item.path} className="flex items-center gap-4">
                       <item.icon className="w-5 h-5" />
                       <span>{item.label}</span>
                     </Link>
@@ -125,15 +126,16 @@ export const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="bg-lawyer-dark text-white">
         <SidebarGroup>
           <SidebarMenuItem>
             <SidebarMenuButton 
               asChild 
               tooltip="Configurações"
               isActive={isActive("/configuracoes")}
+              className="px-1"
             >
-              <Link to="/configuracoes">
+              <Link to="/configuracoes" className="flex items-center gap-4">
                 <Settings className="w-5 h-5" />
                 <span>Configurações</span>
               </Link>
@@ -143,15 +145,15 @@ export const AppSidebar = () => {
           <div className="px-3 py-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-100 transition-colors">
+                <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-700 transition-colors">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>{getUserInitials()}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 text-left">
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-sm font-medium truncate text-white">
                       {user?.user_metadata?.nome || user?.email || "Usuário"}
                     </p>
-                    <p className="text-xs text-gray-500 truncate">
+                    <p className="text-xs text-gray-400 truncate">
                       {user?.email || ""}
                     </p>
                   </div>
