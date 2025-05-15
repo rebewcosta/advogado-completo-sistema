@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Sidebar } from "@/components/ui/sidebar";
+import { 
+  Sidebar, 
+  SidebarProvider 
+} from "@/components/ui/sidebar";
 
 const ProcessosPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,79 +74,81 @@ const ProcessosPage = () => {
   );
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <div className="flex-1 overflow-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">Processos</h1>
-        
-        {/* Search and Action Bar */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="relative w-64">
-            <Input
-              type="text"
-              placeholder="Buscar processos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+    <SidebarProvider>
+      <div className="flex h-screen bg-gray-100 w-full">
+        <Sidebar />
+        <div className="flex-1 overflow-auto p-6">
+          <h1 className="text-3xl font-bold mb-6">Processos</h1>
+          
+          {/* Search and Action Bar */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="relative w-64">
+              <Input
+                type="text"
+                placeholder="Buscar processos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+              <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
             </div>
+            <Button>Novo Processo</Button>
           </div>
-          <Button>Novo Processo</Button>
-        </div>
-        
-        {/* Process List */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Número</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Vara</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Próximo Prazo</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProcesses.map((process) => (
-                <TableRow key={process.id}>
-                  <TableCell className="font-medium">{process.numero}</TableCell>
-                  <TableCell>{process.cliente}</TableCell>
-                  <TableCell>{process.tipo}</TableCell>
-                  <TableCell>{process.vara}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        ${process.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
-                          process.status === "Concluído" ? "bg-green-100 text-green-800" :
-                          "bg-yellow-100 text-yellow-800"}`}
-                    >
-                      {process.status}
-                    </span>
-                  </TableCell>
-                  <TableCell>{process.prazo}</TableCell>
-                  <TableCell>
-                    <div className="flex space-x-2">
-                      <Button variant="ghost" size="sm">
-                        Ver
-                      </Button>
-                      <Button variant="ghost" size="sm">
-                        Editar
-                      </Button>
-                    </div>
-                  </TableCell>
+          
+          {/* Process List */}
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Número</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Vara</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Próximo Prazo</TableHead>
+                  <TableHead>Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredProcesses.map((process) => (
+                  <TableRow key={process.id}>
+                    <TableCell className="font-medium">{process.numero}</TableCell>
+                    <TableCell>{process.cliente}</TableCell>
+                    <TableCell>{process.tipo}</TableCell>
+                    <TableCell>{process.vara}</TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          ${process.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
+                            process.status === "Concluído" ? "bg-green-100 text-green-800" :
+                            "bg-yellow-100 text-yellow-800"}`}
+                      >
+                        {process.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>{process.prazo}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="sm">
+                          Ver
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          Editar
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 

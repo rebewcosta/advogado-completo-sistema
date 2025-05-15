@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Sidebar } from "@/components/ui/sidebar";
 import ClienteForm from '@/components/ClienteForm';
 import { X, Edit, Eye, Plus, Search } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -20,6 +18,7 @@ import {
   DialogOverlay
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import AdminLayout from '@/components/AdminLayout';
 
 const ClientesPage = () => {
   const { toast } = useToast();
@@ -188,9 +187,8 @@ const ClientesPage = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
-      <Sidebar />
-      <div className="flex-1 overflow-auto p-6">
+    <AdminLayout>
+      <div className="p-6">
         <h1 className="text-3xl font-bold mb-6">Clientes</h1>
         
         {/* Search and Action Bar */}
@@ -376,7 +374,7 @@ const ClientesPage = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
