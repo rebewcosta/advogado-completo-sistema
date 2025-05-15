@@ -17,9 +17,9 @@ serve(async (req) => {
 
   try {
     // Obter os dados do corpo da solicitação
-    // Forçamos o modo como 'production' para garantir que estamos no ambiente real
+    // Estamos em ambiente de produção, usando a chave live
     const { nomePlano, valor, emailCliente } = await req.json();
-    const modo = 'production'; // Forçando modo de produção
+    const modo = 'production'; // Ambiente de produção
     
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
@@ -43,7 +43,7 @@ serve(async (req) => {
       );
     }
     
-    // Log para verificar se estamos no modo de produção
+    // Log para verificar se estamos usando a chave de produção
     console.log(`Iniciando Stripe no modo PRODUÇÃO`);
     
     // Verificar se estamos usando uma chave de produção

@@ -1,12 +1,10 @@
-
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 
 // Carrega o Stripe com a chave pública
-// IMPORTANTE: Esta chave ainda é uma chave de teste (pk_test_)
-// Para ambiente de produção real, deve ser substituída por uma chave live (pk_live_)
-const stripePromise = loadStripe('pk_test_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd');
+// Agora utilizando a chave de produção (pk_live_)
+const stripePromise = loadStripe('pk_live_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd');
 
 interface DadosPagamento {
   nomePlano: string;

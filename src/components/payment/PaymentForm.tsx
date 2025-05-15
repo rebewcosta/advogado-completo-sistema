@@ -45,12 +45,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       console.log('Iniciando checkout com email:', email);
       
       // Sempre usar modo de produção para pagamentos reais
-      // Isso garantirá que o Stripe use cartões reais
       const result = await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
         emailCliente: email,
-        modo: 'production' // Sempre usar ambiente de produção
+        modo: 'production' // Ambiente de produção
       });
       
       console.log('Resultado do checkout:', result);
