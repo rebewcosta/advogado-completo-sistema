@@ -26,6 +26,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     return /\S+@\S+\.\S+/.test(email);
   };
 
+  // Função para obter o domínio atual
+  const getDominio = () => {
+    return window.location.origin;
+  };
+
   // Função para processar o pagamento com Stripe
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,12 +49,16 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       
       console.log('Iniciando checkout com email:', email);
       
-      // Sempre usar modo de produção para pagamentos reais
+      // Obter o domínio atual para redirecionamentos
+      const dominio = getDominio();
+      console.log('Usando domínio:', dominio);
+      
       const result = await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
         emailCliente: email,
-        modo: 'production' // Ambiente de produção
+        modo: 'production', // Ambiente de produção
+        dominio // Passar o domínio atual
       });
       
       console.log('Resultado do checkout:', result);

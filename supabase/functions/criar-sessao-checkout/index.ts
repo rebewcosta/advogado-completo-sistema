@@ -18,7 +18,7 @@ serve(async (req) => {
   try {
     // Obter os dados do corpo da solicitação
     // Estamos em ambiente de produção, usando a chave live
-    const { nomePlano, valor, emailCliente } = await req.json();
+    const { nomePlano, valor, emailCliente, dominio } = await req.json();
     const modo = 'production'; // Ambiente de produção
     
     // Validar os dados necessários
@@ -32,6 +32,9 @@ serve(async (req) => {
 
     // Log do modo de operação
     console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
+    if (dominio) {
+      console.log(`Usando domínio personalizado: ${dominio}`);
+    }
     
     // Obter a chave do Stripe do ambiente
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -59,6 +62,14 @@ serve(async (req) => {
 
     console.log("Criando sessão de checkout...");
     
+    // Determinar as URLs de sucesso e cancelamento
+    // Usar o domínio fornecido ou o origin do cabeçalho da requisição
+    const baseUrl = dominio || req.headers.get("origin") || "https://seu-dominio.com.br";
+    const successUrl = `${baseUrl}/pagamento?success=true`;
+    const cancelUrl = `${baseUrl}/pagamento?canceled=true`;
+    
+    console.log(`URLs de redirecionamento: success=${successUrl}, cancel=${cancelUrl}`);
+    
     // Criar a sessão de checkout com redirecionamento para a página de sucesso
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -79,8 +90,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription", // Modo de assinatura
-      success_url: `${req.headers.get("origin")}/pagamento?success=true`,
-      cancel_url: `${req.headers.get("origin")}/pagamento?canceled=true`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
     });
 
     console.log(`Sessão de checkout criada: ${session.id}, URL: ${session.url}`);

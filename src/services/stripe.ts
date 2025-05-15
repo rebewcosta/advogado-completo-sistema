@@ -1,3 +1,4 @@
+
 import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
@@ -11,16 +12,18 @@ interface DadosPagamento {
   valor: number;
   emailCliente: string;
   modo?: 'production' | 'test';
+  dominio?: string; // Novo campo para domínio personalizado
 }
 
 export const iniciarCheckout = async ({
   nomePlano = 'Plano Mensal JusGestão',
   valor = 12700, // R$ 127,00 em centavos
   emailCliente,
-  modo = 'production' // Define modo padrão como produção
+  modo = 'production', // Define modo padrão como produção
+  dominio // Domínio personalizado para redirecionamentos
 }: DadosPagamento) => {
   try {
-    console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente, modo });
+    console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente, modo, dominio });
     
     // Usar o modo especificado sem forçar teste
     const modoFinal = modo;
@@ -34,7 +37,8 @@ export const iniciarCheckout = async ({
         nomePlano,
         valor,
         emailCliente,
-        modo: modoFinal // Usar o modo especificado
+        modo: modoFinal,
+        dominio // Passa o domínio para a edge function
       }
     });
 
