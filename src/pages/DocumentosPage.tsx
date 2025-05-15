@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import DocumentoWarning from '@/components/DocumentoWarning';
@@ -62,7 +63,7 @@ interface Document {
 const DocumentosPage = () => {
   const [documents, setDocuments] = useState<Document[]>(MOCK_DOCUMENTS);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<string>('');
+  const [filterType, setFilterType] = useState<string>('all');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<DocumentType>('outro');
@@ -77,7 +78,7 @@ const DocumentosPage = () => {
                          doc.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (doc.process && doc.process.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesType = filterType === '' || doc.type === filterType;
+    const matchesType = filterType === 'all' || doc.type === filterType;
     
     return matchesSearch && matchesType;
   });
@@ -201,11 +202,11 @@ const DocumentosPage = () => {
                 <SelectTrigger className="w-[180px]">
                   <div className="flex items-center">
                     <Filter className="mr-2 h-4 w-4" />
-                    {filterType ? filterType.charAt(0).toUpperCase() + filterType.slice(1) : 'Todos os tipos'}
+                    {filterType === 'all' ? 'Todos os tipos' : filterType.charAt(0).toUpperCase() + filterType.slice(1)}
                   </div>
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os tipos</SelectItem>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="contrato">Contrato</SelectItem>
                   <SelectItem value="petição">Petição</SelectItem>
                   <SelectItem value="procuração">Procuração</SelectItem>
