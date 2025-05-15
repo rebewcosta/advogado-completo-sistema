@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, Check, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -5,14 +6,11 @@ import { useToast } from '@/hooks/use-toast';
 import { iniciarCheckout } from '@/services/stripe';
 
 const PagamentoPage = () => {
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [expiryDate, setExpiryDate] = useState('');
-  const [cvv, setCvv] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [step, setStep] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [email, setEmail] = useState('');
 
   // Função para processar o pagamento com Stripe
   const handleSubmitPayment = async (e: React.FormEvent) => {
@@ -20,29 +18,21 @@ const PagamentoPage = () => {
     setIsProcessing(true);
 
     try {
-      // Em um cenário real, enviaríamos os dados para o backend
-      // que criaria uma sessão de checkout no Stripe
+      // Inicia o checkout utilizando o Stripe
+      await iniciarCheckout({
+        nomePlano: 'Plano Mensal JusGestão',
+        valor: 12700,
+        emailCliente: email // Agora vamos usar o email informado pelo usuário
+      });
       
-      // Por enquanto, vamos simular o início do checkout do Stripe
-      // Em produção, isso usaria sua API real
-      setTimeout(() => {
-        // Redirecionando para o dashboard após o "pagamento"
-        setIsProcessing(false);
-        setStep(2); // Move para o passo de sucesso
-        
-        toast({
-          title: "Pagamento processado com sucesso",
-          description: "Sua assinatura foi ativada.",
-        });
-      }, 2000);
+      // Após o redirecionamento para o Stripe, quando o usuário voltar
+      // ele será direcionado para a URL de sucesso configurada na função
+      setIsProcessing(false);
       
-      // Em uma implementação completa do Stripe, você usaria este código:
-      // await iniciarCheckout({
-      //  nomePlano: 'Plano Mensal JusGestão',
-      //  valor: 12700,
-      //  emailCliente: 'cliente@exemplo.com' // Idealmente pegaria do estado da aplicação
-      // });
-      
+      toast({
+        title: "Redirecionando para o pagamento",
+        description: "Você será redirecionado para a página de pagamento do Stripe.",
+      });
     } catch (error) {
       console.error('Erro no pagamento:', error);
       setIsProcessing(false);
@@ -52,35 +42,6 @@ const PagamentoPage = () => {
         variant: "destructive"
       });
     }
-  };
-
-  // Format card number with spaces
-  const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
-    const parts = [];
-    
-    for (let i = 0; i < match.length; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return value;
-    }
-  };
-
-  // Format expiry date as MM/YY
-  const formatExpiryDate = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    
-    if (v.length >= 2) {
-      return `${v.substring(0, 2)}/${v.substring(2, 4)}`;
-    }
-    
-    return v;
   };
 
   return (
@@ -119,78 +80,24 @@ const PagamentoPage = () => {
             <form onSubmit={handleSubmitPayment}>
               <div className="space-y-6">
                 <div>
-                  <label htmlFor="card-number" className="block text-sm font-medium text-gray-700 mb-1">
-                    Número do Cartão
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="card-number"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary sm:text-sm pl-10"
-                      placeholder="1234 5678 9012 3456"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                      maxLength={19}
-                      required
-                    />
-                    <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-                      <CreditCard className="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-                </div>
-                
-                <div>
-                  <label htmlFor="card-name" className="block text-sm font-medium text-gray-700 mb-1">
-                    Nome no Cartão
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Seu Email
                   </label>
                   <input
-                    type="text"
-                    id="card-name"
+                    type="email"
+                    id="email"
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary sm:text-sm"
-                    placeholder="João M. Silva"
-                    value={cardName}
-                    onChange={(e) => setCardName(e.target.value)}
+                    placeholder="seu.email@exemplo.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="expiry-date" className="block text-sm font-medium text-gray-700 mb-1">
-                      Data de Validade
-                    </label>
-                    <input
-                      type="text"
-                      id="expiry-date"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary sm:text-sm"
-                      placeholder="MM/YY"
-                      value={expiryDate}
-                      onChange={(e) => setExpiryDate(formatExpiryDate(e.target.value))}
-                      maxLength={5}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-1">
-                      Código de Segurança (CVV)
-                    </label>
-                    <input
-                      type="text"
-                      id="cvv"
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary sm:text-sm"
-                      placeholder="123"
-                      value={cvv}
-                      onChange={(e) => setCvv(e.target.value.replace(/[^0-9]/g, ''))}
-                      maxLength={4}
-                      required
-                    />
-                  </div>
                 </div>
                 
                 <div className="pt-4">
                   <button
                     type="submit"
-                    disabled={isProcessing}
+                    disabled={isProcessing || !email}
                     className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-lawyer-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lawyer-primary ${isProcessing ? 'opacity-75' : ''}`}
                   >
                     {isProcessing ? (
@@ -199,10 +106,10 @@ const PagamentoPage = () => {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Processando pagamento...
+                        Processando...
                       </span>
                     ) : (
-                      'Pagar R$ 127,00'
+                      'Pagar com Stripe - R$ 127,00'
                     )}
                   </button>
                 </div>
@@ -210,7 +117,7 @@ const PagamentoPage = () => {
             </form>
             
             <div className="mt-6 text-center text-sm text-gray-500">
-              <p>Seu pagamento é seguro e processado em ambiente criptografado.</p>
+              <p>Seu pagamento é seguro e processado em ambiente criptografado pelo Stripe.</p>
             </div>
           </div>
         ) : (

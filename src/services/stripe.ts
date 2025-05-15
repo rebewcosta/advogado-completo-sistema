@@ -1,8 +1,9 @@
 
 import { loadStripe } from '@stripe/stripe-js';
+import { supabase } from '@/integrations/supabase/client';
 
-// Carrega o Stripe com sua chave pública 
-// Substitua 'pk_live_SUA_CHAVE' pela sua chave pública real
+// Carrega o Stripe com sua chave pública
+// Substitua pela sua chave pública real do painel do Stripe
 const stripePromise = loadStripe('pk_live_SUA_CHAVE');
 
 interface DadosPagamento {
@@ -17,39 +18,28 @@ export const iniciarCheckout = async ({
   emailCliente
 }: DadosPagamento) => {
   try {
-    // 1. Chama o backend para criar uma sessão de checkout
-    const response = await fetch('/api/criar-sessao-checkout', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    // Chama a edge function do Supabase para criar uma sessão de checkout
+    const { data, error } = await supabase.functions.invoke('criar-sessao-checkout', {
+      body: {
         nomePlano,
         valor,
         emailCliente,
-      }),
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Erro ao criar sessão de checkout');
-    }
-
-    const { sessionId } = await response.json();
-
-    // 2. Redireciona para a página de checkout do Stripe
-    const stripe = await stripePromise;
-    
-    if (!stripe) {
-      throw new Error('Não foi possível carregar o Stripe');
-    }
-
-    const { error } = await stripe.redirectToCheckout({ sessionId });
-
     if (error) {
-      console.error('Erro ao redirecionar para o checkout:', error);
-      throw new Error(error.message);
+      console.error('Erro ao criar sessão de checkout:', error);
+      throw new Error(error.message || 'Erro ao criar sessão de checkout');
     }
+
+    if (!data || !data.url) {
+      throw new Error('Resposta inválida da API de checkout');
+    }
+
+    // Abre o Stripe checkout em uma nova guia
+    window.open(data.url, '_blank');
+    
+    return data;
   } catch (error) {
     console.error('Erro ao iniciar pagamento:', error);
     throw error;
