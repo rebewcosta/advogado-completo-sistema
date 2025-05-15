@@ -1,575 +1,436 @@
 
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import AdminLayout from '@/components/AdminLayout';
+import DocumentoWarning from '@/components/DocumentoWarning';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from '@/components/ui/dialog';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { 
+  FileText, 
   Search, 
-  Plus, 
+  Filter, 
+  MoreVertical, 
+  Upload, 
+  Download, 
   Trash2, 
-  ChevronLeft, 
-  ChevronRight, 
-  Filter,
-  FolderPlus,
-  Folder,
-  File,
-  Download,
-  Share2,
-  MoreVertical,
-  Grid,
-  List,
-  Users,
-  FileText,
-  Clock
+  Eye, 
+  File, 
+  FilePlus 
 } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from '@/hooks/use-toast';
 
-// Mock data for folders and files
-const mockFolders = [
-  { id: 1, nome: "Contratos", quantidadeArquivos: 15, criadoEm: "2023-05-10" },
-  { id: 2, nome: "Processos Ativos", quantidadeArquivos: 23, criadoEm: "2023-05-12" },
-  { id: 3, nome: "Processos Concluídos", quantidadeArquivos: 8, criadoEm: "2023-05-15" },
-  { id: 4, nome: "Documentos Administrativos", quantidadeArquivos: 7, criadoEm: "2023-05-18" },
-];
+// Tipos para documentos
+type DocumentType = 'contrato' | 'petição' | 'procuração' | 'decisão' | 'outro';
 
-const mockDocumentos = [
-  { id: 1, nome: "Contrato_João_Silva.pdf", tipo: "PDF", tamanho: "2.5 MB", criadoEm: "2023-06-10", cliente: "João Silva", categoria: "Contrato" },
-  { id: 2, nome: "Petição_Inicial_Empresa_ABC.docx", tipo: "DOCX", tamanho: "1.8 MB", criadoEm: "2023-06-05", cliente: "Empresa ABC Ltda", categoria: "Petição" },
-  { id: 3, nome: "Procuração_Maria_Oliveira.pdf", tipo: "PDF", tamanho: "0.7 MB", criadoEm: "2023-06-12", cliente: "Maria Oliveira", categoria: "Procuração" },
-  { id: 4, nome: "Relatório_Financeiro_Maio.xlsx", tipo: "XLSX", tamanho: "4.2 MB", criadoEm: "2023-06-02", cliente: "", categoria: "Administrativo" },
-  { id: 5, nome: "Recurso_Apelação_Roberto.docx", tipo: "DOCX", tamanho: "3.1 MB", criadoEm: "2023-06-15", cliente: "Roberto Costa", categoria: "Recurso" },
-  { id: 6, nome: "Comprovante_Pagamento_Custas.pdf", tipo: "PDF", tamanho: "0.5 MB", criadoEm: "2023-06-08", cliente: "", categoria: "Financeiro" },
-  { id: 7, nome: "Sentença_Processo_12345.pdf", tipo: "PDF", tamanho: "2.3 MB", criadoEm: "2023-06-14", cliente: "João Silva", categoria: "Sentença" },
-  { id: 8, nome: "Ata_Reunião_Sócios.pdf", tipo: "PDF", tamanho: "1.1 MB", criadoEm: "2023-06-09", cliente: "Empresa ABC Ltda", categoria: "Ata" },
-];
+interface Document {
+  id: string;
+  name: string;
+  type: DocumentType;
+  client: string;
+  process?: string;
+  createdAt: Date;
+  size: string;
+}
 
 const DocumentosPage = () => {
-  const [documentos, setDocumentos] = useState(mockDocumentos);
-  const [folders, setFolders] = useState(mockFolders);
+  const [documents, setDocuments] = useState<Document[]>(MOCK_DOCUMENTS);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [currentPath, setCurrentPath] = useState<string[]>([]);
-  const { toast } = useToast();
+  const [filterType, setFilterType] = useState<string>('all');
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState<DocumentType>('outro');
+  const [clientName, setClientName] = useState('');
+  const [processNumber, setProcessNumber] = useState('');
   
-  const filteredDocumentos = documentos.filter(documento =>
-    documento.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    documento.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    documento.categoria.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const { toast } = useToast();
 
-  const handleDeleteDocument = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir este documento?")) {
-      setDocumentos(documentos.filter(documento => documento.id !== id));
-      toast({
-        title: "Documento excluído",
-        description: "O documento foi removido com sucesso.",
-      });
+  // Filtrar documentos com base na pesquisa e tipo
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         doc.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (doc.process && doc.process.toLowerCase().includes(searchTerm.toLowerCase()));
+    
+    const matchesType = filterType === 'all' || doc.type === filterType;
+    
+    return matchesSearch && matchesType;
+  });
+
+  // Manipular upload de arquivo
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
     }
   };
 
-  const handleAddDocument = (e: React.FormEvent) => {
+  // Manipular envio do formulário de upload
+  const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const documentData = Object.fromEntries(formData.entries()) as any;
     
-    // Add new document
-    setDocumentos([...documentos, {
-      ...documentData,
-      id: documentos.length + 1,
-      tamanho: "0.0 MB", // This would be determined by the actual file in a real app
-      criadoEm: new Date().toISOString().split('T')[0]
-    }]);
-    
+    if (!selectedFile) {
+      toast({
+        title: "Erro no upload",
+        description: "Por favor, selecione um arquivo para upload.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Criar novo documento
+    const newDocument: Document = {
+      id: `doc-${Date.now()}`,
+      name: selectedFile.name,
+      type: documentType,
+      client: clientName,
+      process: processNumber || undefined,
+      createdAt: new Date(),
+      size: formatFileSize(selectedFile.size),
+    };
+
+    setDocuments([newDocument, ...documents]);
+    setIsUploadDialogOpen(false);
+    setSelectedFile(null);
+    setDocumentType('outro');
+    setClientName('');
+    setProcessNumber('');
+
     toast({
-      title: "Documento adicionado",
-      description: "O novo documento foi adicionado com sucesso.",
+      title: "Documento enviado com sucesso",
+      description: `${selectedFile.name} foi adicionado à sua biblioteca.`,
     });
-    
-    setIsModalOpen(false);
   };
 
-  const handleAddFolder = (e: React.FormEvent) => {
-    e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const folderData = Object.fromEntries(formData.entries()) as any;
-    
-    // Add new folder
-    setFolders([...folders, {
-      nome: folderData.nome,
-      id: folders.length + 1,
-      quantidadeArquivos: 0,
-      criadoEm: new Date().toISOString().split('T')[0]
-    }]);
-    
-    toast({
-      title: "Pasta criada",
-      description: "A nova pasta foi criada com sucesso.",
-    });
-    
-    setIsFolderModalOpen(false);
+  // Formatar tamanho do arquivo
+  const formatFileSize = (bytes: number): string => {
+    if (bytes < 1024) return bytes + ' bytes';
+    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+    else return (bytes / 1048576).toFixed(1) + ' MB';
   };
 
-  const getIconByFileType = (tipo: string) => {
-    switch(tipo) {
-      case 'PDF':
-        return <File className="h-6 w-6 text-red-500" />;
-      case 'DOCX':
-        return <File className="h-6 w-6 text-blue-500" />;
-      case 'XLSX':
-        return <File className="h-6 w-6 text-green-500" />;
+  // Formatar data
+  const formatDate = (date: Date): string => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(date);
+  };
+
+  // Manipular ações de documento
+  const handleDocumentAction = (action: string, document: Document) => {
+    switch (action) {
+      case 'view':
+        toast({
+          title: "Visualizando documento",
+          description: `Abrindo ${document.name}`,
+        });
+        break;
+      case 'download':
+        toast({
+          title: "Download iniciado",
+          description: `Baixando ${document.name}`,
+        });
+        break;
+      case 'delete':
+        setDocuments(documents.filter(doc => doc.id !== document.id));
+        toast({
+          title: "Documento excluído",
+          description: `${document.name} foi removido da sua biblioteca.`,
+        });
+        break;
       default:
-        return <File className="h-6 w-6 text-gray-500" />;
+        break;
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold">Documentos</h1>
-              <p className="text-gray-600">Armazene e organize todos os seus documentos</p>
+    <AdminLayout>
+      <div className="p-8">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-2xl font-bold">Documentos</h1>
+            <p className="text-gray-600">Gerencie todos os documentos do seu escritório</p>
+          </div>
+          <Button onClick={() => setIsUploadDialogOpen(true)} className="bg-lawyer-primary hover:bg-lawyer-primary/90">
+            <Upload className="mr-2 h-4 w-4" />
+            Enviar Documento
+          </Button>
+        </div>
+        
+        <DocumentoWarning />
+        
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex flex-col md:flex-row gap-4 mb-6">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Input
+                placeholder="Buscar documentos por nome, cliente ou processo..."
+                className="pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
             </div>
             <div className="flex gap-2">
-              <button 
-                onClick={() => setIsFolderModalOpen(true)} 
-                className="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50"
-              >
-                <FolderPlus className="h-5 w-5" />
-                Nova Pasta
-              </button>
-              <button 
-                onClick={() => setIsModalOpen(true)} 
-                className="btn-primary"
-              >
-                <Plus className="h-5 w-5 mr-1" />
-                Novo Documento
-              </button>
+              <Select value={filterType} onValueChange={setFilterType}>
+                <SelectTrigger className="w-[180px]">
+                  <div className="flex items-center">
+                    <Filter className="mr-2 h-4 w-4" />
+                    {filterType === 'all' ? 'Todos os tipos' : filterType.charAt(0).toUpperCase() + filterType.slice(1)}
+                  </div>
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  <SelectItem value="contrato">Contrato</SelectItem>
+                  <SelectItem value="petição">Petição</SelectItem>
+                  <SelectItem value="procuração">Procuração</SelectItem>
+                  <SelectItem value="decisão">Decisão</SelectItem>
+                  <SelectItem value="outro">Outro</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <div className="p-4 border-b flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="relative flex-grow">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Buscar documentos..."
-                  className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+          {filteredDocuments.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Processo</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Tamanho</TableHead>
+                  <TableHead className="w-[80px]">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDocuments.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell className="font-medium">
+                      <div className="flex items-center">
+                        <FileText className="mr-2 h-4 w-4 text-gray-500" />
+                        {doc.name}
+                      </div>
+                    </TableCell>
+                    <TableCell className="capitalize">{doc.type}</TableCell>
+                    <TableCell>{doc.client}</TableCell>
+                    <TableCell>{doc.process || '-'}</TableCell>
+                    <TableCell>{formatDate(doc.createdAt)}</TableCell>
+                    <TableCell>{doc.size}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menu</span>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDocumentAction('view', doc)}>
+                            <Eye className="mr-2 h-4 w-4" />
+                            <span>Visualizar</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDocumentAction('download', doc)}>
+                            <Download className="mr-2 h-4 w-4" />
+                            <span>Download</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDocumentAction('delete', doc)} className="text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            <span>Excluir</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="py-12 text-center">
+              <File className="mx-auto h-12 w-12 text-gray-300" />
+              <h3 className="mt-4 text-lg font-medium">Nenhum documento encontrado</h3>
+              <p className="mt-1 text-gray-500">
+                {searchTerm || filterType ? 
+                  'Tente ajustar seus filtros de busca' : 
+                  'Comece enviando seu primeiro documento'}
+              </p>
+              {!searchTerm && !filterType && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setIsUploadDialogOpen(true)}
+                >
+                  <FilePlus className="mr-2 h-4 w-4" />
+                  Enviar documento
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Modal de Upload */}
+      <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Enviar novo documento</DialogTitle>
+            <DialogDescription>
+              Faça upload de um documento e associe-o a um cliente ou processo.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleUploadSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="file" className="text-sm font-medium">
+                  Arquivo
+                </label>
+                <Input
+                  id="file"
+                  type="file"
+                  onChange={handleFileChange}
+                  required
+                />
+                {selectedFile && (
+                  <p className="text-xs text-gray-500">
+                    {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                  </p>
+                )}
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="type" className="text-sm font-medium">
+                  Tipo de documento
+                </label>
+                <Select value={documentType} onValueChange={(value) => setDocumentType(value as DocumentType)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="contrato">Contrato</SelectItem>
+                    <SelectItem value="petição">Petição</SelectItem>
+                    <SelectItem value="procuração">Procuração</SelectItem>
+                    <SelectItem value="decisão">Decisão</SelectItem>
+                    <SelectItem value="outro">Outro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <label htmlFor="client" className="text-sm font-medium">
+                  Cliente
+                </label>
+                <Input
+                  id="client"
+                  value={clientName}
+                  onChange={(e) => setClientName(e.target.value)}
+                  placeholder="Nome do cliente"
+                  required
                 />
               </div>
-              <div className="flex gap-2">
-                <button className="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50">
-                  <Filter className="h-5 w-5" />
-                  Filtrar
-                </button>
-                <div className="flex rounded-md shadow-sm">
-                  <button 
-                    onClick={() => setViewMode('grid')} 
-                    className={`p-2 ${viewMode === 'grid' ? 'bg-gray-100' : 'hover:bg-gray-50'} rounded-l-md border`}
-                  >
-                    <Grid className="h-5 w-5" />
-                  </button>
-                  <button 
-                    onClick={() => setViewMode('list')} 
-                    className={`p-2 ${viewMode === 'list' ? 'bg-gray-100' : 'hover:bg-gray-50'} rounded-r-md border-t border-r border-b`}
-                  >
-                    <List className="h-5 w-5" />
-                  </button>
-                </div>
+              <div className="grid gap-2">
+                <label htmlFor="process" className="text-sm font-medium">
+                  Número do processo (opcional)
+                </label>
+                <Input
+                  id="process"
+                  value={processNumber}
+                  onChange={(e) => setProcessNumber(e.target.value)}
+                  placeholder="Ex: 0001234-56.2023.8.26.0000"
+                />
               </div>
             </div>
-            
-            {/* Navigation Path */}
-            <div className="flex items-center p-4 text-sm">
-              <button 
-                onClick={() => setCurrentPath([])} 
-                className="text-lawyer-primary hover:underline"
-              >
-                Documentos
-              </button>
-              {currentPath.map((folder, index) => (
-                <div key={index} className="flex items-center">
-                  <span className="mx-2">/</span>
-                  <button 
-                    onClick={() => setCurrentPath(currentPath.slice(0, index + 1))}
-                    className="text-lawyer-primary hover:underline"
-                  >
-                    {folder}
-                  </button>
-                </div>
-              ))}
-            </div>
-            
-            {/* Grid View */}
-            {viewMode === 'grid' && (
-              <div className="p-4">
-                {currentPath.length === 0 && (
-                  <>
-                    <h3 className="text-lg font-semibold mb-4">Pastas</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-8">
-                      {folders.map(folder => (
-                        <div 
-                          key={folder.id}
-                          className="border rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer flex flex-col items-center"
-                          onClick={() => setCurrentPath([...currentPath, folder.nome])}
-                        >
-                          <Folder className="h-12 w-12 text-yellow-500 mb-2" />
-                          <h4 className="font-medium text-center">{folder.nome}</h4>
-                          <p className="text-xs text-gray-500">{folder.quantidadeArquivos} arquivos</p>
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                )}
-                
-                <h3 className="text-lg font-semibold mb-4">Arquivos</h3>
-                {filteredDocumentos.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {filteredDocumentos.map(documento => (
-                      <div 
-                        key={documento.id}
-                        className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex-grow">
-                            {getIconByFileType(documento.tipo)}
-                          </div>
-                          <div className="dropdown">
-                            <button className="p-1 hover:bg-gray-100 rounded-full">
-                              <MoreVertical className="h-5 w-5 text-gray-500" />
-                            </button>
-                          </div>
-                        </div>
-                        <h4 className="font-medium text-sm mb-1" title={documento.nome}>
-                          {documento.nome.length > 20 ? documento.nome.substring(0, 20) + '...' : documento.nome}
-                        </h4>
-                        <div className="flex flex-wrap gap-y-1 gap-x-2 mt-2 text-xs text-gray-500">
-                          <span className="bg-gray-100 px-2 py-1 rounded">{documento.tipo}</span>
-                          <span>{documento.tamanho}</span>
-                        </div>
-                        <div className="mt-3 flex justify-between items-center">
-                          <span className="text-xs text-gray-500">{new Date(documento.criadoEm).toLocaleDateString('pt-BR')}</span>
-                          <div className="flex gap-1">
-                            <button 
-                              className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
-                              title="Download"
-                            >
-                              <Download className="h-4 w-4" />
-                            </button>
-                            <button 
-                              className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
-                              title="Compartilhar"
-                            >
-                              <Share2 className="h-4 w-4" />
-                            </button>
-                            <button 
-                              className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded"
-                              title="Excluir"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteDocument(documento.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center p-8 text-gray-500">
-                    <File className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                    <p>Nenhum documento encontrado</p>
-                    {searchTerm && (
-                      <p className="text-sm mt-2">Tente ajustar os filtros ou termo de busca</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {/* List View */}
-            {viewMode === 'list' && (
-              <div className="overflow-x-auto">
-                {currentPath.length === 0 && (
-                  <div className="p-4 border-b">
-                    <h3 className="text-lg font-semibold mb-4">Pastas</h3>
-                    <table className="min-w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Arquivos</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Criado em</th>
-                          <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-200">
-                        {folders.map(folder => (
-                          <tr 
-                            key={folder.id} 
-                            className="hover:bg-gray-50 cursor-pointer"
-                            onClick={() => setCurrentPath([...currentPath, folder.nome])}
-                          >
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                <Folder className="h-5 w-5 text-yellow-500 mr-2" />
-                                <span className="font-medium">{folder.nome}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">{folder.quantidadeArquivos} arquivos</td>
-                            <td className="px-6 py-4 whitespace-nowrap">{new Date(folder.criadoEm).toLocaleDateString('pt-BR')}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <button className="p-1 hover:bg-gray-100 rounded-full">
-                                <MoreVertical className="h-5 w-5 text-gray-500" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                
-                <div className="p-4">
-                  <h3 className="text-lg font-semibold mb-4">Arquivos</h3>
-                  <table className="min-w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tamanho</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoria</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Criado em</th>
-                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {filteredDocumentos.length > 0 ? (
-                        filteredDocumentos.map(documento => (
-                          <tr key={documento.id} className="hover:bg-gray-50">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center">
-                                {getIconByFileType(documento.tipo)}
-                                <span className="ml-2">{documento.nome}</span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">{documento.tipo}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">{documento.tamanho}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">{documento.cliente || "-"}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">{documento.categoria}</td>
-                            <td className="px-6 py-4 whitespace-nowrap">{new Date(documento.criadoEm).toLocaleDateString('pt-BR')}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <div className="flex justify-end gap-1">
-                                <button 
-                                  className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
-                                  title="Download"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </button>
-                                <button 
-                                  className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"
-                                  title="Compartilhar"
-                                >
-                                  <Share2 className="h-4 w-4" />
-                                </button>
-                                <button 
-                                  className="p-1 text-red-500 hover:text-red-700 hover:bg-red-100 rounded"
-                                  title="Excluir"
-                                  onClick={() => handleDeleteDocument(documento.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                            Nenhum documento encontrado
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-            
-            <div className="px-6 py-4 flex items-center justify-between border-t">
-              <div className="text-sm text-gray-500">
-                Mostrando <span className="font-medium">{filteredDocumentos.length}</span> de <span className="font-medium">{documentos.length}</span> documentos
-              </div>
-              <div className="flex gap-2">
-                <button className="p-2 border rounded-md hover:bg-gray-50">
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button className="p-2 border rounded-md hover:bg-gray-50">
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-      
-      {/* Modal para adicionar novo documento */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Novo Documento</h3>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                &times;
-              </button>
-            </div>
-            <form onSubmit={handleAddDocument}>
-              <div className="p-4 space-y-4">
-                <div>
-                  <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">Nome do arquivo</label>
-                  <input 
-                    type="text" 
-                    id="nome" 
-                    name="nome" 
-                    required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="tipo" className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
-                    <select 
-                      id="tipo" 
-                      name="tipo" 
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                    >
-                      <option value="PDF">PDF</option>
-                      <option value="DOCX">DOCX</option>
-                      <option value="XLSX">XLSX</option>
-                      <option value="JPG">JPG</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                    <select 
-                      id="categoria" 
-                      name="categoria" 
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                    >
-                      <option value="Contrato">Contrato</option>
-                      <option value="Petição">Petição</option>
-                      <option value="Procuração">Procuração</option>
-                      <option value="Sentença">Sentença</option>
-                      <option value="Recurso">Recurso</option>
-                      <option value="Administrativo">Administrativo</option>
-                      <option value="Financeiro">Financeiro</option>
-                      <option value="Outro">Outro</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="cliente" className="block text-sm font-medium text-gray-700 mb-1">Cliente (opcional)</label>
-                  <input 
-                    type="text" 
-                    id="cliente" 
-                    name="cliente" 
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Arquivo</label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-md p-6 text-center">
-                    <input type="file" className="hidden" id="file-upload" />
-                    <label htmlFor="file-upload" className="cursor-pointer">
-                      <div className="space-y-2">
-                        <div className="mx-auto h-12 w-12 text-gray-400 flex items-center justify-center rounded-full bg-gray-100">
-                          <Plus className="h-6 w-6" />
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          <span className="text-lawyer-primary">Clique para fazer upload</span> ou arraste e solte
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          PDF, DOCX, XLSX até 10MB
-                        </p>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              </div>
-              <div className="p-4 border-t flex justify-end gap-2">
-                <button 
-                  type="button" 
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary">
-                  Adicionar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      
-      {/* Modal para adicionar nova pasta */}
-      {isFolderModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Nova Pasta</h3>
-              <button 
-                onClick={() => setIsFolderModalOpen(false)}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                &times;
-              </button>
-            </div>
-            <form onSubmit={handleAddFolder}>
-              <div className="p-4 space-y-4">
-                <div>
-                  <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">Nome da pasta</label>
-                  <input 
-                    type="text" 
-                    id="nome" 
-                    name="nome" 
-                    required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                  />
-                </div>
-              </div>
-              <div className="p-4 border-t flex justify-end gap-2">
-                <button 
-                  type="button" 
-                  onClick={() => setIsFolderModalOpen(false)}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-50"
-                >
-                  Cancelar
-                </button>
-                <button type="submit" className="btn-primary">
-                  Criar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      
-      <Footer />
-    </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit">Enviar documento</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </AdminLayout>
   );
 };
+
+// Dados de exemplo
+const MOCK_DOCUMENTS: Document[] = [
+  {
+    id: 'doc-1',
+    name: 'Contrato de Prestação de Serviços - Empresa ABC.pdf',
+    type: 'contrato',
+    client: 'Empresa ABC Ltda',
+    process: '0012345-67.2023.8.26.0000',
+    createdAt: new Date('2023-06-10'),
+    size: '1.2 MB',
+  },
+  {
+    id: 'doc-2',
+    name: 'Petição Inicial - João Silva.docx',
+    type: 'petição',
+    client: 'João Silva',
+    process: '0023456-78.2023.8.26.0000',
+    createdAt: new Date('2023-06-12'),
+    size: '845 KB',
+  },
+  {
+    id: 'doc-3',
+    name: 'Procuração - Maria Oliveira.pdf',
+    type: 'procuração',
+    client: 'Maria Oliveira',
+    createdAt: new Date('2023-06-15'),
+    size: '320 KB',
+  },
+  {
+    id: 'doc-4',
+    name: 'Decisão Judicial - Caso Empresa XYZ.pdf',
+    type: 'decisão',
+    client: 'Empresa XYZ S.A.',
+    process: '0034567-89.2023.8.26.0000',
+    createdAt: new Date('2023-06-18'),
+    size: '1.5 MB',
+  },
+  {
+    id: 'doc-5',
+    name: 'Contrato Social - Empresa ABC.pdf',
+    type: 'contrato',
+    client: 'Empresa ABC Ltda',
+    createdAt: new Date('2023-06-20'),
+    size: '2.1 MB',
+  },
+  {
+    id: 'doc-6',
+    name: 'Recurso de Apelação - Caso Silva.docx',
+    type: 'petição',
+    client: 'João Silva',
+    process: '0012345-67.2023.8.26.0000',
+    createdAt: new Date('2023-06-22'),
+    size: '930 KB',
+  },
+];
 
 export default DocumentosPage;

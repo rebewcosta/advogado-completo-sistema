@@ -28,7 +28,7 @@ const ClientesPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showClientDetails, setShowClientDetails] = useState(false);
   
-  // Mock data for clients
+  // Mock data for clients - reduced to 4 clients
   const [clients, setClients] = useState([
     {
       id: 1,
@@ -89,21 +89,6 @@ const ClientesPage = () => {
       processos: 2,
       status: "Ativo",
       observacoes: ""
-    },
-    {
-      id: 5,
-      nome: "Empresa XYZ S.A.",
-      email: "contato@xyz.com",
-      telefone: "(11) 2345-6789",
-      tipo: "Pessoa Jurídica",
-      cpfCnpj: "98.765.432/0001-10",
-      endereco: "Av. Brigadeiro Faria Lima, 1500",
-      cidade: "São Paulo",
-      estado: "SP",
-      cep: "05426-100",
-      processos: 7,
-      status: "Ativo",
-      observacoes: "Cliente premium"
     }
   ]);
 
