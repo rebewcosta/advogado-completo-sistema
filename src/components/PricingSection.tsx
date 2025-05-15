@@ -25,6 +25,10 @@ const PricingSection = () => {
     }
   ];
 
+  const handleContactClick = () => {
+    window.open("https://wa.me/5588999981618", "_blank");
+  };
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
@@ -76,7 +80,10 @@ const PricingSection = () => {
         </div>
         <div className="mt-12 text-center">
           <p className="text-gray-600 mb-4">Tem alguma dúvida sobre nosso plano?</p>
-          <button className="btn-primary mx-auto">
+          <button 
+            onClick={handleContactClick} 
+            className="bg-lawyer-primary hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md transition-colors"
+          >
             Entre em contato
           </button>
         </div>

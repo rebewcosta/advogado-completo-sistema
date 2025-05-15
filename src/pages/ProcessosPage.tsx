@@ -13,78 +13,40 @@ import {
 import { Search, Eye, Edit } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
+import { useToast } from "@/hooks/use-toast";
 
 const ProcessosPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const { toast } = useToast();
   
-  // Mock data for processes
-  const processes = [
-    {
-      id: 1,
-      numero: "0001234-56.2023.8.26.0100",
-      cliente: "João Silva",
-      tipo: "Cível",
-      vara: "3ª Vara Cível",
-      status: "Em andamento",
-      prazo: "2025-06-15"
-    },
-    {
-      id: 2,
-      numero: "0007890-12.2023.8.26.0100",
-      cliente: "Empresa ABC Ltda",
-      tipo: "Trabalhista",
-      vara: "2ª Vara do Trabalho",
-      status: "Concluído",
-      prazo: "2025-05-10"
-    },
-    {
-      id: 3,
-      numero: "0003456-78.2022.8.26.0100",
-      cliente: "Maria Oliveira",
-      tipo: "Família",
-      vara: "1ª Vara de Família",
-      status: "Em andamento",
-      prazo: "2025-07-20"
-    },
-    {
-      id: 4,
-      numero: "0009012-34.2023.8.26.0100",
-      cliente: "Carlos Pereira",
-      tipo: "Cível",
-      vara: "5ª Vara Cível",
-      status: "Em andamento",
-      prazo: "2025-06-30"
-    },
-    {
-      id: 5,
-      numero: "0005678-90.2022.8.26.0100",
-      cliente: "Empresa XYZ S.A.",
-      tipo: "Tributário",
-      vara: "2ª Vara de Fazenda Pública",
-      status: "Suspenso",
-      prazo: "2025-08-05"
-    }
-  ];
+  // Lista vazia de processos
+  const processes = [];
 
   // Filter processes based on search term
   const filteredProcesses = processes.filter(process =>
-    process.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    process.cliente.toLowerCase().includes(searchTerm.toLowerCase())
+    process.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    process.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleViewProcess = (id) => {
-    // Implementar visualização do processo
-    console.log(`Visualizando processo ${id}`);
+    toast({
+      title: "Visualizar processo",
+      description: `Visualizando detalhes do processo ${id}`,
+    });
   };
 
   const handleEditProcess = (id) => {
-    // Implementar edição do processo
-    console.log(`Editando processo ${id}`);
+    toast({
+      title: "Editar processo",
+      description: `Editando informações do processo ${id}`,
+    });
   };
 
   const handleNewProcess = () => {
-    // Implementar criação de novo processo
-    console.log('Criando novo processo');
+    toast({
+      title: "Novo processo",
+      description: "Formulário para cadastro de novo processo aberto",
+    });
   };
 
   return (
