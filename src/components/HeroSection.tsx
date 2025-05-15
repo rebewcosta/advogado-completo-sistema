@@ -61,7 +61,7 @@ const HeroSection = () => {
                 </button>
                 <div className="text-center text-sm">
                   <span>Não tem uma conta? </span>
-                  <a href="#" className="text-lawyer-accent hover:underline">Cadastre-se</a>
+                  <Link to="/cadastro" className="text-lawyer-accent hover:underline">Cadastre-se</Link>
                 </div>
               </form>
             </div>
