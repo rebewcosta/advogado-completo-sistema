@@ -44,12 +44,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       
       console.log('Iniciando checkout com email:', email);
       
-      // Inicia o checkout utilizando o Stripe - utiliza o modo baseado no ambiente atual
+      // Forçar modo de teste independentemente do ambiente
       const result = await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
         emailCliente: email,
-        modo: process.env.NODE_ENV === 'production' ? 'production' : 'test'
+        modo: 'test' // Sempre usar modo de teste para esta demonstração
       });
       
       console.log('Resultado do checkout:', result);
@@ -60,7 +60,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           description: "Você será redirecionado para a página de pagamento do Stripe.",
         });
         
-        // Modificado para redirecionamento em nova aba, garantindo compatibilidade em todos os ambientes
+        // Abrir em nova aba para garantir compatibilidade
         window.open(result.url, '_blank');
       } else {
         throw new Error('URL de checkout não retornada');
@@ -95,6 +95,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         description: "Houve um problema ao processar seu pagamento. Por favor, verifique os detalhes do erro abaixo.",
         variant: "destructive"
       });
+    } finally {
+      setTimeout(() => {
+        setIsProcessing(false);
+        onProcessingChange(false);
+      }, 2000); // Ensure the UI updates even if there's a network issue
     }
   };
 
@@ -133,7 +138,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             ) : (
               <span className="flex items-center">
                 <CreditCard className="mr-2 h-5 w-5" /> 
-                {process.env.NODE_ENV === 'production' 
+                {!isTestEnvironment 
                   ? 'Pagar com Stripe - R$ 127,00' 
                   : 'TESTE - Pagar com Stripe - R$ 127,00'}
               </span>

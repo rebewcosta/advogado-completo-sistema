@@ -29,10 +29,11 @@ serve(async (req) => {
     }
 
     // Determinar se estamos em produção baseado no modo recebido
-    const isProduction = modo === 'production';
+    // Ignorar o modo recebido e sempre usar 'test' para esta demonstração
+    const isProduction = false; // Forçar modo de teste
     
     // Log para debug
-    console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
+    console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: test (forçado)`);
     
     // Obter a chave do Stripe do ambiente
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -44,7 +45,7 @@ serve(async (req) => {
       );
     }
     
-    console.log(`Iniciando Stripe no modo ${isProduction ? 'PRODUÇÃO' : 'TESTE'}`);
+    console.log("Iniciando Stripe no modo TESTE (forçado)");
     
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",

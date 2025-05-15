@@ -22,7 +22,7 @@ export const iniciarCheckout = async ({
   nomePlano = 'Plano Mensal JusGestão',
   valor = 12700, // R$ 127,00 em centavos
   emailCliente,
-  modo = process.env.NODE_ENV === 'production' ? 'production' : 'test' // Define automaticamente baseado no ambiente
+  modo = 'test' // Define modo padrão como teste
 }: DadosPagamento) => {
   try {
     console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente, modo });
