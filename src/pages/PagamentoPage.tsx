@@ -2,11 +2,7 @@ import React, { useState } from 'react';
 import { ArrowLeft, Check, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { loadStripe } from '@stripe/stripe-js';
-
-// Carregar o Stripe com a chave pública (não é um segredo)
-// Em produção, substitua por sua chave pública real
-const stripePromise = loadStripe('pk_test_TYooMQauvdEDq54NiTphI7jx');
+import { iniciarCheckout } from '@/services/stripe';
 
 const PagamentoPage = () => {
   const [cardNumber, setCardNumber] = useState('');
@@ -24,40 +20,31 @@ const PagamentoPage = () => {
     setIsProcessing(true);
 
     try {
-      // Em uma aplicação real, você faria uma chamada para seu servidor
+      // Em um cenário real, enviaríamos os dados para o backend
       // que criaria uma sessão de checkout no Stripe
       
-      // Por enquanto, vamos simular isso
-      setTimeout(async () => {
-        try {
-          // Criar um checkout do Stripe
-          // Em uma implementação real, esta parte seria feita pelo seu servidor
-          const stripe = await stripePromise;
-          
-          // Simulação - Em uma aplicação real, esta ID viria do seu servidor
-          // após criar a sessão no Stripe através da API do Stripe no backend
-          console.log("Simulando redirecionamento para página de pagamento do Stripe...");
-          
-          // Após o pagamento ser processado, atualizamos o estado da aplicação
-          setIsProcessing(false);
-          setStep(2); // Move para o passo de sucesso
-          
-          toast({
-            title: "Pagamento processado com sucesso",
-            description: "Sua assinatura foi ativada.",
-          });
-        } catch (error) {
-          console.error('Erro no pagamento:', error);
-          setIsProcessing(false);
-          toast({
-            title: "Erro no pagamento",
-            description: "Houve um problema ao processar seu pagamento.",
-            variant: "destructive"
-          });
-        }
+      // Por enquanto, vamos simular o início do checkout do Stripe
+      // Em produção, isso usaria sua API real
+      setTimeout(() => {
+        // Redirecionando para o dashboard após o "pagamento"
+        setIsProcessing(false);
+        setStep(2); // Move para o passo de sucesso
+        
+        toast({
+          title: "Pagamento processado com sucesso",
+          description: "Sua assinatura foi ativada.",
+        });
       }, 2000);
+      
+      // Em uma implementação completa do Stripe, você usaria este código:
+      // await iniciarCheckout({
+      //  nomePlano: 'Plano Mensal JusGestão',
+      //  valor: 12700,
+      //  emailCliente: 'cliente@exemplo.com' // Idealmente pegaria do estado da aplicação
+      // });
+      
     } catch (error) {
-      console.error('Erro:', error);
+      console.error('Erro no pagamento:', error);
       setIsProcessing(false);
       toast({
         title: "Erro no pagamento",
