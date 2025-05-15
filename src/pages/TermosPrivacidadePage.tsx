@@ -79,7 +79,7 @@ const TermosPrivacidadePage = () => {
                   <h3 className="text-xl font-semibold mb-2">6. Contato</h3>
                   <p className="text-gray-700">
                     Se você tiver dúvidas sobre nossa Política de Privacidade, entre em contato conosco através 
-                    do e-mail sisjusgestao@gmail.com ou pelo telefone (88) 9.9998.1618.
+                    do e-mail suporte@sisjusgestao.com.br ou pelo telefone (88) 9.9998.1618.
                   </p>
                 </section>
               </div>

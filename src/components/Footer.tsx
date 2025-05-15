@@ -42,7 +42,7 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Contato</h3>
             <ul className="space-y-2 text-gray-300">
-              <li>sisjusgestao@gmail.com</li>
+              <li>suporte@sisjusgestao.com.br</li>
               <li>(88) 9.9998.1618</li>
               <li>Iguatu - Ceará, BR</li>
             </ul>
