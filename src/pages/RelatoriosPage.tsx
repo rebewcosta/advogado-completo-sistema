@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { 
@@ -28,33 +29,26 @@ import {
 } from 'recharts';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-// Mock data - em uma implementação real, seriam dados vindos do banco de dados
-const mockFinancialData = [
-  { month: 'Jan', receitas: 15000, despesas: 8000 },
-  { month: 'Fev', receitas: 18000, despesas: 9500 },
-  { month: 'Mar', receitas: 22000, despesas: 10000 },
-  { month: 'Abr', receitas: 19500, despesas: 9800 },
-  { month: 'Mai', receitas: 25000, despesas: 12000 },
-  { month: 'Jun', receitas: 27000, despesas: 13500 },
+// Dados vazios para mostrar estados iniciais
+const emptyFinancialData = [
+  { month: 'Jan', receitas: 0, despesas: 0 },
+  { month: 'Fev', receitas: 0, despesas: 0 },
+  { month: 'Mar', receitas: 0, despesas: 0 },
+  { month: 'Abr', receitas: 0, despesas: 0 },
+  { month: 'Mai', receitas: 0, despesas: 0 },
+  { month: 'Jun', receitas: 0, despesas: 0 },
 ];
 
-const mockProcessData = [
-  { name: 'Cível', value: 3 },
-  { name: 'Trabalhista', value: 2 },
-  { name: 'Tributário', value: 1 },
-  { name: 'Criminal', value: 1 },
-  { name: 'Família', value: 1 },
+const emptyProcessData = [
+  { name: 'Sem dados', value: 1 },
 ];
 
-const mockClientData = [
-  { name: 'Pessoa Física', value: 3 },
-  { name: 'Pessoa Jurídica', value: 1 },
+const emptyClientData = [
+  { name: 'Sem dados', value: 1 },
 ];
 
-const mockStatusData = [
-  { name: 'Em andamento', value: 6 },
-  { name: 'Concluídos', value: 2 },
-  { name: 'Suspensos', value: 0 },
+const emptyStatusData = [
+  { name: 'Sem dados', value: 1 },
 ];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
@@ -126,10 +120,10 @@ const RelatoriosPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold">Processos Ativos</h3>
-                    <p className="text-3xl font-bold">8</p>
+                    <p className="text-3xl font-bold">0</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">2 novos processos no último mês</p>
+                <p className="text-sm text-gray-500">Nenhum processo novo no último mês</p>
               </div>
               
               <div className="bg-white rounded-lg shadow-md p-6">
@@ -139,10 +133,10 @@ const RelatoriosPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold">Total de Clientes</h3>
-                    <p className="text-3xl font-bold">4</p>
+                    <p className="text-3xl font-bold">0</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">1 novo cliente no último mês</p>
+                <p className="text-sm text-gray-500">Nenhum cliente no último mês</p>
               </div>
               
               <div className="bg-white rounded-lg shadow-md p-6">
@@ -152,10 +146,10 @@ const RelatoriosPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold">Compromissos Agendados</h3>
-                    <p className="text-3xl font-bold">10</p>
+                    <p className="text-3xl font-bold">0</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">3 nos próximos 7 dias</p>
+                <p className="text-sm text-gray-500">Nenhum nos próximos 7 dias</p>
               </div>
             </div>
             
@@ -172,7 +166,7 @@ const RelatoriosPage = () => {
                   </button>
                 </div>
                 <ResponsiveContainer width="100%" height="85%">
-                  <BarChart data={mockFinancialData}>
+                  <BarChart data={emptyFinancialData}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
                     <YAxis />
@@ -198,7 +192,7 @@ const RelatoriosPage = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={mockProcessData}
+                        data={emptyProcessData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -207,7 +201,7 @@ const RelatoriosPage = () => {
                         dataKey="value"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        {mockProcessData.map((entry, index) => (
+                        {emptyProcessData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -234,7 +228,7 @@ const RelatoriosPage = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={mockClientData}
+                        data={emptyClientData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -243,7 +237,7 @@ const RelatoriosPage = () => {
                         dataKey="value"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        {mockClientData.map((entry, index) => (
+                        {emptyClientData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -268,7 +262,7 @@ const RelatoriosPage = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={mockStatusData}
+                        data={emptyStatusData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -277,7 +271,7 @@ const RelatoriosPage = () => {
                         dataKey="value"
                         label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                       >
-                        {mockStatusData.map((entry, index) => (
+                        {emptyStatusData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>

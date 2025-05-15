@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,75 +29,14 @@ const ClientesPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showClientDetails, setShowClientDetails] = useState(false);
   
-  // Reduzindo para apenas 4 clientes
-  const [clients, setClients] = useState([
-    {
-      id: 1,
-      nome: "João Silva",
-      email: "joao.silva@email.com",
-      telefone: "(11) 98765-4321",
-      tipo: "Pessoa Física",
-      cpfCnpj: "123.456.789-00",
-      endereco: "Av. Paulista, 1000",
-      cidade: "São Paulo",
-      estado: "SP",
-      cep: "01310-100",
-      processos: 3,
-      status: "Ativo",
-      observacoes: "Cliente desde 2021"
-    },
-    {
-      id: 2,
-      nome: "Empresa ABC Ltda",
-      email: "contato@empresaabc.com",
-      telefone: "(11) 3456-7890",
-      tipo: "Pessoa Jurídica",
-      cpfCnpj: "12.345.678/0001-90",
-      endereco: "Rua Augusta, 500",
-      cidade: "São Paulo",
-      estado: "SP",
-      cep: "01305-000",
-      processos: 5,
-      status: "Ativo",
-      observacoes: ""
-    },
-    {
-      id: 3,
-      nome: "Maria Oliveira",
-      email: "maria.oliveira@email.com",
-      telefone: "(11) 91234-5678",
-      tipo: "Pessoa Física",
-      cpfCnpj: "987.654.321-00",
-      endereco: "Rua Consolação, 200",
-      cidade: "São Paulo",
-      estado: "SP",
-      cep: "01301-000",
-      processos: 1,
-      status: "Inativo",
-      observacoes: "Cliente inativo desde 2023"
-    },
-    {
-      id: 4,
-      nome: "Carlos Pereira",
-      email: "carlos.pereira@email.com",
-      telefone: "(11) 97654-3210",
-      tipo: "Pessoa Física",
-      cpfCnpj: "111.222.333-44",
-      endereco: "Av. Rebouças, 300",
-      cidade: "São Paulo",
-      estado: "SP",
-      cep: "05401-000",
-      processos: 2,
-      status: "Ativo",
-      observacoes: ""
-    }
-  ]);
+  // Inicializando com array vazio - sem clientes
+  const [clients, setClients] = useState<any[]>([]);
 
   // Filter clients based on search term
   const filteredClients = clients.filter(client =>
-    client.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.cpfCnpj.toLowerCase().includes(searchTerm.toLowerCase())
+    client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    client.cpfCnpj?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddClient = () => {
@@ -260,7 +200,7 @@ const ClientesPage = () => {
               ) : (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                    Nenhum cliente encontrado
+                    Nenhum cliente cadastrado
                   </TableCell>
                 </TableRow>
               )}
