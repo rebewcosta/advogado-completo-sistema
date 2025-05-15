@@ -92,7 +92,14 @@ export const AppSidebar = () => {
     <Sidebar>
       <SidebarHeader>
         <div className="px-3 py-4 flex justify-between items-center">
-          <Link to="/dashboard" className="text-lg font-bold">JusGestão</Link>
+          <Link to="/dashboard" className="text-lg font-bold flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" 
+              alt="JusGestão Logo" 
+              className="h-6 w-auto"
+            />
+            <span>JusGestão</span>
+          </Link>
         </div>
       </SidebarHeader>
       <SidebarContent>

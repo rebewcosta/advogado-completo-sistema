@@ -42,7 +42,7 @@ const DocumentoStorageInfo = () => {
           <Progress 
             value={porcentagemUso} 
             className="h-2"
-            indicatorClassName={getProgressColor()}
+            className={getProgressColor()}
           />
           
           <div className="mt-2 text-xs text-gray-500 flex items-center">

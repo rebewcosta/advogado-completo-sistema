@@ -13,7 +13,8 @@ import {
   Home,
   Search,
   Bell,
-  User
+  User,
+  Scale
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -24,8 +25,13 @@ const Navbar = () => {
     <nav className="bg-lawyer-dark text-white px-4 py-3 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link to="/" className="text-xl font-bold flex items-center">
-            <span className="text-lawyer-accent">Jus</span>Gestão
+          <Link to="/" className="text-xl font-bold flex items-center gap-2">
+            <img 
+              src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" 
+              alt="JusGestão Logo" 
+              className="h-8 w-auto"
+            />
+            <span><span className="text-lawyer-accent">Jus</span>Gestão</span>
           </Link>
         </div>
 
