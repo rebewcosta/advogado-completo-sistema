@@ -3,13 +3,8 @@ import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 
-// Carrega o Stripe com a chave pública
-// Em produção, usa a chave pública de produção
-const stripePromise = loadStripe(
-  process.env.NODE_ENV === 'production'
-    ? 'pk_live_51JDfUhCo82R3GVdGoUZ9LMGKs1l8g2VCOCHfFFXECAHzV3d8DrlYOOHHapBNCtPkRrZizDTAYpW0CdTWfnF4dxZs00YDDLBKm7'
-    : 'pk_test_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd'
-);
+// Carrega o Stripe com a chave pública - SEMPRE usar a chave de teste
+const stripePromise = loadStripe('pk_test_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd');
 
 interface DadosPagamento {
   nomePlano: string;
@@ -27,9 +22,8 @@ export const iniciarCheckout = async ({
   try {
     console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente, modo });
     
-    // Indicador de ambiente para o usuário
-    const ambiente = modo === 'production' ? 'produção' : 'teste';
-    console.log(`Executando em ambiente de ${ambiente}`);
+    // Indicador de ambiente para o usuário - sempre forçando teste
+    console.log(`Executando em ambiente de teste`);
     
     // Chama a edge function do Supabase para criar uma sessão de checkout
     const { data, error } = await supabase.functions.invoke('criar-sessao-checkout', {
@@ -37,7 +31,7 @@ export const iniciarCheckout = async ({
         nomePlano,
         valor,
         emailCliente,
-        modo
+        modo: 'test' // Sempre forçar modo de teste
       }
     });
 

@@ -42,10 +42,13 @@ const TestEnvironmentWarning: React.FC = () => {
               <p className="font-mono bg-white px-2 py-1 border rounded">Qualquer nome</p>
             </div>
           </div>
-          <div className="mt-3 pt-3 border-t border-blue-100">
+          <div className="mt-3 pt-3 border-t border-blue-100 flex flex-col">
             <p className="text-blue-700 font-medium flex items-center">
               <Info className="h-4 w-4 mr-1" />
               Estas são informações de teste oficiais do Stripe. Nenhuma cobrança real será feita.
+            </p>
+            <p className="mt-2 text-blue-600 font-bold">
+              IMPORTANTE: Use apenas o cartão de teste 4242 4242 4242 4242 para pagamentos de teste!
             </p>
           </div>
         </div>

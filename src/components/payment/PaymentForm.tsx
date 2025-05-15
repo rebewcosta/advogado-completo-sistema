@@ -44,12 +44,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       
       console.log('Iniciando checkout com email:', email);
       
-      // Forçar modo de teste independentemente do ambiente
+      // SEMPRE usar modo de teste para esta demonstração, independente do ambiente
       const result = await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
         emailCliente: email,
-        modo: 'test' // Sempre usar modo de teste para esta demonstração
+        modo: 'test' // Sempre forçar modo de teste
       });
       
       console.log('Resultado do checkout:', result);
@@ -138,9 +138,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             ) : (
               <span className="flex items-center">
                 <CreditCard className="mr-2 h-5 w-5" /> 
-                {!isTestEnvironment 
-                  ? 'Pagar com Stripe - R$ 127,00' 
-                  : 'TESTE - Pagar com Stripe - R$ 127,00'}
+                TESTE - Pagar com Stripe - R$ 127,00
               </span>
             )}
           </Button>

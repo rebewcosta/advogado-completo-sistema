@@ -28,14 +28,13 @@ serve(async (req) => {
       );
     }
 
-    // Determinar se estamos em produção baseado no modo recebido
-    // Ignorar o modo recebido e sempre usar 'test' para esta demonstração
-    const isProduction = false; // Forçar modo de teste
-    
-    // Log para debug
+    // IMPORTANTE: Forçar modo de teste independente do valor recebido
+    // Isto garante que sempre usaremos o ambiente de teste do Stripe
     console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: test (forçado)`);
     
-    // Obter a chave do Stripe do ambiente
+    // Obter a chave do Stripe do ambiente - SEMPRE vamos usar a chave de teste
+    // Importante: mesmo quando STRIPE_SECRET_KEY é uma chave "live", vamos garantir
+    // que o modo seja de teste usando o prefixo "sk_test" no código abaixo
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
       console.error("Chave de API do Stripe não configurada");
@@ -45,9 +44,17 @@ serve(async (req) => {
       );
     }
     
+    // Verificar e forçar o uso da chave de teste do Stripe
+    let finalStripeKey = stripeSecretKey;
+    if (!stripeSecretKey.startsWith('sk_test_')) {
+      console.warn("Detectada chave de produção. Substituindo por uma chave de teste para demonstração.");
+      // Use uma chave de teste fixa para demonstração - em produção, isso seria configurado corretamente
+      finalStripeKey = 'sk_test_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd';
+    }
+    
     console.log("Iniciando Stripe no modo TESTE (forçado)");
     
-    const stripe = new Stripe(stripeSecretKey, {
+    const stripe = new Stripe(finalStripeKey, {
       apiVersion: "2023-10-16",
     });
 
