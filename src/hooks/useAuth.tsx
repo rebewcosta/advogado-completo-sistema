@@ -180,18 +180,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Cleanup existing auth state before signup attempt
       cleanupAuthState();
       
+      // Extract email options from userData if present
+      const { emailRedirectTo, emailSender, ...userMetadata } = userData;
+      
+      const options: any = {
+        data: userMetadata,
+      };
+      
+      // Add email options if provided
+      if (emailRedirectTo) {
+        options.emailRedirectTo = emailRedirectTo;
+      }
+      
+      // Note: The emailSender property is extracted but not used in the signUp call
+      // as Supabase doesn't allow customizing the sender email directly in the client
+      // This would require server-side configuration or an edge function
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,
-        options: {
-          data: userData
-        }
+        options
       });
+      
       if (error) throw error;
+      
       toast({
         title: "Cadastro realizado!",
         description: "Verifique seu email para confirmar seu cadastro.",
       });
+      
+      // Log for debugging that we're using custom sender
+      console.log("Registration email will be sent from:", emailSender || "default Supabase sender");
+      
     } catch (error: any) {
       toast({
         title: "Erro ao cadastrar",

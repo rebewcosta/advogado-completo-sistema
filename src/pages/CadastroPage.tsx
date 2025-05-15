@@ -30,7 +30,13 @@ const CadastroPage = () => {
     setIsLoading(true);
 
     try {
-      await signUp(email, password, { nome });
+      // Pass the custom email sender address as part of the options
+      await signUp(email, password, { 
+        nome, 
+        emailRedirectTo: window.location.origin + "/login",
+        emailSender: "suporte@sisjusgestao.com.br" 
+      });
+      
       toast({
         title: "Cadastro realizado com sucesso",
         description: "Você será redirecionado para o pagamento.",
