@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar } from '@/components/ui/calendar';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { CalendarDays, Plus, Clock, ChevronLeft, ChevronRight, Bell } from 'lucide-react';
+import { CalendarDays, Plus, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AgendaEventForm } from '@/components/AgendaEventForm';
 import { AgendaEventDetail } from '@/components/AgendaEventDetail';
 
@@ -37,54 +38,6 @@ const AgendaPage = () => {
   const selectedDateEvents = events.filter(
     event => format(event.dateTime, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
   ).sort((a, b) => a.dateTime.getTime() - b.dateTime.getTime());
-
-  // Exibir notificações para eventos próximos quando a página carrega
-  useEffect(() => {
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    // Encontrar eventos para hoje e amanhã que são de alta prioridade
-    const urgentEvents = events.filter(event => {
-      const eventDate = new Date(event.dateTime);
-      const isToday = format(eventDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-      const isTomorrow = format(eventDate, 'yyyy-MM-dd') === format(tomorrow, 'yyyy-MM-dd');
-      return (isToday || isTomorrow) && event.priority === 'alta';
-    });
-    
-    // Notificar sobre eventos urgentes
-    if (urgentEvents.length > 0) {
-      urgentEvents.forEach(event => {
-        const timeUntil = event.dateTime.getTime() - today.getTime();
-        const hoursUntil = Math.floor(timeUntil / (1000 * 60 * 60));
-        
-        if (hoursUntil < 24) {
-          toast({
-            title: "Compromisso importante em breve!",
-            description: `${event.title} - ${format(event.dateTime, 'PPp', { locale: ptBR })}`,
-            variant: "destructive",
-          });
-        }
-      });
-    }
-    
-    // Verificar prazos vencendo
-    const deadlineEvents = events.filter(event => {
-      const eventDate = new Date(event.dateTime);
-      const isToday = format(eventDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
-      return isToday && event.title.toLowerCase().includes('prazo');
-    });
-    
-    if (deadlineEvents.length > 0) {
-      deadlineEvents.forEach(event => {
-        toast({
-          title: "Prazo vence hoje!",
-          description: `${event.title} - ${format(event.dateTime, 'HH:mm', { locale: ptBR })}`,
-          variant: "destructive",
-        });
-      });
-    }
-  }, [events, toast]);
 
   // Função para adicionar um novo evento
   const handleAddEvent = (event: Omit<AgendaEvent, 'id'>) => {
@@ -172,7 +125,7 @@ const AgendaPage = () => {
               <Calendar
                 mode="single"
                 selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
+                onSelect={(date) => date && setDate(date)}
                 className="rounded-md border p-3 pointer-events-auto"
                 showOutsideDays
               />
@@ -304,7 +257,7 @@ const MOCK_EVENTS: AgendaEvent[] = [
     id: '4',
     title: 'Entrevista com testemunha',
     description: 'Coleta de depoimento preliminar',
-    dateTime: new Date(new Date().setDate(new Date().getDate() + 1)),
+    dateTime: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(9, 0, 0, 0),
     duration: 120,
     clientName: 'Ana Santos',
     processNumber: '13579-24.2023.8.26.0000',
