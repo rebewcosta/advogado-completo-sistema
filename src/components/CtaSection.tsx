@@ -13,13 +13,10 @@ const CtaSection = () => {
         <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
           Junte-se a milhares de advogados que já otimizaram seus escritórios com o JusGestão.
         </p>
-        <div className="flex flex-col sm:flex-row justify-center gap-4">
+        <div className="flex justify-center">
           <Link to="/cadastro" className="btn-primary">
             Comece agora <ArrowRight className="h-5 w-5" />
           </Link>
-          <button className="px-6 py-2 rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors">
-            Agendar demonstração
-          </button>
         </div>
       </div>
     </section>
