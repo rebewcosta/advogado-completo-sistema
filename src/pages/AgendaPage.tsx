@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
-import { Calendar } from 'lucide-react';
+import { Calendar as CalendarIcon } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -30,12 +30,13 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon } from "lucide-react"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Calendar } from "@/components/ui/calendar"
+import { cn } from "@/lib/utils"
 import { useToast } from "@/hooks/use-toast";
 import { MoreVertical, Pencil, Trash2, UserRound } from 'lucide-react';
 
@@ -289,7 +290,7 @@ const AgendaPage = () => {
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-3xl font-bold">Agenda</h1>
           <Button onClick={() => setIsNewEventDialogOpen(true)}>
-            <Calendar className="mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4" />
             Novo Evento
           </Button>
         </div>

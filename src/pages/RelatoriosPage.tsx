@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { 
@@ -153,10 +152,10 @@ const RelatoriosPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold">Compromissos Agendados</h3>
-                    <p className="text-3xl font-bold">3</p>
+                    <p className="text-3xl font-bold">10</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">1 nos próximos 7 dias</p>
+                <p className="text-sm text-gray-500">3 nos próximos 7 dias</p>
               </div>
             </div>
             
