@@ -41,8 +41,7 @@ const DocumentoStorageInfo = () => {
           
           <Progress 
             value={porcentagemUso} 
-            className="h-2"
-            className={getProgressColor()}
+            className={`h-2 ${getProgressColor()}`}
           />
           
           <div className="mt-2 text-xs text-gray-500 flex items-center">
