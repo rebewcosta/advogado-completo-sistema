@@ -184,6 +184,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Extract email options from userData if present
       const { emailRedirectTo, ...userMetadata } = userData;
       
+      // Define a list of test/special emails that should bypass confirmation
+      const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com', 'test@example.com'];
+      const isSpecialEmail = specialEmails.includes(email.trim().toLowerCase());
+      
       const options: any = {
         data: userMetadata,
       };
@@ -193,32 +197,92 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         options.emailRedirectTo = emailRedirectTo;
       }
       
-      // Verificar se é um email especial que não precisa de confirmação
-      const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com'];
-      const isSpecialEmail = specialEmails.includes(email.trim().toLowerCase());
+      // Check if email rate limit has been exceeded previously
+      const lastRateLimitTime = localStorage.getItem('email_rate_limit_time');
+      const isRateLimited = lastRateLimitTime && 
+        (Date.now() - parseInt(lastRateLimitTime)) < (30 * 60 * 1000); // 30 minutes
       
-      if (isSpecialEmail) {
-        console.log("Email especial detectado, pulando confirmação de email:", email);
+      // Skip email confirmation for special emails or if we've hit rate limits
+      if (isSpecialEmail || isRateLimited) {
+        console.log(`${isSpecialEmail ? "Email especial" : "Rate limit detected"}, pulando confirmação de email:`, email);
         options.emailConfirmation = {
           skipConfirmation: true
         };
+        
+        if (isRateLimited) {
+          toast({
+            title: "Modo de teste ativado",
+            description: "Detectamos limitação de emails - o cadastro será feito sem confirmação por email.",
+          });
+        }
       }
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options
       });
       
-      if (error) throw error;
+      if (error) {
+        // If we hit a rate limit error, store this information and try again with skipConfirmation
+        if (error.message.includes("rate limit") || error.message.includes("429")) {
+          console.log("Email rate limit hit, trying again with skipConfirmation");
+          localStorage.setItem('email_rate_limit_time', Date.now().toString());
+          
+          // Try again with skipConfirmation
+          const retryOptions = {
+            ...options,
+            emailConfirmation: {
+              skipConfirmation: true
+            }
+          };
+          
+          const retryResult = await supabase.auth.signUp({
+            email,
+            password,
+            options: retryOptions
+          });
+          
+          if (retryResult.error) {
+            throw retryResult.error;
+          }
+          
+          toast({
+            title: "Cadastro realizado com sucesso!",
+            description: "Devido a limitações técnicas, seu cadastro foi concluído sem confirmação por email.",
+          });
+          
+          // Redirect to payment page after successful registration
+          setTimeout(() => {
+            window.location.href = '/pagamento';
+          }, 1000);
+          return;
+        }
+        
+        throw error;
+      }
       
-      toast({
-        title: "Cadastro realizado!",
-        description: "Verifique seu email para confirmar seu cadastro.",
-      });
+      // Check if confirmation was skipped
+      if (data?.user?.email_confirmed_at || (options.emailConfirmation?.skipConfirmation)) {
+        toast({
+          title: "Cadastro realizado com sucesso!",
+          description: "Você será redirecionado para o pagamento.",
+        });
+        
+        // Redirect to payment page after successful registration
+        setTimeout(() => {
+          window.location.href = '/pagamento';
+        }, 1000);
+      } else {
+        toast({
+          title: "Cadastro realizado!",
+          description: "Verifique seu email para confirmar seu cadastro.",
+        });
+      }
       
       // Log for debugging
       console.log("Registration email will be sent from: default Supabase sender");
+      console.log("Email confirmation required:", !options.emailConfirmation?.skipConfirmation);
       
     } catch (error: any) {
       toast({
@@ -272,6 +336,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           data: {
             ...userData,
             special_access: true
+          },
+          emailConfirmation: {
+            skipConfirmation: userData.skip_email_confirmation || true
           }
         }
       });
