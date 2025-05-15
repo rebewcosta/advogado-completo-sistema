@@ -31,14 +31,28 @@ const PagamentoPage = () => {
     }
   }, [location, toast]);
 
+  // Função para validar email
+  const isValidEmail = (email) => {
+    return /\S+@\S+\.\S+/.test(email);
+  };
+
   // Função para processar o pagamento com Stripe
-  const handleSubmitPayment = async (e: React.FormEvent) => {
+  const handleSubmitPayment = async (e) => {
     e.preventDefault();
     
     if (!email) {
       toast({
         title: "Email necessário",
         description: "Por favor, insira seu endereço de email para prosseguir com o pagamento.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      toast({
+        title: "Email inválido",
+        description: "Por favor, insira um endereço de email válido.",
         variant: "destructive"
       });
       return;
@@ -65,11 +79,8 @@ const PagamentoPage = () => {
           description: "Você será redirecionado para a página de pagamento do Stripe.",
         });
         
-        // Pequeno delay para garantir que o toast seja exibido antes do redirecionamento
-        setTimeout(() => {
-          // Redirecionar para a URL do Stripe checkout
-          window.location.href = result.url;
-        }, 500);
+        // Usamos window.location.href para garantir um redirecionamento completo
+        window.location.href = result.url;
       } else {
         throw new Error('URL de checkout não retornada');
       }
@@ -150,10 +161,10 @@ const PagamentoPage = () => {
                 </div>
                 
                 <div className="pt-4">
-                  <Button
+                  <button 
                     type="submit"
                     disabled={isProcessing || !email}
-                    className={`w-full py-2 px-4 ${isProcessing ? 'opacity-75' : ''}`}
+                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-lawyer-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lawyer-primary ${isProcessing ? 'opacity-75 cursor-not-allowed' : ''}`}
                   >
                     {isProcessing ? (
                       <span className="flex items-center justify-center">
@@ -166,7 +177,7 @@ const PagamentoPage = () => {
                     ) : (
                       'Pagar com Stripe - R$ 127,00'
                     )}
-                  </Button>
+                  </button>
                 </div>
               </div>
             </form>

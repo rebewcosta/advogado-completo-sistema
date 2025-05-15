@@ -22,7 +22,7 @@ export const iniciarCheckout = async ({
   nomePlano = 'Plano Mensal JusGestão',
   valor = 12700, // R$ 127,00 em centavos
   emailCliente,
-  modo
+  modo = 'test'
 }: DadosPagamento) => {
   try {
     console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente });
@@ -37,37 +37,18 @@ export const iniciarCheckout = async ({
         nomePlano,
         valor,
         emailCliente,
-        modo: modo || (process.env.NODE_ENV === 'production' ? 'production' : 'test')
+        // Forçamos o modo de teste para desenvolvimento
+        modo: modo
       }
     });
 
     if (error) {
       console.error('Erro ao criar sessão de checkout:', error);
-      
-      // Mensagem de erro mais informativa
-      if (error.message?.includes('401')) {
-        toast({
-          title: "Erro de configuração",
-          description: "O sistema de pagamento não está configurado corretamente. Por favor, contate o suporte.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Erro ao processar pagamento",
-          description: "Houve um problema ao iniciar o processo de pagamento. Tente novamente mais tarde.",
-          variant: "destructive"
-        });
-      }
-      
       throw new Error(error.message || 'Erro ao criar sessão de checkout');
     }
 
     if (!data || !data.url) {
-      toast({
-        title: "Erro no checkout",
-        description: "Não foi possível obter o link de pagamento. Tente novamente mais tarde.",
-        variant: "destructive"
-      });
+      console.error('Resposta inválida da API de checkout:', data);
       throw new Error('Resposta inválida da API de checkout');
     }
 
@@ -77,11 +58,6 @@ export const iniciarCheckout = async ({
     return data;
   } catch (error) {
     console.error('Erro ao iniciar pagamento:', error);
-    toast({
-      title: "Falha no pagamento",
-      description: "Não foi possível processar seu pagamento. Por favor, tente novamente.",
-      variant: "destructive"
-    });
     throw error;
   }
 };

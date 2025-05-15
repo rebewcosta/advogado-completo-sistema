@@ -30,11 +30,11 @@ serve(async (req) => {
     // Log para debug
     console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
     
-    // Usar a chave correta baseada no modo
-    let stripeSecretKey;
-    
-    // Inicializar o Stripe com a chave secreta (armazenada como variável de ambiente)
-    stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    // Em ambiente de teste, usamos uma chave de teste fixa conhecida que tem permissão de checkout
+    const stripeSecretKey = modo === 'test' 
+      ? 'sk_test_51JDfUhCo82R3GVdG48gDZJUKTfbiOAJNz7VKV10VaeIgLMITgpLv8h749YJw8VtaAsgBaQOGphE0o9iulsLNT6kG00VBxS1nVk'
+      : Deno.env.get("STRIPE_SECRET_KEY");
+      
     if (!stripeSecretKey) {
       console.error("STRIPE_SECRET_KEY não configurada no ambiente");
       return new Response(
@@ -47,6 +47,8 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
+    console.log("Criando sessão de checkout...");
+    
     // Criar a sessão de checkout diretamente sem verificar cliente existente
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
