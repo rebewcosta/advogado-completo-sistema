@@ -60,8 +60,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           description: "Você será redirecionado para a página de pagamento do Stripe.",
         });
         
-        // Redirecionamento para a página de pagamento do Stripe
-        window.location.href = result.url;
+        // Modificado para redirecionamento em nova aba, garantindo compatibilidade em todos os ambientes
+        window.open(result.url, '_blank');
       } else {
         throw new Error('URL de checkout não retornada');
       }
