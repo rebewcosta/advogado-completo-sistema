@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Check } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const PricingSection = () => {
   const plans = [
@@ -27,7 +28,7 @@ const PricingSection = () => {
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
-        <h2 className="section-title">Plano de Acesso</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Plano de Acesso</h2>
         <p className="text-center text-gray-600 max-w-2xl mx-auto mb-12">
           Comece a otimizar a gestão do seu escritório de advocacia hoje mesmo com nosso sistema completo.
         </p>
@@ -59,15 +60,16 @@ const PricingSection = () => {
                 </ul>
               </div>
               <div className="px-6 pb-6">
-                <button 
-                  className={`w-full py-2 rounded-md font-medium transition-colors ${
+                <Link 
+                  to="/cadastro"
+                  className={`w-full py-2 rounded-md font-medium transition-colors block text-center ${
                     plan.popular 
                       ? 'bg-lawyer-primary text-white hover:bg-blue-700' 
                       : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
                   }`}
                 >
                   {plan.cta}
-                </button>
+                </Link>
               </div>
             </div>
           ))}

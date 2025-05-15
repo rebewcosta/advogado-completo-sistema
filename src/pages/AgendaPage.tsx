@@ -1,525 +1,431 @@
 
 import React, { useState } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
-import { 
-  Calendar as CalendarIcon,
-  Clock, 
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  MoreVertical,
-  User,
-  FileText,
-  MapPin,
-  CheckCircle,
-  X
-} from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
-
-// Mock data for events
-const mockEvents = [
-  {
-    id: 1,
-    title: "Audiência - Processo nº 0001234-56.2023.8.26.0100",
-    date: "2025-06-18",
-    time: "14:00",
-    location: "3ª Vara Cível - Fórum Central",
-    client: "João Silva",
-    description: "Audiência de conciliação",
-    completed: false
-  },
-  {
-    id: 2,
-    title: "Reunião com cliente",
-    date: "2025-06-18",
-    time: "09:30",
-    location: "Escritório",
-    client: "Maria Oliveira",
-    description: "Discussão sobre novo caso",
-    completed: false
-  },
-  {
-    id: 3,
-    title: "Prazo final - Recurso",
-    date: "2025-06-20",
-    time: "18:00",
-    location: "Online",
-    client: "Empresa ABC Ltda",
-    description: "Entregar recurso de apelação",
-    completed: false
-  },
-  {
-    id: 4,
-    title: "Depoimento de testemunha",
-    date: "2025-06-21",
-    time: "10:00",
-    location: "5ª Vara do Trabalho",
-    client: "Roberto Costa",
-    description: "Oitiva de testemunha da parte contrária",
-    completed: false
-  },
-  {
-    id: 5,
-    title: "Almoço com Dr. Rodrigo",
-    date: "2025-06-19",
-    time: "12:30",
-    location: "Restaurante Jangada",
-    client: "",
-    description: "Discussão sobre parceria",
-    completed: false
-  }
-];
-
-// Helper function to group events by date
-const groupEventsByDate = (events: any[]) => {
-  return events.reduce((acc: any, event: any) => {
-    const date = event.date;
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(event);
-    return acc;
-  }, {});
-};
+import { Calendar, Clock, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import Sidebar from '@/components/ui/sidebar';
 
 const AgendaPage = () => {
-  const [events, setEvents] = useState(mockEvents);
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<'day' | 'week' | 'month'>('week');
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState<any>(null);
-  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('compromissos');
+  const [showNewEventModal, setShowNewEventModal] = useState(false);
+  const [eventType, setEventType] = useState('appointment');
   
-  // Function to format date as YYYY-MM-DD
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
+  // Mock data for the calendar
+  const compromissos = [
+    {
+      id: 1,
+      title: 'Audiência - Processo 12345',
+      type: 'Audiência',
+      date: '2025-05-18',
+      time: '09:30',
+      location: 'Tribunal de Justiça - Sala 302',
+      client: 'João Silva',
+    },
+    {
+      id: 2,
+      title: 'Reunião com cliente',
+      type: 'Reunião',
+      date: '2025-05-20',
+      time: '14:00',
+      location: 'Escritório',
+      client: 'Maria Oliveira',
+    },
+    {
+      id: 3,
+      title: 'Prazo - Recurso',
+      type: 'Prazo',
+      date: '2025-05-22',
+      time: '18:00',
+      location: 'Escritório',
+      client: 'Pedro Santos',
+    },
+  ];
+
+  const prazos = [
+    {
+      id: 1,
+      process: 'Processo 12345',
+      description: 'Apresentação de contestação',
+      deadline: '2025-05-25',
+      status: 'pendente',
+      priority: 'alta',
+      client: 'João Silva',
+    },
+    {
+      id: 2,
+      process: 'Processo 67890',
+      description: 'Entrega de documentos complementares',
+      deadline: '2025-05-30',
+      status: 'pendente',
+      priority: 'média',
+      client: 'Maria Oliveira',
+    },
+    {
+      id: 3,
+      process: 'Processo 54321',
+      description: 'Elaboração de recurso',
+      deadline: '2025-06-10',
+      status: 'pendente',
+      priority: 'alta',
+      client: 'Pedro Santos',
+    },
+  ];
+
+  // Event form state
+  const [newEvent, setNewEvent] = useState({
+    title: '',
+    date: '',
+    time: '',
+    location: '',
+    description: '',
+    client: '',
+    process: '',
+    priority: 'média',
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewEvent({
+      ...newEvent,
+      [name]: value,
+    });
   };
 
-  // Calculate the first and last day of the current week
-  const getWeekDates = (date: Date) => {
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is Sunday
-    const monday = new Date(date);
-    monday.setDate(diff);
-    
-    const weekDates = [];
-    for (let i = 0; i < 7; i++) {
-      const nextDate = new Date(monday);
-      nextDate.setDate(monday.getDate() + i);
-      weekDates.push(nextDate);
-    }
-    
-    return weekDates;
-  };
-  
-  // Get current week's dates
-  const weekDates = getWeekDates(selectedDate);
-  
-  // Filter events for the current week
-  const weekEvents = events.filter(event => {
-    const eventDate = new Date(event.date);
-    return weekDates.some(date => formatDate(date) === event.date);
-  });
-  
-  // Group events by date
-  const groupedEvents = groupEventsByDate(weekEvents);
-  
-  const handleAddOrUpdateEvent = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const eventData = Object.fromEntries(formData.entries()) as any;
-    
-    if (currentEvent) {
-      // Update existing event
-      setEvents(events.map(event => 
-        event.id === currentEvent.id ? {...event, ...eventData, id: event.id} : event
-      ));
-      toast({
-        title: "Compromisso atualizado",
-        description: "As informações do compromisso foram atualizadas com sucesso.",
-      });
-    } else {
-      // Add new event
-      setEvents([...events, {
-        ...eventData,
-        id: events.length + 1,
-        completed: false
-      }]);
-      toast({
-        title: "Compromisso adicionado",
-        description: "O novo compromisso foi adicionado com sucesso.",
-      });
+    // Here you would save the event to your database
+    console.log('New event:', newEvent);
+    setShowNewEventModal(false);
+    // Reset form
+    setNewEvent({
+      title: '',
+      date: '',
+      time: '',
+      location: '',
+      description: '',
+      client: '',
+      process: '',
+      priority: 'média',
+    });
+  };
+
+  const renderTabContent = () => {
+    if (activeTab === 'compromissos') {
+      return (
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Compromissos Agendados</h2>
+            <Button onClick={() => {
+              setEventType('appointment');
+              setShowNewEventModal(true);
+            }}>
+              Novo Compromisso
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Hora</TableHead>
+                  <TableHead>Local</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {compromissos.map((compromisso) => (
+                  <TableRow key={compromisso.id}>
+                    <TableCell className="font-medium">{compromisso.title}</TableCell>
+                    <TableCell>{compromisso.type}</TableCell>
+                    <TableCell>{compromisso.date}</TableCell>
+                    <TableCell>{compromisso.time}</TableCell>
+                    <TableCell>{compromisso.location}</TableCell>
+                    <TableCell>{compromisso.client}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="sm">
+                          Editar
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-red-500">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      );
+    } else if (activeTab === 'prazos') {
+      return (
+        <div>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold">Prazos Processuais</h2>
+            <Button onClick={() => {
+              setEventType('deadline');
+              setShowNewEventModal(true);
+            }}>
+              Novo Prazo
+            </Button>
+          </div>
+
+          <div className="bg-white rounded-lg shadow overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Processo</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Data Limite</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Prioridade</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {prazos.map((prazo) => (
+                  <TableRow key={prazo.id}>
+                    <TableCell className="font-medium">{prazo.process}</TableCell>
+                    <TableCell>{prazo.description}</TableCell>
+                    <TableCell>{prazo.deadline}</TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        prazo.status === 'concluído' 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-amber-100 text-amber-800'
+                      }`}>
+                        {prazo.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        prazo.priority === 'alta' 
+                          ? 'bg-red-100 text-red-800' 
+                          : prazo.priority === 'média'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {prazo.priority}
+                      </span>
+                    </TableCell>
+                    <TableCell>{prazo.client}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="sm">
+                          Editar
+                        </Button>
+                        <Button variant="ghost" size="sm" className="text-red-500">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      );
     }
-    
-    setIsModalOpen(false);
-    setCurrentEvent(null);
-  };
-  
-  const toggleEventCompletion = (id: number) => {
-    setEvents(events.map(event => 
-      event.id === id ? {...event, completed: !event.completed} : event
-    ));
-  };
-  
-  const deleteEvent = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir este compromisso?")) {
-      setEvents(events.filter(event => event.id !== id));
-      toast({
-        title: "Compromisso excluído",
-        description: "O compromisso foi removido com sucesso.",
-      });
-    }
-  };
-  
-  const navigatePrev = () => {
-    const newDate = new Date(selectedDate);
-    switch (currentView) {
-      case 'day':
-        newDate.setDate(newDate.getDate() - 1);
-        break;
-      case 'week':
-        newDate.setDate(newDate.getDate() - 7);
-        break;
-      case 'month':
-        newDate.setMonth(newDate.getMonth() - 1);
-        break;
-    }
-    setSelectedDate(newDate);
-  };
-  
-  const navigateNext = () => {
-    const newDate = new Date(selectedDate);
-    switch (currentView) {
-      case 'day':
-        newDate.setDate(newDate.getDate() + 1);
-        break;
-      case 'week':
-        newDate.setDate(newDate.getDate() + 7);
-        break;
-      case 'month':
-        newDate.setMonth(newDate.getMonth() + 1);
-        break;
-    }
-    setSelectedDate(newDate);
-  };
-  
-  const formatDayHeader = (date: Date) => {
-    const today = new Date();
-    const isToday = date.getDate() === today.getDate() && 
-                   date.getMonth() === today.getMonth() && 
-                   date.getFullYear() === today.getFullYear();
-    
-    const options: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric' };
-    const dayStr = date.toLocaleDateString('pt-BR', options);
-    
-    return (
-      <div className={`text-center p-2 ${isToday ? 'bg-lawyer-primary text-white rounded-t-lg' : ''}`}>
-        {dayStr}
-      </div>
-    );
-  };
-  
-  const getEventTimeDisplay = (time: string) => {
-    if (!time) return '';
-    const [hours, minutes] = time.split(':');
-    return `${hours}:${minutes}`;
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <main className="flex-grow py-8">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-bold">Agenda & Compromissos</h1>
-              <p className="text-gray-600">Organize seus compromissos e nunca perca um prazo</p>
-            </div>
-            <button 
-              onClick={() => {
-                setCurrentEvent(null);
-                setIsModalOpen(true);
-              }} 
-              className="btn-primary"
-            >
-              <Plus className="h-5 w-5 mr-1" />
-              Novo Compromisso
-            </button>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <div className="p-4 border-b flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="flex items-center">
-                <button onClick={navigatePrev} className="p-2 hover:bg-gray-100 rounded-full">
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <h2 className="text-lg font-semibold mx-4">
-                  {currentView === 'day' && selectedDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                  {currentView === 'week' && `Semana de ${weekDates[0].toLocaleDateString('pt-BR', { day: 'numeric', month: 'long' })} a ${weekDates[6].toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`}
-                  {currentView === 'month' && selectedDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                </h2>
-                <button onClick={navigateNext} className="p-2 hover:bg-gray-100 rounded-full">
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-                <button 
-                  className="ml-4 px-3 py-1 border rounded-md hover:bg-gray-50"
-                  onClick={() => setSelectedDate(new Date())}
-                >
-                  Hoje
-                </button>
-              </div>
-              <div className="flex rounded-md shadow-sm">
-                <button 
-                  onClick={() => setCurrentView('day')} 
-                  className={`px-4 py-2 text-sm ${currentView === 'day' ? 'bg-lawyer-primary text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
-                >
-                  Dia
-                </button>
-                <button 
-                  onClick={() => setCurrentView('week')} 
-                  className={`px-4 py-2 text-sm ${currentView === 'week' ? 'bg-lawyer-primary text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
-                >
-                  Semana
-                </button>
-                <button 
-                  onClick={() => setCurrentView('month')} 
-                  className={`px-4 py-2 text-sm ${currentView === 'month' ? 'bg-lawyer-primary text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100'}`}
-                >
-                  Mês
-                </button>
-              </div>
-            </div>
-            
-            {/* Week View */}
-            {currentView === 'week' && (
-              <div className="grid grid-cols-7 min-h-[600px] border-b">
-                {weekDates.map((date, i) => (
-                  <div key={i} className="border-r last:border-r-0">
-                    {formatDayHeader(date)}
-                    <div className="min-h-[500px] p-2">
-                      {groupedEvents[formatDate(date)]?.map((event: any) => (
-                        <div 
-                          key={event.id} 
-                          className={`mb-2 p-2 rounded-md text-sm cursor-pointer hover:shadow-md transition-all ${
-                            event.completed 
-                              ? 'bg-gray-100 text-gray-500 line-through' 
-                              : 'bg-blue-50 border-l-4 border-lawyer-primary'
-                          }`}
-                          onClick={() => {
-                            setCurrentEvent(event);
-                            setIsModalOpen(true);
-                          }}
-                        >
-                          <div className="flex items-start justify-between">
-                            <p className="font-medium">{event.title}</p>
-                            <button 
-                              className="p-1 rounded-full hover:bg-gray-200 text-gray-500"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleEventCompletion(event.id);
-                              }}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </button>
-                          </div>
-                          {event.time && (
-                            <div className="flex items-center text-gray-600 mt-1">
-                              <Clock className="h-3 w-3 mr-1" />
-                              <span>{getEventTimeDisplay(event.time)}</span>
-                            </div>
-                          )}
-                          {event.location && (
-                            <div className="flex items-center text-gray-600 mt-1">
-                              <MapPin className="h-3 w-3 mr-1" />
-                              <span>{event.location}</span>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {/* Upcoming Events Section */}
-            <div className="p-4">
-              <h3 className="font-semibold mb-4">Próximos Compromissos</h3>
-              <div className="space-y-3">
-                {events
-                  .filter(event => new Date(event.date) >= new Date() && !event.completed)
-                  .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                  .slice(0, 5)
-                  .map(event => (
-                    <div key={event.id} className="flex items-start gap-4 p-4 border rounded-lg hover:shadow-md transition-all">
-                      <div className="bg-lawyer-primary/10 p-3 rounded-lg text-lawyer-primary flex flex-col items-center justify-center min-w-[60px]">
-                        <CalendarIcon className="h-5 w-5 mb-1" />
-                        <span className="text-sm font-semibold">
-                          {new Date(event.date).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })}
-                        </span>
-                      </div>
-                      <div className="flex-grow">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium">{event.title}</h4>
-                            {event.time && (
-                              <div className="flex items-center text-gray-600 mt-1">
-                                <Clock className="h-4 w-4 mr-1" />
-                                <span>{getEventTimeDisplay(event.time)}</span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex">
-                            <button 
-                              className="p-1 text-blue-600 hover:bg-blue-100 rounded-full"
-                              onClick={() => {
-                                setCurrentEvent(event);
-                                setIsModalOpen(true);
-                              }}
-                              title="Editar compromisso"
-                            >
-                              <MoreVertical className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                        <div className="flex flex-wrap gap-y-1 gap-x-3 mt-2">
-                          {event.location && (
-                            <div className="flex items-center text-gray-600">
-                              <MapPin className="h-4 w-4 mr-1" />
-                              <span>{event.location}</span>
-                            </div>
-                          )}
-                          {event.client && (
-                            <div className="flex items-center text-gray-600">
-                              <User className="h-4 w-4 mr-1" />
-                              <span>{event.client}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-      
-      {/* Modal para adicionar/editar compromisso */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h3 className="text-lg font-semibold">{currentEvent ? 'Editar Compromisso' : 'Novo Compromisso'}</h3>
-              <button 
-                onClick={() => {
-                  setIsModalOpen(false);
-                  setCurrentEvent(null);
-                }}
-                className="text-gray-500 hover:text-gray-700"
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar />
+      <div className="flex-1 overflow-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">Agenda e Prazos</h1>
+
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('compromissos')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'compromissos'
+                    ? 'border-lawyer-primary text-lawyer-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
               >
-                &times;
+                Compromissos
               </button>
-            </div>
-            <form onSubmit={handleAddOrUpdateEvent}>
-              <div className="p-4 space-y-4">
-                <div>
-                  <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                  <input 
-                    type="text" 
-                    id="title" 
-                    name="title" 
-                    defaultValue={currentEvent?.title || ''}
-                    required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="date" className="block text-sm font-medium text-gray-700 mb-1">Data</label>
-                    <input 
-                      type="date" 
-                      id="date" 
-                      name="date" 
-                      defaultValue={currentEvent?.date || formatDate(new Date())}
-                      required
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="time" className="block text-sm font-medium text-gray-700 mb-1">Hora</label>
-                    <input 
-                      type="time" 
-                      id="time" 
-                      name="time" 
-                      defaultValue={currentEvent?.time || ''}
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Local</label>
-                  <input 
-                    type="text" 
-                    id="location" 
-                    name="location" 
-                    defaultValue={currentEvent?.location || ''}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="client" className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-                  <input 
-                    type="text" 
-                    id="client" 
-                    name="client" 
-                    defaultValue={currentEvent?.client || ''}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                  <textarea 
-                    id="description" 
-                    name="description" 
-                    defaultValue={currentEvent?.description || ''}
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary h-24"
-                  />
-                </div>
-              </div>
-              <div className="p-4 border-t flex justify-between">
-                {currentEvent && (
-                  <button 
-                    type="button" 
-                    onClick={() => deleteEvent(currentEvent.id)}
-                    className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center"
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" /> Excluir
-                  </button>
-                )}
-                <div className="flex gap-2 ml-auto">
-                  <button 
-                    type="button" 
-                    onClick={() => {
-                      setIsModalOpen(false);
-                      setCurrentEvent(null);
-                    }}
-                    className="px-4 py-2 border rounded-md hover:bg-gray-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button type="submit" className="btn-primary">
-                    {currentEvent ? 'Atualizar' : 'Adicionar'}
-                  </button>
-                </div>
-              </div>
-            </form>
+              <button
+                onClick={() => setActiveTab('prazos')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'prazos'
+                    ? 'border-lawyer-primary text-lawyer-primary'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Prazos Processuais
+              </button>
+            </nav>
           </div>
         </div>
-      )}
-      
-      <Footer />
+
+        {renderTabContent()}
+
+        {/* Modal for adding new events */}
+        {showNewEventModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-8 max-w-lg w-full">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold">
+                  {eventType === 'appointment' ? 'Novo Compromisso' : 'Novo Prazo'}
+                </h2>
+                <button onClick={() => setShowNewEventModal(false)}>
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmit}>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="title">Título</Label>
+                    <Input
+                      id="title"
+                      name="title"
+                      value={newEvent.title}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="date">Data</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5">
+                          <Calendar className="h-4 w-4 text-gray-400" />
+                        </span>
+                        <Input
+                          id="date"
+                          name="date"
+                          type="date"
+                          value={newEvent.date}
+                          onChange={handleInputChange}
+                          className="pl-10"
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="time">Hora</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-2.5">
+                          <Clock className="h-4 w-4 text-gray-400" />
+                        </span>
+                        <Input
+                          id="time"
+                          name="time"
+                          type="time"
+                          value={newEvent.time}
+                          onChange={handleInputChange}
+                          className="pl-10"
+                          required={eventType === 'appointment'}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {eventType === 'appointment' && (
+                    <div>
+                      <Label htmlFor="location">Local</Label>
+                      <Input
+                        id="location"
+                        name="location"
+                        value={newEvent.location}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <Label htmlFor="client">Cliente</Label>
+                    <Input
+                      id="client"
+                      name="client"
+                      value={newEvent.client}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+
+                  {eventType === 'deadline' && (
+                    <>
+                      <div>
+                        <Label htmlFor="process">Processo</Label>
+                        <Input
+                          id="process"
+                          name="process"
+                          value={newEvent.process}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="priority">Prioridade</Label>
+                        <select
+                          id="priority"
+                          name="priority"
+                          value={newEvent.priority}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary"
+                          required
+                        >
+                          <option value="baixa">Baixa</option>
+                          <option value="média">Média</option>
+                          <option value="alta">Alta</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  <div>
+                    <Label htmlFor="description">Descrição</Label>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={newEvent.description}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowNewEventModal(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit">
+                      Salvar
+                    </Button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

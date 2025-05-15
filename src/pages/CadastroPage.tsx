@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -11,6 +11,7 @@ const CadastroPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +36,7 @@ const CadastroPage = () => {
       });
       
       // Redirect to payment page after successful registration
-      setTimeout(() => {
-        window.location.href = '/pagamento';
-      }, 1500);
+      navigate('/pagamento');
     }, 1500);
   };
 
