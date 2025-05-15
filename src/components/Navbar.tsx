@@ -47,16 +47,23 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <nav className="bg-white shadow-md">
+    <nav className="bg-lawyer-dark shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" className="flex flex-col items-center">
-              <span className="text-xl font-bold">
-                <span className="text-lawyer-primary">Jus</span>
-                <span className="text-white">Gestão</span>
-              </span>
+            <Link to="/" className="flex items-center gap-2">
+              <img 
+                src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" 
+                alt="JusGestão Logo" 
+                className="h-8 w-8" 
+              />
+              <div className="flex flex-col">
+                <span className="text-xl font-bold">
+                  <span className="text-lawyer-primary">Jus</span>
+                  <span className="text-white">Gestão</span>
+                </span>
+              </div>
             </Link>
           </div>
 
@@ -68,7 +75,7 @@ const Navbar: React.FC = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary ${isActive(item.path)}`}
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive(item.path)}`}
                   >
                     {item.icon}
                     <span className="ml-2">{item.label}</span>
@@ -79,7 +86,7 @@ const Navbar: React.FC = () => {
                 {user?.email === 'webercostag@gmail.com' && (
                   <Link 
                     to="/admin" 
-                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary ${isActive('/admin')}`}
+                    className={`flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}
                   >
                     <Settings className="h-5 w-5" />
                     <span className="ml-2">Admin</span>
@@ -87,7 +94,7 @@ const Navbar: React.FC = () => {
                 )}
 
                 <div className="ml-4 flex items-center">
-                  <Link to="/perfil" className="flex items-center text-gray-700 hover:text-lawyer-primary">
+                  <Link to="/perfil" className="flex items-center text-white hover:text-lawyer-primary">
                     <User className="h-5 w-5" />
                     <span className="ml-1">Perfil</span>
                   </Link>
@@ -95,7 +102,7 @@ const Navbar: React.FC = () => {
                     variant="ghost"
                     size="sm"
                     onClick={handleSignOut}
-                    className="ml-4 flex items-center text-gray-700 hover:text-lawyer-primary"
+                    className="ml-4 flex items-center text-white hover:text-lawyer-primary"
                   >
                     <LogOut className="h-5 w-5" />
                     <span className="ml-1">Sair</span>
@@ -104,7 +111,7 @@ const Navbar: React.FC = () => {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-gray-700 hover:text-lawyer-primary px-3 py-2">
+                <Link to="/login" className="text-white hover:text-lawyer-primary px-3 py-2">
                   Login
                 </Link>
                 <Link to="/cadastro" className="bg-lawyer-primary text-white px-4 py-2 rounded-md hover:bg-blue-700">
@@ -118,7 +125,7 @@ const Navbar: React.FC = () => {
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:text-lawyer-primary hover:bg-gray-100 focus:outline-none"
+              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-lawyer-primary hover:bg-gray-700 focus:outline-none"
             >
               {isMenuOpen ? (
                 <X className="h-6 w-6" />
@@ -132,7 +139,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t">
+        <div className="md:hidden bg-lawyer-dark border-t border-gray-700">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             {user ? (
               <>
@@ -140,7 +147,7 @@ const Navbar: React.FC = () => {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary ${isActive(item.path)}`}
+                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive(item.path)}`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     {item.icon}
@@ -152,7 +159,7 @@ const Navbar: React.FC = () => {
                 {user?.email === 'webercostag@gmail.com' && (
                   <Link 
                     to="/admin" 
-                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary ${isActive('/admin')}`}
+                    className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <Settings className="h-5 w-5" />
@@ -162,7 +169,7 @@ const Navbar: React.FC = () => {
 
                 <Link
                   to="/perfil"
-                  className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary"
+                  className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   <User className="h-5 w-5" />
@@ -173,7 +180,7 @@ const Navbar: React.FC = () => {
                     handleSignOut();
                     setIsMenuOpen(false);
                   }}
-                  className="flex w-full items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary"
+                  className="flex w-full items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white"
                 >
                   <LogOut className="h-5 w-5" />
                   <span className="ml-2">Sair</span>
@@ -183,7 +190,7 @@ const Navbar: React.FC = () => {
               <>
                 <Link
                   to="/login"
-                  className="block px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary"
+                  className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-lawyer-primary/10 hover:text-lawyer-primary"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Login
