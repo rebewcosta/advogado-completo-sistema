@@ -37,6 +37,7 @@ const Footer = () => {
               <li><HashLink to="/#pricing" smooth className="text-gray-300 hover:text-white transition-colors">Planos e Preços</HashLink></li>
               <li><Link to="/termos-privacidade" className="text-gray-300 hover:text-white transition-colors">Política de Privacidade</Link></li>
               <li><Link to="/termos-privacidade" className="text-gray-300 hover:text-white transition-colors">Termos de Uso</Link></li>
+              <li><Link to="/suporte" className="text-gray-300 hover:text-white transition-colors">Suporte e FAQ</Link></li>
             </ul>
           </div>
           <div>

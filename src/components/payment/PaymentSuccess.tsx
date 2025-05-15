@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 
 const PaymentSuccess: React.FC = () => {
   return (
@@ -32,12 +33,67 @@ const PaymentSuccess: React.FC = () => {
         </div>
       </div>
       
-      <Link
-        to="/dashboard"
-        className="inline-flex items-center px-6 py-3 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-lawyer-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lawyer-primary"
-      >
-        Acessar o Sistema
-      </Link>
+      <div className="space-y-4 mb-8">
+        <h3 className="font-medium text-lg">Próximos Passos:</h3>
+        <ul className="text-left space-y-3">
+          <li className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5 mr-2">
+              <div className="bg-green-100 p-1 rounded-full">
+                <Check className="h-4 w-4 text-green-600" />
+              </div>
+            </div>
+            <span>Explore o <strong>Dashboard</strong> para ver uma visão geral do seu escritório</span>
+          </li>
+          <li className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5 mr-2">
+              <div className="bg-green-100 p-1 rounded-full">
+                <Check className="h-4 w-4 text-green-600" />
+              </div>
+            </div>
+            <span>Adicione seus primeiros <strong>clientes</strong> ao sistema</span>
+          </li>
+          <li className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5 mr-2">
+              <div className="bg-green-100 p-1 rounded-full">
+                <Check className="h-4 w-4 text-green-600" />
+              </div>
+            </div>
+            <span>Cadastre seus <strong>processos</strong> em andamento</span>
+          </li>
+          <li className="flex items-start">
+            <div className="flex-shrink-0 pt-0.5 mr-2">
+              <div className="bg-green-100 p-1 rounded-full">
+                <Check className="h-4 w-4 text-green-600" />
+              </div>
+            </div>
+            <span>Configure seu perfil e preferências nas <strong>configurações</strong></span>
+          </li>
+        </ul>
+      </div>
+      
+      <div className="flex flex-col sm:flex-row gap-4 justify-center">
+        <Button asChild className="flex items-center justify-center">
+          <Link to="/dashboard">
+            Acessar o Sistema 
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Link>
+        </Button>
+        
+        <Button asChild variant="outline" className="flex items-center justify-center">
+          <Link to="/suporte">
+            Ver Tutoriais e Suporte
+          </Link>
+        </Button>
+      </div>
+      
+      <div className="mt-8 text-sm text-gray-500">
+        <p>Precisa de ajuda? Entre em contato com nosso suporte:</p>
+        <p className="mt-1">
+          <a href="mailto:suporte@sisjusgestao.com.br" className="text-lawyer-primary hover:underline">
+            suporte@sisjusgestao.com.br
+          </a>
+        </p>
+      </div>
     </div>
   );
 };

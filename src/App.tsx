@@ -16,6 +16,8 @@ import ConfiguracoesPage from './pages/ConfiguracoesPage';
 import NotFound from './pages/NotFound';
 import TermosPrivacidadePage from './pages/TermosPrivacidadePage';
 import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
+import SuportePage from './pages/SuportePage';
+import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
 import './App.css';
 
 import { AuthProvider } from './hooks/useAuth';
@@ -30,6 +32,8 @@ function App() {
         <Routes>
           {/* Rotas públicas */}
           <Route path="/" element={<Index />} />
+          <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
+          <Route path="/suporte" element={<SuportePage />} />
           
           {/* Rotas de autenticação - acessíveis apenas quando não logado */}
           <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
@@ -40,7 +44,6 @@ function App() {
           {/* Rotas de pagamento */}
           <Route path="/pagamento" element={<PagamentoPage />} />
           <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
-          <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
           
           {/* Rotas protegidas - requerem autenticação */}
           <Route element={<ProtectedRoute />}>
@@ -58,6 +61,7 @@ function App() {
                 <Route path="/documentos" element={<DocumentosPage />} />
                 <Route path="/relatorios" element={<RelatoriosPage />} />
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+                <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
               </Routes>
             </VerificarAssinatura>}>
               <Route path="/clientes" element={null} />
@@ -67,6 +71,7 @@ function App() {
               <Route path="/documentos" element={null} />
               <Route path="/relatorios" element={null} />
               <Route path="/configuracoes" element={null} />
+              <Route path="/emails-transacionais" element={null} />
             </Route>
           </Route>
           
