@@ -1,4 +1,3 @@
-
 // Este arquivo é um edge function do Supabase para verificar o status da assinatura de um usuário
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@13.5.0?dts";
@@ -27,6 +26,7 @@ const corsHeaders = {
 // Esta lista pode ser expandida conforme necessário
 const specialAccessEmails = [
   "teste@sisjusgestao.com.br",
+  "webercostag@gmail.com", // Adicionado novo email para acesso especial
   // Adicione mais e-mails conforme necessário
 ];
 

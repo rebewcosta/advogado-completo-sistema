@@ -24,10 +24,14 @@ import { AuthProvider } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
 import { Toaster } from '@/components/ui/toaster';
+import CreateUserAccount from './components/admin/CreateUserAccount';
 
 function App() {
   return (
     <AuthProvider>
+      {/* Componente temporário para criar a conta especial */}
+      <CreateUserAccount />
+      
       <Router>
         <Routes>
           {/* Rotas públicas */}
