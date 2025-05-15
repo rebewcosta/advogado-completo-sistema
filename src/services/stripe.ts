@@ -58,6 +58,8 @@ export const iniciarCheckout = async ({
   } catch (error) {
     console.error('Erro ao iniciar pagamento:', error);
     const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Detalhes completos do erro:', error);
+    
     toast({
       title: "Erro ao iniciar pagamento",
       description: errorMessage,

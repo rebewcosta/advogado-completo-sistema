@@ -80,11 +80,30 @@ const PagamentoPage = () => {
     } catch (error) {
       console.error('Erro no pagamento:', error);
       setIsProcessing(false);
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      
+      // Extrair mensagem de erro mais detalhada
+      let errorMessage = "Erro ao processar pagamento";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        // Tentar extrair mensagem de erro de uma resposta da API
+        if ('message' in error) {
+          errorMessage = error.message;
+        } else if ('error' in error) {
+          errorMessage = typeof error.error === 'string' 
+            ? error.error 
+            : JSON.stringify(error.error);
+        } else {
+          errorMessage = JSON.stringify(error);
+        }
+      }
+      
       setErrorDetails(errorMessage);
+      
       toast({
         title: "Erro no pagamento",
-        description: "Houve um problema ao processar seu pagamento. Por favor, tente novamente.",
+        description: "Houve um problema ao processar seu pagamento. Por favor, verifique os detalhes do erro abaixo.",
         variant: "destructive"
       });
     }
@@ -177,9 +196,14 @@ const PagamentoPage = () => {
 
                 {errorDetails && (
                   <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-800">
-                      <strong>Detalhes do erro:</strong> {errorDetails}
-                    </p>
+                    <p className="text-sm font-medium text-red-800 mb-1">Detalhes do erro:</p>
+                    <p className="text-sm text-red-700">{errorDetails}</p>
+                    <div className="mt-3 pt-3 border-t border-red-100">
+                      <p className="text-xs text-red-600">
+                        Se o problema persistir, verifique se a chave de API do Stripe está configurada corretamente 
+                        nas Edge Functions do Supabase.
+                      </p>
+                    </div>
                   </div>
                 )}
               </div>

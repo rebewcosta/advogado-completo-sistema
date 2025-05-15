@@ -36,7 +36,7 @@ serve(async (req) => {
     if (!stripeSecretKey) {
       console.error("Chave de API do Stripe não configurada");
       return new Response(
-        JSON.stringify({ error: "Configuração de API não disponível" }),
+        JSON.stringify({ error: "Chave de API do Stripe não configurada. Verifique as configurações do Edge Function." }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
