@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -38,11 +37,10 @@ const RegisterForm = ({ onSubmitStart, onSubmitEnd }: RegisterFormProps) => {
     onSubmitStart();
 
     try {
-      // Pass the custom email sender address as part of the options
+      // Remover a configuração de emailSender personalizada
       await signUp(email, password, { 
         nome, 
-        emailRedirectTo: window.location.origin + "/login",
-        emailSender: "suporte@sisjusgestao.com.br" 
+        emailRedirectTo: window.location.origin + "/login"
       });
       
       toast({

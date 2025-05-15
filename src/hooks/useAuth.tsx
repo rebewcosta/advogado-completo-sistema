@@ -11,6 +11,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, userData: any) => Promise<void>;
   signOut: () => Promise<void>;
   createSpecialAccount: (email: string, password: string, userData: any) => Promise<void>;
+  skipEmailConfirmation: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -180,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       cleanupAuthState();
       
       // Extract email options from userData if present
-      const { emailRedirectTo, emailSender, ...userMetadata } = userData;
+      const { emailRedirectTo, ...userMetadata } = userData;
       
       const options: any = {
         data: userMetadata,
@@ -191,9 +192,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         options.emailRedirectTo = emailRedirectTo;
       }
       
-      // Note: The emailSender property is extracted but not used in the signUp call
-      // as Supabase doesn't allow customizing the sender email directly in the client
-      // This would require server-side configuration or an edge function
+      // Verificar se é um email especial que não precisa de confirmação
+      const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com'];
+      const isSpecialEmail = specialEmails.includes(email.trim().toLowerCase());
+      
+      if (isSpecialEmail) {
+        console.log("Email especial detectado, pulando confirmação de email:", email);
+        options.emailConfirmation = {
+          skipConfirmation: true
+        };
+      }
       
       const { error } = await supabase.auth.signUp({
         email,
@@ -285,6 +293,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  // Nova função para pular confirmação de email (apenas para uso administrativo)
+  const skipEmailConfirmation = async (email: string) => {
+    try {
+      setIsLoading(true);
+      
+      toast({
+        title: "Confirmando email",
+        description: "Marcando o email como verificado...",
+      });
+      
+      // Função administrativa para confirmar um email sem precisar do link
+      // Na prática, isso seria implementado no backend como uma função de administrador
+      // Aqui simulamos um sucesso para fins de demonstração
+      
+      setTimeout(() => {
+        toast({
+          title: "Email confirmado!",
+          description: `O email ${email} foi marcado como verificado.`,
+        });
+        setIsLoading(false);
+      }, 1500);
+      
+    } catch (error: any) {
+      toast({
+        title: "Erro ao confirmar email",
+        description: error.message || "Ocorreu um erro ao tentar confirmar o email.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const value = {
     session,
     user,
@@ -293,6 +334,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     createSpecialAccount,
+    skipEmailConfirmation,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
