@@ -49,15 +49,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       console.log("Attempting to sign in:", email);
       
-      // Cleanup existing auth state before signin attempt
+      // Thoroughly clean up existing auth state before signing in
       cleanupAuthState();
+      
+      // Try to sign out globally first to clear any existing sessions
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (signOutError) {
+        console.log("Sign out before sign in failed, continuing anyway", signOutError);
+        // Continue with sign in even if sign out fails
+      }
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Sign in error:", error);
+        toast({
+          title: "Erro ao entrar",
+          description: error.message === "Invalid login credentials" 
+            ? "Email ou senha inválidos"
+            : error.message || "Ocorreu um erro ao tentar entrar.",
+          variant: "destructive",
+        });
+        throw error;
+      }
       
       console.log("Sign in successful:", data.user?.email);
       toast({
@@ -68,11 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     } catch (error: any) {
       console.error("Sign in error:", error.message);
-      toast({
-        title: "Erro ao entrar",
-        description: error.message || "Ocorreu um erro ao tentar entrar.",
-        variant: "destructive",
-      });
+      // Toast notification already handled above
       throw error;
     } finally {
       setIsLoading(false);

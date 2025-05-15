@@ -10,11 +10,6 @@ interface VerificarAssinaturaProps {
   children: React.ReactNode;
 }
 
-interface AssinaturaStatus {
-  status: 'ativa' | 'pendente' | 'inativa';
-  dataProximoFaturamento?: string;
-}
-
 const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAssinante, setIsAssinante] = useState(false);
@@ -23,7 +18,7 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
   const { toast } = useToast();
 
   // Lista de rotas que não requerem assinatura ativa, mas requerem autenticação
-  const rotasPermitidas = ['/dashboard', '/perfil', '/pagamento'];
+  const rotasPermitidas = ['/dashboard', '/perfil', '/pagamento', '/admin'];
 
   useEffect(() => {
     const verificarAssinatura = async () => {
@@ -37,19 +32,19 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
         
         console.log("Verificando assinatura para usuário:", user.email);
         
+        // Lista de emails com acesso especial
+        const specialEmails = ["webercostag@gmail.com", "teste@sisjusgestao.com.br"];
+        
         // Verificar se o usuário tem special_access nos metadados
         const hasSpecialAccess = user.user_metadata?.special_access === true;
-        if (hasSpecialAccess) {
-          console.log("Acesso especial encontrado nos metadados");
-          setIsAssinante(true);
-          setIsLoading(false);
-          return;
-        }
         
         // Verificar se o email está na lista de acesso especial
-        const specialEmails = ["webercostag@gmail.com", "teste@sisjusgestao.com.br"];
-        if (user.email && specialEmails.includes(user.email)) {
-          console.log("Email com acesso especial detectado");
+        const hasSpecialEmail = user.email && specialEmails.includes(user.email);
+        
+        // Conceder acesso se tiver special_access nos metadados ou email especial
+        if (hasSpecialAccess || hasSpecialEmail) {
+          console.log("Acesso especial detectado:", 
+            hasSpecialAccess ? "via metadados" : "via email");
           setIsAssinante(true);
           setIsLoading(false);
           return;
