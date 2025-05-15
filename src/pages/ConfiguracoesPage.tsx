@@ -6,7 +6,8 @@ import {
   Building, 
   Bell, 
   Shield, 
-  Save
+  Save,
+  LogOut
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,7 @@ const ConfiguracoesPage = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("perfil");
   const [saving, setSaving] = useState(false);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   
   // Estado para configurações de perfil
   const [profileSettings, setProfileSettings] = useState({
@@ -79,6 +80,8 @@ const ConfiguracoesPage = () => {
 
   // Estado para controlar carregamento do botão de senha
   const [changingPassword, setChangingPassword] = useState(false);
+  // Estado para controlar o logout
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
@@ -184,6 +187,17 @@ const ConfiguracoesPage = () => {
     }
   };
 
+  const handleSignOut = async () => {
+    setLoggingOut(true);
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="p-6">
@@ -192,14 +206,28 @@ const ConfiguracoesPage = () => {
             <h1 className="text-3xl font-bold">Configurações</h1>
             <p className="text-gray-600">Personalize o sistema de acordo com suas necessidades</p>
           </div>
-          <Button onClick={handleSave} disabled={saving}>
-            {saving ? (
-              <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full"></div>
-            ) : (
-              <Save className="mr-2 h-4 w-4" />
-            )}
-            Salvar alterações
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSave} disabled={saving}>
+              {saving ? (
+                <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full"></div>
+              ) : (
+                <Save className="mr-2 h-4 w-4" />
+              )}
+              Salvar alterações
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleSignOut} 
+              disabled={loggingOut}
+            >
+              {loggingOut ? (
+                <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full"></div>
+              ) : (
+                <LogOut className="mr-2 h-4 w-4" />
+              )}
+              Sair
+            </Button>
+          </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

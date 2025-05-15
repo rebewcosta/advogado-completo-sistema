@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const CriarContaEspecial = () => {
   const [email, setEmail] = useState('');
@@ -16,6 +17,50 @@ const CriarContaEspecial = () => {
   const [createdAccounts, setCreatedAccounts] = useState<Array<{email: string, nome: string, date: string}>>([]);
   
   const { createSpecialAccount } = useAuth();
+  
+  // Lista de emails especiais predefinidos
+  const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com', 'focolaresce@gmail.com'];
+  
+  // Função para criar uma senha aleatória
+  const generatePassword = () => {
+    const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let password = "";
+    for (let i = 0; i < 10; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  };
+
+  // Função para criar uma conta especial com email predefinido
+  const handleCreateSpecialAccount = async (presetEmail: string) => {
+    const presetNome = presetEmail.split('@')[0];
+    const presetPassword = generatePassword();
+    
+    setIsLoading(true);
+    
+    try {
+      await createSpecialAccount(presetEmail, presetPassword, { 
+        nome: presetNome, 
+        special_access: true,
+        skip_email_confirmation: true 
+      });
+      
+      // Adicionar à lista de contas criadas
+      setCreatedAccounts([
+        ...createdAccounts,
+        { 
+          email: presetEmail, 
+          nome: presetNome, 
+          date: new Date().toLocaleString('pt-BR') 
+        }
+      ]);
+      
+    } catch (error) {
+      console.error('Erro ao criar conta especial:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +103,29 @@ const CriarContaEspecial = () => {
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {/* Botões de acesso rápido para contas especiais */}
+        <div className="mb-6">
+          <h3 className="text-sm font-medium mb-3">Contas especiais rápidas:</h3>
+          <div className="flex flex-wrap gap-2">
+            {specialEmails.map((email) => (
+              <Button
+                key={email}
+                variant="outline"
+                onClick={() => handleCreateSpecialAccount(email)}
+                disabled={isLoading}
+                className="text-xs"
+              >
+                {email}
+              </Button>
+            ))}
+          </div>
+          <Alert className="mt-2 bg-amber-50 text-amber-800 border-amber-200">
+            <AlertDescription className="text-xs">
+              Ao clicar em um dos botões acima, uma conta especial será criada automaticamente para o email selecionado com uma senha aleatória segura.
+            </AlertDescription>
+          </Alert>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>

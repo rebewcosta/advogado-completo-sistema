@@ -3,11 +3,12 @@ import React from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, DollarSign, FileText, Users } from 'lucide-react';
+import { Calendar, Clock, DollarSign, FileText, Users, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
 
 const DashboardPage = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   
   // Obter o primeiro nome do usuário dos metadados ou do email
   const getUserFirstName = () => {
@@ -18,12 +19,30 @@ const DashboardPage = () => {
     return user?.email?.split('@')[0] || 'Usuário';
   };
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error) {
+      console.error("Erro ao fazer logout:", error);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="p-6">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-gray-600">Bem-vindo(a), {getUserFirstName()}. Aqui está o resumo do seu escritório.</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-gray-600">Bem-vindo(a), {getUserFirstName()}. Aqui está o resumo do seu escritório.</p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleSignOut}
+            className="flex items-center gap-2 border-red-300 text-red-600 hover:bg-red-50"
+          >
+            <LogOut className="h-4 w-4" /> Sair
+          </Button>
         </div>
 
         <Tabs defaultValue="visao-geral">

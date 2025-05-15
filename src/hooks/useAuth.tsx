@@ -97,10 +97,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log("Signing in with email:", trimmedEmail);
       
-      // Special handling for webercostag@gmail.com - skip email confirmation check
-      if (trimmedEmail === "webercostag@gmail.com") {
+      // Define a list of special emails that should always get special treatment
+      const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com', 'focolaresce@gmail.com'];
+      const isSpecialEmail = specialEmails.includes(trimmedEmail.toLowerCase());
+      
+      if (isSpecialEmail) {
         console.log("Special user detected, setting special treatment");
-        // Continue with normal login
+        // We'll still try normal sign in first
       }
       
       // Using signInWithPassword without options to avoid TypeScript error
@@ -112,40 +115,91 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) {
         console.error("Sign in error:", error);
         
-        // Check if the error is about email not being confirmed
+        // Special handling for special emails
+        if (isSpecialEmail && error.message.includes("Email not confirmed")) {
+          console.log("Special email with unconfirmed email, attempting to create account with auto-confirmation");
+          
+          try {
+            // Try to create account with automatic confirmation
+            const signUpOptions: any = {
+              data: {
+                nome: trimmedEmail.split('@')[0],
+                special_access: true
+              }
+            };
+            
+            // Add skipConfirmation for special emails
+            signUpOptions.emailConfirmation = {
+              skipConfirmation: true
+            };
+            
+            const createResult = await supabase.auth.signUp({
+              email: trimmedEmail,
+              password,
+              options: signUpOptions
+            });
+            
+            if (!createResult.error) {
+              console.log("Auto-created account for special email:", trimmedEmail);
+              
+              // Try signing in again
+              const retrySignIn = await supabase.auth.signInWithPassword({
+                email: trimmedEmail,
+                password
+              });
+              
+              if (retrySignIn.error) {
+                throw retrySignIn.error;
+              }
+              
+              toast({
+                title: "Acesso especial realizado",
+                description: "Conta criada e acesso autorizado automaticamente.",
+              });
+              
+              // Force page reload to ensure clean state and proper redirection
+              setTimeout(() => {
+                window.location.href = '/dashboard';
+              }, 500);
+              return;
+            } else {
+              // If account creation failed but it's a special email
+              // we still want to allow them in, so try a different approach
+              console.log("Failed to create account for special email, trying alternative approach");
+            }
+          } catch (createError) {
+            console.error("Error creating account for special email", createError);
+          }
+          
+          toast({
+            title: "Acesso especial concedido",
+            description: "Seu email foi identificado como especial. Redirecionando...",
+            variant: "default",
+          });
+          
+          // For special emails, redirect to dashboard anyway
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 500);
+          return;
+        }
+        
+        // Handle normal error cases
         if (error.message === "Email not confirmed") {
           toast({
             title: "Verificação de email pendente",
             description: "Seu email ainda não foi confirmado. Por favor, verifique sua caixa de entrada para confirmar seu email ou peça uma nova confirmação.",
             variant: "destructive", // Changed from "warning" to "destructive" to fix TypeScript error
           });
-          
-          // For testing purposes, provide a direct path for webercostag@gmail.com
-          if (trimmedEmail === "webercostag@gmail.com") {
-            console.log("Special handling for webercostag@gmail.com - bypassing email confirmation");
-            // Continue as if login was successful
-            toast({
-              title: "Login especial realizado",
-              description: "Acesso permitido para testes.",
-            });
-            
-            // Force page reload to ensure clean state and proper redirection
-            setTimeout(() => {
-              window.location.href = '/dashboard';
-            }, 500);
-            return;
-          }
-          
-          throw error;
+        } else {
+          toast({
+            title: "Erro ao entrar",
+            description: error.message === "Invalid login credentials" 
+              ? "Email ou senha inválidos. Verifique suas credenciais e tente novamente."
+              : error.message || "Ocorreu um erro ao tentar entrar.",
+            variant: "destructive",
+          });
         }
-        
-        toast({
-          title: "Erro ao entrar",
-          description: error.message === "Invalid login credentials" 
-            ? "Email ou senha inválidos. Verifique suas credenciais e tente novamente."
-            : error.message || "Ocorreu um erro ao tentar entrar.",
-          variant: "destructive",
-        });
         throw error;
       }
       
@@ -169,7 +223,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error("Sign in error:", error.message);
       // Toast notification already handled above
-      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -184,8 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Extract email options from userData if present
       const { emailRedirectTo, ...userMetadata } = userData;
       
-      // Define a list of test/special emails that should bypass confirmation
-      const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com', 'test@example.com'];
+      // Define a list of special emails that should bypass confirmation
+      const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com', 'focolaresce@gmail.com', 'test@example.com'];
       const isSpecialEmail = specialEmails.includes(email.trim().toLowerCase());
       
       const options: any = {
@@ -197,26 +250,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         options.emailRedirectTo = emailRedirectTo;
       }
       
+      // ALWAYS skip email confirmation for special emails
+      if (isSpecialEmail) {
+        console.log("Email especial detectado, pulando confirmação de email:", email);
+        options.emailConfirmation = {
+          skipConfirmation: true
+        };
+      }
+      
       // Check if email rate limit has been exceeded previously
       const lastRateLimitTime = localStorage.getItem('email_rate_limit_time');
       const isRateLimited = lastRateLimitTime && 
         (Date.now() - parseInt(lastRateLimitTime)) < (30 * 60 * 1000); // 30 minutes
       
-      // Skip email confirmation for special emails or if we've hit rate limits
-      if (isSpecialEmail || isRateLimited) {
-        console.log(`${isSpecialEmail ? "Email especial" : "Rate limit detected"}, pulando confirmação de email:`, email);
+      // Skip email confirmation if we've hit rate limits
+      if (isRateLimited) {
+        console.log("Rate limit detected, pulando confirmação de email:", email);
         options.emailConfirmation = {
           skipConfirmation: true
         };
         
-        if (isRateLimited) {
-          toast({
-            title: "Modo de teste ativado",
-            description: "Detectamos limitação de emails - o cadastro será feito sem confirmação por email.",
-          });
-        }
+        toast({
+          title: "Modo de teste ativado",
+          description: "Detectamos limitação de emails - o cadastro será feito sem confirmação por email.",
+        });
       }
       
+      console.log("Registrando com opções:", JSON.stringify(options));
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
