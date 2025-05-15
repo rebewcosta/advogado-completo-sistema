@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { HashLink } from 'react-router-hash-link';
 
 const Footer = () => {
   return (
@@ -32,10 +33,10 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Links Úteis</h3>
             <ul className="space-y-2">
-              <li><Link to="/sobre" className="text-gray-300 hover:text-white transition-colors">Sobre Nós</Link></li>
-              <li><Link to="/planos" className="text-gray-300 hover:text-white transition-colors">Planos e Preços</Link></li>
-              <li><Link to="/privacidade" className="text-gray-300 hover:text-white transition-colors">Política de Privacidade</Link></li>
-              <li><Link to="/termos" className="text-gray-300 hover:text-white transition-colors">Termos de Uso</Link></li>
+              <li><HashLink to="/#about" smooth className="text-gray-300 hover:text-white transition-colors">Sobre Nós</HashLink></li>
+              <li><HashLink to="/#pricing" smooth className="text-gray-300 hover:text-white transition-colors">Planos e Preços</HashLink></li>
+              <li><Link to="/termos-privacidade" className="text-gray-300 hover:text-white transition-colors">Política de Privacidade</Link></li>
+              <li><Link to="/termos-privacidade" className="text-gray-300 hover:text-white transition-colors">Termos de Uso</Link></li>
             </ul>
           </div>
           <div>

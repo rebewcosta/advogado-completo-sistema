@@ -16,12 +16,7 @@ import LoginPage from "./pages/LoginPage";
 import CadastroPage from "./pages/CadastroPage";
 import DashboardPage from "./pages/DashboardPage";
 import PagamentoPage from "./pages/PagamentoPage";
-
-// Páginas simples para os links do rodapé
-const SobrePage = () => <div className="min-h-screen p-8"><h1 className="text-3xl font-bold mb-4">Sobre Nós</h1><p>Informações sobre a empresa JusGestão.</p></div>;
-const PlanosPage = () => <div className="min-h-screen p-8"><h1 className="text-3xl font-bold mb-4">Planos e Preços</h1><p>Detalhes sobre os planos disponíveis.</p></div>;
-const PrivacidadePage = () => <div className="min-h-screen p-8"><h1 className="text-3xl font-bold mb-4">Política de Privacidade</h1><p>Nossa política de privacidade.</p></div>;
-const TermosPage = () => <div className="min-h-screen p-8"><h1 className="text-3xl font-bold mb-4">Termos de Uso</h1><p>Termos e condições de uso do sistema.</p></div>;
+import TermosPrivacidadePage from "./pages/TermosPrivacidadePage";
 
 const queryClient = new QueryClient();
 
@@ -44,11 +39,8 @@ const App = () => (
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/pagamento" element={<PagamentoPage />} />
           
-          {/* Novas rotas para os links do rodapé */}
-          <Route path="/sobre" element={<SobrePage />} />
-          <Route path="/planos" element={<PlanosPage />} />
-          <Route path="/privacidade" element={<PrivacidadePage />} />
-          <Route path="/termos" element={<TermosPage />} />
+          {/* Nova rota para Termos e Privacidade */}
+          <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
           
           {/* Redirecionamentos para garantir que as páginas estejam interligadas */}
           <Route path="/admin" element={<Navigate to="/dashboard" replace />} />
