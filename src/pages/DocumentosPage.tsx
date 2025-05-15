@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import DocumentoWarning from '@/components/DocumentoWarning';
+import DocumentoStorageInfo from '@/components/DocumentoStorageInfo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -43,25 +44,13 @@ import {
   Trash2, 
   Eye, 
   File, 
-  FilePlus 
+  FilePlus,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-// Tipos para documentos
-type DocumentType = 'contrato' | 'petição' | 'procuração' | 'decisão' | 'outro';
-
-interface Document {
-  id: string;
-  name: string;
-  type: DocumentType;
-  client: string;
-  process?: string;
-  createdAt: Date;
-  size: string;
-}
+import { useDocumentos, DocumentType, LIMITE_ARMAZENAMENTO_BYTES } from '@/hooks/useDocumentos';
 
 const DocumentosPage = () => {
-  const [documents, setDocuments] = useState<Document[]>(MOCK_DOCUMENTS);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
@@ -71,14 +60,25 @@ const DocumentosPage = () => {
   const [processNumber, setProcessNumber] = useState('');
   
   const { toast } = useToast();
+  const { 
+    documents, 
+    isLoading, 
+    isRefreshing, 
+    espacoDisponivel, 
+    formatarTamanhoArquivo, 
+    uploadDocumento, 
+    listarDocumentos,
+    obterUrlDocumento,
+    excluirDocumento
+  } = useDocumentos();
 
   // Filtrar documentos com base na pesquisa e tipo
   const filteredDocuments = documents.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         doc.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (doc.process && doc.process.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = doc.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         doc.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (doc.processo && doc.processo.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesType = filterType === 'all' || doc.type === filterType;
+    const matchesType = filterType === 'all' || doc.tipo === filterType;
     
     return matchesSearch && matchesType;
   });
@@ -86,12 +86,36 @@ const DocumentosPage = () => {
   // Manipular upload de arquivo
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+      const file = e.target.files[0];
+      
+      // Verificar tamanho do arquivo
+      if (file.size > LIMITE_ARMAZENAMENTO_BYTES) {
+        toast({
+          title: "Arquivo muito grande",
+          description: `O arquivo excede o limite máximo de 25MB.`,
+          variant: "destructive"
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      // Verificar se há espaço suficiente
+      if (file.size > espacoDisponivel) {
+        toast({
+          title: "Espaço insuficiente",
+          description: `Você não tem espaço suficiente. Disponível: ${formatarTamanhoArquivo(espacoDisponivel)}`,
+          variant: "destructive"
+        });
+        e.target.value = '';
+        return;
+      }
+      
+      setSelectedFile(file);
     }
   };
 
   // Manipular envio do formulário de upload
-  const handleUploadSubmit = (e: React.FormEvent) => {
+  const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedFile) {
@@ -103,68 +127,90 @@ const DocumentosPage = () => {
       return;
     }
 
-    // Criar novo documento
-    const newDocument: Document = {
-      id: `doc-${Date.now()}`,
-      name: selectedFile.name,
-      type: documentType,
-      client: clientName,
-      process: processNumber || undefined,
-      createdAt: new Date(),
-      size: formatFileSize(selectedFile.size),
-    };
+    if (!clientName) {
+      toast({
+        title: "Erro no upload",
+        description: "Por favor, informe o nome do cliente.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setDocuments([newDocument, ...documents]);
-    setIsUploadDialogOpen(false);
-    setSelectedFile(null);
-    setDocumentType('outro');
-    setClientName('');
-    setProcessNumber('');
+    try {
+      // Fazer upload do documento
+      await uploadDocumento(
+        selectedFile,
+        documentType,
+        clientName,
+        processNumber || undefined
+      );
 
-    toast({
-      title: "Documento enviado com sucesso",
-      description: `${selectedFile.name} foi adicionado à sua biblioteca.`,
-    });
-  };
-
-  // Formatar tamanho do arquivo
-  const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' bytes';
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    else return (bytes / 1048576).toFixed(1) + ' MB';
+      // Fechar diálogo e resetar campos
+      setIsUploadDialogOpen(false);
+      setSelectedFile(null);
+      setDocumentType('outro');
+      setClientName('');
+      setProcessNumber('');
+      
+      toast({
+        title: "Documento enviado com sucesso",
+        description: `${selectedFile.name} foi adicionado à sua biblioteca.`,
+      });
+    } catch (error) {
+      console.error('Erro no upload:', error);
+    }
   };
 
   // Formatar data
-  const formatDate = (date: Date): string => {
+  const formatDate = (dateString: string): string => {
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric'
-    }).format(date);
+    }).format(new Date(dateString));
   };
 
   // Manipular ações de documento
-  const handleDocumentAction = (action: string, document: Document) => {
+  const handleDocumentAction = async (action: string, document: any) => {
     switch (action) {
       case 'view':
-        toast({
-          title: "Visualizando documento",
-          description: `Abrindo ${document.name}`,
-        });
+        try {
+          const url = await obterUrlDocumento(document.path);
+          window.open(url, '_blank');
+        } catch (error) {
+          console.error('Erro ao visualizar documento:', error);
+        }
         break;
+        
       case 'download':
-        toast({
-          title: "Download iniciado",
-          description: `Baixando ${document.name}`,
-        });
+        try {
+          const url = await obterUrlDocumento(document.path);
+          
+          // Criar um link temporário para download
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = document.nome;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          toast({
+            title: "Download iniciado",
+            description: `Baixando ${document.nome}`,
+          });
+        } catch (error) {
+          console.error('Erro ao baixar documento:', error);
+        }
         break;
+        
       case 'delete':
-        setDocuments(documents.filter(doc => doc.id !== document.id));
-        toast({
-          title: "Documento excluído",
-          description: `${document.name} foi removido da sua biblioteca.`,
-        });
+        try {
+          await excluirDocumento(document.id, document.path);
+        } catch (error) {
+          console.error('Erro ao excluir documento:', error);
+        }
         break;
+        
       default:
         break;
     }
@@ -178,13 +224,20 @@ const DocumentosPage = () => {
             <h1 className="text-2xl font-bold">Documentos</h1>
             <p className="text-gray-600">Gerencie todos os documentos do seu escritório</p>
           </div>
-          <Button onClick={() => setIsUploadDialogOpen(true)} className="bg-lawyer-primary hover:bg-lawyer-primary/90">
+          <Button 
+            onClick={() => setIsUploadDialogOpen(true)} 
+            className="bg-lawyer-primary hover:bg-lawyer-primary/90"
+            disabled={espacoDisponivel < 1024} // Desabilitar se menos de 1KB disponível
+          >
             <Upload className="mr-2 h-4 w-4" />
             Enviar Documento
           </Button>
         </div>
         
         <DocumentoWarning />
+        
+        {/* Informações de armazenamento */}
+        <DocumentoStorageInfo />
         
         <div className="bg-white rounded-lg shadow-sm p-6">
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -214,6 +267,13 @@ const DocumentosPage = () => {
                   <SelectItem value="outro">Outro</SelectItem>
                 </SelectContent>
               </Select>
+              <Button 
+                variant="outline" 
+                onClick={() => listarDocumentos()} 
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? "Atualizando..." : "Atualizar"}
+              </Button>
             </div>
           </div>
           
@@ -236,14 +296,14 @@ const DocumentosPage = () => {
                     <TableCell className="font-medium">
                       <div className="flex items-center">
                         <FileText className="mr-2 h-4 w-4 text-gray-500" />
-                        {doc.name}
+                        {doc.nome}
                       </div>
                     </TableCell>
-                    <TableCell className="capitalize">{doc.type}</TableCell>
-                    <TableCell>{doc.client}</TableCell>
-                    <TableCell>{doc.process || '-'}</TableCell>
-                    <TableCell>{formatDate(doc.createdAt)}</TableCell>
-                    <TableCell>{doc.size}</TableCell>
+                    <TableCell className="capitalize">{doc.tipo}</TableCell>
+                    <TableCell>{doc.cliente}</TableCell>
+                    <TableCell>{doc.processo || '-'}</TableCell>
+                    <TableCell>{formatDate(doc.created_at)}</TableCell>
+                    <TableCell>{formatarTamanhoArquivo(doc.tamanho_bytes)}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -277,20 +337,30 @@ const DocumentosPage = () => {
               <File className="mx-auto h-12 w-12 text-gray-300" />
               <h3 className="mt-4 text-lg font-medium">Nenhum documento encontrado</h3>
               <p className="mt-1 text-gray-500">
-                {searchTerm || filterType ? 
+                {searchTerm || filterType !== 'all' ? 
                   'Tente ajustar seus filtros de busca' : 
                   'Comece enviando seu primeiro documento'}
               </p>
-              {!searchTerm && !filterType && (
+              {!searchTerm && filterType === 'all' && (
                 <Button 
                   variant="outline" 
                   className="mt-4"
                   onClick={() => setIsUploadDialogOpen(true)}
+                  disabled={espacoDisponivel < 1024} // Desabilitar se menos de 1KB disponível
                 >
                   <FilePlus className="mr-2 h-4 w-4" />
                   Enviar documento
                 </Button>
               )}
+            </div>
+          )}
+          
+          {espacoDisponivel < 1024 && (
+            <div className="mt-4 bg-amber-50 border border-amber-200 rounded-md p-3 flex items-center text-amber-800">
+              <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
+              <p className="text-sm">
+                Você não tem espaço suficiente para enviar novos documentos. Exclua alguns documentos antigos para liberar espaço.
+              </p>
             </div>
           )}
         </div>
@@ -316,18 +386,26 @@ const DocumentosPage = () => {
                   type="file"
                   onChange={handleFileChange}
                   required
+                  disabled={isLoading}
                 />
                 {selectedFile && (
                   <p className="text-xs text-gray-500">
-                    {selectedFile.name} ({formatFileSize(selectedFile.size)})
+                    {selectedFile.name} ({formatarTamanhoArquivo(selectedFile.size)})
                   </p>
                 )}
+                <p className="text-xs text-gray-500">
+                  Limite máximo: 25MB. Espaço disponível: {formatarTamanhoArquivo(espacoDisponivel)}
+                </p>
               </div>
               <div className="grid gap-2">
                 <label htmlFor="type" className="text-sm font-medium">
                   Tipo de documento
                 </label>
-                <Select value={documentType} onValueChange={(value) => setDocumentType(value as DocumentType)}>
+                <Select 
+                  value={documentType} 
+                  onValueChange={(value) => setDocumentType(value as DocumentType)}
+                  disabled={isLoading}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
@@ -350,6 +428,7 @@ const DocumentosPage = () => {
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="Nome do cliente"
                   required
+                  disabled={isLoading}
                 />
               </div>
               <div className="grid gap-2">
@@ -361,14 +440,25 @@ const DocumentosPage = () => {
                   value={processNumber}
                   onChange={(e) => setProcessNumber(e.target.value)}
                   placeholder="Ex: 0001234-56.2023.8.26.0000"
+                  disabled={isLoading}
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsUploadDialogOpen(false)}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsUploadDialogOpen(false)}
+                disabled={isLoading}
+              >
                 Cancelar
               </Button>
-              <Button type="submit">Enviar documento</Button>
+              <Button 
+                type="submit"
+                disabled={isLoading || !selectedFile}
+              >
+                {isLoading ? "Enviando..." : "Enviar documento"}
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -376,61 +466,5 @@ const DocumentosPage = () => {
     </AdminLayout>
   );
 };
-
-// Dados de exemplo
-const MOCK_DOCUMENTS: Document[] = [
-  {
-    id: 'doc-1',
-    name: 'Contrato de Prestação de Serviços - Empresa ABC.pdf',
-    type: 'contrato',
-    client: 'Empresa ABC Ltda',
-    process: '0012345-67.2023.8.26.0000',
-    createdAt: new Date('2023-06-10'),
-    size: '1.2 MB',
-  },
-  {
-    id: 'doc-2',
-    name: 'Petição Inicial - João Silva.docx',
-    type: 'petição',
-    client: 'João Silva',
-    process: '0023456-78.2023.8.26.0000',
-    createdAt: new Date('2023-06-12'),
-    size: '845 KB',
-  },
-  {
-    id: 'doc-3',
-    name: 'Procuração - Maria Oliveira.pdf',
-    type: 'procuração',
-    client: 'Maria Oliveira',
-    createdAt: new Date('2023-06-15'),
-    size: '320 KB',
-  },
-  {
-    id: 'doc-4',
-    name: 'Decisão Judicial - Caso Empresa XYZ.pdf',
-    type: 'decisão',
-    client: 'Empresa XYZ S.A.',
-    process: '0034567-89.2023.8.26.0000',
-    createdAt: new Date('2023-06-18'),
-    size: '1.5 MB',
-  },
-  {
-    id: 'doc-5',
-    name: 'Contrato Social - Empresa ABC.pdf',
-    type: 'contrato',
-    client: 'Empresa ABC Ltda',
-    createdAt: new Date('2023-06-20'),
-    size: '2.1 MB',
-  },
-  {
-    id: 'doc-6',
-    name: 'Recurso de Apelação - Caso Silva.docx',
-    type: 'petição',
-    client: 'João Silva',
-    process: '0012345-67.2023.8.26.0000',
-    createdAt: new Date('2023-06-22'),
-    size: '930 KB',
-  },
-];
 
 export default DocumentosPage;

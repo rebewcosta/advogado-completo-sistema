@@ -9,13 +9,58 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      documentos: {
+        Row: {
+          cliente: string
+          content_type: string
+          created_at: string
+          id: string
+          nome: string
+          path: string
+          processo: string | null
+          tamanho_bytes: number
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          cliente: string
+          content_type: string
+          created_at?: string
+          id?: string
+          nome: string
+          path: string
+          processo?: string | null
+          tamanho_bytes: number
+          tipo: string
+          user_id: string
+        }
+        Update: {
+          cliente?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          nome?: string
+          path?: string
+          processo?: string | null
+          tamanho_bytes?: number
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_user_storage_limit: {
+        Args: { uid: string; novo_tamanho: number }
+        Returns: boolean
+      }
+      get_user_storage_usage: {
+        Args: { uid: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
