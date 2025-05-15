@@ -18,7 +18,7 @@ serve(async (req) => {
   try {
     // Obter os dados do corpo da solicitação
     const { nomePlano, valor, emailCliente } = await req.json();
-
+    
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
       return new Response(
@@ -27,9 +27,20 @@ serve(async (req) => {
       );
     }
 
+    // Log para debug
+    console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}`);
+    
     // Inicializar o Stripe com a chave secreta (armazenada como variável de ambiente)
-    // IMPORTANTE: Você precisa configurar esta variável no painel do Supabase
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) {
+      console.error("STRIPE_SECRET_KEY não configurada no ambiente");
+      return new Response(
+        JSON.stringify({ error: "Configuração de pagamento incompleta" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+    
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
 
@@ -43,6 +54,7 @@ serve(async (req) => {
     let idCliente;
     if (clientes.data.length > 0) {
       idCliente = clientes.data[0].id;
+      console.log(`Cliente existente encontrado: ${idCliente}`);
     } else {
       // Criar um novo cliente no Stripe
       const novoCliente = await stripe.customers.create({
@@ -50,6 +62,7 @@ serve(async (req) => {
         name: emailCliente.split('@')[0], // Usar parte do email como nome (exemplo)
       });
       idCliente = novoCliente.id;
+      console.log(`Novo cliente criado: ${idCliente}`);
     }
 
     // Criar a sessão de checkout
@@ -75,6 +88,8 @@ serve(async (req) => {
       success_url: `${req.headers.get("origin")}/dashboard?success=true`,
       cancel_url: `${req.headers.get("origin")}/pagamento?canceled=true`,
     });
+
+    console.log(`Sessão de checkout criada: ${session.id}, URL: ${session.url}`);
 
     // Retornar o ID da sessão
     return new Response(
