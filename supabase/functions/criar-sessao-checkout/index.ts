@@ -17,7 +17,9 @@ serve(async (req) => {
 
   try {
     // Obter os dados do corpo da solicitação
-    const { nomePlano, valor, emailCliente, modo = 'production' } = await req.json();
+    // Forçamos o modo como 'production' para garantir que estamos no ambiente real
+    const { nomePlano, valor, emailCliente } = await req.json();
+    const modo = 'production'; // Forçando modo de produção
     
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
@@ -41,8 +43,15 @@ serve(async (req) => {
       );
     }
     
-    // Usar a chave do Stripe conforme configurada no ambiente
-    console.log(`Iniciando Stripe no modo ${modo}`);
+    // Log para verificar se estamos no modo de produção
+    console.log(`Iniciando Stripe no modo PRODUÇÃO`);
+    
+    // Verificar se estamos usando uma chave de produção
+    if (stripeSecretKey.startsWith('sk_test_')) {
+      console.warn("ATENÇÃO: Estamos usando uma chave de TESTE no modo de PRODUÇÃO!");
+    } else if (stripeSecretKey.startsWith('sk_live_')) {
+      console.log("Confirmado: Usando chave de PRODUÇÃO corretamente.");
+    }
     
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",

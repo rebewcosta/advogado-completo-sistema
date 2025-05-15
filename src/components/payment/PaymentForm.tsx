@@ -44,14 +44,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       
       console.log('Iniciando checkout com email:', email);
       
-      // Usar o modo apropriado baseado no ambiente
-      const modo = isTestEnvironment ? 'test' : 'production';
-      
+      // Sempre usar modo de produção para pagamentos reais
+      // Isso garantirá que o Stripe use cartões reais
       const result = await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
         emailCliente: email,
-        modo: modo
+        modo: 'production' // Sempre usar ambiente de produção
       });
       
       console.log('Resultado do checkout:', result);
@@ -140,7 +139,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             ) : (
               <span className="flex items-center">
                 <CreditCard className="mr-2 h-5 w-5" /> 
-                {isTestEnvironment ? "TESTE - Pagar com Stripe - R$ 127,00" : "Pagar com Stripe - R$ 127,00"}
+                Pagar com Stripe - R$ 127,00
               </span>
             )}
           </Button>
