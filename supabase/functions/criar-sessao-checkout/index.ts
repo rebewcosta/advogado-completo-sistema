@@ -44,31 +44,11 @@ serve(async (req) => {
       apiVersion: "2023-10-16",
     });
 
-    // Verificar se já existe um cliente com este e-mail
-    const clientes = await stripe.customers.list({
-      email: emailCliente,
-      limit: 1,
-    });
-
-    // Definir ID do cliente ou criar um novo
-    let idCliente;
-    if (clientes.data.length > 0) {
-      idCliente = clientes.data[0].id;
-      console.log(`Cliente existente encontrado: ${idCliente}`);
-    } else {
-      // Criar um novo cliente no Stripe
-      const novoCliente = await stripe.customers.create({
-        email: emailCliente,
-        name: emailCliente.split('@')[0], // Usar parte do email como nome (exemplo)
-      });
-      idCliente = novoCliente.id;
-      console.log(`Novo cliente criado: ${idCliente}`);
-    }
-
-    // Criar a sessão de checkout
+    // Criar a sessão de checkout diretamente sem verificar cliente existente
+    // Isso contorna o problema de permissões da chave restrita
     const session = await stripe.checkout.sessions.create({
-      customer: idCliente,
       payment_method_types: ["card"],
+      customer_email: emailCliente, // Usar email do cliente diretamente
       line_items: [
         {
           price_data: {

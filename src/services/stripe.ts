@@ -71,9 +71,7 @@ export const iniciarCheckout = async ({
 
     console.log('Sessão de checkout criada com sucesso:', data);
     
-    // Abre o Stripe checkout em uma nova guia
-    window.open(data.url, '_blank');
-    
+    // Retorna os dados para que o componente possa fazer o redirecionamento
     return data;
   } catch (error) {
     console.error('Erro ao iniciar pagamento:', error);

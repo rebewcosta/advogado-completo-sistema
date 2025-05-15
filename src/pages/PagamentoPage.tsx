@@ -36,12 +36,23 @@ const PagamentoPage = () => {
     setIsProcessing(true);
 
     try {
+      console.log('Iniciando checkout com email:', email);
+      
       // Inicia o checkout utilizando o Stripe
-      await iniciarCheckout({
+      const result = await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
         emailCliente: email // Usamos o email informado pelo usuário
       });
+      
+      console.log('Resultado do checkout:', result);
+      
+      if (result && result.url) {
+        // Redirecionar para a URL do Stripe checkout
+        window.location.href = result.url;
+      } else {
+        throw new Error('URL de checkout não retornada');
+      }
       
       setIsProcessing(false);
       
