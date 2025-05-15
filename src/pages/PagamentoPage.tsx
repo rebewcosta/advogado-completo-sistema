@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
-import { ArrowLeft, Check, CreditCard } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { ArrowLeft, Check, CreditCard, Info } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { iniciarCheckout } from '@/services/stripe';
 
@@ -10,7 +10,23 @@ const PagamentoPage = () => {
   const [step, setStep] = useState(1);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
+  
+  // Verificar parâmetros de URL ao carregar a página
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('success') === 'true') {
+      setStep(2); // Mostrar tela de sucesso
+    }
+    if (params.get('canceled') === 'true') {
+      toast({
+        title: "Pagamento cancelado",
+        description: "Você cancelou o processo de pagamento. Tente novamente quando estiver pronto.",
+        variant: "destructive"
+      });
+    }
+  }, [location, toast]);
 
   // Função para processar o pagamento com Stripe
   const handleSubmitPayment = async (e: React.FormEvent) => {
@@ -22,11 +38,9 @@ const PagamentoPage = () => {
       await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
-        emailCliente: email // Agora vamos usar o email informado pelo usuário
+        emailCliente: email // Usamos o email informado pelo usuário
       });
       
-      // Após o redirecionamento para o Stripe, quando o usuário voltar
-      // ele será direcionado para a URL de sucesso configurada na função
       setIsProcessing(false);
       
       toast({
@@ -38,7 +52,7 @@ const PagamentoPage = () => {
       setIsProcessing(false);
       toast({
         title: "Erro no pagamento",
-        description: "Houve um problema ao processar seu pagamento.",
+        description: "Houve um problema ao processar seu pagamento. Por favor, tente novamente.",
         variant: "destructive"
       });
     }
@@ -118,6 +132,21 @@ const PagamentoPage = () => {
             
             <div className="mt-6 text-center text-sm text-gray-500">
               <p>Seu pagamento é seguro e processado em ambiente criptografado pelo Stripe.</p>
+            </div>
+            
+            {/* Seção de testes para desenvolvimento */}
+            <div className="mt-8 border-t pt-6">
+              <div className="flex items-center text-sm text-gray-600 mb-2">
+                <Info className="h-4 w-4 mr-1 text-gray-500" />
+                <span className="font-medium">Dados para teste (ambiente de desenvolvimento)</span>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-md text-sm">
+                <p><span className="font-medium">Cartão:</span> 4242 4242 4242 4242</p>
+                <p><span className="font-medium">Expiração:</span> Qualquer data futura (ex: 12/25)</p>
+                <p><span className="font-medium">CVV:</span> Qualquer número de 3 dígitos (ex: 123)</p>
+                <p><span className="font-medium">Nome:</span> Qualquer nome</p>
+                <p className="mt-1 text-gray-500 italic">Estes são dados de teste do Stripe, sem cobrança real.</p>
+              </div>
             </div>
           </div>
         ) : (
