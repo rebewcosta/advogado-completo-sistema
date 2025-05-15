@@ -40,6 +40,9 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
           console.log("Email exato webercostag@gmail.com detectado no componente! Concedendo acesso direto.");
           setIsAssinante(true);
           setIsLoading(false);
+          
+          // Log extra para debugging
+          console.log("Acesso concedido para", user.email, "- usuário pode acessar todas as rotas");
           return;
         }
         
@@ -108,6 +111,10 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
     location.pathname.startsWith(rota)
   );
 
+  console.log("Rota atual:", location.pathname);
+  console.log("É rota permitida?", rotaAtualPermitida);
+  console.log("Usuário é assinante?", isAssinante);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -117,9 +124,11 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
   }
 
   if (!isAssinante && !rotaAtualPermitida) {
+    console.log("Redirecionando para /perfil - usuário não tem acesso à rota atual");
     return <Navigate to="/perfil" state={{ from: location }} replace />;
   }
 
+  console.log("Renderizando conteúdo - acesso permitido");
   return <>{children}</>;
 };
 

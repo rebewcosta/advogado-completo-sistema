@@ -39,7 +39,7 @@ serve(async (req) => {
     // Special handling for specific emails
     const specialEmails = ["webercostag@gmail.com", "teste@sisjusgestao.com.br"]
     
-    // Exact match check for webercostag@gmail.com
+    // Exact match check for webercostag@gmail.com with detailed logging
     if (user.email === "webercostag@gmail.com") {
       console.log("Email exato webercostag@gmail.com detectado na função! Retornando subscribed: true")
       return new Response(

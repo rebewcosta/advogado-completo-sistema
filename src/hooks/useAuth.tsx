@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           toast({
             title: "Verificação de email pendente",
             description: "Seu email ainda não foi confirmado. Por favor, verifique sua caixa de entrada para confirmar seu email ou peça uma nova confirmação.",
-            variant: "warning",
+            variant: "destructive", // Changed from "warning" to "destructive" to fix TypeScript error
           });
           
           // For testing purposes, provide a direct path for webercostag@gmail.com
@@ -157,6 +157,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "Bem-vindo de volta!",
       });
       
+      // Force navigation to dashboard to ensure proper routing
+      window.location.href = '/dashboard';
       return;
     } catch (error: any) {
       console.error("Sign in error:", error.message);
