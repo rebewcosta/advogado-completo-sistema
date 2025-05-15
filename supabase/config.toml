@@ -1,1 +1,8 @@
+
 project_id = "lqprcsquknlegzmzdoct"
+
+[functions.criar-sessao-checkout]
+verify_jwt = false
+
+[functions.criar-portal-cliente]
+verify_jwt = false

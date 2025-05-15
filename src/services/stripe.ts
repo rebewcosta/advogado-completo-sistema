@@ -68,3 +68,38 @@ export const iniciarCheckout = async ({
     throw error;
   }
 };
+
+export const abrirPortalCliente = async () => {
+  try {
+    console.log('Abrindo portal do cliente Stripe');
+    
+    // Chama a edge function do Supabase para criar uma sessão do portal do cliente
+    const { data, error } = await supabase.functions.invoke('criar-portal-cliente');
+
+    if (error) {
+      console.error('Erro ao criar sessão do portal do cliente:', error);
+      throw new Error(`Erro ao criar sessão do portal: ${error.message || JSON.stringify(error)}`);
+    }
+
+    if (!data || !data.url) {
+      console.error('Resposta inválida da API do portal:', data);
+      throw new Error('Resposta inválida da API do portal: ' + JSON.stringify(data));
+    }
+
+    console.log('Sessão do portal criada com sucesso:', data);
+    
+    // Retorna a URL do portal
+    return data.url;
+  } catch (error) {
+    console.error('Erro ao abrir portal do cliente:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('Detalhes completos do erro:', error);
+    
+    toast({
+      title: "Erro ao abrir portal do cliente",
+      description: errorMessage,
+      variant: "destructive"
+    });
+    throw error;
+  }
+};

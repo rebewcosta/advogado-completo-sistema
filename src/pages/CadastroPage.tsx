@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/useAuth';
 
 const CadastroPage = () => {
   const [nome, setNome] = useState('');
@@ -12,8 +13,9 @@ const CadastroPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signUp } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
@@ -27,9 +29,8 @@ const CadastroPage = () => {
     
     setIsLoading(true);
 
-    // Simulate registration
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await signUp(email, password, { nome });
       toast({
         title: "Cadastro realizado com sucesso",
         description: "Você será redirecionado para o pagamento.",
@@ -37,7 +38,10 @@ const CadastroPage = () => {
       
       // Redirect to payment page after successful registration
       navigate('/pagamento');
-    }, 1500);
+    } catch (error) {
+      // Erro já tratado no hook useAuth
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -149,7 +153,7 @@ const CadastroPage = () => {
                   </div>
                   <div className="ml-3 text-sm">
                     <label htmlFor="terms" className="text-gray-600">
-                      Concordo com os <a href="#" className="text-lawyer-primary hover:underline">Termos de Serviço</a> e <a href="#" className="text-lawyer-primary hover:underline">Política de Privacidade</a>
+                      Concordo com os <Link to="/termos-privacidade" className="text-lawyer-primary hover:underline">Termos de Serviço</Link> e <Link to="/termos-privacidade" className="text-lawyer-primary hover:underline">Política de Privacidade</Link>
                     </label>
                   </div>
                 </div>

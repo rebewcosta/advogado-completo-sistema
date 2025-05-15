@@ -14,28 +14,49 @@ import PagamentoPage from './pages/PagamentoPage';
 import ConfiguracoesPage from './pages/ConfiguracoesPage';
 import NotFound from './pages/NotFound';
 import TermosPrivacidadePage from './pages/TermosPrivacidadePage';
+import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
 import './App.css';
+
+import { AuthProvider } from './hooks/useAuth';
+import ProtectedRoute from './components/ProtectedRoute';
+import { Toaster } from '@/components/ui/toaster';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/cadastro" element={<CadastroPage />} />
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/clientes" element={<ClientesPage />} />
-        <Route path="/processos" element={<ProcessosPage />} />
-        <Route path="/agenda" element={<AgendaPage />} />
-        <Route path="/financeiro" element={<FinanceiroPage />} />
-        <Route path="/documentos" element={<DocumentosPage />} />
-        <Route path="/relatorios" element={<RelatoriosPage />} />
-        <Route path="/pagamento" element={<PagamentoPage />} />
-        <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-        <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* Rotas públicas */}
+          <Route path="/" element={<Index />} />
+          
+          {/* Rotas de autenticação - acessíveis apenas quando não logado */}
+          <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/cadastro" element={<CadastroPage />} />
+          </Route>
+          
+          {/* Rota de pagamento - acessível sem proteção */}
+          <Route path="/pagamento" element={<PagamentoPage />} />
+          <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
+          
+          {/* Rotas protegidas - requerem autenticação */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/clientes" element={<ClientesPage />} />
+            <Route path="/processos" element={<ProcessosPage />} />
+            <Route path="/agenda" element={<AgendaPage />} />
+            <Route path="/financeiro" element={<FinanceiroPage />} />
+            <Route path="/documentos" element={<DocumentosPage />} />
+            <Route path="/relatorios" element={<RelatoriosPage />} />
+            <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="/perfil" element={<PerfilUsuarioPage />} />
+          </Route>
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+        <Toaster />
+      </Router>
+    </AuthProvider>
   );
 }
 
