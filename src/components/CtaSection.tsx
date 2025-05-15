@@ -1,29 +1,22 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const CtaSection = () => {
-  const handleWhatsAppContact = () => {
-    window.open('https://wa.me/5588999981618', '_blank');
-  };
-
   return (
-    <section className="bg-lawyer-primary py-16 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto text-center">
-        <h2 className="text-3xl font-bold text-white mb-4">
-          Pronto para otimizar a gestão do seu escritório?
+    <section className="py-16 bg-lawyer-dark text-white">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold mb-6">
+          Pronto para transformar a gestão do seu escritório?
         </h2>
-        <p className="text-xl text-white/90 mb-8 max-w-3xl mx-auto">
-          Acesso Mensal por apenas R$99,90. Cancele quando quiser.
+        <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+          Junte-se a milhares de advogados que já otimizaram seus escritórios com o JusGestão.
         </p>
-        <div className="space-x-4">
-          <Button 
-            onClick={handleWhatsAppContact}
-            size="lg" 
-            className="bg-white text-lawyer-primary hover:bg-gray-100"
-          >
-            Entre em contato
-          </Button>
+        <div className="flex justify-center">
+          <Link to="/cadastro" className="btn-primary">
+            Comece agora <ArrowRight className="h-5 w-5" />
+          </Link>
         </div>
       </div>
     </section>
