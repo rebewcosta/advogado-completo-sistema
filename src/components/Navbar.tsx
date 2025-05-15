@@ -16,10 +16,17 @@ import {
   User,
   Scale
 } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState(3);
+  const { user } = useAuth();
+  
+  // Obtém o nome do usuário ou um valor padrão
+  const userName = user ? 
+    (user.user_metadata?.nome || user.email?.split('@')[0] || "Usuário") : 
+    "Visitante";
 
   return (
     <nav className="bg-lawyer-dark text-white px-4 py-3 shadow-md">
@@ -65,7 +72,7 @@ const Navbar = () => {
             <div className="w-8 h-8 bg-lawyer-primary rounded-full flex items-center justify-center">
               <User className="w-4 h-4" />
             </div>
-            <span className="font-medium">Dr. Silva</span>
+            <span className="font-medium">{userName}</span>
           </div>
         </div>
 
@@ -115,7 +122,7 @@ const Navbar = () => {
                 <div className="w-8 h-8 bg-lawyer-primary rounded-full flex items-center justify-center">
                   <User className="w-4 h-4" />
                 </div>
-                <span className="font-medium">Dr. Silva</span>
+                <span className="font-medium">{userName}</span>
               </div>
             </div>
           </div>
