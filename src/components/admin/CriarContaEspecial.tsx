@@ -15,6 +15,7 @@ const CriarContaEspecial: React.FC = () => {
   const [nome, setNome] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [contasCriadas, setContasCriadas] = useState<Array<{email: string, nome: string}>>([]);
   
   const { createSpecialAccount } = useAuth();
   const { toast } = useToast();
@@ -51,6 +52,9 @@ const CriarContaEspecial: React.FC = () => {
       
       // Mostrar mensagem de sucesso
       setSuccess(true);
+      
+      // Adicionar à lista de contas criadas
+      setContasCriadas(prev => [...prev, {email, nome}]);
       
       // Limpar os campos do formulário
       setEmail('');
@@ -129,6 +133,19 @@ const CriarContaEspecial: React.FC = () => {
             />
           </div>
         </form>
+        
+        {contasCriadas.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-sm font-medium mb-2">Contas especiais criadas nesta sessão:</h3>
+            <ul className="bg-gray-50 p-3 rounded-md text-sm">
+              {contasCriadas.map((conta, index) => (
+                <li key={index} className="mb-1 pb-1 border-b border-gray-100 last:border-0 last:mb-0 last:pb-0">
+                  <span className="font-medium">{conta.email}</span> - {conta.nome}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </CardContent>
       <CardFooter>
         <Button

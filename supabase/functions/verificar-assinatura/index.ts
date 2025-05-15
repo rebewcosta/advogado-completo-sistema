@@ -37,7 +37,7 @@ serve(async (req) => {
     console.log("User email in verificar-assinatura:", user.email)
     
     // Special handling for specific emails
-    const specialEmails = ["webercostag@gmail.com", "teste@sisjusgestao.com.br"]
+    const specialEmails = ["webercostag@gmail.com", "teste@sisjusgestao.com.br", "logo.advocacia@gmail.com"]
     
     // Exact match check for webercostag@gmail.com with detailed logging
     if (user.email === "webercostag@gmail.com") {
