@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -216,8 +217,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "Verifique seu email para confirmar seu cadastro.",
       });
       
-      // Log for debugging that we're using custom sender
-      console.log("Registration email will be sent from:", emailSender || "default Supabase sender");
+      // Log for debugging
+      console.log("Registration email will be sent from: default Supabase sender");
       
     } catch (error: any) {
       toast({
