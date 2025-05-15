@@ -13,6 +13,7 @@ const PagamentoPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState('');
+  const [errorDetails, setErrorDetails] = useState('');
   
   const isTestEnvironment = process.env.NODE_ENV !== 'production';
   
@@ -39,6 +40,7 @@ const PagamentoPage = () => {
   // Função para processar o pagamento com Stripe
   const handleSubmitPayment = async (e) => {
     e.preventDefault();
+    setErrorDetails('');
     
     if (!email) {
       toast({
@@ -68,7 +70,7 @@ const PagamentoPage = () => {
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
         emailCliente: email, // Usamos o email informado pelo usuário
-        modo: isTestEnvironment ? 'test' : 'production'
+        modo: 'test' // Sempre usar o modo de teste para esta demo
       });
       
       console.log('Resultado do checkout:', result);
@@ -79,7 +81,7 @@ const PagamentoPage = () => {
           description: "Você será redirecionado para a página de pagamento do Stripe.",
         });
         
-        // Usamos window.location.href para garantir um redirecionamento completo
+        // Redirecionamento para a página de pagamento do Stripe
         window.location.href = result.url;
       } else {
         throw new Error('URL de checkout não retornada');
@@ -87,6 +89,7 @@ const PagamentoPage = () => {
     } catch (error) {
       console.error('Erro no pagamento:', error);
       setIsProcessing(false);
+      setErrorDetails(error.message || 'Erro desconhecido');
       toast({
         title: "Erro no pagamento",
         description: "Houve um problema ao processar seu pagamento. Por favor, tente novamente.",
@@ -161,10 +164,10 @@ const PagamentoPage = () => {
                 </div>
                 
                 <div className="pt-4">
-                  <button 
+                  <Button 
                     type="submit"
                     disabled={isProcessing || !email}
-                    className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-lawyer-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lawyer-primary ${isProcessing ? 'opacity-75 cursor-not-allowed' : ''}`}
+                    className={`w-full ${isProcessing ? 'opacity-75 cursor-not-allowed' : ''}`}
                   >
                     {isProcessing ? (
                       <span className="flex items-center justify-center">
@@ -177,8 +180,16 @@ const PagamentoPage = () => {
                     ) : (
                       'Pagar com Stripe - R$ 127,00'
                     )}
-                  </button>
+                  </Button>
                 </div>
+
+                {errorDetails && (
+                  <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-800">
+                      <strong>Detalhes do erro:</strong> {errorDetails}
+                    </p>
+                  </div>
+                )}
               </div>
             </form>
             

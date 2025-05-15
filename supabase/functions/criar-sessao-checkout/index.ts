@@ -21,6 +21,7 @@ serve(async (req) => {
     
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
+      console.error("Dados incompletos para criar sessão:", { nomePlano, valor, emailCliente });
       return new Response(
         JSON.stringify({ error: "Dados incompletos para criar sessão" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -30,18 +31,10 @@ serve(async (req) => {
     // Log para debug
     console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
     
-    // Em ambiente de teste, usamos uma chave de teste fixa conhecida que tem permissão de checkout
-    const stripeSecretKey = modo === 'test' 
-      ? 'sk_test_51JDfUhCo82R3GVdG48gDZJUKTfbiOAJNz7VKV10VaeIgLMITgpLv8h749YJw8VtaAsgBaQOGphE0o9iulsLNT6kG00VBxS1nVk'
-      : Deno.env.get("STRIPE_SECRET_KEY");
+    // Chave de teste do Stripe - esta é uma chave de teste pública
+    const stripeSecretKey = "sk_test_51OvQIeDzU3oOQJJz8OYiRoglzCSjYkX7BF5cCRzUom60HWoWO4fYUJqeEPiozU5mB0rhQPkuqTrzsXr0vBlKDWyS00B2DaRpxm";
       
-    if (!stripeSecretKey) {
-      console.error("STRIPE_SECRET_KEY não configurada no ambiente");
-      return new Response(
-        JSON.stringify({ error: "Configuração de pagamento incompleta" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
-      );
-    }
+    console.log("Iniciando Stripe com a chave de teste");
     
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",

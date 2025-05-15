@@ -8,7 +8,7 @@ import { toast } from "@/hooks/use-toast";
 const stripePromise = loadStripe(
   process.env.NODE_ENV === 'production'
     ? 'pk_live_51JDfUhCo82R3GVdGoUZ9LMGKs1l8g2VCOCHfFFXECAHzV3d8DrlYOOHHapBNCtPkRrZizDTAYpW0CdTWfnF4dxZs00YDDLBKm7'
-    : 'pk_test_51JDfUhCo82R3GVdGoUZ9LMGKs1l8g2VCOCHfFFXECAHzV3d8DrlYOOHHapBNCtPkRrZizDTAYpW0CdTWfnF4dxZs00YDDLBKm7'
+    : 'pk_test_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd'
 );
 
 interface DadosPagamento {
@@ -37,7 +37,6 @@ export const iniciarCheckout = async ({
         nomePlano,
         valor,
         emailCliente,
-        // Forçamos o modo de teste para desenvolvimento
         modo: modo
       }
     });
@@ -49,7 +48,7 @@ export const iniciarCheckout = async ({
 
     if (!data || !data.url) {
       console.error('Resposta inválida da API de checkout:', data);
-      throw new Error('Resposta inválida da API de checkout');
+      throw new Error('Resposta inválida da API de checkout: ' + JSON.stringify(data));
     }
 
     console.log('Sessão de checkout criada com sucesso:', data);
