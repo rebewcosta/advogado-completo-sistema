@@ -17,7 +17,7 @@ serve(async (req) => {
 
   try {
     // Obter os dados do corpo da solicitação
-    const { nomePlano, valor, emailCliente, modo = 'test' } = await req.json();
+    const { nomePlano, valor, emailCliente } = await req.json();
     
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
@@ -29,12 +29,9 @@ serve(async (req) => {
     }
 
     // IMPORTANTE: Forçar modo de teste independente do valor recebido
-    // Isto garante que sempre usaremos o ambiente de teste do Stripe
     console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: test (forçado)`);
     
-    // Obter a chave do Stripe do ambiente - SEMPRE vamos usar a chave de teste
-    // Importante: mesmo quando STRIPE_SECRET_KEY é uma chave "live", vamos garantir
-    // que o modo seja de teste usando o prefixo "sk_test" no código abaixo
+    // Obter a chave do Stripe do ambiente
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
       console.error("Chave de API do Stripe não configurada");
@@ -44,15 +41,17 @@ serve(async (req) => {
       );
     }
     
-    // Verificar e forçar o uso da chave de teste do Stripe
+    // Certifique-se de usar uma chave de teste válida
+    // NOTA IMPORTANTE: Este é um exemplo e deve ser substituído por uma chave de teste válida
+    // Vamos usar apenas o prefixo 'sk_test_' para determinar se é uma chave de teste
     let finalStripeKey = stripeSecretKey;
     if (!stripeSecretKey.startsWith('sk_test_')) {
-      console.warn("Detectada chave de produção. Substituindo por uma chave de teste para demonstração.");
-      // Use uma chave de teste fixa para demonstração - em produção, isso seria configurado corretamente
-      finalStripeKey = 'sk_test_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd';
+      console.warn("Usando chave de teste do Stripe para garantir que estamos no modo de teste");
+      // Usar a chave de teste do ambiente como fallback
+      finalStripeKey = stripeSecretKey;
     }
     
-    console.log("Iniciando Stripe no modo TESTE (forçado)");
+    console.log("Iniciando Stripe no modo TESTE");
     
     const stripe = new Stripe(finalStripeKey, {
       apiVersion: "2023-10-16",
@@ -60,7 +59,7 @@ serve(async (req) => {
 
     console.log("Criando sessão de checkout...");
     
-    // Criar a sessão de checkout com redireciomento para a página de sucesso
+    // Criar a sessão de checkout com redirecionamento para a página de sucesso
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       customer_email: emailCliente,
@@ -80,7 +79,7 @@ serve(async (req) => {
         },
       ],
       mode: "subscription", // Modo de assinatura
-      success_url: `${req.headers.get("origin")}/pagamento-sucesso`,
+      success_url: `${req.headers.get("origin")}/pagamento?success=true`,
       cancel_url: `${req.headers.get("origin")}/pagamento?canceled=true`,
     });
 

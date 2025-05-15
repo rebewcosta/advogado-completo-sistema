@@ -22,6 +22,9 @@ export const iniciarCheckout = async ({
   try {
     console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente, modo });
     
+    // Forçando modo de teste independentemente do que é passado
+    const modoFinal = 'test';
+    
     // Indicador de ambiente para o usuário - sempre forçando teste
     console.log(`Executando em ambiente de teste`);
     
@@ -31,7 +34,7 @@ export const iniciarCheckout = async ({
         nomePlano,
         valor,
         emailCliente,
-        modo: 'test' // Sempre forçar modo de teste
+        modo: modoFinal // Sempre forçar modo de teste
       }
     });
 
