@@ -10,81 +10,58 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Eye, Edit } from 'lucide-react';
+import { Search, Eye, Edit, Plus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
+
+// Definição do tipo de processo
+interface Processo {
+  id: number;
+  numero: string;
+  cliente: string;
+  tipo: string;
+  vara: string;
+  status: string;
+  prazo: string;
+}
 
 const ProcessosPage = () => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  
-  // Mock data for processes
-  const processes = [
-    {
-      id: 1,
-      numero: "0001234-56.2023.8.26.0100",
-      cliente: "João Silva",
-      tipo: "Cível",
-      vara: "3ª Vara Cível",
-      status: "Em andamento",
-      prazo: "2025-06-15"
-    },
-    {
-      id: 2,
-      numero: "0007890-12.2023.8.26.0100",
-      cliente: "Empresa ABC Ltda",
-      tipo: "Trabalhista",
-      vara: "2ª Vara do Trabalho",
-      status: "Concluído",
-      prazo: "2025-05-10"
-    },
-    {
-      id: 3,
-      numero: "0003456-78.2022.8.26.0100",
-      cliente: "Maria Oliveira",
-      tipo: "Família",
-      vara: "1ª Vara de Família",
-      status: "Em andamento",
-      prazo: "2025-07-20"
-    },
-    {
-      id: 4,
-      numero: "0009012-34.2023.8.26.0100",
-      cliente: "Carlos Pereira",
-      tipo: "Cível",
-      vara: "5ª Vara Cível",
-      status: "Em andamento",
-      prazo: "2025-06-30"
-    },
-    {
-      id: 5,
-      numero: "0005678-90.2022.8.26.0100",
-      cliente: "Empresa XYZ S.A.",
-      tipo: "Tributário",
-      vara: "2ª Vara de Fazenda Pública",
-      status: "Suspenso",
-      prazo: "2025-08-05"
-    }
-  ];
+  const [processos, setProcessos] = useState<Processo[]>([]);
 
-  // Filter processes based on search term
-  const filteredProcesses = processes.filter(process =>
-    process.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    process.cliente.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filtrar processos com base no termo de pesquisa
+  const filteredProcessos = processos.filter(processo =>
+    processo.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    processo.cliente.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleViewProcess = (id) => {
-    // Implementar visualização do processo
-    console.log(`Visualizando processo ${id}`);
+  const handleViewProcess = (id: number) => {
+    toast({
+      title: "Visualizando processo",
+      description: `Detalhes do processo ${id} estão sendo carregados.`
+    });
+    // Em uma implementação real, isso navegaria para a página de detalhes
+    // navigate(`/processos/${id}`);
   };
 
-  const handleEditProcess = (id) => {
-    // Implementar edição do processo
-    console.log(`Editando processo ${id}`);
+  const handleEditProcess = (id: number) => {
+    toast({
+      title: "Editando processo",
+      description: `Formulário de edição do processo ${id} aberto.`
+    });
+    // Em uma implementação real, isso abriria um modal ou navegaria para uma página de edição
   };
 
   const handleNewProcess = () => {
-    // Implementar criação de novo processo
-    console.log('Criando novo processo');
+    toast({
+      title: "Novo processo",
+      description: "Formulário para cadastro de novo processo aberto."
+    });
+    // Em uma implementação real, isso abriria um modal ou navegaria para uma página de criação
   };
 
   return (
@@ -107,12 +84,8 @@ const ProcessosPage = () => {
             </div>
           </div>
           <Button onClick={handleNewProcess}>
-            <span className="flex items-center">
-              <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Novo Processo
-            </span>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Processo
           </Button>
         </div>
         
@@ -131,30 +104,30 @@ const ProcessosPage = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredProcesses.length > 0 ? (
-                filteredProcesses.map((process) => (
-                  <TableRow key={process.id}>
-                    <TableCell className="font-medium">{process.numero}</TableCell>
-                    <TableCell>{process.cliente}</TableCell>
-                    <TableCell>{process.tipo}</TableCell>
-                    <TableCell>{process.vara}</TableCell>
+              {filteredProcessos.length > 0 ? (
+                filteredProcessos.map((processo) => (
+                  <TableRow key={processo.id}>
+                    <TableCell className="font-medium">{processo.numero}</TableCell>
+                    <TableCell>{processo.cliente}</TableCell>
+                    <TableCell>{processo.tipo}</TableCell>
+                    <TableCell>{processo.vara}</TableCell>
                     <TableCell>
                       <Badge
                         className={`
-                          ${process.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
-                            process.status === "Concluído" ? "bg-green-100 text-green-800" :
+                          ${processo.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
+                            processo.status === "Concluído" ? "bg-green-100 text-green-800" :
                             "bg-yellow-100 text-yellow-800"}`}
                       >
-                        {process.status}
+                        {processo.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>{process.prazo}</TableCell>
+                    <TableCell>{processo.prazo}</TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewProcess(process.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleViewProcess(processo.id)}>
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditProcess(process.id)}>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditProcess(processo.id)}>
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>

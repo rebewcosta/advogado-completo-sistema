@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -305,7 +304,7 @@ const MOCK_EVENTS: AgendaEvent[] = [
     id: '4',
     title: 'Entrevista com testemunha',
     description: 'Coleta de depoimento preliminar',
-    dateTime: new Date(new Date().setDate(new Date().getDate() + 1)).setHours(9, 0, 0, 0),
+    dateTime: new Date(new Date().setDate(new Date().getDate() + 1)),
     duration: 120,
     clientName: 'Ana Santos',
     processNumber: '13579-24.2023.8.26.0000',
