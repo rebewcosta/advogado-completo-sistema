@@ -52,8 +52,11 @@ const Navbar: React.FC = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold text-lawyer-primary">JusGestão</span>
+            <Link to="/" className="flex flex-col items-center">
+              <span className="text-xl font-bold">
+                <span className="text-lawyer-primary">Jus</span>
+                <span className="text-white">Gestão</span>
+              </span>
             </Link>
           </div>
 
