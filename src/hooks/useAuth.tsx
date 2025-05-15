@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -230,8 +229,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Cleanup auth state before signout
       cleanupAuthState();
       
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
       if (error) throw error;
+      
+      toast({
+        title: "Desconectado com sucesso",
+        description: "Você saiu da sua conta.",
+      });
       
       // Force refresh the page after signout to ensure clean state
       window.location.href = '/';
