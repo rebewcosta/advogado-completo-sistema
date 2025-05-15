@@ -3,7 +3,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
 
-// Carrega o Stripe com a chave pública - SEMPRE usar a chave de teste
+// Carrega o Stripe com a chave pública
 const stripePromise = loadStripe('pk_test_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd');
 
 interface DadosPagamento {
@@ -17,16 +17,16 @@ export const iniciarCheckout = async ({
   nomePlano = 'Plano Mensal JusGestão',
   valor = 12700, // R$ 127,00 em centavos
   emailCliente,
-  modo = 'test' // Define modo padrão como teste
+  modo = 'production' // Define modo padrão como produção
 }: DadosPagamento) => {
   try {
     console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente, modo });
     
-    // Forçando modo de teste independentemente do que é passado
-    const modoFinal = 'test';
+    // Usar o modo especificado sem forçar teste
+    const modoFinal = modo;
     
-    // Indicador de ambiente para o usuário - sempre forçando teste
-    console.log(`Executando em ambiente de teste`);
+    // Indicador de ambiente para o usuário
+    console.log(`Executando em ambiente ${modoFinal}`);
     
     // Chama a edge function do Supabase para criar uma sessão de checkout
     const { data, error } = await supabase.functions.invoke('criar-sessao-checkout', {
@@ -34,7 +34,7 @@ export const iniciarCheckout = async ({
         nomePlano,
         valor,
         emailCliente,
-        modo: modoFinal // Sempre forçar modo de teste
+        modo: modoFinal // Usar o modo especificado
       }
     });
 

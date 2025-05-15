@@ -17,7 +17,7 @@ serve(async (req) => {
 
   try {
     // Obter os dados do corpo da solicitação
-    const { nomePlano, valor, emailCliente } = await req.json();
+    const { nomePlano, valor, emailCliente, modo = 'production' } = await req.json();
     
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
@@ -28,8 +28,8 @@ serve(async (req) => {
       );
     }
 
-    // IMPORTANTE: Forçar modo de teste independente do valor recebido
-    console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: test (forçado)`);
+    // Log do modo de operação
+    console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
     
     // Obter a chave do Stripe do ambiente
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -41,19 +41,10 @@ serve(async (req) => {
       );
     }
     
-    // Certifique-se de usar uma chave de teste válida
-    // NOTA IMPORTANTE: Este é um exemplo e deve ser substituído por uma chave de teste válida
-    // Vamos usar apenas o prefixo 'sk_test_' para determinar se é uma chave de teste
-    let finalStripeKey = stripeSecretKey;
-    if (!stripeSecretKey.startsWith('sk_test_')) {
-      console.warn("Usando chave de teste do Stripe para garantir que estamos no modo de teste");
-      // Usar a chave de teste do ambiente como fallback
-      finalStripeKey = stripeSecretKey;
-    }
+    // Usar a chave do Stripe conforme configurada no ambiente
+    console.log(`Iniciando Stripe no modo ${modo}`);
     
-    console.log("Iniciando Stripe no modo TESTE");
-    
-    const stripe = new Stripe(finalStripeKey, {
+    const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
 
