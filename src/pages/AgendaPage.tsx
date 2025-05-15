@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
@@ -30,9 +31,43 @@ import { Textarea } from "@/components/ui/textarea"
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from "lucide-react"
-import { DatePicker } from "@/components/ui/date-picker"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import { useToast } from "@/hooks/use-toast";
 import { MoreVertical, Pencil, Trash2, UserRound } from 'lucide-react';
+
+// Event types
+export type EventPriority = 'baixa' | 'média' | 'alta';
+
+// Event interface
+export interface Event {
+  id: string;
+  title: string;
+  description: string;
+  date: Date;
+  time: string;
+  location: string;
+  type: string;
+  status: string;
+  cliente: string;
+  createdAt: Date;
+}
+
+// Interface for the AgendaEvent used in AgendaEventDetail and AgendaEventForm
+export interface AgendaEvent {
+  id: string;
+  title: string;
+  description: string;
+  dateTime: Date;
+  duration: number;
+  location?: string;
+  clientName?: string;
+  processNumber?: string;
+  priority: EventPriority;
+}
 
 // Mock data for events
 const mockEvents = [
@@ -158,20 +193,6 @@ const mockEvents = [
   },
 ];
 
-// Event interface
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: Date;
-  time: string;
-  location: string;
-  type: string;
-  status: string;
-  cliente: string;
-  createdAt: Date;
-}
-
 const AgendaPage = () => {
   const [events, setEvents] = useState<Event[]>(mockEvents);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -274,13 +295,26 @@ const AgendaPage = () => {
         </div>
 
         <div className="mb-4">
-          <DatePicker
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            locale={ptBR}
-            className="rounded-md border shadow-sm"
-          />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={"outline"}
+                className="w-full md:w-auto justify-start text-left font-normal"
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                locale={ptBR}
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -366,14 +400,28 @@ const AgendaPage = () => {
                 <Label htmlFor="date" className="text-right">
                   Data
                 </Label>
-                <DatePicker
-                  id="date"
-                  mode="single"
-                  selected={newEvent.date}
-                  onSelect={(date) => setNewEvent({ ...newEvent, date: date || new Date() })}
-                  locale={ptBR}
-                  className="col-span-3 rounded-md border shadow-sm"
-                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      id="date"
+                      variant="outline"
+                      className="col-span-3 justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(newEvent.date, "PPP", { locale: ptBR })}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={newEvent.date}
+                      onSelect={(date) => setNewEvent({ ...newEvent, date: date || new Date() })}
+                      initialFocus
+                      locale={ptBR}
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="time" className="text-right">
@@ -475,14 +523,28 @@ const AgendaPage = () => {
                   <Label htmlFor="date" className="text-right">
                     Data
                   </Label>
-                  <DatePicker
-                    id="date"
-                    mode="single"
-                    selected={selectedEvent.date}
-                    onSelect={(date) => setSelectedEvent({ ...selectedEvent, date: date || new Date() })}
-                    locale={ptBR}
-                    className="col-span-3 rounded-md border shadow-sm"
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        id="date"
+                        variant="outline"
+                        className="col-span-3 justify-start text-left font-normal"
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(selectedEvent.date, "PPP", { locale: ptBR })}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedEvent.date}
+                        onSelect={(date) => setSelectedEvent({ ...selectedEvent, date: date || new Date() })}
+                        initialFocus
+                        locale={ptBR}
+                        className="p-3 pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="time" className="text-right">
@@ -540,7 +602,7 @@ const AgendaPage = () => {
                     className="col-span-3"
                   />
                 </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
+                <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="location" className="text-right">
                     Localização
                   </Label>
