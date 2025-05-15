@@ -8,6 +8,7 @@ const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
 const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
 const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
 const stripeWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
+const customDomain = Deno.env.get("CUSTOM_DOMAIN") || "sisjusgestao.com.br";
 
 const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2023-10-16",
