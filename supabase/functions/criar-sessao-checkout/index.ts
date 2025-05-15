@@ -30,8 +30,11 @@ serve(async (req) => {
     // Log para debug
     console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
     
+    // Usar a chave correta baseada no modo
+    let stripeSecretKey;
+    
     // Inicializar o Stripe com a chave secreta (armazenada como variável de ambiente)
-    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
       console.error("STRIPE_SECRET_KEY não configurada no ambiente");
       return new Response(
@@ -45,7 +48,6 @@ serve(async (req) => {
     });
 
     // Criar a sessão de checkout diretamente sem verificar cliente existente
-    // Isso contorna o problema de permissões da chave restrita
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       customer_email: emailCliente, // Usar email do cliente diretamente
@@ -65,13 +67,13 @@ serve(async (req) => {
         },
       ],
       mode: "subscription", // Modo de assinatura
-      success_url: `${req.headers.get("origin")}/dashboard?success=true`,
+      success_url: `${req.headers.get("origin")}/pagamento?success=true`,
       cancel_url: `${req.headers.get("origin")}/pagamento?canceled=true`,
     });
 
     console.log(`Sessão de checkout criada: ${session.id}, URL: ${session.url}`);
 
-    // Retornar o ID da sessão
+    // Retornar o ID da sessão e URL
     return new Response(
       JSON.stringify({ sessionId: session.id, url: session.url }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }

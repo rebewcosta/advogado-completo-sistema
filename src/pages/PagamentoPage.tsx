@@ -4,6 +4,7 @@ import { ArrowLeft, Check, CreditCard, Info, AlertTriangle } from 'lucide-react'
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { iniciarCheckout } from '@/services/stripe';
+import { Button } from '@/components/ui/button';
 
 const PagamentoPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -33,6 +34,16 @@ const PagamentoPage = () => {
   // Função para processar o pagamento com Stripe
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!email) {
+      toast({
+        title: "Email necessário",
+        description: "Por favor, insira seu endereço de email para prosseguir com o pagamento.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setIsProcessing(true);
 
     try {
@@ -42,24 +53,26 @@ const PagamentoPage = () => {
       const result = await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
-        emailCliente: email // Usamos o email informado pelo usuário
+        emailCliente: email, // Usamos o email informado pelo usuário
+        modo: isTestEnvironment ? 'test' : 'production'
       });
       
       console.log('Resultado do checkout:', result);
       
       if (result && result.url) {
-        // Redirecionar para a URL do Stripe checkout
-        window.location.href = result.url;
+        toast({
+          title: "Redirecionando para o pagamento",
+          description: "Você será redirecionado para a página de pagamento do Stripe.",
+        });
+        
+        // Pequeno delay para garantir que o toast seja exibido antes do redirecionamento
+        setTimeout(() => {
+          // Redirecionar para a URL do Stripe checkout
+          window.location.href = result.url;
+        }, 500);
       } else {
         throw new Error('URL de checkout não retornada');
       }
-      
-      setIsProcessing(false);
-      
-      toast({
-        title: "Redirecionando para o pagamento",
-        description: "Você será redirecionado para a página de pagamento do Stripe.",
-      });
     } catch (error) {
       console.error('Erro no pagamento:', error);
       setIsProcessing(false);
@@ -137,10 +150,10 @@ const PagamentoPage = () => {
                 </div>
                 
                 <div className="pt-4">
-                  <button
+                  <Button
                     type="submit"
                     disabled={isProcessing || !email}
-                    className={`w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-lawyer-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lawyer-primary ${isProcessing ? 'opacity-75' : ''}`}
+                    className={`w-full py-2 px-4 ${isProcessing ? 'opacity-75' : ''}`}
                   >
                     {isProcessing ? (
                       <span className="flex items-center justify-center">
@@ -153,7 +166,7 @@ const PagamentoPage = () => {
                     ) : (
                       'Pagar com Stripe - R$ 127,00'
                     )}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </form>

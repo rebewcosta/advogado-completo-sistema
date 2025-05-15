@@ -15,12 +15,14 @@ interface DadosPagamento {
   nomePlano: string;
   valor: number;
   emailCliente: string;
+  modo?: 'production' | 'test';
 }
 
 export const iniciarCheckout = async ({
   nomePlano = 'Plano Mensal JusGestão',
   valor = 12700, // R$ 127,00 em centavos
-  emailCliente
+  emailCliente,
+  modo
 }: DadosPagamento) => {
   try {
     console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente });
@@ -35,7 +37,7 @@ export const iniciarCheckout = async ({
         nomePlano,
         valor,
         emailCliente,
-        modo: process.env.NODE_ENV === 'production' ? 'production' : 'test'
+        modo: modo || (process.env.NODE_ENV === 'production' ? 'production' : 'test')
       }
     });
 
