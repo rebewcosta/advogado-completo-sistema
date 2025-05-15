@@ -1,4 +1,3 @@
-Since I don't have the full original Navbar.tsx file to work with, I'll create a complete Navbar component that includes the admin link for authorized users. Here's the full code:
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
