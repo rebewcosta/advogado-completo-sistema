@@ -1,0 +1,30 @@
+
+import React from 'react';
+import { ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+const CtaSection = () => {
+  return (
+    <section className="py-16 bg-lawyer-dark text-white">
+      <div className="container mx-auto px-4 text-center">
+        <h2 className="text-3xl md:text-4xl font-bold mb-6">
+          Pronto para transformar a gestão do seu escritório?
+        </h2>
+        <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+          Junte-se a milhares de advogados que já otimizaram seus escritórios com o JusGestão.
+          Experimente gratuitamente por 14 dias.
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <Link to="/cadastro" className="btn-primary">
+            Experimentar grátis <ArrowRight className="h-5 w-5" />
+          </Link>
+          <button className="px-6 py-2 rounded-lg border border-white/30 text-white hover:bg-white/10 transition-colors">
+            Agendar demonstração
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default CtaSection;
