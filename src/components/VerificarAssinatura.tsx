@@ -37,7 +37,7 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
         
         // Verificação explícita para o email webercostag@gmail.com
         if (user.email === "webercostag@gmail.com") {
-          console.log("Email exato webercostag@gmail.com detectado no componente!");
+          console.log("Email exato webercostag@gmail.com detectado no componente! Concedendo acesso direto.");
           setIsAssinante(true);
           setIsLoading(false);
           return;

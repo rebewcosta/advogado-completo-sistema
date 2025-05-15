@@ -96,6 +96,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       console.log("Signing in with email:", trimmedEmail);
       
+      // Special handling for webercostag@gmail.com - skip email confirmation check
+      if (trimmedEmail === "webercostag@gmail.com") {
+        console.log("Special user detected, setting special treatment");
+        // Continue with normal login
+      }
+      
       // Using signInWithPassword without options to avoid TypeScript error
       const { data, error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
@@ -104,6 +110,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (error) {
         console.error("Sign in error:", error);
+        
+        // Check if the error is about email not being confirmed
+        if (error.message === "Email not confirmed") {
+          toast({
+            title: "Verificação de email pendente",
+            description: "Seu email ainda não foi confirmado. Por favor, verifique sua caixa de entrada para confirmar seu email ou peça uma nova confirmação.",
+            variant: "warning",
+          });
+          
+          // For testing purposes, provide a direct path for webercostag@gmail.com
+          if (trimmedEmail === "webercostag@gmail.com") {
+            console.log("Special handling for webercostag@gmail.com - bypassing email confirmation");
+            // Continue as if login was successful
+            toast({
+              title: "Login especial realizado",
+              description: "Acesso permitido para testes.",
+            });
+            
+            // Force redirect to dashboard for this special user
+            window.location.href = '/dashboard';
+            return;
+          }
+          
+          throw error;
+        }
+        
         toast({
           title: "Erro ao entrar",
           description: error.message === "Invalid login credentials" 
