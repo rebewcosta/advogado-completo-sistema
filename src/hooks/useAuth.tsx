@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session, User } from '@supabase/supabase-js';
@@ -14,6 +15,36 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper function to clean up authentication state
+const cleanupAuthState = () => {
+  console.log("Cleaning up auth state...");
+  
+  // Remove all Supabase auth keys from localStorage with detailed logging
+  Object.keys(localStorage).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      console.log("Removing localStorage key:", key);
+      localStorage.removeItem(key);
+    }
+  });
+  
+  // Remove from sessionStorage if in use
+  Object.keys(sessionStorage || {}).forEach((key) => {
+    if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      console.log("Removing sessionStorage key:", key);
+      sessionStorage.removeItem(key);
+    }
+  });
+  
+  // Clear browser cookies that might be related to authentication
+  document.cookie.split(";").forEach((cookie) => {
+    const name = cookie.trim().split("=")[0];
+    if (name.includes("supabase") || name.includes("sb-")) {
+      document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
+      console.log("Removed cookie:", name);
+    }
+  });
+};
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -48,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(true);
       console.log("Attempting to sign in:", email);
       
-      // First clear localStorage and sessionStorage to ensure a clean state
+      // First clear auth state to ensure a clean state
       cleanupAuthState();
       
       // Try to sign out globally first to clear any existing sessions
@@ -60,19 +91,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Continue with sign in even if sign out fails
       }
       
-      // Ensure email and password are correctly trimmed
+      // Ensure email is correctly trimmed
       const trimmedEmail = email.trim();
       
       console.log("Signing in with email:", trimmedEmail);
       
-      // Add explicit configuration for auto refresh token and persistSession
+      // Using signInWithPassword without options to avoid TypeScript error
       const { data, error } = await supabase.auth.signInWithPassword({
         email: trimmedEmail,
-        password,
-        options: {
-          // Ensure persistent session
-          persistSession: true
-        }
+        password
       });
       
       if (error) {
@@ -88,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       
       console.log("Sign in successful:", data.user?.email);
-      // Additional check for special access in user metadata
+      // Log special access in user metadata if present
       if (data.user?.user_metadata?.special_access) {
         console.log("User has special access in metadata:", data.user.user_metadata);
       }
@@ -161,7 +188,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Nova função para criar contas especiais (apenas para uso administrativo)
+  // Function to create special accounts (for admin use only)
   const createSpecialAccount = async (email: string, password: string, userData: any) => {
     try {
       setIsLoading(true);
@@ -193,36 +220,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  // Função para limpar o estado de autenticação
-  const cleanupAuthState = () => {
-    console.log("Cleaning up auth state...");
-    
-    // Remove all Supabase auth keys from localStorage with more detailed logging
-    Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        console.log("Removing localStorage key:", key);
-        localStorage.removeItem(key);
-      }
-    });
-    
-    // Remove from sessionStorage if in use
-    Object.keys(sessionStorage || {}).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-        console.log("Removing sessionStorage key:", key);
-        sessionStorage.removeItem(key);
-      }
-    });
-    
-    // Clear browser cookies that might be related to authentication
-    document.cookie.split(";").forEach((cookie) => {
-      const name = cookie.trim().split("=")[0];
-      if (name.includes("supabase") || name.includes("sb-")) {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/;`;
-        console.log("Removed cookie:", name);
-      }
-    });
   };
 
   const value = {
