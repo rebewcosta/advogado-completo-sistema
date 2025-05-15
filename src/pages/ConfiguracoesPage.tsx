@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Card,
   CardContent,
@@ -37,6 +38,18 @@ const ConfiguracoesPage = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("perfil");
   const [saving, setSaving] = useState(false);
+  
+  // Use o contexto de tema
+  const { 
+    darkMode, 
+    compactMode, 
+    fontSize, 
+    accentColor, 
+    toggleDarkMode, 
+    toggleCompactMode, 
+    setFontSize, 
+    setAccentColor 
+  } = useTheme();
 
   // Estado para configurações de perfil
   const [profileSettings, setProfileSettings] = useState({
@@ -68,14 +81,6 @@ const ConfiguracoesPage = () => {
     twoFactor: false,
     sessionTimeout: "30",
     ipRestriction: false,
-  });
-
-  // Estado para configurações de aparência
-  const [appearanceSettings, setAppearanceSettings] = useState({
-    darkMode: false,
-    compactMode: false,
-    fontSize: "medium",
-    accentColor: "#9b87f5",
   });
 
   const handleSave = () => {
@@ -409,7 +414,7 @@ const ConfiguracoesPage = () => {
                   Customize a aparência do sistema
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-6 card-content">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Modo Escuro</Label>
@@ -418,10 +423,8 @@ const ConfiguracoesPage = () => {
                     </p>
                   </div>
                   <Switch 
-                    checked={appearanceSettings.darkMode}
-                    onCheckedChange={(checked) => 
-                      setAppearanceSettings({...appearanceSettings, darkMode: checked})
-                    }
+                    checked={darkMode}
+                    onCheckedChange={toggleDarkMode}
                   />
                 </div>
                 
@@ -435,10 +438,8 @@ const ConfiguracoesPage = () => {
                     </p>
                   </div>
                   <Switch 
-                    checked={appearanceSettings.compactMode}
-                    onCheckedChange={(checked) => 
-                      setAppearanceSettings({...appearanceSettings, compactMode: checked})
-                    }
+                    checked={compactMode}
+                    onCheckedChange={toggleCompactMode}
                   />
                 </div>
                 
@@ -447,14 +448,14 @@ const ConfiguracoesPage = () => {
                 <div className="space-y-2">
                   <Label>Tamanho da Fonte</Label>
                   <div className="flex space-x-2 pt-2">
-                    {["small", "medium", "large"].map((size) => (
+                    {[["small", "Pequeno"], ["medium", "Médio"], ["large", "Grande"]].map(([size, label]) => (
                       <Button 
                         key={size}
-                        variant={appearanceSettings.fontSize === size ? "default" : "outline"}
+                        variant={fontSize === size ? "default" : "outline"}
                         className="flex-1"
-                        onClick={() => setAppearanceSettings({...appearanceSettings, fontSize: size})}
+                        onClick={() => setFontSize(size as "small" | "medium" | "large")}
                       >
-                        {size === "small" ? "Pequeno" : size === "medium" ? "Médio" : "Grande"}
+                        {label}
                       </Button>
                     ))}
                   </div>
@@ -468,9 +469,9 @@ const ConfiguracoesPage = () => {
                     {["#9b87f5", "#4F46E5", "#0EA5E9", "#10B981", "#F97316", "#EC4899"].map((color) => (
                       <button
                         key={color}
-                        className={`h-8 rounded-full ${appearanceSettings.accentColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
+                        className={`h-8 rounded-full ${accentColor === color ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
                         style={{ backgroundColor: color }}
-                        onClick={() => setAppearanceSettings({...appearanceSettings, accentColor: color})}
+                        onClick={() => setAccentColor(color as any)}
                         aria-label={`Cor ${color}`}
                       />
                     ))}
