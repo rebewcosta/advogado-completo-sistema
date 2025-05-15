@@ -37,13 +37,13 @@ export const iniciarCheckout = async ({
         nomePlano,
         valor,
         emailCliente,
-        modo: modo
+        modo
       }
     });
 
     if (error) {
       console.error('Erro ao criar sessão de checkout:', error);
-      throw new Error(error.message || 'Erro ao criar sessão de checkout');
+      throw new Error(`Erro ao criar sessão de checkout: ${error.message || JSON.stringify(error)}`);
     }
 
     if (!data || !data.url) {
@@ -57,6 +57,12 @@ export const iniciarCheckout = async ({
     return data;
   } catch (error) {
     console.error('Erro ao iniciar pagamento:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    toast({
+      title: "Erro ao iniciar pagamento",
+      description: errorMessage,
+      variant: "destructive"
+    });
     throw error;
   }
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Check, CreditCard, Info, AlertTriangle } from 'lucide-react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -30,6 +29,9 @@ const PagamentoPage = () => {
         variant: "destructive"
       });
     }
+    
+    // Log para debug
+    console.log("PagamentoPage carregada. URL params:", Object.fromEntries(params.entries()));
   }, [location, toast]);
 
   // Função para validar email
@@ -40,36 +42,25 @@ const PagamentoPage = () => {
   // Função para processar o pagamento com Stripe
   const handleSubmitPayment = async (e) => {
     e.preventDefault();
+    setIsProcessing(true);
     setErrorDetails('');
     
-    if (!email) {
-      toast({
-        title: "Email necessário",
-        description: "Por favor, insira seu endereço de email para prosseguir com o pagamento.",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      toast({
-        title: "Email inválido",
-        description: "Por favor, insira um endereço de email válido.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setIsProcessing(true);
-
     try {
+      if (!email) {
+        throw new Error("Email necessário para prosseguir com o pagamento.");
+      }
+
+      if (!isValidEmail(email)) {
+        throw new Error("Por favor, insira um endereço de email válido.");
+      }
+      
       console.log('Iniciando checkout com email:', email);
       
       // Inicia o checkout utilizando o Stripe
       const result = await iniciarCheckout({
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
-        emailCliente: email, // Usamos o email informado pelo usuário
+        emailCliente: email,
         modo: 'test' // Sempre usar o modo de teste para esta demo
       });
       
@@ -89,7 +80,8 @@ const PagamentoPage = () => {
     } catch (error) {
       console.error('Erro no pagamento:', error);
       setIsProcessing(false);
-      setErrorDetails(error.message || 'Erro desconhecido');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      setErrorDetails(errorMessage);
       toast({
         title: "Erro no pagamento",
         description: "Houve um problema ao processar seu pagamento. Por favor, tente novamente.",
@@ -167,7 +159,7 @@ const PagamentoPage = () => {
                   <Button 
                     type="submit"
                     disabled={isProcessing || !email}
-                    className={`w-full ${isProcessing ? 'opacity-75 cursor-not-allowed' : ''}`}
+                    className="w-full"
                   >
                     {isProcessing ? (
                       <span className="flex items-center justify-center">

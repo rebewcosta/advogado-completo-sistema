@@ -31,10 +31,17 @@ serve(async (req) => {
     // Log para debug
     console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
     
-    // Chave de teste do Stripe - esta é uma chave de teste pública
-    const stripeSecretKey = "sk_test_51OvQIeDzU3oOQJJz8OYiRoglzCSjYkX7BF5cCRzUom60HWoWO4fYUJqeEPiozU5mB0rhQPkuqTrzsXr0vBlKDWyS00B2DaRpxm";
-      
-    console.log("Iniciando Stripe com a chave de teste");
+    // Obter a chave do Stripe do ambiente
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    if (!stripeSecretKey) {
+      console.error("Chave de API do Stripe não configurada");
+      return new Response(
+        JSON.stringify({ error: "Configuração de API não disponível" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+    
+    console.log("Iniciando Stripe com a chave configurada");
     
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
@@ -76,8 +83,16 @@ serve(async (req) => {
   } catch (error) {
     console.error("Erro ao criar sessão de checkout:", error);
     
+    // Retornar detalhes de erro mais específicos para facilitar o debug
+    const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor";
+    const errorDetails = error instanceof Error && error.stack ? error.stack : undefined;
+    
     return new Response(
-      JSON.stringify({ error: error.message || "Erro interno do servidor" }),
+      JSON.stringify({ 
+        error: errorMessage,
+        details: errorDetails,
+        message: "Houve um erro ao processar o pagamento. Por favor, verifique os logs para mais detalhes."
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
   }
