@@ -40,22 +40,22 @@ const mockFinancialData = [
 ];
 
 const mockProcessData = [
-  { name: 'Cível', value: 45 },
-  { name: 'Trabalhista', value: 30 },
-  { name: 'Tributário', value: 15 },
-  { name: 'Criminal', value: 5 },
-  { name: 'Família', value: 10 },
+  { name: 'Cível', value: 3 },
+  { name: 'Trabalhista', value: 2 },
+  { name: 'Tributário', value: 1 },
+  { name: 'Criminal', value: 1 },
+  { name: 'Família', value: 1 },
 ];
 
 const mockClientData = [
-  { name: 'Pessoa Física', value: 65 },
-  { name: 'Pessoa Jurídica', value: 35 },
+  { name: 'Pessoa Física', value: 3 },
+  { name: 'Pessoa Jurídica', value: 1 },
 ];
 
 const mockStatusData = [
-  { name: 'Em andamento', value: 75 },
-  { name: 'Concluídos', value: 20 },
-  { name: 'Suspensos', value: 5 },
+  { name: 'Em andamento', value: 6 },
+  { name: 'Concluídos', value: 2 },
+  { name: 'Suspensos', value: 0 },
 ];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
@@ -127,10 +127,10 @@ const RelatoriosPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold">Processos Ativos</h3>
-                    <p className="text-3xl font-bold">56</p>
+                    <p className="text-3xl font-bold">8</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">12 novos processos no último mês</p>
+                <p className="text-sm text-gray-500">2 novos processos no último mês</p>
               </div>
               
               <div className="bg-white rounded-lg shadow-md p-6">
@@ -140,10 +140,10 @@ const RelatoriosPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold">Total de Clientes</h3>
-                    <p className="text-3xl font-bold">187</p>
+                    <p className="text-3xl font-bold">4</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">8 novos clientes no último mês</p>
+                <p className="text-sm text-gray-500">1 novo cliente no último mês</p>
               </div>
               
               <div className="bg-white rounded-lg shadow-md p-6">
@@ -153,10 +153,10 @@ const RelatoriosPage = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold">Compromissos Agendados</h3>
-                    <p className="text-3xl font-bold">23</p>
+                    <p className="text-3xl font-bold">3</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">5 nos próximos 7 dias</p>
+                <p className="text-sm text-gray-500">1 nos próximos 7 dias</p>
               </div>
             </div>
             
