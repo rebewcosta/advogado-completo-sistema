@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -19,6 +18,7 @@ const LoginPage = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
+      console.log("User is already logged in, redirecting to:", from);
       navigate(from, { replace: true });
     }
   }, [user, navigate, from]);
@@ -37,8 +37,10 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
+      console.log("Tentando fazer login via página de login com:", email);
       await signIn(email, password);
-      navigate(from, { replace: true });
+      console.log("Login bem-sucedido, redirecionamento será feito pelo signIn");
+      // Navigation is now handled in the signIn function
     } catch (error) {
       console.error("Login error:", error);
       // Erro já tratado no hook useAuth

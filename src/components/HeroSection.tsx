@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -29,8 +28,8 @@ const HeroSection = () => {
     try {
       console.log("Tentando fazer login com:", email);
       await signIn(email, password);
-      console.log("Login bem-sucedido!");
-      navigate('/dashboard', { replace: true });
+      console.log("Login bem-sucedido! Redirecionando...");
+      // Navigation is now handled in the signIn function to ensure proper routing
     } catch (error: any) {
       console.error("Login error:", error);
       // Erro específico já é tratado no hook useAuth

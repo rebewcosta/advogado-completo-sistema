@@ -128,8 +128,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               description: "Acesso permitido para testes.",
             });
             
-            // Force redirect to dashboard for this special user
-            window.location.href = '/dashboard';
+            // Force page reload to ensure clean state and proper redirection
+            setTimeout(() => {
+              window.location.href = '/dashboard';
+            }, 500);
             return;
           }
           
@@ -157,8 +159,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         description: "Bem-vindo de volta!",
       });
       
-      // Force navigation to dashboard to ensure proper routing
-      window.location.href = '/dashboard';
+      // Force page reload to ensure clean state and proper redirection
+      // Add a small timeout to ensure toast is visible before navigation
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 500);
       return;
     } catch (error: any) {
       console.error("Sign in error:", error.message);
