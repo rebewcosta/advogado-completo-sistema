@@ -14,6 +14,12 @@ import { Search, Eye, Edit, Plus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from "@/hooks/use-toast";
+import ProcessForm from '@/components/ProcessForm';
+import {
+  Dialog,
+  DialogContent,
+  DialogOverlay
+} from "@/components/ui/dialog";
 
 // Interface para tipagem dos processos
 interface Process {
@@ -29,6 +35,9 @@ interface Process {
 const ProcessosPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [selectedProcess, setSelectedProcess] = useState<Process | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   
   // Lista de processos vazia inicialmente - persistida no localStorage para não perder ao navegar
   const [processes, setProcesses] = useState<Process[]>(() => {
@@ -49,24 +58,58 @@ const ProcessosPage = () => {
   );
 
   const handleViewProcess = (id: string) => {
-    toast({
-      title: "Visualizar processo",
-      description: `Visualizando detalhes do processo ${id}`,
-    });
+    const process = processes.find(p => p.id === id);
+    if (process) {
+      setSelectedProcess(process);
+      toast({
+        title: "Visualizar processo",
+        description: `Visualizando detalhes do processo ${process.numero}`,
+      });
+    }
   };
 
   const handleEditProcess = (id: string) => {
-    toast({
-      title: "Editar processo",
-      description: `Editando informações do processo ${id}`,
-    });
+    const process = processes.find(p => p.id === id);
+    if (process) {
+      setSelectedProcess(process);
+      setIsEditing(true);
+      setShowForm(true);
+    }
   };
 
   const handleNewProcess = () => {
-    toast({
-      title: "Novo processo",
-      description: "Formulário para cadastro de novo processo aberto",
-    });
+    setSelectedProcess(null);
+    setIsEditing(false);
+    setShowForm(true);
+  };
+
+  const handleSaveProcess = (processData: Omit<Process, "id">) => {
+    if (isEditing && selectedProcess) {
+      // Update existing process
+      setProcesses(prev => 
+        prev.map(process => 
+          process.id === selectedProcess.id 
+            ? { ...processData, id: process.id } 
+            : process
+        )
+      );
+      toast({
+        title: "Processo atualizado",
+        description: `O processo ${processData.numero} foi atualizado com sucesso.`,
+      });
+    } else {
+      // Add new process
+      const newProcess = {
+        ...processData,
+        id: Date.now().toString(), // Usar timestamp para garantir IDs únicos
+      };
+      setProcesses(prev => [...prev, newProcess]);
+      toast({
+        title: "Processo cadastrado",
+        description: `O processo ${processData.numero} foi cadastrado com sucesso.`,
+      });
+    }
+    setShowForm(false);
   };
 
   return (
@@ -151,6 +194,19 @@ const ProcessosPage = () => {
             </TableBody>
           </Table>
         </div>
+        
+        {/* Process Form Dialog */}
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogOverlay />
+          <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+            <ProcessForm 
+              onSave={handleSaveProcess}
+              onCancel={() => setShowForm(false)}
+              process={selectedProcess}
+              isEdit={isEditing}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
