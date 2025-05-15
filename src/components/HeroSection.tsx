@@ -27,11 +27,13 @@ const HeroSection = () => {
     setIsLoading(true);
 
     try {
+      console.log("Tentando fazer login com:", email);
       await signIn(email, password);
+      console.log("Login bem-sucedido!");
       navigate('/dashboard', { replace: true });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
-      // Error already handled in the useAuth hook
+      // Erro específico já é tratado no hook useAuth
     } finally {
       setIsLoading(false);
     }

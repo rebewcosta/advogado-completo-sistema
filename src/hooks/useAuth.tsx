@@ -55,13 +55,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Try to sign out globally first to clear any existing sessions
       try {
         await supabase.auth.signOut({ scope: 'global' });
+        console.log("Successfully signed out previous sessions");
       } catch (signOutError) {
         console.log("Sign out before sign in failed, continuing anyway", signOutError);
         // Continue with sign in even if sign out fails
       }
       
+      // Ensure email and password are correctly trimmed
+      const trimmedEmail = email.trim();
+      
+      console.log("Signing in with email:", trimmedEmail);
+      
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: trimmedEmail,
         password,
       });
       
@@ -70,7 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast({
           title: "Erro ao entrar",
           description: error.message === "Invalid login credentials" 
-            ? "Email ou senha inválidos"
+            ? "Email ou senha inválidos. Verifique suas credenciais e tente novamente."
             : error.message || "Ocorreu um erro ao tentar entrar.",
           variant: "destructive",
         });
@@ -182,9 +188,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Função para limpar o estado de autenticação
   const cleanupAuthState = () => {
+    console.log("Cleaning up auth state...");
     // Remove all Supabase auth keys from localStorage
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        console.log("Removing localStorage key:", key);
         localStorage.removeItem(key);
       }
     });
@@ -192,6 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Remove from sessionStorage if in use
     Object.keys(sessionStorage || {}).forEach((key) => {
       if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+        console.log("Removing sessionStorage key:", key);
         sessionStorage.removeItem(key);
       }
     });

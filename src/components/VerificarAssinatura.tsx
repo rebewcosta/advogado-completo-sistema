@@ -37,9 +37,11 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
         
         // Verificar se o usuário tem special_access nos metadados
         const hasSpecialAccess = user.user_metadata?.special_access === true;
+        console.log("Special access nos metadados:", hasSpecialAccess, "Metadados:", JSON.stringify(user.user_metadata));
         
         // Verificar se o email está na lista de acesso especial
         const hasSpecialEmail = user.email && specialEmails.includes(user.email);
+        console.log("Email está na lista de acesso especial:", hasSpecialEmail);
         
         // Conceder acesso se tiver special_access nos metadados ou email especial
         if (hasSpecialAccess || hasSpecialEmail) {
