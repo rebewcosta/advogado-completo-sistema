@@ -1,19 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import ProcessForm from '@/components/ProcessForm';
-import { Plus, Search } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from '@/components/AdminLayout';
 import { useProcessesStore } from '@/stores/useProcessesStore';
-import ProcessDetails from '@/components/processos/ProcessDetails';
-import ProcessTable from '@/components/processos/ProcessTable';
-import {
-  Dialog,
-  DialogContent,
-  DialogOverlay
-} from "@/components/ui/dialog";
+import ProcessesPageContent from '@/components/processos/ProcessesPageContent';
 
 const MeusProcessosPage = () => {
   const { toast } = useToast();
@@ -47,6 +37,11 @@ const MeusProcessosPage = () => {
     process.cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     process.tipo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Handle search change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
 
   // Open form for new process
   const handleOpenNewProcessForm = () => {
@@ -133,68 +128,23 @@ const MeusProcessosPage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-6">
-        <h1 className="text-3xl font-bold mb-6">Meus Processos</h1>
-        
-        {/* Search and Action Bar */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="relative w-64">
-            <Input
-              type="text"
-              placeholder="Buscar processos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-          </div>
-          <Button onClick={handleOpenNewProcessForm}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Processo
-          </Button>
-        </div>
-        
-        {/* Process Table */}
-        <ProcessTable 
-          processes={filteredProcesses}
-          onEdit={handleEditProcess}
-          onView={handleViewProcess}
-          onToggleStatus={handleToggleStatus}
-          onDelete={handleDeleteProcess}
-        />
-        
-        {/* Process Form Dialog */}
-        <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-          <DialogOverlay className="bg-black/30" />
-          <DialogContent className="p-0 max-w-4xl overflow-auto max-h-[90vh]">
-            <ProcessForm 
-              onSave={handleSaveProcess}
-              onCancel={() => setFormDialogOpen(false)}
-              process={selectedProcess}
-              isEdit={isEditing}
-            />
-          </DialogContent>
-        </Dialog>
-        
-        {/* Process Details Dialog */}
-        <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-          <DialogOverlay className="bg-black/30" />
-          <DialogContent className="p-6 max-w-3xl">
-            {selectedProcess && (
-              <ProcessDetails 
-                process={selectedProcess} 
-                onClose={() => setDetailsDialogOpen(false)}
-                onEdit={() => {
-                  setDetailsDialogOpen(false);
-                  handleEditProcess(selectedProcess.id);
-                }}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+      <ProcessesPageContent
+        processes={filteredProcesses}
+        searchTerm={searchTerm}
+        formDialogOpen={formDialogOpen}
+        detailsDialogOpen={detailsDialogOpen}
+        selectedProcess={selectedProcess}
+        isEditing={isEditing}
+        onSearchChange={handleSearchChange}
+        onFormDialogOpenChange={setFormDialogOpen}
+        onDetailsDialogOpenChange={setDetailsDialogOpen}
+        onNewProcess={handleOpenNewProcessForm}
+        onEditProcess={handleEditProcess}
+        onViewProcess={handleViewProcess}
+        onToggleStatus={handleToggleStatus}
+        onDeleteProcess={handleDeleteProcess}
+        onSaveProcess={handleSaveProcess}
+      />
     </AdminLayout>
   );
 };
