@@ -10,7 +10,8 @@ export {
   formatarTamanhoArquivo, 
   LIMITE_ARMAZENAMENTO_MB, 
   LIMITE_ARMAZENAMENTO_BYTES,
-  obterUrlDocumento
+  obterUrlDocumento,
+  obterUsoArmazenamento
 };
 
 // Função para calcular espaço disponível em bytes
@@ -150,6 +151,3 @@ export const excluirDocumento = async (id: string, path: string) => {
     throw handleError(error, 'Erro ao excluir documento');
   }
 };
-
-// Re-export da função obterUsoArmazenamento
-export { obterUsoArmazenamento };
