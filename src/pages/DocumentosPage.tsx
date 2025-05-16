@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import DocumentoWarning from '@/components/DocumentoWarning';
@@ -39,7 +38,7 @@ import {
   Search, 
   Filter, 
   MoreVertical, 
-  Upload, 
+  Send, 
   Download, 
   Trash2, 
   Eye, 
@@ -229,7 +228,7 @@ const DocumentosPage = () => {
             className="bg-lawyer-primary hover:bg-lawyer-primary/90"
             disabled={espacoDisponivel < 1024} // Desabilitar se menos de 1KB disponível
           >
-            <Upload className="mr-2 h-4 w-4" />
+            <Send className="mr-2 h-4 w-4" />
             Enviar Documento
           </Button>
         </div>

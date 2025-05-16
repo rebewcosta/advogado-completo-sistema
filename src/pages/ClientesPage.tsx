@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ClienteForm from '@/components/ClienteForm';
-import { X, Edit, Eye, Plus, Search } from 'lucide-react';
+import { X, Edit, Eye, Plus, Search, UserPlus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog,
@@ -138,7 +139,7 @@ const ClientesPage = () => {
             </div>
           </div>
           <Button onClick={handleAddClient}>
-            <Plus className="h-4 w-4 mr-2" />
+            <UserPlus className="h-4 w-4 mr-2" />
             Novo Cliente
           </Button>
         </div>

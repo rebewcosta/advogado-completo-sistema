@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Eye, Edit, Plus } from 'lucide-react';
+import { Search, Eye, Edit, FilePlus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from "@/hooks/use-toast";
@@ -132,10 +131,8 @@ const ProcessosPage = () => {
             </div>
           </div>
           <Button onClick={handleNewProcess}>
-            <span className="flex items-center">
-              <Plus className="h-5 w-5 mr-2" />
-              Novo Processo
-            </span>
+            <FilePlus className="h-4 w-4 mr-2" />
+            Novo Processo
           </Button>
         </div>
         
