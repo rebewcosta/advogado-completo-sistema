@@ -13,7 +13,6 @@ import ProcessTable from '@/components/processos/ProcessTable';
 import ProcessDetails from '@/components/processos/ProcessDetails';
 import { useProcessesStore } from '@/stores/useProcessesStore';
 
-// Interface para tipagem dos processos
 interface Process {
   id: string;
   numero: string;
@@ -49,6 +48,7 @@ const ProcessosPage = () => {
   );
 
   const handleAddProcess = () => {
+    console.log("Add process button clicked");
     setSelectedProcess(null);
     setIsEditing(false);
     setShowForm(true);
@@ -136,7 +136,6 @@ const ProcessosPage = () => {
         
         {/* Process Form Dialog */}
         <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogOverlay />
           <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
             <ProcessForm 
               onSave={handleSaveProcess}
@@ -149,7 +148,6 @@ const ProcessosPage = () => {
         
         {/* Process Details Dialog */}
         <Dialog open={showProcessDetails} onOpenChange={setShowProcessDetails}>
-          <DialogOverlay />
           <DialogContent className="max-w-3xl p-6">
             {selectedProcess && (
               <ProcessDetails
