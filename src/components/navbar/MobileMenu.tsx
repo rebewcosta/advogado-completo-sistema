@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, LogOut } from 'lucide-react';
+import { User, LogOut, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NavLink from './NavLink';
 
@@ -39,14 +39,15 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               />
             ))}
             
-            {/* Admin link for authorized users in mobile menu */}
+            {/* Admin link for authorized users in mobile menu - show only icon */}
             {user?.email === 'webercostag@gmail.com' && (
               <Link 
                 to="/admin" 
                 className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}
                 onClick={() => setIsMenuOpen(false)}
+                title="Admin"
               >
-                <User className="h-5 w-5" />
+                <Settings className="h-5 w-5" />
                 <span className="ml-2">Admin</span>
               </Link>
             )}

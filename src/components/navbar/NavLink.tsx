@@ -9,19 +9,20 @@ interface NavLinkProps {
   icon: React.ReactNode;
   isActive: boolean;
   onClick?: () => void;
+  className?: string;
 }
 
-const NavLink: React.FC<NavLinkProps> = ({ path, label, icon, isActive, onClick }) => {
+const NavLink: React.FC<NavLinkProps> = ({ path, label, icon, isActive, onClick, className = "" }) => {
   return (
     <Link
       to={path}
-      className={`flex items-center px-3 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${
+      className={`flex items-center px-2 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${
         isActive ? 'bg-lawyer-primary/10 text-lawyer-primary' : ''
-      }`}
+      } ${className}`}
       onClick={onClick}
     >
       {icon}
-      <span className="ml-2">{label}</span>
+      <span className="ml-1">{label}</span>
     </Link>
   );
 };
