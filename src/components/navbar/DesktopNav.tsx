@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, Settings, LogOut } from 'lucide-react';
+import { User, Settings, LogOut, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import NavLink from './NavLink';
@@ -35,23 +35,22 @@ const DesktopNav: React.FC<DesktopNavProps> = ({ user, navItems, isActive, handl
               className={`flex items-center px-2 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}
               title="Admin"
             >
-              <Settings className="h-4 w-4" />
+              <Shield className="h-4 w-4" />
             </Link>
           )}
 
           <div className="ml-3 flex items-center">
-            <Link to="/perfil" className="flex items-center text-white hover:text-lawyer-primary text-xs">
+            <Link to="/perfil" className="flex items-center text-white hover:text-lawyer-primary text-xs" title="Perfil">
               <User className="h-4 w-4" />
-              <span className="ml-1">Perfil</span>
             </Link>
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSignOut}
               className="ml-3 flex items-center text-white hover:text-lawyer-primary text-xs"
+              title="Sair"
             >
               <LogOut className="h-4 w-4" />
-              <span className="ml-1">Sair</span>
             </Button>
           </div>
         </>

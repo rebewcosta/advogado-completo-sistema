@@ -12,7 +12,8 @@ import {
   BarChart2, 
   Settings,
   Menu,
-  X
+  X,
+  Shield
 } from 'lucide-react';
 import Logo from './navbar/Logo';
 import DesktopNav from './navbar/DesktopNav';

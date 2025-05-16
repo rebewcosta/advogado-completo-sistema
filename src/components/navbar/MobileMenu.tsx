@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NavLink from './NavLink';
 
@@ -47,7 +47,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 onClick={() => setIsMenuOpen(false)}
                 title="Admin"
               >
-                <Settings className="h-5 w-5" />
+                <Shield className="h-5 w-5" />
                 <span className="ml-2">Admin</span>
               </Link>
             )}

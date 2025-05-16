@@ -6,10 +6,18 @@
     <link rel="icon" type="image/png" href="/lovable-uploads/f43e275d-744e-43eb-a2c7-bbf3c17b3fc5.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestão para Advogados</title>
+    <style>
+      /* Hide any potential Lovable banners */
+      [class*="lovable-banner"], [id*="lovable-banner"], 
+      [class*="lovable-editor"], [id*="lovable-editor"],
+      [class*="lovable-tagger"], [id*="lovable-tagger"] {
+        display: none !important;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
+    <!-- Remove the Lovable tagger script -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

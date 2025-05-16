@@ -15,6 +15,22 @@ const updateViewport = () => {
 // Execute viewport update
 updateViewport();
 
+// Remove any Lovable editor banners that might appear
+const removeLovableBanner = () => {
+  // Check for any Lovable editor elements and remove them
+  setTimeout(() => {
+    const possibleBanners = document.querySelectorAll('[class*="lovable"], [id*="lovable"], [class*="Lovable"], [id*="Lovable"]');
+    possibleBanners.forEach(el => {
+      if (el.tagName !== 'SCRIPT') {
+        el.remove();
+      }
+    });
+  }, 100);
+};
+
+// Execute banner removal
+removeLovableBanner();
+
 // Mount the app without the Lovable tagger
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
