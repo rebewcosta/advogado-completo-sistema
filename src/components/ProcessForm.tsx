@@ -42,11 +42,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
   );
   const [clienteOptions, setClienteOptions] = useState<string[]>([]);
 
-  useEffect(() => {
-    console.log("ProcessForm mounted with isEdit:", isEdit);
-    console.log("Process data:", process);
-  }, [process, isEdit]);
-
   // Carregar clientes do localStorage
   useEffect(() => {
     const savedClients = localStorage.getItem('clients');
@@ -66,7 +61,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with data:", { numero, cliente, tipo, vara, status, prazo: prazoDate });
+    console.log("Form submitted with data:", { numero, cliente, tipo, vara, status, prazoDate });
     
     const processData = {
       numero,
@@ -87,10 +82,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
         <Button 
           variant="ghost" 
           size="sm" 
-          onClick={() => {
-            console.log("Cancel button clicked");
-            onCancel();
-          }}
+          onClick={onCancel}
         >
           <X className="h-5 w-5" />
         </Button>
@@ -186,10 +178,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
           <Button 
             variant="outline" 
             type="button" 
-            onClick={() => {
-              console.log("Cancel button clicked");
-              onCancel();
-            }}
+            onClick={onCancel}
           >
             Cancelar
           </Button>

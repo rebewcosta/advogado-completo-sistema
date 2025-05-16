@@ -2,36 +2,26 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import ProcessForm from '@/components/ProcessForm';
-import { X, Edit, Eye, Plus, Search } from 'lucide-react';
+import { Plus, Search } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
 import { useProcessesStore } from '@/stores/useProcessesStore';
 import ProcessDetails from '@/components/processos/ProcessDetails';
-import SearchBar from '@/components/processos/SearchBar';
 import ProcessTable from '@/components/processos/ProcessTable';
 import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogOverlay,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogOverlay
+} from "@/components/ui/dialog";
 
 const MeusProcessosPage = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [showForm, setShowForm] = useState(false);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [showProcessDetails, setShowProcessDetails] = useState(false);
   
   const {
     processes,
@@ -45,29 +35,11 @@ const MeusProcessosPage = () => {
   // Debugging logs
   useEffect(() => {
     console.log("==== PAGE RENDER ====");
-    console.log("showForm:", showForm);
-    console.log("showProcessDetails:", showProcessDetails);
+    console.log("formDialogOpen:", formDialogOpen);
+    console.log("detailsDialogOpen:", detailsDialogOpen);
     console.log("selectedProcess:", selectedProcess);
     console.log("isEditing:", isEditing);
-  }, [showForm, showProcessDetails, selectedProcess, isEditing]);
-
-  // Efeito para registrar quando o botão é clicado
-  useEffect(() => {
-    const button = document.querySelector('button[data-add-process]');
-    if (button) {
-      button.addEventListener('click', () => {
-        console.log("Botão Novo Processo clicado via event listener!");
-      });
-    }
-    
-    return () => {
-      if (button) {
-        button.removeEventListener('click', () => {
-          console.log("Listener removido");
-        });
-      }
-    };
-  }, []);
+  }, [formDialogOpen, detailsDialogOpen, selectedProcess, isEditing]);
 
   // Filter processes based on search term
   const filteredProcesses = processes.filter(process =>
@@ -76,14 +48,15 @@ const MeusProcessosPage = () => {
     process.tipo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddProcess = () => {
-    console.log("Add process button clicked");
+  // Open form for new process
+  const handleOpenNewProcessForm = () => {
+    console.log("Opening new process form");
     setSelectedProcess(null);
     setIsEditing(false);
-    setShowForm(true);
-    console.log("showForm set to:", true);
+    setFormDialogOpen(true);
   };
 
+  // Handle save process
   const handleSaveProcess = (processData: any) => {
     if (isEditing && selectedProcess) {
       // Update existing process
@@ -105,28 +78,32 @@ const MeusProcessosPage = () => {
         description: `O processo ${newProcess.numero} foi cadastrado com sucesso.`,
       });
     }
-    setShowForm(false);
+    
+    setFormDialogOpen(false);
   };
 
+  // Handle edit process
   const handleEditProcess = (id: string) => {
     console.log("Edit process button clicked for id:", id);
     const process = getProcessById(id);
     if (process) {
       setSelectedProcess(process);
       setIsEditing(true);
-      setShowForm(true);
+      setFormDialogOpen(true);
     }
   };
 
+  // Handle view process
   const handleViewProcess = (id: string) => {
     console.log("View process button clicked for id:", id);
     const process = getProcessById(id);
     if (process) {
       setSelectedProcess(process);
-      setShowProcessDetails(true);
+      setDetailsDialogOpen(true);
     }
   };
 
+  // Handle toggle status
   const handleToggleStatus = (id: string) => {
     const process = toggleProcessStatus(id);
     
@@ -139,6 +116,7 @@ const MeusProcessosPage = () => {
     }
   };
 
+  // Handle delete process
   const handleDeleteProcess = (id: string) => {
     const process = getProcessById(id);
     
@@ -151,14 +129,6 @@ const MeusProcessosPage = () => {
         variant: "destructive"
       });
     }
-  };
-  
-  const closeFormDialog = () => {
-    setShowForm(false);
-  };
-  
-  const closeDetailsDialog = () => {
-    setShowProcessDetails(false);
   };
 
   return (
@@ -180,10 +150,7 @@ const MeusProcessosPage = () => {
               <Search className="h-5 w-5 text-gray-400" />
             </div>
           </div>
-          <Button 
-            onClick={handleAddProcess} 
-            data-add-process
-          >
+          <Button onClick={handleOpenNewProcessForm}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Processo
           </Button>
@@ -198,35 +165,35 @@ const MeusProcessosPage = () => {
           onDelete={handleDeleteProcess}
         />
         
-        {/* Process Form Dialog usando AlertDialog */}
-        <AlertDialog open={showForm} onOpenChange={setShowForm}>
-          <AlertDialogOverlay className="bg-black/30" />
-          <AlertDialogContent className="p-0 max-w-4xl overflow-auto max-h-[90vh]">
+        {/* Process Form Dialog */}
+        <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+          <DialogOverlay className="bg-black/30" />
+          <DialogContent className="p-0 max-w-4xl overflow-auto max-h-[90vh]">
             <ProcessForm 
               onSave={handleSaveProcess}
-              onCancel={closeFormDialog}
+              onCancel={() => setFormDialogOpen(false)}
               process={selectedProcess}
               isEdit={isEditing}
             />
-          </AlertDialogContent>
-        </AlertDialog>
+          </DialogContent>
+        </Dialog>
         
-        {/* Process Details Dialog usando AlertDialog */}
-        <AlertDialog open={showProcessDetails} onOpenChange={setShowProcessDetails}>
-          <AlertDialogOverlay className="bg-black/30" />
-          <AlertDialogContent className="p-6 max-w-3xl">
+        {/* Process Details Dialog */}
+        <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+          <DialogOverlay className="bg-black/30" />
+          <DialogContent className="p-6 max-w-3xl">
             {selectedProcess && (
               <ProcessDetails 
                 process={selectedProcess} 
-                onClose={closeDetailsDialog}
+                onClose={() => setDetailsDialogOpen(false)}
                 onEdit={() => {
-                  setShowProcessDetails(false);
+                  setDetailsDialogOpen(false);
                   handleEditProcess(selectedProcess.id);
                 }}
               />
             )}
-          </AlertDialogContent>
-        </AlertDialog>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
