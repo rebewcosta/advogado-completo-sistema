@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -38,12 +37,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const AppSidebar = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // Define menu items
   const menuItems = [
@@ -88,6 +89,19 @@ export const AppSidebar = () => {
     return nome.substring(0, 2).toUpperCase();
   };
 
+  // For mobile, handle menu item clicks differently
+  const handleMenuItemClick = (path: string) => {
+    if (!isMobile) return; // Only apply special handling on mobile
+    
+    // If we're already on the path, don't navigate (prevent redirection)
+    if (location.pathname === path) {
+      return;
+    }
+    
+    // Otherwise navigate as normal
+    navigate(path);
+  };
+
   return (
     <Sidebar>
       <SidebarHeader className="bg-lawyer-dark">
@@ -115,10 +129,23 @@ export const AppSidebar = () => {
                     isActive={isActive(item.path)}
                     className="px-1"
                   >
-                    <Link to={item.path} className="flex items-center gap-4">
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
-                    </Link>
+                    {isMobile ? (
+                      <div 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handleMenuItemClick(item.path);
+                        }}
+                        className="flex items-center gap-4"
+                      >
+                        <item.icon className="w-5 h-5" />
+                        <span>{item.label}</span>
+                      </div>
+                    ) : (
+                      <Link to={item.path} className="flex items-center gap-4">
+                        <item.icon className="w-5 h-5" />
+                        <span>{item.label}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -135,10 +162,23 @@ export const AppSidebar = () => {
               isActive={isActive("/configuracoes")}
               className="px-1"
             >
-              <Link to="/configuracoes" className="flex items-center gap-4">
-                <Settings className="w-5 h-5" />
-                <span>Configurações</span>
-              </Link>
+              {isMobile ? (
+                <div 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleMenuItemClick("/configuracoes");
+                  }}
+                  className="flex items-center gap-4"
+                >
+                  <Settings className="w-5 h-5" />
+                  <span>Configurações</span>
+                </div>
+              ) : (
+                <Link to="/configuracoes" className="flex items-center gap-4">
+                  <Settings className="w-5 h-5" />
+                  <span>Configurações</span>
+                </Link>
+              )}
             </SidebarMenuButton>
           </SidebarMenuItem>
           

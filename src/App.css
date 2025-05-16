@@ -85,6 +85,41 @@
   .space-y-4 > * + * {
     margin-top: 0.5rem;
   }
+  
+  /* Login notification adjustments */
+  .login-notification {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Mobile específico para sidebar e navegação */
+@media screen and (max-width: 767px) {
+  /* Reduz tamanho de fonte para cabeçalhos */
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  /* Ajusta tamanho dos cards */
+  .card {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Ajusta padding e margens */
+  .p-4 {
+    padding: 0.75rem;
+  }
+}
+
+/* Login notification styling */
+.login-notification {
+  background: linear-gradient(to right, #f7f1e3, #ffeaa7);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.login-notification:hover {
+  box-shadow: 0 3px 6px rgba(0,0,0,0.15);
 }
 
 /* Hide all lovable edit buttons and banners */
@@ -109,22 +144,4 @@
 /* Force hide floating buttons */
 body > div:not(#root) {
   display: none !important;
-}
-
-/* Mobile específico para sidebar e navegação */
-@media screen and (max-width: 767px) {
-  /* Reduz tamanho de fonte para cabeçalhos */
-  h1 {
-    font-size: 1.5rem;
-  }
-  
-  /* Ajusta tamanho dos cards */
-  .card {
-    margin-bottom: 0.5rem;
-  }
-  
-  /* Ajusta padding e margens */
-  .p-4 {
-    padding: 0.75rem;
-  }
 }
