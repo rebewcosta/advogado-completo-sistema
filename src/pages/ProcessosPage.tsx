@@ -194,17 +194,19 @@ const ProcessosPage = () => {
           </Table>
         </div>
         
-        {/* Process Form Dialog */}
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
-            <ProcessForm 
-              onSave={handleSaveProcess}
-              onCancel={() => setShowForm(false)}
-              process={selectedProcess}
-              isEdit={isEditing}
-            />
-          </DialogContent>
-        </Dialog>
+        {/* Process Form Dialog - Fixed with proper implementation matching ClientesPage.tsx */}
+        {showForm && (
+          <Dialog open={showForm} onOpenChange={setShowForm}>
+            <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+              <ProcessForm 
+                onSave={handleSaveProcess}
+                onCancel={() => setShowForm(false)}
+                process={selectedProcess}
+                isEdit={isEditing}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </AdminLayout>
   );
