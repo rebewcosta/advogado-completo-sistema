@@ -1,9 +1,10 @@
 
 import React, { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Database, HardDrive, RefreshCw } from 'lucide-react';
+import { Database, HardDrive, RefreshCw, AlertCircle } from 'lucide-react';
 import { useDocumentos, LIMITE_ARMAZENAMENTO_MB, LIMITE_ARMAZENAMENTO_BYTES } from '@/hooks/useDocumentos';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const DocumentoStorageInfo = () => {
   const [porcentagemUso, setPorcentagemUso] = useState<number>(0);
@@ -13,7 +14,8 @@ const DocumentoStorageInfo = () => {
     espacoDisponivel, 
     formatarTamanhoArquivo, 
     isRefreshing, 
-    calcularEspacoDisponivel 
+    calcularEspacoDisponivel,
+    isLoading
   } = useDocumentos();
 
   useEffect(() => {
@@ -38,7 +40,7 @@ const DocumentoStorageInfo = () => {
       await calcularEspacoDisponivel();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 
-                          typeof err === 'object' && err !== null ? JSON.stringify(err) : 
+                          typeof err === 'object' && err !== null ? String(err) : 
                           String(err);
       setError(errorMessage);
     }
@@ -65,10 +67,13 @@ const DocumentoStorageInfo = () => {
       </div>
       
       {error ? (
-        <div className="p-2 text-xs text-red-600 bg-red-50 rounded mb-2">
-          Erro ao atualizar informações: {error}
-        </div>
-      ) : isRefreshing ? (
+        <Alert variant="destructive" className="p-2 text-xs mb-2">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Erro ao atualizar informações: {error}
+          </AlertDescription>
+        </Alert>
+      ) : isRefreshing || isLoading ? (
         <div className="h-2 w-full bg-gray-100 rounded animate-pulse"></div>
       ) : (
         <>

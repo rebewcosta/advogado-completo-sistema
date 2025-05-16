@@ -34,6 +34,11 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
 import { 
   FileText, 
   Search, 
@@ -45,7 +50,8 @@ import {
   Eye, 
   File, 
   FilePlus,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useDocumentos, DocumentType, LIMITE_ARMAZENAMENTO_BYTES } from '@/hooks/useDocumentos';
@@ -58,7 +64,6 @@ const DocumentosPage = () => {
   const [documentType, setDocumentType] = useState<DocumentType>('outro');
   const [clientName, setClientName] = useState('');
   const [processNumber, setProcessNumber] = useState('');
-  const [error, setError] = useState<string | null>(null);
   
   const { toast } = useToast();
   const { 
@@ -71,22 +76,17 @@ const DocumentosPage = () => {
     listarDocumentos,
     obterUrlDocumento,
     excluirDocumento,
-    calcularEspacoDisponivel
+    calcularEspacoDisponivel,
+    error
   } = useDocumentos();
 
   // Verificar e atualizar o espaço disponível quando o componente for montado
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setError(null);
         await listarDocumentos();
         await calcularEspacoDisponivel();
       } catch (err) {
-        // Ensure the error is properly converted to a string
-        const errorMessage = err instanceof Error ? err.message : 
-                            typeof err === 'object' && err !== null ? JSON.stringify(err) : 
-                            String(err);
-        setError(errorMessage);
         console.error('Erro ao carregar documentos:', err);
       }
     };
@@ -240,7 +240,6 @@ const DocumentosPage = () => {
 
   const handleRefresh = async () => {
     try {
-      setError(null);
       await listarDocumentos();
       await calcularEspacoDisponivel();
       toast({
@@ -248,11 +247,6 @@ const DocumentosPage = () => {
         description: "Os documentos foram atualizados com sucesso",
       });
     } catch (err) {
-      // Ensure the error is properly converted to a string
-      const errorMessage = err instanceof Error ? err.message : 
-                          typeof err === 'object' && err !== null ? JSON.stringify(err) : 
-                          String(err);
-      setError(errorMessage);
       console.error('Erro ao atualizar dados:', err);
     }
   };
@@ -282,13 +276,11 @@ const DocumentosPage = () => {
         
         <div className="bg-white rounded-lg shadow-sm p-6">
           {error && (
-            <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-red-800 flex items-center">
-              <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
-              <div>
-                <p className="font-medium">Erro ao carregar documentos</p>
-                <p className="text-sm">{error}</p>
-              </div>
-            </div>
+            <Alert variant="destructive" className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Erro ao carregar documentos</AlertTitle>
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
           
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -322,7 +314,9 @@ const DocumentosPage = () => {
                 variant="outline" 
                 onClick={handleRefresh} 
                 disabled={isRefreshing}
+                className="flex items-center"
               >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                 {isRefreshing ? "Atualizando..." : "Atualizar"}
               </Button>
             </div>
@@ -397,7 +391,7 @@ const DocumentosPage = () => {
                   'Tente ajustar seus filtros de busca' : 
                   'Comece enviando seu primeiro documento'}
               </p>
-              {!searchTerm && filterType === 'all' && (
+              {!searchTerm && filterType === 'all' && !error && (
                 <Button 
                   variant="outline" 
                   className="mt-4"
@@ -406,6 +400,17 @@ const DocumentosPage = () => {
                 >
                   <FilePlus className="mr-2 h-4 w-4" />
                   Enviar documento
+                </Button>
+              )}
+              {!searchTerm && filterType === 'all' && error && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                >
+                  <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  {isRefreshing ? "Atualizando..." : "Tentar novamente"}
                 </Button>
               )}
             </div>
