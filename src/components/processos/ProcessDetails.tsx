@@ -29,8 +29,8 @@ const ProcessDetails: React.FC<ProcessDetailsProps> = ({ process, onClose, onEdi
           <Badge
             className={`
               mt-2 ${process.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
-              process.status === "Concluído" ? "bg-green-100 text-green-800" : 
-              "bg-yellow-100 text-yellow-800"}`}
+                process.status === "Concluído" ? "bg-green-100 text-green-800" : 
+                "bg-yellow-100 text-yellow-800"}`}
           >
             {process.status}
           </Badge>
