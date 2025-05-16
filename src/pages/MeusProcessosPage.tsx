@@ -1,13 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Edit, Eye, Plus, Search } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog,
-  DialogContent,
-  DialogOverlay
+  DialogContent
 } from "@/components/ui/dialog";
 import AdminLayout from '@/components/AdminLayout';
 import ProcessForm from '@/components/ProcessForm';
@@ -32,6 +31,11 @@ const MeusProcessosPage = () => {
     getProcessById
   } = useProcessesStore();
 
+  // For debugging purposes
+  useEffect(() => {
+    console.log("Current showForm state:", showForm);
+  }, [showForm]);
+
   // Filter processes based on search term
   const filteredProcesses = processes.filter(process =>
     process.numero?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -40,9 +44,11 @@ const MeusProcessosPage = () => {
   );
 
   const handleAddProcess = () => {
-    console.log("Add process button clicked");
+    console.log("Add process button clicked - trying to open form");
+    // Reset state for new process
     setSelectedProcess(null);
     setIsEditing(false);
+    // Force the form to open
     setShowForm(true);
   };
 
@@ -130,7 +136,13 @@ const MeusProcessosPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button onClick={handleAddProcess} className="flex items-center gap-1 whitespace-nowrap">
+          <Button 
+            onClick={() => {
+              console.log("Button clicked, setting showForm to true");
+              setShowForm(true);
+            }} 
+            className="flex items-center gap-1 whitespace-nowrap"
+          >
             <Plus className="h-4 w-4" />
             Cadastrar Novo Processo
           </Button>
@@ -146,11 +158,20 @@ const MeusProcessosPage = () => {
         />
         
         {/* Process Form Dialog */}
-        <Dialog open={showForm} onOpenChange={setShowForm}>
+        <Dialog 
+          open={showForm} 
+          onOpenChange={(isOpen) => {
+            console.log("Dialog onOpenChange triggered with:", isOpen);
+            setShowForm(isOpen);
+          }}
+        >
           <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
             <ProcessForm 
               onSave={handleSaveProcess}
-              onCancel={() => setShowForm(false)}
+              onCancel={() => {
+                console.log("Form cancel button clicked");
+                setShowForm(false);
+              }}
               process={selectedProcess}
               isEdit={isEditing}
             />
@@ -158,12 +179,18 @@ const MeusProcessosPage = () => {
         </Dialog>
         
         {/* Process Details Dialog */}
-        <Dialog open={showProcessDetails} onOpenChange={setShowProcessDetails}>
+        <Dialog 
+          open={showProcessDetails} 
+          onOpenChange={setShowProcessDetails}
+        >
           <DialogContent className="max-w-3xl p-6">
             {selectedProcess && (
               <ProcessDetails 
                 process={selectedProcess}
-                onClose={() => setShowProcessDetails(false)}
+                onClose={() => {
+                  console.log("Process details close button clicked");
+                  setShowProcessDetails(false);
+                }}
                 onEdit={() => {
                   setShowProcessDetails(false);
                   handleEditProcess(selectedProcess.id);

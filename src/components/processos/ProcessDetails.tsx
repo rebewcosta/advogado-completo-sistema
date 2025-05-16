@@ -35,7 +35,7 @@ const ProcessDetails: React.FC<ProcessDetailsProps> = ({ process, onClose, onEdi
             {process.status}
           </Badge>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-0 right-0">
+        <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>
