@@ -63,11 +63,14 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         </div>
         
         {user && (
-          <div className="fixed top-14 left-0 right-0 z-40 bg-gradient-to-r from-amber-50 to-yellow-100 border-b border-amber-200">
+          <div className="fixed top-14 left-0 right-0 z-40 bg-gradient-to-r from-amber-100 to-amber-50 border-b border-amber-200">
             <div className="p-2 px-4 flex justify-between items-center">
-              <div className="flex items-center">
+              <div className="flex items-center gap-2">
+                <div className="bg-amber-200 rounded-full h-6 w-6 flex items-center justify-center">
+                  <User className="h-3 w-3 text-amber-800" />
+                </div>
                 <p className="text-sm font-medium text-amber-900">
-                  <span className="font-normal">Olá,</span> {getUserInfo()}
+                  {getUserInfo()}
                 </p>
               </div>
             </div>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -89,17 +90,15 @@ export const AppSidebar = () => {
     return nome.substring(0, 2).toUpperCase();
   };
 
-  // For mobile, handle menu item clicks differently
-  const handleMenuItemClick = (path: string) => {
-    if (!isMobile) return; // Only apply special handling on mobile
-    
-    // If we're already on the path, don't navigate (prevent redirection)
-    if (location.pathname === path) {
-      return;
+  // Manipulador para navegação em dispositivos móveis
+  const handleMobileNavigation = (path: string) => {
+    if (isMobile) {
+      // No mobile, não queremos redirecionamento automático para evitar navegação indesejada
+      if (location.pathname === path) {
+        return;
+      }
+      navigate(path);
     }
-    
-    // Otherwise navigate as normal
-    navigate(path);
   };
 
   return (
@@ -131,10 +130,7 @@ export const AppSidebar = () => {
                   >
                     {isMobile ? (
                       <div 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          handleMenuItemClick(item.path);
-                        }}
+                        onClick={() => handleMobileNavigation(item.path)}
                         className="flex items-center gap-4"
                       >
                         <item.icon className="w-5 h-5" />
@@ -164,10 +160,7 @@ export const AppSidebar = () => {
             >
               {isMobile ? (
                 <div 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleMenuItemClick("/configuracoes");
-                  }}
+                  onClick={() => handleMobileNavigation("/configuracoes")}
                   className="flex items-center gap-4"
                 >
                   <Settings className="w-5 h-5" />

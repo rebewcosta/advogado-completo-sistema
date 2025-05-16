@@ -109,6 +109,22 @@
   .p-4 {
     padding: 0.75rem;
   }
+  
+  /* Ajustes para menu mobile */
+  .mobile-menu-sheet {
+    z-index: 100;
+  }
+  
+  /* Melhoria na barra de usuário em mobile */
+  .user-bar-mobile {
+    height: auto;
+    padding: 0.5rem;
+  }
+  
+  .user-bar-mobile-avatar {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
 }
 
 /* Login notification styling */
