@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,10 +29,19 @@ const DashboardPage = () => {
   return (
     <AdminLayout>
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-gray-600">Bem-vindo(a), {getUserFirstName()}. Aqui está o resumo do seu escritório.</p>
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center">
+            {user?.user_metadata?.logo && (
+              <img 
+                src={user.user_metadata.logo} 
+                alt="Logo do Escritório" 
+                className="h-12 w-auto mr-3 rounded-md" 
+              />
+            )}
+            <div>
+              <h1 className="text-2xl font-bold text-left">Dashboard</h1>
+              <p className="text-sm text-gray-600 text-left">Bem-vindo(a), {getUserFirstName()}. Aqui está o resumo do seu escritório.</p>
+            </div>
           </div>
           <Button 
             variant="outline" 
@@ -50,6 +58,7 @@ const DashboardPage = () => {
             <TabsTrigger value="visao-geral">Visão Geral</TabsTrigger>
             <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
             <TabsTrigger value="processos">Processos</TabsTrigger>
+            <TabsTrigger value="agenda">Agenda</TabsTrigger>
           </TabsList>
 
           {/* Conteúdo da aba Visão Geral */}
@@ -244,6 +253,42 @@ const DashboardPage = () => {
               <CardContent>
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhum processo cadastrado
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Nova aba de Agenda */}
+          <TabsContent value="agenda" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Compromissos para Hoje</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum compromisso agendado para hoje
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Próximas Audiências</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma audiência agendada
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Próximos Prazos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum prazo próximo
                 </div>
               </CardContent>
             </Card>

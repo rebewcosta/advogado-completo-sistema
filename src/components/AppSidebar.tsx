@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -36,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/hooks/use-toast';
 
 export const AppSidebar = () => {
@@ -152,10 +153,14 @@ export const AppSidebar = () => {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-700 transition-colors">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    {user?.user_metadata?.logo ? (
+                      <AvatarImage src={user.user_metadata.logo} alt="Logo" />
+                    ) : (
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="flex-1 text-left">
-                    <p className="text-sm font-medium truncate text-white">
+                    <p className="text-xs font-medium truncate text-white">
                       {user?.user_metadata?.nome || user?.email || "Usuário"}
                     </p>
                     <p className="text-xs text-gray-400 truncate">

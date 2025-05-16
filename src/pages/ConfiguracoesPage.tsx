@@ -32,6 +32,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import Footer from '@/components/Footer';
 import { supabase } from '@/integrations/supabase/client';
+import LogoUpload from '@/components/configuracoes/LogoUpload';
 
 const ConfiguracoesPage = () => {
   const { toast } = useToast();
@@ -199,10 +200,10 @@ const ConfiguracoesPage = () => {
   return (
     <AdminLayout>
       <div className="p-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-start justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold">Configurações</h1>
-            <p className="text-gray-600">Personalize o sistema de acordo com suas necessidades</p>
+            <h1 className="text-2xl font-bold text-left">Configurações</h1>
+            <p className="text-sm text-gray-600 text-left">Personalize o sistema de acordo com suas necessidades</p>
           </div>
           <div className="flex gap-2">
             <Button onClick={handleSave} disabled={saving}>
@@ -341,6 +342,16 @@ const ConfiguracoesPage = () => {
                       onChange={(e) => setOfficeSettings({...officeSettings, website: e.target.value})}
                     />
                   </div>
+                </div>
+
+                <Separator className="my-4" />
+                
+                <div className="space-y-2">
+                  <Label>Logo do Escritório</Label>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Faça upload da logo do seu escritório (até 1MB)
+                  </p>
+                  <LogoUpload />
                 </div>
               </CardContent>
             </Card>

@@ -1,258 +1,188 @@
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Session, SupabaseClient } from '@supabase/supabase-js';
-import { useToast } from './use-toast';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { Session, User } from '@supabase/supabase-js';
+import { useToast } from '@/hooks/use-toast';
 
-// Create a type for the database
-type Database = any;
-
-type AuthContextType = {
-  supabaseClient: SupabaseClient<Database>;
+interface AuthContextType {
+  user: User | null;
   session: Session | null;
-  user: Session['user'] | null;
-  signUp: (email: string, password: string, options?: any) => Promise<any>;
-  signIn: (email: string, password: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, metadata?: object) => Promise<void>;
   signOut: () => Promise<void>;
-  updateUser: (data: any) => Promise<any>;
-  isLoading: boolean;
-  checkEmailExists: (email: string) => Promise<boolean>;
-  createSpecialAccount: (email: string, password: string, options?: any) => Promise<any>;
-};
+  loading: boolean;
+  refreshSession: () => Promise<void>;
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [user, setUser] = useState<Session['user'] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   const { toast } = useToast();
-  
-  // Use the imported Supabase client instead of creating a new one
-  const supabaseClient = supabase;
 
   useEffect(() => {
-    const getSession = async () => {
-      const { data } = await supabaseClient.auth.getSession();
-      setSession(data.session);
-      setUser(data.session?.user || null);
+    const setData = (session: Session | null) => {
+      setSession(session);
+      setUser(session?.user ?? null);
     };
-    
-    getSession();
-    
-    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
-      (_event, newSession) => {
-        setSession(newSession);
-        setUser(newSession?.user || null);
+
+    // Obter a sessão atual
+    const setupAuth = async () => {
+      setLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setData(session);
+      } catch (error) {
+        console.error("Erro ao obter sessão:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Configurar o listener para mudanças de auth
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setData(session);
+        setLoading(false);
       }
     );
-    
+
+    // Inicializar
+    setupAuth();
+
+    // Limpar o listener quando o componente for desmontado
     return () => {
       subscription.unsubscribe();
     };
   }, []);
 
-  const signUp = async (email: string, password: string, options?: any) => {
-    setIsLoading(true);
+  const signIn = async (email: string, password: string) => {
     try {
-      const emailExists = await checkEmailExists(email);
-      if (emailExists) {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        // Mapeamento de erros para mensagens amigáveis
+        let errorMessage = "Ocorreu um erro ao fazer login.";
+        
+        if (error.message.includes("Invalid login credentials")) {
+          errorMessage = "Email ou senha incorretos. Por favor, verifique suas credenciais.";
+        } else if (error.message.includes("Email not confirmed")) {
+          errorMessage = "Email não confirmado. Por favor, verifique sua caixa de entrada.";
+        }
+        
         toast({
-          title: "Erro ao cadastrar",
-          description: "Este email já está cadastrado.",
+          title: "Erro de autenticação",
+          description: errorMessage,
           variant: "destructive"
         });
-        return { error: { message: "Este email já está cadastrado." } };
+        
+        throw new Error(errorMessage);
       }
 
-      const { data, error } = await supabaseClient.auth.signUp({
+      if (data.user) {
+        setUser(data.user);
+        setSession(data.session);
+        
+        // Redirecionar para o dashboard
+        navigate('/dashboard');
+      }
+    } catch (error: any) {
+      console.error("Erro ao fazer login:", error);
+      throw error; // Propagar o erro para tratamento adicional
+    }
+  };
+
+  const signUp = async (email: string, password: string, metadata?: object) => {
+    try {
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: options
+          data: metadata || {}
         }
       });
 
       if (error) {
+        let errorMessage = "Ocorreu um erro ao criar sua conta.";
+        
+        if (error.message.includes("User already registered")) {
+          errorMessage = "Este email já está registrado. Por favor, tente fazer login.";
+        } else if (error.message.includes("Email rate limit exceeded")) {
+          errorMessage = "Muitas tentativas. Por favor, tente novamente mais tarde.";
+        }
+        
         toast({
-          title: "Erro ao cadastrar",
-          description: error.message,
+          title: "Erro ao criar conta",
+          description: errorMessage,
           variant: "destructive"
         });
+        
+        throw new Error(errorMessage);
+      }
+
+      // Verificar se o email precisa ser confirmado
+      if (data.user && data.session) {
+        setUser(data.user);
+        setSession(data.session);
+        navigate('/dashboard');
       } else {
         toast({
           title: "Cadastro realizado",
-          description: "Verifique seu email para confirmar o cadastro.",
+          description: "Por favor, confirme seu email antes de fazer login.",
         });
+        navigate('/login');
       }
-      return { data, error };
     } catch (error: any) {
-      toast({
-        title: "Erro ao cadastrar",
-        description: error.message,
-        variant: "destructive"
-      });
-      return { error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const signIn = async (email: string, password: string) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabaseClient.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        toast({
-          title: "Erro ao logar",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Login realizado",
-          description: "Login realizado com sucesso.",
-        });
-        window.location.href = '/dashboard';
-      }
-      return error;
-    } catch (error: any) {
-      toast({
-        title: "Erro ao logar",
-        description: error.message,
-        variant: "destructive"
-      });
-      return error;
-    } finally {
-      setIsLoading(false);
+      console.error("Erro ao criar conta:", error);
+      throw error; // Propagar o erro para tratamento adicional
     }
   };
 
   const signOut = async () => {
-    setIsLoading(true);
     try {
-      await supabaseClient.auth.signOut();
-      window.location.href = '/login';
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      navigate('/');
     } catch (error: any) {
+      console.error("Erro ao fazer logout:", error);
       toast({
-        title: "Erro ao sair",
-        description: error.message,
+        title: "Erro ao desconectar",
+        description: "Ocorreu um erro ao tentar sair do sistema.",
         variant: "destructive"
       });
-    } finally {
-      setIsLoading(false);
+      throw error;
     }
   };
 
-  const updateUser = async (data: any) => {
-    setIsLoading(true);
+  const refreshSession = async () => {
     try {
-      const { data: response, error } = await supabaseClient
-        .auth.updateUser({
-          data: data
-        });
-        
-      if (error) {
-        toast({
-          title: "Erro ao atualizar",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Perfil atualizado",
-          description: "Perfil atualizado com sucesso.",
-        });
-      }
-      return { response, error };
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar",
-        description: error.message,
-        variant: "destructive"
-      });
-      return { error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Check if an email already exists using raw query to avoid type issues
-  const checkEmailExists = async (email: string): Promise<boolean> => {
-    try {
-      // Using a type assertion to work around TypeScript limitations with dynamic RPC functions
-      const { data, error } = await (supabaseClient.rpc as any)('get_user_by_email', {
-        email_to_check: email
-      });
+      const { data, error } = await supabase.auth.refreshSession();
+      if (error) throw error;
       
-      if (error) {
-        console.error('Erro ao verificar email:', error);
-        return false;
-      }
+      setUser(data.user);
+      setSession(data.session);
       
-      return data && data.length > 0 && data[0].count > 0;
+      return data;
     } catch (error) {
-      console.error('Erro ao verificar email:', error);
-      return false;
+      console.error("Erro ao atualizar sessão:", error);
+      throw error;
     }
   };
 
-  // Create a special account (admin function)
-  const createSpecialAccount = async (email: string, password: string, options?: any) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabaseClient.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: options?.skip_email_confirmation || false,
-        user_metadata: {
-          ...options,
-        }
-      });
-
-      if (error) {
-        toast({
-          title: "Erro ao criar conta especial",
-          description: error.message,
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Conta especial criada",
-          description: "Conta especial criada com sucesso.",
-        });
-      }
-      return { data, error };
-    } catch (error: any) {
-      toast({
-        title: "Erro ao criar conta especial",
-        description: error.message,
-        variant: "destructive"
-      });
-      return { error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const value = {
-    supabaseClient,
-    session,
-    user,
-    signUp,
-    signIn,
-    signOut,
-    updateUser,
-    isLoading,
-    checkEmailExists,
-    createSpecialAccount,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+  return (
+    <AuthContext.Provider value={{ user, session, signIn, signUp, signOut, loading, refreshSession }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -260,24 +190,4 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
-
-// Standalone version with error handling for direct imports
-export const checkEmailExists = async (email: string): Promise<boolean> => {
-  try {
-    // Using a type assertion to work around TypeScript limitations with dynamic RPC functions
-    const { data, error } = await (supabase.rpc as any)('get_user_by_email', {
-      email_to_check: email
-    });
-    
-    if (error) {
-      console.error('Erro ao verificar email:', error);
-      return false;
-    }
-    
-    return data && data.length > 0 && data[0].count > 0;
-  } catch (error) {
-    console.error('Erro ao verificar email:', error);
-    return false;
-  }
 };
