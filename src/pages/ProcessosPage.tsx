@@ -4,7 +4,6 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog,
   DialogContent,
-  DialogOverlay
 } from "@/components/ui/dialog";
 import AdminLayout from '@/components/AdminLayout';
 import ProcessForm from '@/components/ProcessForm';
@@ -48,7 +47,6 @@ const ProcessosPage = () => {
   );
 
   const handleAddProcess = () => {
-    console.log("Add process button clicked");
     setSelectedProcess(null);
     setIsEditing(false);
     setShowForm(true);
@@ -135,21 +133,23 @@ const ProcessosPage = () => {
         />
         
         {/* Process Form Dialog */}
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
-            <ProcessForm 
-              onSave={handleSaveProcess}
-              onCancel={() => setShowForm(false)}
-              process={selectedProcess}
-              isEdit={isEditing}
-            />
-          </DialogContent>
-        </Dialog>
+        {showForm && (
+          <Dialog open={showForm} onOpenChange={setShowForm}>
+            <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+              <ProcessForm 
+                onSave={handleSaveProcess}
+                onCancel={() => setShowForm(false)}
+                process={selectedProcess}
+                isEdit={isEditing}
+              />
+            </DialogContent>
+          </Dialog>
+        )}
         
         {/* Process Details Dialog */}
-        <Dialog open={showProcessDetails} onOpenChange={setShowProcessDetails}>
-          <DialogContent className="max-w-3xl p-6">
-            {selectedProcess && (
+        {showProcessDetails && selectedProcess && (
+          <Dialog open={showProcessDetails} onOpenChange={setShowProcessDetails}>
+            <DialogContent className="max-w-3xl p-6">
               <ProcessDetails
                 process={selectedProcess}
                 onClose={() => setShowProcessDetails(false)}
@@ -158,9 +158,9 @@ const ProcessosPage = () => {
                   handleEditProcess(selectedProcess.id);
                 }}
               />
-            )}
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </AdminLayout>
   );
