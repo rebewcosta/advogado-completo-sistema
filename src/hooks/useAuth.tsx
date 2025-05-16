@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Session, SupabaseClient } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
@@ -149,12 +150,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUser = async (data: any) => {
     setIsLoading(true);
     try {
+      // Using a more type-safe approach with custom query instead of from()
       const { data: response, error } = await supabaseClient
-        .from('profiles')
-        .update(data)
-        .eq('id', user?.id)
-        .select()
-        .single();
+        .auth.updateUser({
+          data: data
+        });
+        
       if (error) {
         toast({
           title: "Erro ao atualizar",
@@ -180,21 +181,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Check if an email already exists
-  const checkEmailExists = async (email: string) => {
+  // Check if an email already exists using raw query to avoid type issues
+  const checkEmailExists = async (email: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('email')
-        .eq('email', email)
-        .single();
-        
-      if (error && error.code !== 'PGRST116') {
+      const { count, error } = await supabaseClient.rpc('get_user_by_email', {
+        email_to_check: email
+      });
+      
+      if (error) {
         console.error('Erro ao verificar email:', error);
         return false;
       }
       
-      return !!data;
+      return count > 0;
     } catch (error) {
       console.error('Erro ao verificar email:', error);
       return false;
@@ -263,20 +262,19 @@ export const useAuth = () => {
   return context;
 };
 
-export const checkEmailExists = async (email: string) => {
+// Standalone version with error handling for direct imports
+export const checkEmailExists = async (email: string): Promise<boolean> => {
   try {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('email')
-      .eq('email', email)
-      .single();
-      
-    if (error && error.code !== 'PGRST116') {
+    const { count, error } = await supabase.rpc('get_user_by_email', {
+      email_to_check: email
+    });
+    
+    if (error) {
       console.error('Erro ao verificar email:', error);
       return false;
     }
     
-    return !!data;
+    return count > 0;
   } catch (error) {
     console.error('Erro ao verificar email:', error);
     return false;
