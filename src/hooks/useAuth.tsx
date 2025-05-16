@@ -176,7 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const createSpecialAccount = async (email: string, password: string, metadata: object) => {
+  const createSpecialAccount = async (email: string, password: string, metadata: object): Promise<void> => {
     try {
       // Use the admin API to create an account with special access
       const { data, error } = await supabase.auth.signUp({
@@ -207,8 +207,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         title: "Conta especial criada",
         description: `Conta com acesso especial criada para ${email}.`,
       });
-
-      return data;
+      
+      // Return void to match the expected return type
+      return;
     } catch (error: any) {
       console.error("Erro ao criar conta especial:", error);
       throw error;
