@@ -57,6 +57,12 @@ export type Database = {
         Args: { uid: string; novo_tamanho: number }
         Returns: boolean
       }
+      get_user_by_email: {
+        Args: { email_to_check: string }
+        Returns: {
+          count: number
+        }[]
+      }
       get_user_storage_usage: {
         Args: { uid: string }
         Returns: number

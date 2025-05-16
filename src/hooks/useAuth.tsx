@@ -150,7 +150,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUser = async (data: any) => {
     setIsLoading(true);
     try {
-      // Using a more type-safe approach with custom query instead of from()
       const { data: response, error } = await supabaseClient
         .auth.updateUser({
           data: data
@@ -184,7 +183,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check if an email already exists using raw query to avoid type issues
   const checkEmailExists = async (email: string): Promise<boolean> => {
     try {
-      const { count, error } = await supabaseClient.rpc('get_user_by_email', {
+      // Using a type assertion to work around TypeScript limitations with dynamic RPC functions
+      const { data, error } = await (supabaseClient.rpc as any)('get_user_by_email', {
         email_to_check: email
       });
       
@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return false;
       }
       
-      return count > 0;
+      return data && data.length > 0 && data[0].count > 0;
     } catch (error) {
       console.error('Erro ao verificar email:', error);
       return false;
@@ -265,7 +265,8 @@ export const useAuth = () => {
 // Standalone version with error handling for direct imports
 export const checkEmailExists = async (email: string): Promise<boolean> => {
   try {
-    const { count, error } = await supabase.rpc('get_user_by_email', {
+    // Using a type assertion to work around TypeScript limitations with dynamic RPC functions
+    const { data, error } = await (supabase.rpc as any)('get_user_by_email', {
       email_to_check: email
     });
     
@@ -274,7 +275,7 @@ export const checkEmailExists = async (email: string): Promise<boolean> => {
       return false;
     }
     
-    return count > 0;
+    return data && data.length > 0 && data[0].count > 0;
   } catch (error) {
     console.error('Erro ao verificar email:', error);
     return false;
