@@ -18,7 +18,6 @@ import ProcessForm from '@/components/ProcessForm';
 import {
   Dialog,
   DialogContent,
-  DialogOverlay
 } from "@/components/ui/dialog";
 
 // Interface para tipagem dos processos
@@ -197,7 +196,6 @@ const ProcessosPage = () => {
         
         {/* Process Form Dialog */}
         <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogOverlay />
           <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
             <ProcessForm 
               onSave={handleSaveProcess}
