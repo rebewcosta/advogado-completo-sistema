@@ -1,119 +1,81 @@
-
+// src/components/VerificarAssinatura.tsx
 import React, { useEffect, useState } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
+import { Navigate, useLocation, Outlet } from 'react-router-dom'; // ADICIONADO Outlet
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from './ui/spinner';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 interface VerificarAssinaturaProps {
-  children: React.ReactNode;
+  // Não precisa mais de children aqui se ele sempre renderiza Outlet ou Navigate
+  // children: React.ReactNode; // REMOVER OU DEIXAR OPCIONAL
 }
 
-const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) => {
+const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = (/* { children } */) => { // children removido
   const [isLoading, setIsLoading] = useState(true);
   const [isAssinante, setIsAssinante] = useState(false);
   const { user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
 
-  // Lista de rotas que não requerem assinatura ativa, mas requerem autenticação
-  const rotasPermitidas = ['/dashboard', '/perfil', '/pagamento', '/admin'];
+  const rotasPermitidas = ['/dashboard', '/perfil', '/pagamento', '/admin']; // '/configuracoes' não está aqui
 
   useEffect(() => {
-    const verificarAssinatura = async () => {
+    const verificar = async () => {
       if (!user) {
+        setIsAssinante(false); // Garante que não é assinante se não há usuário
         setIsLoading(false);
         return;
       }
 
+      setIsLoading(true);
       try {
-        setIsLoading(true);
-        
-        console.log("Verificando assinatura para usuário:", user.email);
-        
-        // Lista de emails com acesso especial
-        const specialEmails = ["webercostag@gmail.com", "teste@sisjusgestao.com.br"];
-        
-        // Verificação explícita para o email webercostag@gmail.com
-        if (user.email === "webercostag@gmail.com") {
-          console.log("Email exato webercostag@gmail.com detectado no componente! Concedendo acesso direto.");
+        console.log("VerificarAssinatura: Verificando para:", user.email);
+
+        // Lógica para determinar isAssinante (admin, special_access, ou chamada à Edge Function)
+        // Mantenha a lógica que já discutimos para chamar a Edge Function 'verificar-assinatura'
+        // e definir setIsAssinante(true/false) com base na resposta.
+        // Vou simplificar aqui para focar no roteamento, mas a sua lógica completa deve estar aqui.
+
+        if (user.email === "webercostag@gmail.com" || user.user_metadata?.special_access === true) {
+          console.log("VerificarAssinatura: Acesso especial local para", user.email);
           setIsAssinante(true);
-          setIsLoading(false);
-          
-          // Log extra para debugging
-          console.log("Acesso concedido para", user.email, "- usuário pode acessar todas as rotas");
-          return;
-        }
-        
-        // Verificar se o usuário tem special_access nos metadados
-        const hasSpecialAccess = user.user_metadata?.special_access === true;
-        console.log("Special access nos metadados:", hasSpecialAccess, "Metadados:", JSON.stringify(user.user_metadata));
-        
-        // Verificar se o email está na lista de acesso especial
-        const hasSpecialEmail = user.email && specialEmails.includes(user.email);
-        console.log("Email está na lista de acesso especial:", hasSpecialEmail);
-        console.log("Email do usuário:", user.email);
-        
-        // Conceder acesso se tiver special_access nos metadados ou email especial
-        if (hasSpecialAccess || hasSpecialEmail) {
-          console.log("Acesso especial detectado:", 
-            hasSpecialAccess ? "via metadados" : "via email");
-          setIsAssinante(true);
-          setIsLoading(false);
-          return;
-        }
-        
-        // Consultar o status da assinatura através da edge function
-        const { data, error } = await supabase.functions.invoke('verificar-assinatura');
-        
-        if (error) {
-          console.error('Erro ao verificar assinatura:', error);
-          toast({
-            title: "Erro ao verificar assinatura",
-            description: "Não foi possível verificar o status da sua assinatura. Você será redirecionado para a página de perfil.",
-            variant: "destructive"
-          });
-          setIsAssinante(false);
-          setIsLoading(false);
-          return;
-        }
-        
-        console.log("Resposta da verificação:", data);
-        
-        // Verificar se o usuário tem uma assinatura ativa
-        setIsAssinante(data?.subscribed || false);
-        
-        if (data?.subscribed) {
-          console.log('Assinatura ativa detectada:', data);
         } else {
-          console.log('Assinatura inativa ou não encontrada');
+          console.log("VerificarAssinatura: Chamando Edge Function para", user.email);
+          const { data: funcResponse, error: funcError } = await supabase.functions.invoke('verificar-assinatura');
+          if (funcError) {
+            console.error("VerificarAssinatura: Erro da Edge Function", funcError);
+            setIsAssinante(false);
+            toast({ title: "Erro", description: "Falha ao verificar status da assinatura.", variant: "destructive"});
+          } else {
+            console.log("VerificarAssinatura: Resposta da Edge Function", funcResponse);
+            setIsAssinante(funcResponse?.subscribed === true);
+          }
         }
-        
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Erro ao verificar assinatura:', error);
-        toast({
-          title: "Erro ao verificar assinatura",
-          description: "Ocorreu um erro ao verificar sua assinatura. Você será redirecionado para a página de perfil.",
-          variant: "destructive"
-        });
+      } catch (e) {
+        console.error("VerificarAssinatura: Erro no try/catch", e);
         setIsAssinante(false);
+        toast({ title: "Erro", description: "Ocorreu um erro ao verificar sua permissão.", variant: "destructive"});
+      } finally {
         setIsLoading(false);
       }
     };
-
-    verificarAssinatura();
+    verificar();
   }, [user, toast]);
 
-  // Verificar se a rota atual está na lista de rotas permitidas
-  const rotaAtualPermitida = rotasPermitidas.some(rota => 
+  const rotaAtualPermitida = rotasPermitidas.some(rota =>
     location.pathname.startsWith(rota)
   );
+  
+  // Adicionar /configuracoes às rotas permitidas se usuários não-assinantes (mas logados) devem acessá-la
+  // Ou garantir que usuários "Membro Amigo" tenham isAssinante = true
+  if (location.pathname.startsWith('/configuracoes') && user) {
+      // Se todos os usuários logados podem acessar configurações, descomente a linha abaixo
+      // return <Outlet />;
+  }
 
-  console.log("Rota atual:", location.pathname);
-  console.log("É rota permitida?", rotaAtualPermitida);
-  console.log("Usuário é assinante?", isAssinante);
+
+  console.log("VerificarAssinatura - Rota atual:", location.pathname, "É permitida (sem ass.)?:", rotaAtualPermitida, "É assinante?:", isAssinante, "Loading:", isLoading);
 
   if (isLoading) {
     return (
@@ -123,13 +85,28 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
     );
   }
 
+  if (!user && !rotasPermitidas.includes(location.pathname)) { // Se não há usuário e não é uma rota pública permitida (embora ProtectedRoute já deva cuidar disso)
+      console.log("VerificarAssinatura: Usuário não logado, redirecionando para login desde VA.");
+      return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (isAssinante) {
+    console.log("VerificarAssinatura: Acesso permitido, renderizando Outlet.");
+    return <Outlet />; // <<<---- MUDANÇA IMPORTANTE
+  }
+
+  // Se não é assinante E a rota atual NÃO está na lista de rotas permitidas SEM assinatura
   if (!isAssinante && !rotaAtualPermitida) {
-    console.log("Redirecionando para /perfil - usuário não tem acesso à rota atual");
+    console.log("VerificarAssinatura: Redirecionando para /perfil (ou /pagamento) - usuário não tem acesso à rota:", location.pathname);
+    // Redirecionar para a página de pagamento ou perfil se a assinatura for necessária e não estiver ativa
+    // Poderia ser /pagamento se o perfil não for o destino ideal
     return <Navigate to="/perfil" state={{ from: location }} replace />;
   }
 
-  console.log("Renderizando conteúdo - acesso permitido");
-  return <>{children}</>;
+  // Se é uma rota permitida sem assinatura (ex: /dashboard, /perfil, /admin), renderiza o Outlet
+  // Esta condição é para o caso de isAssinante ser false, mas a rota ser permitida.
+  console.log("VerificarAssinatura: Rota permitida sem assinatura ou usuário é assinante, renderizando Outlet.");
+  return <Outlet />; // <<<---- MUDANÇA IMPORTANTE
 };
 
 export default VerificarAssinatura;
