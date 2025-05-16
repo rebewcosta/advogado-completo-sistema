@@ -194,7 +194,7 @@ const ProcessosPage = () => {
           </Table>
         </div>
         
-        {/* Process Form Dialog - Fixed with proper implementation matching ClientesPage.tsx */}
+        {/* Process Form Dialog */}
         {showForm && (
           <Dialog open={showForm} onOpenChange={setShowForm}>
             <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
