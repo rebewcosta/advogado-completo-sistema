@@ -13,7 +13,6 @@ import AdminLayout from '@/components/AdminLayout';
 import ProcessForm from '@/components/ProcessForm';
 import { useProcessesStore } from '@/stores/useProcessesStore';
 import ProcessTable from '@/components/processos/ProcessTable';
-import SearchBar from '@/components/processos/SearchBar';
 import ProcessDetails from '@/components/processos/ProcessDetails';
 
 const MeusProcessosPage = () => {
@@ -41,6 +40,7 @@ const MeusProcessosPage = () => {
   );
 
   const handleAddProcess = () => {
+    console.log("Add process button clicked");
     setSelectedProcess(null);
     setIsEditing(false);
     setShowForm(true);
@@ -147,7 +147,6 @@ const MeusProcessosPage = () => {
         
         {/* Process Form Dialog */}
         <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogOverlay />
           <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
             <ProcessForm 
               onSave={handleSaveProcess}
@@ -160,7 +159,6 @@ const MeusProcessosPage = () => {
         
         {/* Process Details Dialog */}
         <Dialog open={showProcessDetails} onOpenChange={setShowProcessDetails}>
-          <DialogOverlay />
           <DialogContent className="max-w-3xl p-6">
             {selectedProcess && (
               <ProcessDetails 
