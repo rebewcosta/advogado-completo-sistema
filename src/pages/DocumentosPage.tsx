@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import DocumentoWarning from '@/components/DocumentoWarning';
@@ -38,7 +39,7 @@ import {
   Search, 
   Filter, 
   MoreVertical, 
-  Send, 
+  Upload, 
   Download, 
   Trash2, 
   Eye, 
@@ -215,11 +216,6 @@ const DocumentosPage = () => {
     }
   };
 
-  // Function to fix modal display
-  const openUploadDialog = () => {
-    setIsUploadDialogOpen(true);
-  };
-
   return (
     <AdminLayout>
       <div className="p-8">
@@ -229,11 +225,11 @@ const DocumentosPage = () => {
             <p className="text-gray-600">Gerencie todos os documentos do seu escritório</p>
           </div>
           <Button 
-            onClick={openUploadDialog} 
+            onClick={() => setIsUploadDialogOpen(true)} 
             className="bg-lawyer-primary hover:bg-lawyer-primary/90"
             disabled={espacoDisponivel < 1024} // Desabilitar se menos de 1KB disponível
           >
-            <Send className="mr-2 h-4 w-4" />
+            <Upload className="mr-2 h-4 w-4" />
             Enviar Documento
           </Button>
         </div>
@@ -372,7 +368,7 @@ const DocumentosPage = () => {
       
       {/* Modal de Upload */}
       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Enviar novo documento</DialogTitle>
             <DialogDescription>

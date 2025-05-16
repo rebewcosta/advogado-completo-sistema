@@ -1,6 +1,5 @@
 
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import HeroSection from '../components/HeroSection';
@@ -15,23 +14,10 @@ import { LogOut } from 'lucide-react';
 
 const Index = () => {
   const { user, signOut } = useAuth();
-  const navigate = useNavigate();
-
-  // Redirecionar usuários logados para o dashboard
-  useEffect(() => {
-    if (user) {
-      navigate('/dashboard');
-    }
-  }, [user, navigate]);
 
   const handleSignOut = async () => {
     await signOut();
   };
-
-  // Se o usuário estiver logado, não renderize nada enquanto o redirecionamento acontece
-  if (user) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen flex flex-col">

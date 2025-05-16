@@ -12,8 +12,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
-  useSidebar
+  SidebarTrigger
 } from "@/components/ui/sidebar";
 import { 
   Home, 
@@ -26,8 +25,7 @@ import {
   Settings,
   LogOut,
   User,
-  CreditCard,
-  ShieldCheck
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -40,15 +38,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from '@/hooks/use-toast';
-import { useIsMobile } from '@/hooks/use-mobile';
 
 export const AppSidebar = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const isMobile = useIsMobile();
-  const { setOpenMobile } = useSidebar();
 
   // Define menu items
   const menuItems = [
@@ -60,9 +55,6 @@ export const AppSidebar = () => {
     { path: "/documentos", icon: FileArchive, label: "Documentos" },
     { path: "/relatorios", icon: BarChart2, label: "Relatórios" },
   ];
-  
-  // Check if user is admin (webercostag@gmail.com)
-  const isAdmin = user?.email === 'webercostag@gmail.com';
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -96,18 +88,6 @@ export const AppSidebar = () => {
     return nome.substring(0, 2).toUpperCase();
   };
 
-  // Manipulador para navegação em dispositivos móveis
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    // No mobile, fechamos o menu depois de navegação
-    if (isMobile) {
-      setOpenMobile(false);
-      // Fechamos o Sheet component pai
-      const closeEvent = new CustomEvent('closeMobileMenu', { bubbles: true });
-      document.dispatchEvent(closeEvent);
-    }
-  };
-
   return (
     <Sidebar>
       <SidebarHeader className="bg-lawyer-dark">
@@ -134,33 +114,14 @@ export const AppSidebar = () => {
                     tooltip={item.label}
                     isActive={isActive(item.path)}
                     className="px-1"
-                    onClick={() => handleNavigation(item.path)}
                   >
-                    <div className="flex items-center gap-4 cursor-pointer">
+                    <Link to={item.path} className="flex items-center gap-4">
                       <item.icon className="w-5 h-5" />
                       <span>{item.label}</span>
-                    </div>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-              
-              {/* Admin menu item - only visible for webercostag@gmail.com */}
-              {isAdmin && (
-                <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    asChild 
-                    tooltip="Admin"
-                    isActive={isActive("/admin")}
-                    className="px-1"
-                    onClick={() => handleNavigation("/admin")}
-                  >
-                    <div className="flex items-center gap-4 cursor-pointer">
-                      <ShieldCheck className="w-5 h-5" />
-                      <span>Admin</span>
-                    </div>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -173,19 +134,18 @@ export const AppSidebar = () => {
               tooltip="Configurações"
               isActive={isActive("/configuracoes")}
               className="px-1"
-              onClick={() => handleNavigation("/configuracoes")}
             >
-              <div className="flex items-center gap-4 cursor-pointer">
+              <Link to="/configuracoes" className="flex items-center gap-4">
                 <Settings className="w-5 h-5" />
                 <span>Configurações</span>
-              </div>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           <div className="px-3 py-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-700 transition-colors cursor-pointer">
+                <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-700 transition-colors">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>{getUserInitials()}</AvatarFallback>
                   </Avatar>
@@ -199,19 +159,23 @@ export const AppSidebar = () => {
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 z-[999]">
+              <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer" onClick={() => handleNavigation("/perfil")}>
-                  <User className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/perfil" className="flex items-center cursor-pointer">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => handleNavigation("/perfil?tab=assinatura")}>
-                  <CreditCard className="mr-2 h-4 w-4" />
-                  <span>Assinatura</span>
+                <DropdownMenuItem asChild>
+                  <Link to="/perfil?tab=assinatura" className="flex items-center cursor-pointer">
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    <span>Assinatura</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600">
+                <DropdownMenuItem onClick={handleSignOut} className="flex items-center cursor-pointer text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>

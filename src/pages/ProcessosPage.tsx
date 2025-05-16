@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Eye, Edit, FilePlus } from 'lucide-react';
+import { Search, Eye, Edit, Plus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +18,7 @@ import ProcessForm from '@/components/ProcessForm';
 import {
   Dialog,
   DialogContent,
+  DialogOverlay
 } from "@/components/ui/dialog";
 
 // Interface para tipagem dos processos
@@ -130,8 +132,10 @@ const ProcessosPage = () => {
             </div>
           </div>
           <Button onClick={handleNewProcess}>
-            <FilePlus className="h-4 w-4 mr-2" />
-            Novo Processo
+            <span className="flex items-center">
+              <Plus className="h-5 w-5 mr-2" />
+              Novo Processo
+            </span>
           </Button>
         </div>
         
@@ -190,19 +194,20 @@ const ProcessosPage = () => {
             </TableBody>
           </Table>
         </div>
+        
+        {/* Process Form Dialog */}
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogOverlay />
+          <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+            <ProcessForm 
+              onSave={handleSaveProcess}
+              onCancel={() => setShowForm(false)}
+              process={selectedProcess}
+              isEdit={isEditing}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
-
-      {/* Process Form Dialog - Fixed positioning to ensure form is visible */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-          <ProcessForm 
-            onSave={handleSaveProcess}
-            onCancel={() => setShowForm(false)}
-            process={selectedProcess}
-            isEdit={isEditing}
-          />
-        </DialogContent>
-      </Dialog>
     </AdminLayout>
   );
 };

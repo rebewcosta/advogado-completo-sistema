@@ -10,39 +10,21 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import GerenciarAssinatura from '@/components/assinatura/GerenciarAssinatura';
 import { Spinner } from '@/components/ui/spinner';
-import { User, Settings, CreditCard, Bell } from 'lucide-react';
+import { User, Settings, CreditCard } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { useSearchParams } from 'react-router-dom';
-import { Switch } from '@/components/ui/switch';
 
 const PerfilUsuarioPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
-  const [searchParams] = useSearchParams();
-  const [notificacoes, setNotificacoes] = useState({
-    emailNovosProcessos: true,
-    emailAudiencias: true,
-    emailPrazos: true,
-    smsAudiencias: false,
-    smsVencimentos: false
-  });
   const { user } = useAuth();
   const { toast } = useToast();
-  
-  // Get the active tab from URL or default to "perfil"
-  const activeTab = searchParams.get('tab') || 'perfil';
 
   useEffect(() => {
     if (user) {
       setEmail(user.email || '');
       setNome(user.user_metadata?.nome || '');
-      
-      // Se existirem configurações de notificações nos metadados do usuário
-      if (user.user_metadata?.notificacoes) {
-        setNotificacoes(user.user_metadata.notificacoes);
-      }
     }
   }, [user]);
 
@@ -71,41 +53,6 @@ const PerfilUsuarioPage = () => {
       setIsSaving(false);
     }
   };
-  
-  const handleSalvarNotificacoes = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSaving(true);
-
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: { 
-          notificacoes: notificacoes
-        }
-      });
-
-      if (error) throw error;
-
-      toast({
-        title: "Preferências atualizadas",
-        description: "Suas preferências de notificações foram atualizadas com sucesso.",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar preferências",
-        description: error.message || "Ocorreu um erro ao atualizar suas preferências.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-  
-  const handleToggleNotificacao = (key: keyof typeof notificacoes) => {
-    setNotificacoes(prev => ({
-      ...prev,
-      [key]: !prev[key]
-    }));
-  };
 
   if (isLoading) {
     return (
@@ -122,10 +69,10 @@ const PerfilUsuarioPage = () => {
       <div className="container py-6">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Perfil do Usuário</h1>
-          <p className="text-gray-500">Gerencie suas informações e preferências</p>
+          <p className="text-gray-500">Gerencie suas informações e assinatura</p>
         </div>
 
-        <Tabs defaultValue={activeTab} value={activeTab}>
+        <Tabs defaultValue="perfil">
           <TabsList className="grid w-full grid-cols-3 mb-8">
             <TabsTrigger value="perfil" className="flex items-center gap-2">
               <User className="h-4 w-4" /> Perfil
@@ -133,8 +80,8 @@ const PerfilUsuarioPage = () => {
             <TabsTrigger value="assinatura" className="flex items-center gap-2">
               <CreditCard className="h-4 w-4" /> Assinatura
             </TabsTrigger>
-            <TabsTrigger value="notificacoes" className="flex items-center gap-2">
-              <Bell className="h-4 w-4" /> Notificações
+            <TabsTrigger value="seguranca" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" /> Segurança
             </TabsTrigger>
           </TabsList>
           
@@ -196,97 +143,30 @@ const PerfilUsuarioPage = () => {
             </Card>
           </TabsContent>
           
-          <TabsContent value="notificacoes">
+          <TabsContent value="seguranca">
             <Card>
               <CardHeader>
-                <CardTitle>Preferências de Notificações</CardTitle>
+                <CardTitle>Segurança da Conta</CardTitle>
                 <CardDescription>
-                  Configure como e quando deseja receber notificações
+                  Altere sua senha e configure opções de segurança
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSalvarNotificacoes} className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">Notificações por Email</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="email-processos" className="font-medium">Novos processos</Label>
-                          <p className="text-sm text-gray-500">Receba um email quando novos processos forem adicionados</p>
-                        </div>
-                        <Switch 
-                          id="email-processos" 
-                          checked={notificacoes.emailNovosProcessos}
-                          onCheckedChange={() => handleToggleNotificacao('emailNovosProcessos')}
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="email-audiencias" className="font-medium">Audiências</Label>
-                          <p className="text-sm text-gray-500">Receba um email lembrando de audiências marcadas</p>
-                        </div>
-                        <Switch 
-                          id="email-audiencias" 
-                          checked={notificacoes.emailAudiencias}
-                          onCheckedChange={() => handleToggleNotificacao('emailAudiencias')}
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="email-prazos" className="font-medium">Prazos processuais</Label>
-                          <p className="text-sm text-gray-500">Receba um email quando houver prazos a vencer</p>
-                        </div>
-                        <Switch 
-                          id="email-prazos" 
-                          checked={notificacoes.emailPrazos}
-                          onCheckedChange={() => handleToggleNotificacao('emailPrazos')}
-                        />
-                      </div>
-                    </div>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Senha atual</Label>
+                    <Input id="current-password" type="password" />
                   </div>
-                  
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">Notificações por SMS</h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="sms-audiencias" className="font-medium">Audiências</Label>
-                          <p className="text-sm text-gray-500">Receba um SMS no dia de audiências marcadas</p>
-                        </div>
-                        <Switch 
-                          id="sms-audiencias" 
-                          checked={notificacoes.smsAudiencias}
-                          onCheckedChange={() => handleToggleNotificacao('smsAudiencias')}
-                        />
-                      </div>
-                      
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <Label htmlFor="sms-vencimentos" className="font-medium">Vencimentos</Label>
-                          <p className="text-sm text-gray-500">Receba um SMS quando houver faturas a vencer</p>
-                        </div>
-                        <Switch 
-                          id="sms-vencimentos" 
-                          checked={notificacoes.smsVencimentos}
-                          onCheckedChange={() => handleToggleNotificacao('smsVencimentos')}
-                        />
-                      </div>
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Nova senha</Label>
+                    <Input id="new-password" type="password" />
                   </div>
-                  
-                  <Button type="submit" disabled={isSaving}>
-                    {isSaving ? (
-                      <>
-                        <Spinner size="sm" className="mr-2" />
-                        Salvando...
-                      </>
-                    ) : (
-                      'Salvar preferências'
-                    )}
-                  </Button>
-                </form>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirmar nova senha</Label>
+                    <Input id="confirm-password" type="password" />
+                  </div>
+                  <Button>Alterar senha</Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
