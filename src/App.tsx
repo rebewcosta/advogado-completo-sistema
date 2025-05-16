@@ -15,7 +15,6 @@ import PaymentSuccessPage from './pages/PaymentSuccessPage';
 import ConfiguracoesPage from './pages/ConfiguracoesPage';
 import NotFound from './pages/NotFound';
 import TermosPrivacidadePage from './pages/TermosPrivacidadePage';
-import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
 import SuportePage from './pages/SuportePage';
 import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
 import AdminPage from './pages/AdminPage';
@@ -50,7 +49,6 @@ function App() {
           <Route element={<ProtectedRoute />}>
             {/* Rotas que não requerem verificação de assinatura */}
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/perfil" element={<PerfilUsuarioPage />} />
             <Route path="/admin" element={<AdminPage />} />
             
             {/* Rotas que requerem verificação de assinatura */}

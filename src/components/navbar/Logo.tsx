@@ -7,7 +7,7 @@ const Logo: React.FC = () => {
     <div className="flex-shrink-0">
       <Link to="/" className="flex items-center gap-1">
         <img 
-          src="/lovable-uploads/f43e275d-744e-43eb-a2c7-bbf3c17b3fc5.png" 
+          src="/lovable-uploads/b847f8b8-3af4-4dc2-9e6c-84c18116e7cf.png" 
           alt="JusGestão Logo" 
           className="h-7 w-7" 
         />

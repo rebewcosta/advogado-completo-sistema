@@ -24,7 +24,6 @@ import {
   BarChart2, 
   Settings,
   LogOut,
-  User,
   CreditCard,
   Shield
 } from 'lucide-react';
@@ -171,19 +170,6 @@ export const AppSidebar = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/perfil" className="flex items-center cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Perfil</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/perfil?tab=assinatura" className="flex items-center cursor-pointer">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Assinatura</span>
-                  </Link>
-                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="flex items-center cursor-pointer text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { User, LogOut, Shield } from 'lucide-react';
+import { LogOut, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import NavLink from './NavLink';
 
@@ -52,14 +52,6 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               </Link>
             )}
 
-            <Link
-              to="/perfil"
-              className="flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <User className="h-5 w-5" />
-              <span className="ml-2">Perfil</span>
-            </Link>
             <button
               onClick={() => {
                 handleSignOut();
