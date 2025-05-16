@@ -21,7 +21,7 @@ const CriarContaEspecial = () => {
   const { toast } = useToast();
   
   // Lista de emails especiais predefinidos
-  const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com', 'focolaresce@gmail.com'];
+  const specialEmails = ['webercostag@gmail.com', 'logo.advocacia@gmail.com', 'focolaresce@gmail.com','future.iartificial@gmail.com'];
   
   // Função para criar uma senha aleatória
   const generatePassword = () => {
