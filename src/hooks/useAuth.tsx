@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +12,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   loading: boolean;
   refreshSession: () => Promise<void>;
+  createSpecialAccount: (email: string, password: string, metadata: object) => Promise<void>;
+  checkEmailExists: (email: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -175,8 +176,73 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const createSpecialAccount = async (email: string, password: string, metadata: object) => {
+    try {
+      // Use the admin API to create an account with special access
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata || {}
+        }
+      });
+
+      if (error) {
+        let errorMessage = "Ocorreu um erro ao criar a conta especial.";
+        
+        if (error.message.includes("User already registered")) {
+          errorMessage = "Este email já está registrado.";
+        }
+        
+        toast({
+          title: "Erro ao criar conta",
+          description: errorMessage,
+          variant: "destructive"
+        });
+        
+        throw new Error(errorMessage);
+      }
+
+      toast({
+        title: "Conta especial criada",
+        description: `Conta com acesso especial criada para ${email}.`,
+      });
+
+      return data;
+    } catch (error: any) {
+      console.error("Erro ao criar conta especial:", error);
+      throw error;
+    }
+  };
+
+  const checkEmailExists = async (email: string): Promise<boolean> => {
+    try {
+      // This is a simplified version - in production you might want to use a Supabase function
+      const { data, error } = await supabase
+        .rpc('get_user_by_email', { email_to_check: email });
+      
+      if (error) throw error;
+      
+      // Return true if the count is greater than 0
+      return data?.[0]?.count > 0;
+    } catch (error) {
+      console.error("Erro ao verificar email:", error);
+      return false;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, session, signIn, signUp, signOut, loading, refreshSession }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      signIn, 
+      signUp, 
+      signOut, 
+      loading, 
+      refreshSession,
+      createSpecialAccount,
+      checkEmailExists
+    }}>
       {children}
     </AuthContext.Provider>
   );

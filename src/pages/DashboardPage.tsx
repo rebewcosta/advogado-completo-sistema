@@ -1,10 +1,13 @@
+
 import React from 'react';
 import AdminLayout from '@/components/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Calendar, Clock, DollarSign, FileText, Users, LogOut } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/button';
+import DashboardHeader from '@/components/dashboard/DashboardHeader';
+import VisaoGeralContent from '@/components/dashboard/VisaoGeralContent';
+import FinanceiroContent from '@/components/dashboard/FinanceiroContent';
+import ProcessosContent from '@/components/dashboard/ProcessosContent';
+import AgendaContent from '@/components/dashboard/AgendaContent';
 
 const DashboardPage = () => {
   const { user, signOut } = useAuth();
@@ -29,29 +32,11 @@ const DashboardPage = () => {
   return (
     <AdminLayout>
       <div className="p-6">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center">
-            {user?.user_metadata?.logo && (
-              <img 
-                src={user.user_metadata.logo} 
-                alt="Logo do Escritório" 
-                className="h-12 w-auto mr-3 rounded-md" 
-              />
-            )}
-            <div>
-              <h1 className="text-2xl font-bold text-left">Dashboard</h1>
-              <p className="text-sm text-gray-600 text-left">Bem-vindo(a), {getUserFirstName()}. Aqui está o resumo do seu escritório.</p>
-            </div>
-          </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={handleSignOut}
-            className="flex items-center gap-2 border-red-300 text-red-600 hover:bg-red-50"
-          >
-            <LogOut className="h-4 w-4" /> Sair
-          </Button>
-        </div>
+        <DashboardHeader 
+          user={user} 
+          getUserFirstName={getUserFirstName} 
+          handleSignOut={handleSignOut} 
+        />
 
         <Tabs defaultValue="visao-geral">
           <TabsList className="mb-4">
@@ -62,236 +47,23 @@ const DashboardPage = () => {
           </TabsList>
 
           {/* Conteúdo da aba Visão Geral */}
-          <TabsContent value="visao-geral" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">
-                    Nenhum cliente cadastrado
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Processos em Andamento</CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">
-                    Nenhum processo cadastrado
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Compromissos Hoje</CardTitle>
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                  <p className="text-xs text-muted-foreground">
-                    Nenhum compromisso agendado
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Receita no Mês</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">R$ 0,00</div>
-                  <p className="text-xs text-muted-foreground">
-                    Nenhum recebimento registrado
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Próximas Audiências</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhuma audiência agendada
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Prazos Próximos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhum prazo cadastrado
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Atividades Recentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhuma atividade registrada
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="visao-geral">
+            <VisaoGeralContent />
           </TabsContent>
 
           {/* Conteúdo da aba Financeiro */}
-          <TabsContent value="financeiro" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">R$ 0,00</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Despesas</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">R$ 0,00</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pagamentos Pendentes</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Valor Pendente</CardTitle>
-                  <DollarSign className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">R$ 0,00</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Histórico de Transações</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhuma transação registrada
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="financeiro">
+            <FinanceiroContent />
           </TabsContent>
 
           {/* Conteúdo da aba Processos */}
-          <TabsContent value="processos" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Processos por Status</CardTitle>
-                </CardHeader>
-                <CardContent className="h-80">
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhum processo cadastrado
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Audiências por Mês</CardTitle>
-                </CardHeader>
-                <CardContent className="h-80">
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhuma audiência agendada
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Processos por Área</CardTitle>
-                </CardHeader>
-                <CardContent className="h-80">
-                  <div className="text-center py-8 text-muted-foreground">
-                    Nenhum processo cadastrado
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Últimos Processos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhum processo cadastrado
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="processos">
+            <ProcessosContent />
           </TabsContent>
 
-          {/* Nova aba de Agenda */}
-          <TabsContent value="agenda" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Compromissos para Hoje</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhum compromisso agendado para hoje
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Próximas Audiências</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhuma audiência agendada
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Próximos Prazos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Nenhum prazo próximo
-                </div>
-              </CardContent>
-            </Card>
+          {/* Conteúdo da aba Agenda */}
+          <TabsContent value="agenda">
+            <AgendaContent />
           </TabsContent>
         </Tabs>
       </div>
