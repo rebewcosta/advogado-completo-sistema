@@ -12,7 +12,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger
+  SidebarTrigger,
+  useSidebar
 } from "@/components/ui/sidebar";
 import { 
   Home, 
@@ -25,8 +26,7 @@ import {
   Settings,
   LogOut,
   User,
-  CreditCard,
-  Bell
+  CreditCard
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -47,6 +47,7 @@ export const AppSidebar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
 
   // Define menu items
   const menuItems = [
@@ -96,6 +97,7 @@ export const AppSidebar = () => {
     navigate(path);
     // No mobile, fechamos o menu depois de navegação
     if (isMobile) {
+      setOpenMobile(false);
       // Fechamos o Sheet component pai
       const closeEvent = new CustomEvent('closeMobileMenu', { bubbles: true });
       document.dispatchEvent(closeEvent);
@@ -158,21 +160,6 @@ export const AppSidebar = () => {
             </SidebarMenuButton>
           </SidebarMenuItem>
           
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              tooltip="Notificações"
-              isActive={isActive("/perfil?tab=notificacoes")}
-              className="px-1"
-              onClick={() => handleNavigation("/perfil?tab=notificacoes")}
-            >
-              <div className="flex items-center gap-4 cursor-pointer">
-                <Bell className="w-5 h-5" />
-                <span>Notificações</span>
-              </div>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
           <div className="px-3 py-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -190,7 +177,7 @@ export const AppSidebar = () => {
                   </div>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 z-[999]">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="cursor-pointer" onClick={() => handleNavigation("/perfil")}>
@@ -200,10 +187,6 @@ export const AppSidebar = () => {
                 <DropdownMenuItem className="cursor-pointer" onClick={() => handleNavigation("/perfil?tab=assinatura")}>
                   <CreditCard className="mr-2 h-4 w-4" />
                   <span>Assinatura</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer" onClick={() => handleNavigation("/perfil?tab=notificacoes")}>
-                  <Bell className="mr-2 h-4 w-4" />
-                  <span>Notificações</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600">

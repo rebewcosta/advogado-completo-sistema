@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Toaster } from "@/components/ui/toaster";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { Menu, User, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -75,19 +75,32 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     navigate('/perfil?tab=assinatura');
   };
 
+  // Close sidebar when navigating on mobile
+  useEffect(() => {
+    const handleCloseMenu = () => setSidebarOpen(false);
+    document.addEventListener('closeMobileMenu', handleCloseMenu);
+    
+    return () => {
+      document.removeEventListener('closeMobileMenu', handleCloseMenu);
+    };
+  }, []);
+
   if (isMobile) {
     return (
-      <SidebarProvider>
-        <div className="flex h-screen w-full bg-gray-100">
+      <div className="flex h-screen w-full bg-gray-100">
+        <SidebarProvider>
           <div className="fixed top-0 left-0 right-0 z-50 bg-lawyer-dark h-14 px-4 flex items-center justify-between">
             <div className="flex items-center">
               <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white">
-                    <Menu className="h-6 w-6" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-[75%] bg-lawyer-dark">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="text-white"
+                  onClick={() => setSidebarOpen(true)}
+                >
+                  <Menu className="h-6 w-6" />
+                </Button>
+                <SheetContent side="left" className="p-0 w-[75%] bg-lawyer-dark z-[999]">
                   <div className="h-full">
                     <AppSidebar />
                   </div>
@@ -107,7 +120,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               <div className="flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative rounded-full text-white hover:bg-white/10">
+                    <Button variant="ghost" size="icon" className="relative rounded-full text-white hover:bg-white/10 z-10">
                       <Avatar className="h-8 w-8 border border-white/20">
                         <AvatarFallback className="bg-white/10 text-white text-sm">
                           {getUserInitials()}
@@ -115,16 +128,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 mt-1">
+                  <DropdownMenuContent align="end" className="w-56 mt-1 z-[999]">
                     <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
                       <User className="mr-2 h-4 w-4" />
                       <span>Perfil</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleSubscriptionClick} className="cursor-pointer">
-                      <Bell className="mr-2 h-4 w-4" />
-                      <span>Notificações</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
@@ -155,9 +164,9 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
           <div className="flex-1 overflow-auto pt-14 mt-10">
             {children}
           </div>
-          <Toaster />
-        </div>
-      </SidebarProvider>
+        </SidebarProvider>
+        <Toaster />
+      </div>
     );
   }
 
