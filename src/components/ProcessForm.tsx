@@ -114,7 +114,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
                     <SelectItem key={index} value={nome}>{nome}</SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="" disabled>Nenhum cliente cadastrado</SelectItem>
+                  <SelectItem value="no_clients_available" disabled>Nenhum cliente cadastrado</SelectItem>
                 )}
               </SelectContent>
             </Select>
