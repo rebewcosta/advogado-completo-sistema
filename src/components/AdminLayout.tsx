@@ -100,7 +100,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                 >
                   <Menu className="h-6 w-6" />
                 </Button>
-                <SheetContent side="left" className="p-0 w-[75%] bg-lawyer-dark z-[999]">
+                <SheetContent side="left" className="p-0 w-[75%] bg-lawyer-dark sidebar-sheet-content">
                   <div className="h-full">
                     <AppSidebar />
                   </div>
@@ -120,7 +120,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               <div className="flex items-center">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="relative rounded-full text-white hover:bg-white/10 z-10">
+                    <Button variant="ghost" size="icon" className="relative rounded-full text-white hover:bg-white/10 z-50">
                       <Avatar className="h-8 w-8 border border-white/20">
                         <AvatarFallback className="bg-white/10 text-white text-sm">
                           {getUserInitials()}
@@ -128,7 +128,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 mt-1 z-[999]">
+                  <DropdownMenuContent align="end" className="w-56 mt-1 dropdown-menu-mobile">
                     <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">

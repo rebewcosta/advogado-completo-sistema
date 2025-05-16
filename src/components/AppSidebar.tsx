@@ -26,7 +26,8 @@ import {
   Settings,
   LogOut,
   User,
-  CreditCard
+  CreditCard,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -59,6 +60,9 @@ export const AppSidebar = () => {
     { path: "/documentos", icon: FileArchive, label: "Documentos" },
     { path: "/relatorios", icon: BarChart2, label: "Relatórios" },
   ];
+  
+  // Check if user is admin (webercostag@gmail.com)
+  const isAdmin = user?.email === 'webercostag@gmail.com';
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -139,6 +143,24 @@ export const AppSidebar = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Admin menu item - only visible for webercostag@gmail.com */}
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    asChild 
+                    tooltip="Admin"
+                    isActive={isActive("/admin")}
+                    className="px-1"
+                    onClick={() => handleNavigation("/admin")}
+                  >
+                    <div className="flex items-center gap-4 cursor-pointer">
+                      <ShieldCheck className="w-5 h-5" />
+                      <span>Admin</span>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
