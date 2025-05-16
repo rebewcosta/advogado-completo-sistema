@@ -1,69 +1,16 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
+import { verificarAutenticacao } from './auth';
+import { handleError, formatarTamanhoArquivo, LIMITE_ARMAZENAMENTO_MB, LIMITE_ARMAZENAMENTO_BYTES } from './utils';
+import { obterUsoArmazenamento, obterUrlDocumento } from './storage';
 
-export const LIMITE_ARMAZENAMENTO_MB = 25;
-export const LIMITE_ARMAZENAMENTO_BYTES = LIMITE_ARMAZENAMENTO_MB * 1024 * 1024; // 25MB em bytes
-
-// Função para formatar tamanho em bytes para formato legível
-export const formatarTamanhoArquivo = (bytes: number): string => {
-  if (bytes < 1024) return bytes + ' bytes';
-  else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-  else return (bytes / 1048576).toFixed(1) + ' MB';
-};
-
-// Função para tratar erros de forma consistente
-const handleError = (error: any, defaultMessage: string): Error => {
-  console.error(defaultMessage, error);
-  
-  if (error instanceof Error) return error;
-  
-  if (typeof error === 'object' && error !== null) {
-    return new Error(
-      error.message || error.error_description || error.error || JSON.stringify(error)
-    );
-  }
-  
-  return new Error(String(error || defaultMessage));
-};
-
-// Verifica se o usuário está autenticado e retorna o usuário ou lança um erro
-const verificarAutenticacao = async () => {
-  const { data, error } = await supabase.auth.getUser();
-  
-  if (error) {
-    console.error("Erro na autenticação:", error);
-    throw new Error(error.message || 'Erro na autenticação');
-  }
-  
-  if (!data.user) {
-    throw new Error('Usuário não autenticado');
-  }
-  
-  return data.user;
-};
-
-// Função para obter o uso de armazenamento do usuário atual
-export const obterUsoArmazenamento = async (): Promise<number> => {
-  try {
-    const user = await verificarAutenticacao();
-    
-    const { data, error } = await supabase
-      .from('documentos')
-      .select('tamanho_bytes')
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error("Erro ao obter documentos:", error);
-      throw error;
-    }
-
-    // Calcular total em bytes
-    const totalBytes = data?.reduce((acc, doc) => acc + doc.tamanho_bytes, 0) || 0;
-    return totalBytes;
-  } catch (error) {
-    throw handleError(error, 'Erro ao obter uso de armazenamento');
-  }
+// Re-export das funções e constantes
+export { 
+  formatarTamanhoArquivo, 
+  LIMITE_ARMAZENAMENTO_MB, 
+  LIMITE_ARMAZENAMENTO_BYTES,
+  obterUrlDocumento
 };
 
 // Função para calcular espaço disponível em bytes
@@ -167,30 +114,6 @@ export const uploadDocumento = async (
   }
 };
 
-// Função para obter URL de download de um documento
-export const obterUrlDocumento = async (path: string): Promise<string> => {
-  try {
-    await verificarAutenticacao();
-    
-    const { data, error } = await supabase.storage
-      .from('documentos')
-      .createSignedUrl(path, 60); // URL válida por 60 segundos
-
-    if (error) {
-      console.error("Erro ao criar URL assinada:", error);
-      throw error;
-    }
-
-    if (!data || !data.signedUrl) {
-      throw new Error('Não foi possível gerar a URL do documento');
-    }
-
-    return data.signedUrl;
-  } catch (error) {
-    throw handleError(error, 'Erro ao obter URL do documento');
-  }
-};
-
 // Função para excluir um documento
 export const excluirDocumento = async (id: string, path: string) => {
   try {
@@ -227,3 +150,6 @@ export const excluirDocumento = async (id: string, path: string) => {
     throw handleError(error, 'Erro ao excluir documento');
   }
 };
+
+// Re-export da função obterUsoArmazenamento
+export { obterUsoArmazenamento };

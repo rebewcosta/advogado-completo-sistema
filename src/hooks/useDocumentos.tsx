@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import * as DocumentosService from '@/services/documentos';
+import { useDocumentUpload } from './useDocumentUpload';
+import { useDocumentActions } from './useDocumentActions';
 
-export const LIMITE_ARMAZENAMENTO_MB = 25;
-export const LIMITE_ARMAZENAMENTO_BYTES = LIMITE_ARMAZENAMENTO_MB * 1024 * 1024; // 25MB em bytes
+export const LIMITE_ARMAZENAMENTO_MB = DocumentosService.LIMITE_ARMAZENAMENTO_MB;
+export const LIMITE_ARMAZENAMENTO_BYTES = DocumentosService.LIMITE_ARMAZENAMENTO_BYTES;
 
 // Tipos para documentos
 export type DocumentType = 'contrato' | 'petição' | 'procuração' | 'decisão' | 'outro';
@@ -29,20 +29,17 @@ export function useDocumentos() {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [espacoDisponivel, setEspacoDisponivel] = useState<number>(LIMITE_ARMAZENAMENTO_BYTES);
   const [usoAtual, setUsoAtual] = useState<number>(0);
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const [error, setError] = useState<string | null>(null);
 
   // Formatar tamanho em bytes para formato legível
-  const formatarTamanhoArquivo = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' bytes';
-    else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-    else return (bytes / 1048576).toFixed(1) + ' MB';
-  };
+  const formatarTamanhoArquivo = DocumentosService.formatarTamanhoArquivo;
 
   // Função para obter o uso de armazenamento do usuário atual
-  const obterUsoArmazenamento = async (): Promise<number> => {
-    if (!user) {
+  const obterUsoArmazenamento = useCallback(async (): Promise<number> => {
+    if (!session || !user) {
       console.log("Usuário não autenticado ao obter uso de armazenamento");
+      setUsoAtual(0);
       return 0;
     }
     
@@ -52,16 +49,19 @@ export function useDocumentos() {
       return usoBytes;
     } catch (error) {
       console.error('Erro ao obter uso de armazenamento:', error);
-      setError(error instanceof Error ? error.message : 'Falha ao obter informações de armazenamento');
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Falha ao obter informações de armazenamento';
+      setError(errorMessage);
+      return 0;
     }
-  };
+  }, [session, user]);
 
   // Função para calcular espaço disponível em bytes
-  const calcularEspacoDisponivel = async (): Promise<number> => {
+  const calcularEspacoDisponivel = useCallback(async (): Promise<number> => {
     try {
       setIsRefreshing(true);
-      if (!user) {
+      setError(null);
+      
+      if (!session || !user) {
         console.log("Usuário não autenticado ao calcular espaço disponível");
         setEspacoDisponivel(LIMITE_ARMAZENAMENTO_BYTES);
         return LIMITE_ARMAZENAMENTO_BYTES;
@@ -73,26 +73,29 @@ export function useDocumentos() {
       return disponivel;
     } catch (error) {
       console.error('Erro ao calcular espaço disponível:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Falha ao calcular espaço disponível';
+      setError(errorMessage);
       // Default to showing full space available if error occurs
       setEspacoDisponivel(LIMITE_ARMAZENAMENTO_BYTES);
-      throw error;
+      return LIMITE_ARMAZENAMENTO_BYTES;
     } finally {
       setIsRefreshing(false);
     }
-  };
+  }, [obterUsoArmazenamento, session, user]);
 
   // Carregar documentos
-  const listarDocumentos = async () => {
-    if (!user) {
+  const listarDocumentos = useCallback(async () => {
+    if (!session || !user) {
       console.log("Usuário não autenticado ao listar documentos");
       setDocuments([]);
       setIsLoading(false);
+      setError("Usuário não autenticado. Faça login para ver seus documentos.");
       return [];
     }
     
     try {
-      setIsRefreshing(true);
       setError(null);
+      setIsRefreshing(true);
       const data = await DocumentosService.listarDocumentos();
       setDocuments(data as Document[]);
       return data;
@@ -101,126 +104,52 @@ export function useDocumentos() {
       const errorMessage = error instanceof Error ? error.message : String(error);
       setError(`Falha ao listar documentos: ${errorMessage}`);
       setDocuments([]);
-      throw error;
+      return [];
     } finally {
       setIsRefreshing(false);
       setIsLoading(false);
     }
-  };
+  }, [session, user]);
 
-  // Função para fazer upload de um documento
-  const uploadDocumento = async (
-    file: File, 
-    tipo: string,
-    cliente: string,
-    processo?: string
-  ): Promise<string> => {
-    if (!user) throw new Error('Usuário não autenticado');
-    
-    try {
-      setIsLoading(true);
-      setError(null);
+  // Atualizar recursos após uma ação bem-sucedida
+  const refreshResources = useCallback(async () => {
+    await listarDocumentos();
+    await calcularEspacoDisponivel();
+  }, [listarDocumentos, calcularEspacoDisponivel]);
 
-      // Verificar tamanho do arquivo
-      if (file.size > LIMITE_ARMAZENAMENTO_BYTES) {
-        throw new Error(`O arquivo excede o limite máximo de ${LIMITE_ARMAZENAMENTO_MB}MB`);
-      }
+  // Hooks para upload e ações em documentos
+  const { 
+    uploadDocumento, 
+    isUploading, 
+    uploadError 
+  } = useDocumentUpload(refreshResources, calcularEspacoDisponivel);
 
-      // Verificar se o usuário tem espaço suficiente
-      const espacoDisponivel = await calcularEspacoDisponivel();
-      if (file.size > espacoDisponivel) {
-        throw new Error(`Você não tem espaço suficiente. Disponível: ${formatarTamanhoArquivo(espacoDisponivel)}`);
-      }
-
-      const filePath = await DocumentosService.uploadDocumento(file, tipo, cliente, processo);
-
-      // Atualizar lista de documentos e espaço disponível
-      await listarDocumentos();
-      await calcularEspacoDisponivel();
-
-      return filePath;
-    } catch (error) {
-      console.error('Erro ao fazer upload do documento:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      setError(`Falha ao fazer upload: ${errorMessage}`);
-      toast({
-        title: "Erro ao fazer upload",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Função para obter URL de download de um documento
-  const obterUrlDocumento = async (path: string): Promise<string> => {
-    try {
-      setError(null);
-      return await DocumentosService.obterUrlDocumento(path);
-    } catch (error) {
-      console.error('Erro ao obter URL do documento:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      setError(`Falha ao obter URL do documento: ${errorMessage}`);
-      toast({
-        title: "Erro ao obter documento",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  // Função para excluir um documento
-  const excluirDocumento = async (id: string, path: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      await DocumentosService.excluirDocumento(id, path);
-
-      toast({
-        title: "Documento excluído",
-        description: "O documento foi excluído com sucesso.",
-      });
-
-      // Atualizar lista de documentos e espaço disponível
-      await listarDocumentos();
-      await calcularEspacoDisponivel();
-
-      return true;
-    } catch (error) {
-      console.error('Erro ao excluir documento:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      setError(`Falha ao excluir documento: ${errorMessage}`);
-      toast({
-        title: "Erro ao excluir documento",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      throw error;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { 
+    obterUrlDocumento, 
+    excluirDocumento, 
+    isActionLoading, 
+    actionError 
+  } = useDocumentActions(refreshResources);
 
   // Atualizar dados quando o usuário mudar
   useEffect(() => {
     let isMounted = true;
     
     const loadData = async () => {
+      if (!isMounted) return;
+      
       try {
         setIsLoading(true);
         setError(null);
         
-        if (!user) {
+        if (!user || !session) {
           if (isMounted) {
             setDocuments([]);
             setUsoAtual(0);
             setEspacoDisponivel(LIMITE_ARMAZENAMENTO_BYTES);
-            setIsLoading(false);
+            setError("Usuário não autenticado. Faça login para ver seus documentos.");
           }
+          setIsLoading(false);
           return;
         }
         
@@ -246,11 +175,16 @@ export function useDocumentos() {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user, session, listarDocumentos, calcularEspacoDisponivel]);
 
+  // Combinar erros de todos os hooks
+  const combinedError = error || uploadError || actionError;
+  const combinedLoading = isLoading || isUploading || isActionLoading || isRefreshing;
+
+  // Fornecer todos os métodos e estados necessários
   return {
     documents,
-    isLoading,
+    isLoading: combinedLoading,
     isRefreshing,
     espacoDisponivel,
     usoAtual,
@@ -260,6 +194,6 @@ export function useDocumentos() {
     obterUrlDocumento,
     excluirDocumento,
     calcularEspacoDisponivel,
-    error
+    error: combinedError
   };
 }

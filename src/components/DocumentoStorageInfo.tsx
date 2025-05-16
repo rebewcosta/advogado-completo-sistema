@@ -1,14 +1,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { Progress } from '@/components/ui/progress';
-import { Database, HardDrive, RefreshCw, AlertCircle } from 'lucide-react';
+import { Database, HardDrive, RefreshCw, AlertCircle, LogIn } from 'lucide-react';
 import { useDocumentos, LIMITE_ARMAZENAMENTO_MB, LIMITE_ARMAZENAMENTO_BYTES } from '@/hooks/useDocumentos';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from '@/hooks/useAuth';
+import { Link } from 'react-router-dom';
 
 const DocumentoStorageInfo = () => {
   const [porcentagemUso, setPorcentagemUso] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
   const { 
     usoAtual, 
     espacoDisponivel, 
@@ -45,6 +48,33 @@ const DocumentoStorageInfo = () => {
       setError(errorMessage);
     }
   };
+
+  // Verificar se o usuário está autenticado
+  if (!user) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center">
+            <HardDrive className="mr-2 h-5 w-5 text-gray-500" />
+            <h3 className="font-medium">Armazenamento ({LIMITE_ARMAZENAMENTO_MB}MB)</h3>
+          </div>
+        </div>
+        <Alert variant="default" className="p-3 border-blue-200 bg-blue-50 mb-2">
+          <div className="flex items-center">
+            <LogIn className="h-4 w-4 mr-2 text-blue-500" />
+            <AlertDescription className="text-blue-700">
+              Faça login para visualizar seu armazenamento.
+            </AlertDescription>
+          </div>
+        </Alert>
+        <Link to="/login" className="block w-full">
+          <Button variant="outline" className="w-full mt-2">
+            <LogIn className="h-4 w-4 mr-2" /> Fazer Login
+          </Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
