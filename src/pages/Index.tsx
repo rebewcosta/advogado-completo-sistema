@@ -23,18 +23,22 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       {user && (
-        <div className="bg-amber-100 p-2">
-          <div className="container mx-auto flex items-center justify-between">
-            <p className="text-amber-800">
-              Você está logado como <strong>{user.email}</strong>
-            </p>
+        <div className="bg-gradient-to-r from-lawyer-dark to-blue-800 shadow-md">
+          <div className="container mx-auto py-2 px-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
+              <p className="text-white text-sm md:text-base font-medium">
+                Bem-vindo, <span className="font-semibold">{user.email}</span>
+              </p>
+            </div>
             <Button 
-              variant="outline" 
+              variant="ghost" 
               size="sm" 
               onClick={handleSignOut}
-              className="flex items-center gap-2 border-amber-500 text-amber-800 hover:bg-amber-200"
+              className="flex items-center gap-1 text-white hover:bg-white/10"
             >
-              <LogOut className="h-4 w-4" /> Sair
+              <LogOut className="h-3 w-3 md:h-4 md:w-4" /> 
+              <span className="text-xs md:text-sm">Sair</span>
             </Button>
           </div>
         </div>

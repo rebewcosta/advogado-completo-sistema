@@ -15,6 +15,7 @@ const updateViewport = () => {
 // Execute viewport update
 updateViewport();
 
+// Mount the app without Lovable tagger
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider>
     <App />

@@ -25,7 +25,8 @@ import {
   Settings,
   LogOut,
   User,
-  CreditCard
+  CreditCard,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -45,6 +46,9 @@ export const AppSidebar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check if user is admin (has the specific email)
+  const isAdmin = user?.email === 'webercostag@gmail.com';
+
   // Define menu items
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
@@ -54,6 +58,8 @@ export const AppSidebar = () => {
     { path: "/financeiro", icon: DollarSign, label: "Financeiro" },
     { path: "/documentos", icon: FileArchive, label: "Documentos" },
     { path: "/relatorios", icon: BarChart2, label: "Relatórios" },
+    // Only show admin link for admin user
+    ...(isAdmin ? [{ path: "/admin", icon: Shield, label: "Admin" }] : []),
   ];
 
   const isActive = (path: string) => {
