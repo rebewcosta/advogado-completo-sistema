@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
 
 interface Process {
-  id: number;
+  id: string; // Changed from number to string to match the other Process interface
   numero: string;
   cliente: string;
   tipo: string;
@@ -41,7 +41,15 @@ const Processos2Page = () => {
   // Inicializando com array vazio - persistindo usando localStorage
   const [processes, setProcesses] = useState<Process[]>(() => {
     const savedProcesses = localStorage.getItem('processes2');
-    return savedProcesses ? JSON.parse(savedProcesses) : [];
+    if (savedProcesses) {
+      // Convert all 'id' fields from number to string when loading from localStorage
+      const parsedProcesses = JSON.parse(savedProcesses);
+      return parsedProcesses.map((process: any) => ({
+        ...process,
+        id: String(process.id) // Ensure id is string
+      }));
+    }
+    return [];
   });
 
   // Efeito para atualizar localStorage quando os processos mudam
@@ -80,7 +88,7 @@ const Processos2Page = () => {
       // Add new process
       const newProcess = {
         ...processData,
-        id: Date.now(), // Usar timestamp para garantir IDs únicos
+        id: Date.now().toString(), // Use timestamp as string for ID
       };
       setProcesses(prev => [...prev, newProcess]);
       toast({
@@ -102,7 +110,7 @@ const Processos2Page = () => {
     setShowProcessDetails(true);
   };
 
-  const handleToggleStatus = (id: number) => {
+  const handleToggleStatus = (id: string) => { // Changed from number to string
     setProcesses(prev => 
       prev.map(process => {
         if (process.id === id) {
@@ -128,7 +136,7 @@ const Processos2Page = () => {
     });
   };
 
-  const handleDeleteProcess = (id: number) => {
+  const handleDeleteProcess = (id: string) => { // Changed from number to string
     const process = processes.find(process => process.id === id);
     
     if (window.confirm(`Tem certeza que deseja excluir o processo ${process?.numero}?`)) {
