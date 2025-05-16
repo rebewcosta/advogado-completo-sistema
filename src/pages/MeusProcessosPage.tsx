@@ -1,25 +1,34 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Search } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
-import AdminLayout from '@/components/AdminLayout';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import ProcessForm from '@/components/ProcessForm';
+import { X, Edit, Eye, Plus, Search } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { 
+  Dialog,
+  DialogContent,
+  DialogOverlay
+} from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import AdminLayout from '@/components/AdminLayout';
 import { useProcessesStore } from '@/stores/useProcessesStore';
-import ProcessTable from '@/components/processos/ProcessTable';
-import ProcessDetails from '@/components/processos/ProcessDetails';
-
-// Import Dialog components directly from radix instead of the shadcn wrapper
-import * as DialogPrimitive from "@radix-ui/react-dialog";
 
 const MeusProcessosPage = () => {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [showProcessDetails, setShowProcessDetails] = useState(false);
   
   const {
     processes,
@@ -30,11 +39,11 @@ const MeusProcessosPage = () => {
     getProcessById
   } = useProcessesStore();
 
-  // Debug logging for dialog state
+  // Debugging logs
   useEffect(() => {
-    console.log("Form dialog state:", isFormOpen);
-    console.log("Details dialog state:", isDetailsOpen);
-  }, [isFormOpen, isDetailsOpen]);
+    console.log("Render MeusProcessosPage with showForm:", showForm);
+    console.log("Render MeusProcessosPage with showProcessDetails:", showProcessDetails);
+  }, [showForm, showProcessDetails]);
 
   // Filter processes based on search term
   const filteredProcesses = processes.filter(process =>
@@ -43,16 +52,14 @@ const MeusProcessosPage = () => {
     process.tipo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Use callbacks to ensure functions are stable
-  const handleOpenNewProcessForm = useCallback(() => {
-    console.log("Add process button clicked - resetting state");
+  const handleAddProcess = () => {
+    console.log("Add process button clicked");
     setSelectedProcess(null);
     setIsEditing(false);
-    console.log("Setting isFormOpen to true");
-    setIsFormOpen(true);
-  }, []);
+    setShowForm(true);
+  };
 
-  const handleSaveProcess = useCallback((processData: any) => {
+  const handleSaveProcess = (processData: any) => {
     if (isEditing && selectedProcess) {
       // Update existing process
       updateProcess(selectedProcess.id, processData);
@@ -73,30 +80,29 @@ const MeusProcessosPage = () => {
         description: `O processo ${newProcess.numero} foi cadastrado com sucesso.`,
       });
     }
-    console.log("Closing form dialog after save");
-    setIsFormOpen(false);
-  }, [addProcess, isEditing, selectedProcess, toast, updateProcess]);
+    setShowForm(false);
+  };
 
-  const handleEditProcess = useCallback((id: string) => {
+  const handleEditProcess = (id: string) => {
+    console.log("Edit process button clicked for id:", id);
     const process = getProcessById(id);
     if (process) {
-      console.log("Edit process:", process.id);
       setSelectedProcess(process);
       setIsEditing(true);
-      setIsFormOpen(true);
+      setShowForm(true);
     }
-  }, [getProcessById]);
+  };
 
-  const handleViewProcess = useCallback((id: string) => {
+  const handleViewProcess = (id: string) => {
+    console.log("View process button clicked for id:", id);
     const process = getProcessById(id);
     if (process) {
-      console.log("View process:", process.id);
       setSelectedProcess(process);
-      setIsDetailsOpen(true);
+      setShowProcessDetails(true);
     }
-  }, [getProcessById]);
+  };
 
-  const handleToggleStatus = useCallback((id: string) => {
+  const handleToggleStatus = (id: string) => {
     const process = toggleProcessStatus(id);
     
     if (process) {
@@ -106,9 +112,9 @@ const MeusProcessosPage = () => {
         description: `Processo ${process.numero} agora está ${newStatus}.`
       });
     }
-  }, [toggleProcessStatus, toast]);
+  };
 
-  const handleDeleteProcess = useCallback((id: string) => {
+  const handleDeleteProcess = (id: string) => {
     const process = getProcessById(id);
     
     if (process && window.confirm(`Tem certeza que deseja excluir o processo ${process.numero}?`)) {
@@ -120,18 +126,7 @@ const MeusProcessosPage = () => {
         variant: "destructive"
       });
     }
-  }, [deleteProcess, getProcessById, toast]);
-
-  // Handle dialog changes via explicit functions
-  const handleFormOpenChange = useCallback((open: boolean) => {
-    console.log("Form dialog openChange event:", open);
-    setIsFormOpen(open);
-  }, []);
-
-  const handleDetailsOpenChange = useCallback((open: boolean) => {
-    console.log("Details dialog openChange event:", open);
-    setIsDetailsOpen(open);
-  }, []);
+  };
 
   return (
     <AdminLayout>
@@ -139,90 +134,178 @@ const MeusProcessosPage = () => {
         <h1 className="text-3xl font-bold mb-6">Meus Processos</h1>
         
         {/* Search and Action Bar */}
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
-          <div className="relative w-full md:w-96">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+        <div className="flex items-center justify-between mb-6">
+          <div className="relative w-64">
             <Input
-              type="search"
-              placeholder="Buscar processo..."
-              className="pl-8"
+              type="text"
+              placeholder="Buscar processos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
             />
+            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+              <Search className="h-5 w-5 text-gray-400" />
+            </div>
           </div>
-          
-          {/* Direct button to trigger form - with click handler console logged */}
-          <Button 
-            onClick={() => {
-              console.log("Add button clicked");
-              handleOpenNewProcessForm();
-            }} 
-            className="flex items-center gap-1 whitespace-nowrap"
-          >
-            <Plus className="h-4 w-4" />
-            Cadastrar Novo Processo
+          <Button onClick={handleAddProcess}>
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Processo
           </Button>
         </div>
         
-        {/* Process List Table */}
-        <ProcessTable 
-          processes={filteredProcesses}
-          onEdit={handleEditProcess}
-          onView={handleViewProcess}
-          onToggleStatus={handleToggleStatus}
-          onDelete={handleDeleteProcess}
-        />
-        
-        {/* Process Form Dialog - Using DialogPrimitive directly */}
-        <DialogPrimitive.Root 
-          open={isFormOpen} 
-          onOpenChange={handleFormOpenChange}
-        >
-          <DialogPrimitive.Portal>
-            <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-            <DialogPrimitive.Content 
-              className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-4xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-0 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-lg overflow-auto max-h-[90vh]"
-            >
-              <ProcessForm 
-                onSave={handleSaveProcess}
-                onCancel={() => {
-                  console.log("Form cancel clicked");
-                  setIsFormOpen(false);
-                }}
-                process={selectedProcess}
-                isEdit={isEditing}
-              />
-            </DialogPrimitive.Content>
-          </DialogPrimitive.Portal>
-        </DialogPrimitive.Root>
-        
-        {/* Process Details Dialog - Using DialogPrimitive directly */}
-        <DialogPrimitive.Root 
-          open={isDetailsOpen} 
-          onOpenChange={handleDetailsOpenChange}
-        >
-          <DialogPrimitive.Portal>
-            <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-            <DialogPrimitive.Content 
-              className="fixed left-[50%] top-[50%] z-50 grid w-full max-w-3xl translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] rounded-lg"
-            >
-              {selectedProcess && (
-                <ProcessDetails 
-                  process={selectedProcess}
-                  onClose={() => {
-                    console.log("Details close clicked");
-                    setIsDetailsOpen(false);
-                  }}
-                  onEdit={() => {
-                    console.log("Details edit clicked");
-                    setIsDetailsOpen(false);
-                    handleEditProcess(selectedProcess.id);
-                  }}
-                />
+        {/* Process List */}
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Número</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Vara</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Próximo Prazo</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredProcesses.length > 0 ? (
+                filteredProcesses.map((process) => (
+                  <TableRow key={process.id}>
+                    <TableCell className="font-medium">{process.numero}</TableCell>
+                    <TableCell>{process.cliente}</TableCell>
+                    <TableCell>{process.tipo}</TableCell>
+                    <TableCell>{process.vara}</TableCell>
+                    <TableCell>
+                      <Badge
+                        className={`
+                          ${process.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
+                            process.status === "Concluído" ? "bg-green-100 text-green-800" :
+                            "bg-yellow-100 text-yellow-800"}`}
+                      >
+                        {process.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{process.prazo}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button variant="ghost" size="sm" onClick={() => handleViewProcess(process.id)}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleEditProcess(process.id)}>
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleToggleStatus(process.id)}
+                        >
+                          Alterar Status
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteProcess(process.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    Nenhum processo cadastrado
+                  </TableCell>
+                </TableRow>
               )}
-            </DialogPrimitive.Content>
-          </DialogPrimitive.Portal>
-        </DialogPrimitive.Root>
+            </TableBody>
+          </Table>
+        </div>
+        
+        {/* Process Form Dialog using shadcn/ui Dialog */}
+        <Dialog open={showForm} onOpenChange={setShowForm}>
+          <DialogOverlay />
+          <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+            <ProcessForm 
+              onSave={handleSaveProcess}
+              onCancel={() => setShowForm(false)}
+              process={selectedProcess}
+              isEdit={isEditing}
+            />
+          </DialogContent>
+        </Dialog>
+        
+        {/* Process Details Dialog using shadcn/ui Dialog */}
+        <Dialog open={showProcessDetails} onOpenChange={setShowProcessDetails}>
+          <DialogOverlay />
+          <DialogContent className="max-w-3xl p-6">
+            {selectedProcess && (
+              <div>
+                <div className="flex justify-between items-start mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold">Processo: {selectedProcess.numero}</h2>
+                    <Badge
+                      className={`
+                        mt-2 ${selectedProcess.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
+                          selectedProcess.status === "Concluído" ? "bg-green-100 text-green-800" : 
+                          "bg-yellow-100 text-yellow-800"}`}
+                    >
+                      {selectedProcess.status}
+                    </Badge>
+                  </div>
+                  <Button variant="ghost" size="icon" onClick={() => setShowProcessDetails(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Número do Processo</h3>
+                      <p className="font-medium">{selectedProcess.numero}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Cliente</h3>
+                      <p className="font-medium">{selectedProcess.cliente}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Tipo de Processo</h3>
+                      <p className="font-medium">{selectedProcess.tipo}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Vara</h3>
+                      <p className="font-medium">{selectedProcess.vara}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Próximo Prazo</h3>
+                      <p className="font-medium">{selectedProcess.prazo}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-500">Status</h3>
+                      <p className="font-medium">{selectedProcess.status}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 flex justify-end space-x-4">
+                  <Button variant="outline" onClick={() => {
+                    setShowProcessDetails(false);
+                    handleEditProcess(selectedProcess.id);
+                  }}>
+                    Editar Processo
+                  </Button>
+                  <Button onClick={() => setShowProcessDetails(false)}>
+                    Fechar
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
