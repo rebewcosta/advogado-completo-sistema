@@ -57,9 +57,7 @@ const ConfiguracoesPage = () => {
 
   // Estado para configurações de notificações
   const [notificationSettings, setNotificationSettings] = useState({
-    emailNotifications: true,
     pushNotifications: true,
-    smsNotifications: false,
     deadlineAlerts: true,
     weeklyReport: true,
   });
@@ -360,23 +358,6 @@ const ConfiguracoesPage = () => {
               <CardContent className="space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <Label>Notificações por E-mail</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receba alertas e relatórios por e-mail
-                    </p>
-                  </div>
-                  <Switch 
-                    checked={notificationSettings.emailNotifications}
-                    onCheckedChange={(checked) => 
-                      setNotificationSettings({...notificationSettings, emailNotifications: checked})
-                    }
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
                     <Label>Notificações Push</Label>
                     <p className="text-sm text-muted-foreground">
                       Receba alertas no navegador ou aplicativo
@@ -386,23 +367,6 @@ const ConfiguracoesPage = () => {
                     checked={notificationSettings.pushNotifications}
                     onCheckedChange={(checked) => 
                       setNotificationSettings({...notificationSettings, pushNotifications: checked})
-                    }
-                  />
-                </div>
-                
-                <Separator />
-                
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Notificações por SMS</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receba alertas por mensagem de texto
-                    </p>
-                  </div>
-                  <Switch 
-                    checked={notificationSettings.smsNotifications}
-                    onCheckedChange={(checked) => 
-                      setNotificationSettings({...notificationSettings, smsNotifications: checked})
                     }
                   />
                 </div>
