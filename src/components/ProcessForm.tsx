@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -14,7 +13,6 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { X } from 'lucide-react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 interface Process {
   id: string;
@@ -44,18 +42,31 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
   );
   const [clienteOptions, setClienteOptions] = useState<string[]>([]);
 
+  useEffect(() => {
+    console.log("ProcessForm mounted with isEdit:", isEdit);
+    console.log("Process data:", process);
+  }, [process, isEdit]);
+
   // Carregar clientes do localStorage
-  React.useEffect(() => {
+  useEffect(() => {
     const savedClients = localStorage.getItem('clients');
     if (savedClients) {
-      const clients = JSON.parse(savedClients);
-      const clientNames = clients.map((client: any) => client.nome);
-      setClienteOptions(clientNames);
+      try {
+        const clients = JSON.parse(savedClients);
+        const clientNames = clients.map((client: any) => client.nome);
+        setClienteOptions(clientNames);
+        console.log("Clientes carregados:", clientNames.length);
+      } catch (error) {
+        console.error("Erro ao carregar clientes:", error);
+      }
+    } else {
+      console.log("Nenhum cliente encontrado no localStorage");
     }
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted with data:", { numero, cliente, tipo, vara, status, prazo: prazoDate });
     
     const processData = {
       numero,
@@ -73,7 +84,14 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">{isEdit ? "Editar Processo" : "Novo Processo"}</h2>
-        <Button variant="ghost" size="sm" onClick={onCancel}>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => {
+            console.log("Cancel button clicked");
+            onCancel();
+          }}
+        >
           <X className="h-5 w-5" />
         </Button>
       </div>
@@ -165,7 +183,14 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
         </div>
         
         <div className="flex justify-end space-x-3 mt-8">
-          <Button variant="outline" type="button" onClick={onCancel}>
+          <Button 
+            variant="outline" 
+            type="button" 
+            onClick={() => {
+              console.log("Cancel button clicked");
+              onCancel();
+            }}
+          >
             Cancelar
           </Button>
           <Button type="submit">
