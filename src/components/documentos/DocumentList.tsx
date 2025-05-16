@@ -1,27 +1,26 @@
-
 import React from 'react';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { FileText, MoreVertical, Download, Trash2, Eye, File, FilePlus, RefreshCw } from 'lucide-react';
-import { Document } from '@/hooks/useDocumentTypes';
+import { Document } from '@/hooks/useDocumentTypes'; // Seu tipo Document
 import { formatDate } from '@/lib/utils';
 import { useDocumentos } from '@/hooks/useDocumentos';
 
 interface DocumentListProps {
-  documents: Document[];
+  documents: Document[]; // Seu tipo Document
   isLoading: boolean;
   isRefreshing: boolean;
   searchTerm: string;
@@ -31,8 +30,8 @@ interface DocumentListProps {
   error: string | null;
 }
 
-const DocumentList: React.FC<DocumentListProps> = ({ 
-  documents, 
+const DocumentList: React.FC<DocumentListProps> = ({
+  documents,
   isLoading,
   isRefreshing,
   searchTerm,
@@ -44,41 +43,42 @@ const DocumentList: React.FC<DocumentListProps> = ({
   const { obterUrlDocumento, excluirDocumento, formatarTamanhoArquivo, espacoDisponivel } = useDocumentos();
 
   // Manipular ações de documento
-  const handleDocumentAction = async (action: string, document: Document) => {
+  const handleDocumentAction = async (action: string, doc: Document) => { // Renomeado para 'doc' para evitar conflito
     switch (action) {
       case 'view':
         try {
-          const url = await obterUrlDocumento(document.path);
+          const url = await obterUrlDocumento(doc.path);
           window.open(url, '_blank');
         } catch (error) {
           console.error('Erro ao visualizar documento:', error);
         }
         break;
-        
+
       case 'download':
         try {
-          const url = await obterUrlDocumento(document.path);
-          
+          const url = await obterUrlDocumento(doc.path);
+
           // Criar um link temporário para download
-          const a = document.createElement('a');
+          // Corrigido: usar window.document para se referir ao DOM
+          const a = window.document.createElement('a');
           a.href = url;
-          a.download = document.nome;
-          document.body.appendChild(a);
+          a.download = doc.nome; // Usar doc.nome (o parâmetro da função)
+          window.document.body.appendChild(a);
           a.click();
-          document.body.removeChild(a);
+          window.document.body.removeChild(a);
         } catch (error) {
           console.error('Erro ao baixar documento:', error);
         }
         break;
-        
+
       case 'delete':
         try {
-          await excluirDocumento(document.id, document.path);
+          await excluirDocumento(doc.id, doc.path);
         } catch (error) {
           console.error('Erro ao excluir documento:', error);
         }
         break;
-        
+
       default:
         break;
     }
@@ -93,19 +93,19 @@ const DocumentList: React.FC<DocumentListProps> = ({
     );
   }
 
-  if (documents.length === 0) {
+  if (documents.length === 0 && !isLoading) { // Adicionado !isLoading para evitar piscar
     return (
       <div className="py-12 text-center">
         <File className="mx-auto h-12 w-12 text-gray-300" />
         <h3 className="mt-4 text-lg font-medium">Nenhum documento encontrado</h3>
         <p className="mt-1 text-gray-500">
-          {searchTerm || filterType !== 'all' ? 
-            'Tente ajustar seus filtros de busca' : 
+          {searchTerm || filterType !== 'all' ?
+            'Tente ajustar seus filtros de busca' :
             'Comece enviando seu primeiro documento'}
         </p>
         {!searchTerm && filterType === 'all' && !error && (
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="mt-4"
             onClick={onUploadClick}
             disabled={espacoDisponivel < 1024} // Desabilitar se menos de 1KB disponível
@@ -114,9 +114,9 @@ const DocumentList: React.FC<DocumentListProps> = ({
             Enviar documento
           </Button>
         )}
-        {!searchTerm && filterType === 'all' && error && (
-          <Button 
-            variant="outline" 
+        {error && ( // Mostrar botão de tentar novamente se houver erro
+          <Button
+            variant="outline"
             className="mt-4"
             onClick={onRefresh}
             disabled={isRefreshing}
@@ -143,7 +143,7 @@ const DocumentList: React.FC<DocumentListProps> = ({
         </TableRow>
       </TableHeader>
       <TableBody>
-        {documents.map((doc) => (
+        {documents.map((doc) => ( // Renomeado para 'doc' para evitar conflito
           <TableRow key={doc.id}>
             <TableCell className="font-medium">
               <div className="flex items-center">
