@@ -1,7 +1,7 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { createClient, Session, SupabaseClient } from '@supabase/supabase-js';
+import { Session, SupabaseClient } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 // Create a type for the database
 type Database = any;
@@ -27,11 +27,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<Session['user'] | null>(null);
   const { toast } = useToast();
   
-  // Create the Supabase client
-  const supabaseClient = createClient<Database>(
-    import.meta.env.VITE_SUPABASE_URL || '',
-    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-  );
+  // Use the imported Supabase client instead of creating a new one
+  const supabaseClient = supabase;
 
   useEffect(() => {
     const getSession = async () => {
@@ -52,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabaseClient]);
+  }, []);
 
   const signUp = async (email: string, password: string, options?: any) => {
     setIsLoading(true);
@@ -267,11 +264,6 @@ export const useAuth = () => {
 };
 
 export const checkEmailExists = async (email: string) => {
-  const supabase = createClient(
-    import.meta.env.VITE_SUPABASE_URL || '',
-    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
-  );
-
   try {
     const { data, error } = await supabase
       .from('profiles')
