@@ -5,8 +5,7 @@ import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
 import DashboardPage from './pages/DashboardPage';
 import ClientesPage from './pages/ClientesPage';
-import ProcessosPage from './pages/ProcessosPage';
-import Processos2Page from './pages/Processos2Page';
+import MeusProcessosPage from './pages/MeusProcessosPage';
 import AgendaPage from './pages/AgendaPage';
 import FinanceiroPage from './pages/FinanceiroPage';
 import DocumentosPage from './pages/DocumentosPage';
@@ -57,9 +56,8 @@ function App() {
             {/* Rotas que requerem verificação de assinatura */}
             <Route element={<VerificarAssinatura>
               <Routes>
+                <Route path="/meus-processos" element={<MeusProcessosPage />} />
                 <Route path="/clientes" element={<ClientesPage />} />
-                <Route path="/processos" element={<ProcessosPage />} />
-                <Route path="/processos2" element={<Processos2Page />} />
                 <Route path="/agenda" element={<AgendaPage />} />
                 <Route path="/financeiro" element={<FinanceiroPage />} />
                 <Route path="/documentos" element={<DocumentosPage />} />
@@ -68,9 +66,8 @@ function App() {
                 <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
               </Routes>
             </VerificarAssinatura>}>
+              <Route path="/meus-processos" element={null} />
               <Route path="/clientes" element={null} />
-              <Route path="/processos" element={null} />
-              <Route path="/processos2" element={null} />
               <Route path="/agenda" element={null} />
               <Route path="/financeiro" element={null} />
               <Route path="/documentos" element={null} />

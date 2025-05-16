@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -49,11 +48,11 @@ export const AppSidebar = () => {
   // Check if user is admin (has the specific email)
   const isAdmin = user?.email === 'webercostag@gmail.com';
 
-  // Define menu items
+  // Define menu items - note the ordering changed to put Meus Processos before Clientes
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/meus-processos", icon: FileText, label: "Meus Processos" },
     { path: "/clientes", icon: Users, label: "Clientes" },
-    { path: "/processos", icon: FileText, label: "Processos" },
     { path: "/agenda", icon: Calendar, label: "Agenda" },
     { path: "/financeiro", icon: DollarSign, label: "Financeiro" },
     { path: "/documentos", icon: FileArchive, label: "Documentos" },

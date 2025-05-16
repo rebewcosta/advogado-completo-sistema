@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -35,10 +34,11 @@ const Navbar: React.FC = () => {
     return location.pathname === path ? 'bg-lawyer-primary/10 text-lawyer-primary' : '';
   };
 
+  // Updated navItems to change the order and replace "Processos" with "Meus Processos"
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
+    { path: '/meus-processos', label: 'Meus Processos', icon: <FileText className="h-5 w-5" /> },
     { path: '/clientes', label: 'Clientes', icon: <Users className="h-5 w-5" /> },
-    { path: '/processos', label: 'Processos', icon: <FileText className="h-5 w-5" /> },
     { path: '/agenda', label: 'Agenda', icon: <Calendar className="h-5 w-5" /> },
     { path: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" /> },
     { path: '/documentos', label: 'Documentos', icon: <FileBox className="h-5 w-5" /> },
