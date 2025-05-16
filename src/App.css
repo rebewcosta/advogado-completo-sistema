@@ -51,7 +51,7 @@
   color: #888;
 }
 
-/* Add full width and height for mobile devices */
+/* Ajustes específicos para mobile */
 @media screen and (max-width: 767px) {
   body, html {
     width: 100%;
@@ -66,6 +66,24 @@
     min-height: 100vh;
     margin: 0;
     padding: 0;
+  }
+
+  /* Ajustes de cards e elementos de UI para mobile */
+  .card-header {
+    padding: 0.75rem;
+  }
+
+  .card-content {
+    padding: 0.75rem;
+  }
+
+  /* Reduzir espaçamento em dispositivos mobile */
+  .p-6 {
+    padding: 0.75rem;
+  }
+
+  .space-y-4 > * + * {
+    margin-top: 0.5rem;
   }
 }
 
@@ -91,4 +109,22 @@
 /* Force hide floating buttons */
 body > div:not(#root) {
   display: none !important;
+}
+
+/* Mobile específico para sidebar e navegação */
+@media screen and (max-width: 767px) {
+  /* Reduz tamanho de fonte para cabeçalhos */
+  h1 {
+    font-size: 1.5rem;
+  }
+  
+  /* Ajusta tamanho dos cards */
+  .card {
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Ajusta padding e margens */
+  .p-4 {
+    padding: 0.75rem;
+  }
 }
