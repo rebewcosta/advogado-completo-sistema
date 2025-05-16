@@ -36,7 +36,7 @@ export function useDocumentos() {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
-  const [espacoDisponivel, setEspacoDisponivel] = useState<number>(0);
+  const [espacoDisponivel, setEspacoDisponivel] = useState<number>(LIMITE_ARMAZENAMENTO_BYTES);
   const [usoAtual, setUsoAtual] = useState<number>(0);
   const { user } = useAuth();
 
@@ -49,7 +49,10 @@ export function useDocumentos() {
 
   // Função para obter o uso de armazenamento do usuário atual
   const obterUsoArmazenamento = async (): Promise<number> => {
-    if (!user) return 0;
+    if (!user) {
+      console.log("Usuário não autenticado");
+      return 0;
+    }
     
     try {
       const { data, error } = await supabase
@@ -58,7 +61,7 @@ export function useDocumentos() {
 
       if (error) {
         console.error('Erro ao obter uso de armazenamento:', error);
-        throw error;
+        throw new Error(`Falha ao calcular armazenamento: ${error.message}`);
       }
 
       // Calcular total em bytes
@@ -67,21 +70,37 @@ export function useDocumentos() {
       return totalBytes;
     } catch (error) {
       console.error('Erro ao obter uso de armazenamento:', error);
-      throw error;
+      // Ensure a clean error message is thrown
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error('Falha ao obter informações de armazenamento');
+      }
     }
   };
 
   // Função para calcular espaço disponível em bytes
   const calcularEspacoDisponivel = async (): Promise<number> => {
-    const usoAtualBytes = await obterUsoArmazenamento();
-    const disponivel = LIMITE_ARMAZENAMENTO_BYTES - usoAtualBytes;
-    setEspacoDisponivel(disponivel);
-    return disponivel;
+    try {
+      const usoAtualBytes = await obterUsoArmazenamento();
+      const disponivel = LIMITE_ARMAZENAMENTO_BYTES - usoAtualBytes;
+      setEspacoDisponivel(disponivel);
+      return disponivel;
+    } catch (error) {
+      console.error('Erro ao calcular espaço disponível:', error);
+      // Default to showing full space available if error occurs
+      setEspacoDisponivel(LIMITE_ARMAZENAMENTO_BYTES);
+      throw error;
+    }
   };
 
   // Carregar documentos
   const listarDocumentos = async () => {
-    if (!user) return [];
+    if (!user) {
+      console.log("Usuário não autenticado");
+      setDocuments([]);
+      return [];
+    }
     
     try {
       setIsRefreshing(true);
@@ -92,20 +111,20 @@ export function useDocumentos() {
 
       if (error) {
         console.error('Erro ao listar documentos:', error);
-        throw error;
+        throw new Error(`Falha ao listar documentos: ${error.message}`);
       }
 
       setDocuments(data as Document[]);
       return data;
     } catch (error) {
       console.error('Erro ao listar documentos:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      toast({
-        title: "Erro ao listar documentos",
-        description: errorMessage,
-        variant: "destructive"
-      });
-      throw error;
+      setDocuments([]);
+      // Ensure a clean error message is thrown
+      if (error instanceof Error) {
+        throw error;
+      } else {
+        throw new Error('Falha ao listar documentos');
+      }
     } finally {
       setIsRefreshing(false);
     }
@@ -282,8 +301,21 @@ export function useDocumentos() {
   // Atualizar dados quando o usuário mudar
   useEffect(() => {
     if (user) {
-      listarDocumentos();
-      calcularEspacoDisponivel();
+      const loadData = async () => {
+        try {
+          await listarDocumentos();
+          await calcularEspacoDisponivel();
+        } catch (error) {
+          console.error('Erro ao carregar dados iniciais:', error);
+        }
+      };
+      
+      loadData();
+    } else {
+      // Reset state when user is not logged in
+      setDocuments([]);
+      setUsoAtual(0);
+      setEspacoDisponivel(LIMITE_ARMAZENAMENTO_BYTES);
     }
   }, [user]);
 

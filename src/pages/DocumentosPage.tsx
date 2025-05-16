@@ -82,9 +82,12 @@ const DocumentosPage = () => {
         await listarDocumentos();
         await calcularEspacoDisponivel();
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(message);
-        console.error('Erro ao carregar dados:', err);
+        // Ensure the error is properly converted to a string
+        const errorMessage = err instanceof Error ? err.message : 
+                            typeof err === 'object' && err !== null ? JSON.stringify(err) : 
+                            String(err);
+        setError(errorMessage);
+        console.error('Erro ao carregar documentos:', err);
       }
     };
     
@@ -240,9 +243,16 @@ const DocumentosPage = () => {
       setError(null);
       await listarDocumentos();
       await calcularEspacoDisponivel();
+      toast({
+        title: "Dados atualizados",
+        description: "Os documentos foram atualizados com sucesso",
+      });
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
+      // Ensure the error is properly converted to a string
+      const errorMessage = err instanceof Error ? err.message : 
+                          typeof err === 'object' && err !== null ? JSON.stringify(err) : 
+                          String(err);
+      setError(errorMessage);
       console.error('Erro ao atualizar dados:', err);
     }
   };
