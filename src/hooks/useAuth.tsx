@@ -1,13 +1,10 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {
-  Session,
-  SupabaseClient,
-  useSessionContext,
-  useSupabaseClient,
-} from '@supabase/auth-helpers-react';
-import { Database } from '@/types/supabase';
-import { useRouter } from 'next/navigation';
+import { createClient, Session, SupabaseClient } from '@supabase/supabase-js';
 import { useToast } from './use-toast';
+
+// Create a type for the database
+type Database = any;
 
 type AuthContextType = {
   supabaseClient: SupabaseClient<Database>;
@@ -18,20 +15,44 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   updateUser: (data: any) => Promise<any>;
   isLoading: boolean;
+  checkEmailExists: (email: string) => Promise<boolean>;
+  createSpecialAccount: (email: string, password: string, options?: any) => Promise<any>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { session, isLoading: loadingSession, supabaseClient } = useSessionContext();
+  const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [user, setUser] = useState<Session['user'] | null>(null);
-  const router = useRouter();
   const { toast } = useToast();
+  
+  // Create the Supabase client
+  const supabaseClient = createClient<Database>(
+    import.meta.env.VITE_SUPABASE_URL || '',
+    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+  );
 
   useEffect(() => {
-    setUser(session?.user || null);
-  }, [session]);
+    const getSession = async () => {
+      const { data } = await supabaseClient.auth.getSession();
+      setSession(data.session);
+      setUser(data.session?.user || null);
+    };
+    
+    getSession();
+    
+    const { data: { subscription } } = supabaseClient.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+        setUser(newSession?.user || null);
+      }
+    );
+    
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabaseClient]);
 
   const signUp = async (email: string, password: string, options?: any) => {
     setIsLoading(true);
@@ -43,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           description: "Este email já está cadastrado.",
           variant: "destructive"
         });
-        return;
+        return { error: { message: "Este email já está cadastrado." } };
       }
 
       const { data, error } = await supabaseClient.auth.signUp({
@@ -65,7 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           title: "Cadastro realizado",
           description: "Verifique seu email para confirmar o cadastro.",
         });
-        router.push('/login');
       }
       return { data, error };
     } catch (error: any) {
@@ -74,6 +94,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive"
       });
+      return { error };
     } finally {
       setIsLoading(false);
     }
@@ -97,7 +118,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           title: "Login realizado",
           description: "Login realizado com sucesso.",
         });
-        router.push('/dashboard');
+        window.location.href = '/dashboard';
       }
       return error;
     } catch (error: any) {
@@ -106,6 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive"
       });
+      return error;
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       await supabaseClient.auth.signOut();
-      router.push('/login');
+      window.location.href = '/login';
     } catch (error: any) {
       toast({
         title: "Erro ao sair",
@@ -155,6 +177,66 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: error.message,
         variant: "destructive"
       });
+      return { error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Check if an email already exists
+  const checkEmailExists = async (email: string) => {
+    try {
+      const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('email')
+        .eq('email', email)
+        .single();
+        
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao verificar email:', error);
+        return false;
+      }
+      
+      return !!data;
+    } catch (error) {
+      console.error('Erro ao verificar email:', error);
+      return false;
+    }
+  };
+
+  // Create a special account (admin function)
+  const createSpecialAccount = async (email: string, password: string, options?: any) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabaseClient.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: options?.skip_email_confirmation || false,
+        user_metadata: {
+          ...options,
+        }
+      });
+
+      if (error) {
+        toast({
+          title: "Erro ao criar conta especial",
+          description: error.message,
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Conta especial criada",
+          description: "Conta especial criada com sucesso.",
+        });
+      }
+      return { data, error };
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar conta especial",
+        description: error.message,
+        variant: "destructive"
+      });
+      return { error };
     } finally {
       setIsLoading(false);
     }
@@ -168,7 +250,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signIn,
     signOut,
     updateUser,
-    isLoading: isLoading || loadingSession,
+    isLoading,
+    checkEmailExists,
+    createSpecialAccount,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -182,12 +266,12 @@ export const useAuth = () => {
   return context;
 };
 
-const supabase = new SupabaseClient<Database>(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 export const checkEmailExists = async (email: string) => {
+  const supabase = createClient(
+    import.meta.env.VITE_SUPABASE_URL || '',
+    import.meta.env.VITE_SUPABASE_ANON_KEY || ''
+  );
+
   try {
     const { data, error } = await supabase
       .from('profiles')
