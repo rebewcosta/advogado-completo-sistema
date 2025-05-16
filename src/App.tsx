@@ -28,8 +28,8 @@ import { Toaster } from '@/components/ui/toaster';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <AuthProvider>
         <Routes>
           {/* Rotas públicas */}
           <Route path="/" element={<Index />} />
@@ -80,8 +80,8 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         <Toaster />
-      </Router>
-    </AuthProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 
