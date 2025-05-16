@@ -54,11 +54,7 @@ export function useDocumentos() {
     try {
       const { data, error } = await supabase
         .from('documentos')
-        .select('tamanho_bytes')
-        .then(res => ({
-          data: res.data,
-          error: res.error
-        }));
+        .select('tamanho_bytes');
 
       if (error) {
         console.error('Erro ao obter uso de armazenamento:', error);

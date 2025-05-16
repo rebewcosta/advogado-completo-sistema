@@ -9,8 +9,8 @@ const DocumentoStorageInfo = () => {
   const { usoAtual, espacoDisponivel, formatarTamanhoArquivo, isRefreshing } = useDocumentos();
 
   useEffect(() => {
-    if (usoAtual > 0) {
-      // Calcular porcentagem
+    // Calcular porcentagem de uso apenas quando usoAtual for atualizado
+    if (LIMITE_ARMAZENAMENTO_BYTES > 0) {
       const porcentagem = Math.min((usoAtual / LIMITE_ARMAZENAMENTO_BYTES) * 100, 100);
       setPorcentagemUso(porcentagem);
     }

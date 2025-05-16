@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import DocumentoWarning from '@/components/DocumentoWarning';
 import DocumentoStorageInfo from '@/components/DocumentoStorageInfo';
@@ -58,6 +58,7 @@ const DocumentosPage = () => {
   const [documentType, setDocumentType] = useState<DocumentType>('outro');
   const [clientName, setClientName] = useState('');
   const [processNumber, setProcessNumber] = useState('');
+  const [error, setError] = useState<string | null>(null);
   
   const { toast } = useToast();
   const { 
@@ -69,8 +70,26 @@ const DocumentosPage = () => {
     uploadDocumento, 
     listarDocumentos,
     obterUrlDocumento,
-    excluirDocumento
+    excluirDocumento,
+    calcularEspacoDisponivel
   } = useDocumentos();
+
+  // Verificar e atualizar o espaço disponível quando o componente for montado
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setError(null);
+        await listarDocumentos();
+        await calcularEspacoDisponivel();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(message);
+        console.error('Erro ao carregar dados:', err);
+      }
+    };
+    
+    fetchData();
+  }, []);
 
   // Filtrar documentos com base na pesquisa e tipo
   const filteredDocuments = documents.filter(doc => {
@@ -216,6 +235,18 @@ const DocumentosPage = () => {
     }
   };
 
+  const handleRefresh = async () => {
+    try {
+      setError(null);
+      await listarDocumentos();
+      await calcularEspacoDisponivel();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+      console.error('Erro ao atualizar dados:', err);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="p-8">
@@ -227,7 +258,7 @@ const DocumentosPage = () => {
           <Button 
             onClick={() => setIsUploadDialogOpen(true)} 
             className="bg-lawyer-primary hover:bg-lawyer-primary/90"
-            disabled={espacoDisponivel < 1024} // Desabilitar se menos de 1KB disponível
+            disabled={isLoading || espacoDisponivel < 1024} // Desabilitar se menos de 1KB disponível
           >
             <Upload className="mr-2 h-4 w-4" />
             Enviar Documento
@@ -240,6 +271,16 @@ const DocumentosPage = () => {
         <DocumentoStorageInfo />
         
         <div className="bg-white rounded-lg shadow-sm p-6">
+          {error && (
+            <div className="mb-4 p-3 rounded-md bg-red-50 border border-red-200 text-red-800 flex items-center">
+              <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
+              <div>
+                <p className="font-medium">Erro ao carregar documentos</p>
+                <p className="text-sm">{error}</p>
+              </div>
+            </div>
+          )}
+          
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="relative flex-grow">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -269,7 +310,7 @@ const DocumentosPage = () => {
               </Select>
               <Button 
                 variant="outline" 
-                onClick={() => listarDocumentos()} 
+                onClick={handleRefresh} 
                 disabled={isRefreshing}
               >
                 {isRefreshing ? "Atualizando..." : "Atualizar"}
@@ -277,7 +318,12 @@ const DocumentosPage = () => {
             </div>
           </div>
           
-          {filteredDocuments.length > 0 ? (
+          {isLoading ? (
+            <div className="py-12 text-center">
+              <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+              <p className="mt-4 text-gray-500">Carregando documentos...</p>
+            </div>
+          ) : filteredDocuments.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>

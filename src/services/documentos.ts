@@ -1,7 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from "@/hooks/use-toast";
-import { useAuth } from '@/hooks/useAuth';
 
 interface DocumentoMetadado {
   id?: string;
@@ -21,11 +20,7 @@ export const obterUsoArmazenamento = async (): Promise<number> => {
   try {
     const { data, error } = await supabase
       .from('documentos')
-      .select('tamanho_bytes')
-      .then(res => ({
-        data: res.data,
-        error: res.error
-      }));
+      .select('tamanho_bytes');
 
     if (error) {
       console.error('Erro ao obter uso de armazenamento:', error);
@@ -62,7 +57,7 @@ export const uploadDocumento = async (
   processo?: string
 ): Promise<string> => {
   try {
-    const { user } = useAuth();
+    const { user } = await supabase.auth.getUser().then(res => ({ user: res.data.user }));
     if (!user) throw new Error('Usuário não autenticado');
 
     // Verificar tamanho do arquivo
