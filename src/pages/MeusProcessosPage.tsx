@@ -119,11 +119,22 @@ const MeusProcessosPage = () => {
         <h1 className="text-3xl font-bold mb-6">Meus Processos</h1>
         
         {/* Search and Action Bar */}
-        <SearchBar 
-          searchTerm={searchTerm}
-          onSearchChange={(e) => setSearchTerm(e.target.value)}
-          onAddClick={handleAddProcess}
-        />
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
+            <Input
+              type="search"
+              placeholder="Buscar processo..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Button onClick={handleAddProcess} className="flex items-center gap-1 whitespace-nowrap">
+            <Plus className="h-4 w-4" />
+            Cadastrar Novo Processo
+          </Button>
+        </div>
         
         {/* Process List */}
         <ProcessTable 

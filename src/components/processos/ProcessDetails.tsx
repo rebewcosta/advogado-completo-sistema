@@ -22,7 +22,7 @@ interface ProcessDetailsProps {
 
 const ProcessDetails: React.FC<ProcessDetailsProps> = ({ process, onClose, onEdit }) => {
   return (
-    <div>
+    <div className="relative">
       <div className="flex justify-between items-start mb-6">
         <div>
           <h2 className="text-2xl font-bold">Processo: {process.numero}</h2>
@@ -35,7 +35,7 @@ const ProcessDetails: React.FC<ProcessDetailsProps> = ({ process, onClose, onEdi
             {process.status}
           </Badge>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button variant="ghost" size="icon" onClick={onClose} className="absolute top-0 right-0">
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -44,29 +44,29 @@ const ProcessDetails: React.FC<ProcessDetailsProps> = ({ process, onClose, onEdi
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-gray-500">Número do Processo</h3>
-            <p>{process.numero}</p>
+            <p className="font-medium">{process.numero}</p>
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500">Cliente</h3>
-            <p>{process.cliente}</p>
+            <p className="font-medium">{process.cliente}</p>
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500">Tipo de Processo</h3>
-            <p>{process.tipo}</p>
+            <p className="font-medium">{process.tipo}</p>
           </div>
         </div>
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-gray-500">Vara</h3>
-            <p>{process.vara}</p>
+            <p className="font-medium">{process.vara}</p>
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500">Próximo Prazo</h3>
-            <p>{process.prazo}</p>
+            <p className="font-medium">{process.prazo}</p>
           </div>
           <div>
             <h3 className="text-sm font-medium text-gray-500">Status</h3>
-            <p>{process.status}</p>
+            <p className="font-medium">{process.status}</p>
           </div>
         </div>
       </div>
