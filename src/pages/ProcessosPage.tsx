@@ -1,25 +1,17 @@
 
-import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import ProcessForm from '@/components/ProcessForm';
-import { X, Edit, Eye, Plus, Search } from 'lucide-react';
+import React, { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog,
   DialogContent,
   DialogOverlay
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
+import ProcessForm from '@/components/ProcessForm';
+import SearchBar from '@/components/processos/SearchBar';
+import ProcessTable from '@/components/processos/ProcessTable';
+import ProcessDetails from '@/components/processos/ProcessDetails';
+import { useProcessesStore } from '@/stores/useProcessesStore';
 
 // Interface para tipagem dos processos
 interface Process {
@@ -40,16 +32,14 @@ const ProcessosPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showProcessDetails, setShowProcessDetails] = useState(false);
   
-  // Lista de processos vazia inicialmente - persistida no localStorage para não perder ao navegar
-  const [processes, setProcesses] = useState<Process[]>(() => {
-    const savedProcesses = localStorage.getItem('processes');
-    return savedProcesses ? JSON.parse(savedProcesses) : [];
-  });
-
-  // Salvar processos no localStorage sempre que houver mudanças
-  useEffect(() => {
-    localStorage.setItem('processes', JSON.stringify(processes));
-  }, [processes]);
+  const { 
+    processes, 
+    addProcess, 
+    updateProcess, 
+    toggleProcessStatus, 
+    deleteProcess,
+    getProcessById
+  } = useProcessesStore();
 
   // Filter processes based on search term
   const filteredProcesses = processes.filter(process =>
@@ -67,34 +57,24 @@ const ProcessosPage = () => {
   const handleSaveProcess = (processData: Omit<Process, "id">) => {
     if (isEditing && selectedProcess) {
       // Update existing process
-      setProcesses(prev => 
-        prev.map(process => 
-          process.id === selectedProcess.id 
-            ? { ...processData, id: process.id } 
-            : process
-        )
-      );
+      updateProcess(selectedProcess.id, processData);
       toast({
         title: "Processo atualizado",
         description: `O processo ${processData.numero} foi atualizado com sucesso.`,
       });
     } else {
       // Add new process
-      const newProcess = {
-        ...processData,
-        id: Date.now().toString(), // Usar timestamp para garantir IDs únicos
-      };
-      setProcesses(prev => [...prev, newProcess]);
+      const newProcess = addProcess(processData);
       toast({
         title: "Processo cadastrado",
-        description: `O processo ${processData.numero} foi cadastrado com sucesso.`,
+        description: `O processo ${newProcess.numero} foi cadastrado com sucesso.`,
       });
     }
     setShowForm(false);
   };
 
   const handleEditProcess = (id: string) => {
-    const process = processes.find(p => p.id === id);
+    const process = getProcessById(id);
     if (process) {
       setSelectedProcess(process);
       setIsEditing(true);
@@ -103,7 +83,7 @@ const ProcessosPage = () => {
   };
 
   const handleViewProcess = (id: string) => {
-    const process = processes.find(p => p.id === id);
+    const process = getProcessById(id);
     if (process) {
       setSelectedProcess(process);
       setShowProcessDetails(true);
@@ -111,22 +91,7 @@ const ProcessosPage = () => {
   };
 
   const handleToggleStatus = (id: string) => {
-    setProcesses(prev => 
-      prev.map(process => {
-        if (process.id === id) {
-          let newStatus: 'Em andamento' | 'Concluído' | 'Suspenso';
-          
-          if (process.status === 'Em andamento') newStatus = 'Concluído';
-          else if (process.status === 'Concluído') newStatus = 'Suspenso';
-          else newStatus = 'Em andamento';
-          
-          return { ...process, status: newStatus };
-        }
-        return process;
-      })
-    );
-    
-    const process = processes.find(process => process.id === id);
+    const process = toggleProcessStatus(id);
     
     toast({
       title: "Status atualizado",
@@ -135,14 +100,14 @@ const ProcessosPage = () => {
   };
 
   const handleDeleteProcess = (id: string) => {
-    const process = processes.find(process => process.id === id);
+    const process = getProcessById(id);
     
-    if (window.confirm(`Tem certeza que deseja excluir o processo ${process?.numero}?`)) {
-      setProcesses(prev => prev.filter(process => process.id !== id));
+    if (process && window.confirm(`Tem certeza que deseja excluir o processo ${process.numero}?`)) {
+      deleteProcess(id);
       
       toast({
         title: "Processo excluído",
-        description: `O processo ${process?.numero} foi excluído com sucesso.`,
+        description: `O processo ${process.numero} foi excluído com sucesso.`,
         variant: "destructive"
       });
     }
@@ -154,95 +119,20 @@ const ProcessosPage = () => {
         <h1 className="text-3xl font-bold mb-6">Processos</h1>
         
         {/* Search and Action Bar */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="relative w-64">
-            <Input
-              type="text"
-              placeholder="Buscar processos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3">
-              <Search className="h-5 w-5 text-gray-400" />
-            </div>
-          </div>
-          <Button onClick={handleAddProcess}>
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Processo
-          </Button>
-        </div>
+        <SearchBar
+          searchTerm={searchTerm}
+          onSearchChange={(e) => setSearchTerm(e.target.value)}
+          onAddClick={handleAddProcess}
+        />
         
         {/* Process List */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Número</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Vara</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Próximo Prazo</TableHead>
-                <TableHead>Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProcesses.length > 0 ? (
-                filteredProcesses.map((process) => (
-                  <TableRow key={process.id}>
-                    <TableCell className="font-medium">{process.numero}</TableCell>
-                    <TableCell>{process.cliente}</TableCell>
-                    <TableCell>{process.tipo}</TableCell>
-                    <TableCell>{process.vara}</TableCell>
-                    <TableCell>
-                      <Badge
-                        className={`
-                          ${process.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
-                            process.status === "Concluído" ? "bg-green-100 text-green-800" :
-                            "bg-yellow-100 text-yellow-800"}`}
-                      >
-                        {process.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{process.prazo}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="sm" onClick={() => handleViewProcess(process.id)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditProcess(process.id)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleToggleStatus(process.id)}
-                        >
-                          Alterar Status
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDeleteProcess(process.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                    Nenhum processo cadastrado
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <ProcessTable
+          processes={filteredProcesses}
+          onEdit={handleEditProcess}
+          onView={handleViewProcess}
+          onToggleStatus={handleToggleStatus}
+          onDelete={handleDeleteProcess}
+        />
         
         {/* Process Form Dialog */}
         <Dialog open={showForm} onOpenChange={setShowForm}>
@@ -262,67 +152,14 @@ const ProcessosPage = () => {
           <DialogOverlay />
           <DialogContent className="max-w-3xl p-6">
             {selectedProcess && (
-              <div>
-                <div className="flex justify-between items-start mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold">Processo: {selectedProcess.numero}</h2>
-                    <Badge
-                      className={`
-                        mt-2 ${selectedProcess.status === "Em andamento" ? "bg-blue-100 text-blue-800" : 
-                        selectedProcess.status === "Concluído" ? "bg-green-100 text-green-800" : 
-                        "bg-yellow-100 text-yellow-800"}`}
-                    >
-                      {selectedProcess.status}
-                    </Badge>
-                  </div>
-                  <Button variant="ghost" size="icon" onClick={() => setShowProcessDetails(false)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Número do Processo</h3>
-                      <p>{selectedProcess.numero}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Cliente</h3>
-                      <p>{selectedProcess.cliente}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Tipo de Processo</h3>
-                      <p>{selectedProcess.tipo}</p>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Vara</h3>
-                      <p>{selectedProcess.vara}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Próximo Prazo</h3>
-                      <p>{selectedProcess.prazo}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Status</h3>
-                      <p>{selectedProcess.status}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-8 flex justify-end space-x-4">
-                  <Button variant="outline" onClick={() => {
-                    setShowProcessDetails(false);
-                    handleEditProcess(selectedProcess.id);
-                  }}>
-                    Editar Processo
-                  </Button>
-                  <Button onClick={() => setShowProcessDetails(false)}>
-                    Fechar
-                  </Button>
-                </div>
-              </div>
+              <ProcessDetails
+                process={selectedProcess}
+                onClose={() => setShowProcessDetails(false)}
+                onEdit={() => {
+                  setShowProcessDetails(false);
+                  handleEditProcess(selectedProcess.id);
+                }}
+              />
             )}
           </DialogContent>
         </Dialog>
