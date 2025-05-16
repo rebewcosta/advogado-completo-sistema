@@ -215,6 +215,11 @@ const DocumentosPage = () => {
     }
   };
 
+  // Function to fix modal display
+  const openUploadDialog = () => {
+    setIsUploadDialogOpen(true);
+  };
+
   return (
     <AdminLayout>
       <div className="p-8">
@@ -224,7 +229,7 @@ const DocumentosPage = () => {
             <p className="text-gray-600">Gerencie todos os documentos do seu escritório</p>
           </div>
           <Button 
-            onClick={() => setIsUploadDialogOpen(true)} 
+            onClick={openUploadDialog} 
             className="bg-lawyer-primary hover:bg-lawyer-primary/90"
             disabled={espacoDisponivel < 1024} // Desabilitar se menos de 1KB disponível
           >
@@ -367,7 +372,7 @@ const DocumentosPage = () => {
       
       {/* Modal de Upload */}
       <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <DialogHeader>
             <DialogTitle>Enviar novo documento</DialogTitle>
             <DialogDescription>

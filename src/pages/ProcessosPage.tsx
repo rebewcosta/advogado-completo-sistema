@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,7 +17,6 @@ import ProcessForm from '@/components/ProcessForm';
 import {
   Dialog,
   DialogContent,
-  DialogOverlay
 } from "@/components/ui/dialog";
 
 // Interface para tipagem dos processos
@@ -194,9 +192,9 @@ const ProcessosPage = () => {
         </div>
       </div>
 
-      {/* Process Form Dialog - Fixed to use Dialog correctly */}
+      {/* Process Form Dialog - Fixed positioning to ensure form is visible */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+        <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <ProcessForm 
             onSave={handleSaveProcess}
             onCancel={() => setShowForm(false)}

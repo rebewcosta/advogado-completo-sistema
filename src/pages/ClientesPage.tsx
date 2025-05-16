@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,6 @@ import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog,
   DialogContent,
-  DialogOverlay
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
@@ -219,7 +217,7 @@ const ClientesPage = () => {
       
       {/* Client Form Dialog - Fixed for proper rendering */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+        <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <ClienteForm 
             onSave={handleSaveClient}
             onCancel={() => setShowForm(false)}
@@ -231,7 +229,7 @@ const ClientesPage = () => {
       
       {/* Client Details Dialog */}
       <Dialog open={showClientDetails} onOpenChange={setShowClientDetails}>
-        <DialogContent className="max-w-3xl p-6">
+        <DialogContent className="max-w-3xl p-6 fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           {selectedClient && (
             <div>
               <div className="flex justify-between items-start mb-6">

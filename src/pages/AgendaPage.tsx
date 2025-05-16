@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, parseISO, isToday, startOfToday, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -20,6 +19,10 @@ import { AgendaEventForm } from '@/components/AgendaEventForm';
 import { AgendaEventDetail } from '@/components/AgendaEventDetail';
 import { useToast } from "@/hooks/use-toast";
 import AdminLayout from '@/components/AdminLayout';
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 
 // Tipagem para eventos da agenda
 export type EventPriority = 'baixa' | 'média' | 'alta';
@@ -290,23 +293,31 @@ const AgendaPage = () => {
         </div>
       </div>
       
-      {/* Formulário para adicionar/editar evento - Corrigido para renderizar adequadamente */}
-      {showEventForm && (
-        <AgendaEventForm
-          onSave={handleSaveEvent}
-          onClose={() => setShowEventForm(false)}
-          initialDate={date}
-        />
-      )}
+      {/* Formulário para adicionar/editar evento - usando Dialog para renderizar corretamente */}
+      <Dialog open={showEventForm} onOpenChange={setShowEventForm}>
+        <DialogContent className="max-w-lg p-0 overflow-auto max-h-[90vh] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          {showEventForm && (
+            <AgendaEventForm
+              onSave={handleSaveEvent}
+              onClose={() => setShowEventForm(false)}
+              initialDate={date}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
       
       {/* Modal de detalhes do evento */}
-      {showEventDetail && selectedEvent && (
-        <AgendaEventDetail
-          event={selectedEvent}
-          onClose={() => setShowEventDetail(false)}
-          onDelete={() => selectedEvent && handleDeleteEvent(selectedEvent.id)}
-        />
-      )}
+      <Dialog open={showEventDetail} onOpenChange={setShowEventDetail}>
+        <DialogContent className="max-w-lg p-0 overflow-auto max-h-[90vh] fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+          {showEventDetail && selectedEvent && (
+            <AgendaEventDetail
+              event={selectedEvent}
+              onClose={() => setShowEventDetail(false)}
+              onDelete={() => selectedEvent && handleDeleteEvent(selectedEvent.id)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
