@@ -47,7 +47,7 @@ const ConfiguracoesPage = () => {
             </TabsTrigger>
           </TabsList>
           
-          {/* Conteúdo da aba de Notificações */}
+          {/* Conteúdo da aba de Notificações - Modificado para remover SMS e Email */}
           <TabsContent value="notificacoes">
             <Card>
               <CardHeader>
@@ -100,7 +100,7 @@ const ConfiguracoesPage = () => {
             </Card>
           </TabsContent>
           
-          {/* Conteúdo da aba Geral */}
+          {/* Conteúdo da aba Geral - Mantida sem alterações */}
           <TabsContent value="geral">
             <Card>
               <CardHeader>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, parseISO, isToday, startOfToday, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, Clock, CalendarPlus, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { CalendarIcon, Clock, CalendarPlus, ChevronLeft, ChevronRight, Search } from 'lucide-react';
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -128,8 +128,6 @@ const AgendaPage = () => {
   const navigateDay = (amount: number) => {
     setDate(prev => addDays(prev, amount));
   };
-
-  // ... resto dos handlers e formatações
   
   return (
     <AdminLayout>
@@ -290,25 +288,25 @@ const AgendaPage = () => {
             </CardContent>
           </Card>
         </div>
-        
-        {/* Formulário para adicionar/editar evento */}
-        {showEventForm && (
-          <AgendaEventForm
-            onSave={handleSaveEvent}
-            onClose={() => setShowEventForm(false)}
-            initialDate={date}
-          />
-        )}
-        
-        {/* Modal de detalhes do evento */}
-        {showEventDetail && selectedEvent && (
-          <AgendaEventDetail
-            event={selectedEvent}
-            onClose={() => setShowEventDetail(false)}
-            onDelete={() => selectedEvent && handleDeleteEvent(selectedEvent.id)}
-          />
-        )}
       </div>
+      
+      {/* Formulário para adicionar/editar evento - Corrigido para renderizar adequadamente */}
+      {showEventForm && (
+        <AgendaEventForm
+          onSave={handleSaveEvent}
+          onClose={() => setShowEventForm(false)}
+          initialDate={date}
+        />
+      )}
+      
+      {/* Modal de detalhes do evento */}
+      {showEventDetail && selectedEvent && (
+        <AgendaEventDetail
+          event={selectedEvent}
+          onClose={() => setShowEventDetail(false)}
+          onDelete={() => selectedEvent && handleDeleteEvent(selectedEvent.id)}
+        />
+      )}
     </AdminLayout>
   );
 };

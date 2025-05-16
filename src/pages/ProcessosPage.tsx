@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -191,20 +192,19 @@ const ProcessosPage = () => {
             </TableBody>
           </Table>
         </div>
-        
-        {/* Process Form Dialog */}
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogOverlay />
-          <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
-            <ProcessForm 
-              onSave={handleSaveProcess}
-              onCancel={() => setShowForm(false)}
-              process={selectedProcess}
-              isEdit={isEditing}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
+
+      {/* Process Form Dialog - Fixed to use Dialog correctly */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+          <ProcessForm 
+            onSave={handleSaveProcess}
+            onCancel={() => setShowForm(false)}
+            process={selectedProcess}
+            isEdit={isEditing}
+          />
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

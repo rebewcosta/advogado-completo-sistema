@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ClienteForm from '@/components/ClienteForm';
-import { X, Edit, Eye, Plus, Search, UserPlus } from 'lucide-react';
+import { X, Edit, Eye, UserPlus, Search } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { 
   Dialog,
@@ -215,98 +215,96 @@ const ClientesPage = () => {
             </TableBody>
           </Table>
         </div>
-        
-        {/* Client Form Dialog */}
-        <Dialog open={showForm} onOpenChange={setShowForm}>
-          <DialogOverlay />
-          <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
-            <ClienteForm 
-              onSave={handleSaveClient}
-              onCancel={() => setShowForm(false)}
-              cliente={selectedClient}
-              isEdit={isEditing}
-            />
-          </DialogContent>
-        </Dialog>
-        
-        {/* Client Details Dialog */}
-        <Dialog open={showClientDetails} onOpenChange={setShowClientDetails}>
-          <DialogOverlay />
-          <DialogContent className="max-w-3xl p-6">
-            {selectedClient && (
-              <div>
-                <div className="flex justify-between items-start mb-6">
+      </div>
+      
+      {/* Client Form Dialog - Fixed for proper rendering */}
+      <Dialog open={showForm} onOpenChange={setShowForm}>
+        <DialogContent className="max-w-4xl p-0 overflow-auto max-h-[90vh]">
+          <ClienteForm 
+            onSave={handleSaveClient}
+            onCancel={() => setShowForm(false)}
+            cliente={selectedClient}
+            isEdit={isEditing}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      {/* Client Details Dialog */}
+      <Dialog open={showClientDetails} onOpenChange={setShowClientDetails}>
+        <DialogContent className="max-w-3xl p-6">
+          {selectedClient && (
+            <div>
+              <div className="flex justify-between items-start mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedClient.nome}</h2>
+                  <Badge
+                    className={`
+                      mt-2 ${selectedClient.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
+                    `}
+                  >
+                    {selectedClient.status}
+                  </Badge>
+                </div>
+                <Button variant="ghost" size="icon" onClick={() => setShowClientDetails(false)}>
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
                   <div>
-                    <h2 className="text-2xl font-bold">{selectedClient.nome}</h2>
-                    <Badge
-                      className={`
-                        mt-2 ${selectedClient.status === "Ativo" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}
-                      `}
-                    >
-                      {selectedClient.status}
-                    </Badge>
+                    <h3 className="text-sm font-medium text-gray-500">Tipo de Cliente</h3>
+                    <p>{selectedClient.tipo}</p>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => setShowClientDetails(false)}>
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Tipo de Cliente</h3>
-                      <p>{selectedClient.tipo}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">CPF/CNPJ</h3>
-                      <p>{selectedClient.cpfCnpj}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Email</h3>
-                      <p>{selectedClient.email}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Telefone</h3>
-                      <p>{selectedClient.telefone}</p>
-                    </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">CPF/CNPJ</h3>
+                    <p>{selectedClient.cpfCnpj}</p>
                   </div>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Endereço</h3>
-                      <p>{selectedClient.endereco}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Cidade/Estado</h3>
-                      <p>{selectedClient.cidade}/{selectedClient.estado} - CEP: {selectedClient.cep}</p>
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500">Processos Ativos</h3>
-                      <p>{selectedClient.processos}</p>
-                    </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Email</h3>
+                    <p>{selectedClient.email}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Telefone</h3>
+                    <p>{selectedClient.telefone}</p>
                   </div>
                 </div>
-                
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium text-gray-500">Observações</h3>
-                  <p className="mt-1">{selectedClient.observacoes || "Nenhuma observação cadastrada."}</p>
-                </div>
-                
-                <div className="mt-8 flex justify-end space-x-4">
-                  <Button variant="outline" onClick={() => {
-                    setShowClientDetails(false);
-                    handleEditClient(selectedClient);
-                  }}>
-                    Editar Cliente
-                  </Button>
-                  <Button onClick={() => setShowClientDetails(false)}>
-                    Fechar
-                  </Button>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Endereço</h3>
+                    <p>{selectedClient.endereco}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Cidade/Estado</h3>
+                    <p>{selectedClient.cidade}/{selectedClient.estado} - CEP: {selectedClient.cep}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500">Processos Ativos</h3>
+                    <p>{selectedClient.processos}</p>
+                  </div>
                 </div>
               </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+              
+              <div className="mt-6">
+                <h3 className="text-sm font-medium text-gray-500">Observações</h3>
+                <p className="mt-1">{selectedClient.observacoes || "Nenhuma observação cadastrada."}</p>
+              </div>
+              
+              <div className="mt-8 flex justify-end space-x-4">
+                <Button variant="outline" onClick={() => {
+                  setShowClientDetails(false);
+                  handleEditClient(selectedClient);
+                }}>
+                  Editar Cliente
+                </Button>
+                <Button onClick={() => setShowClientDetails(false)}>
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };
