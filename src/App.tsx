@@ -6,6 +6,7 @@ import CadastroPage from './pages/CadastroPage';
 import DashboardPage from './pages/DashboardPage';
 import ClientesPage from './pages/ClientesPage';
 import ProcessosPage from './pages/ProcessosPage';
+import Processos2Page from './pages/Processos2Page';
 import AgendaPage from './pages/AgendaPage';
 import FinanceiroPage from './pages/FinanceiroPage';
 import DocumentosPage from './pages/DocumentosPage';
@@ -58,6 +59,7 @@ function App() {
               <Routes>
                 <Route path="/clientes" element={<ClientesPage />} />
                 <Route path="/processos" element={<ProcessosPage />} />
+                <Route path="/processos2" element={<Processos2Page />} />
                 <Route path="/agenda" element={<AgendaPage />} />
                 <Route path="/financeiro" element={<FinanceiroPage />} />
                 <Route path="/documentos" element={<DocumentosPage />} />
@@ -68,6 +70,7 @@ function App() {
             </VerificarAssinatura>}>
               <Route path="/clientes" element={null} />
               <Route path="/processos" element={null} />
+              <Route path="/processos2" element={null} />
               <Route path="/agenda" element={null} />
               <Route path="/financeiro" element={null} />
               <Route path="/documentos" element={null} />
