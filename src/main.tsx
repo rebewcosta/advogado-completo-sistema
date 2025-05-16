@@ -12,8 +12,55 @@ const updateViewport = () => {
   }
 };
 
-// Execute viewport update
+// Hide any "Edit with lovable" elements that might be injected
+const hideEditBanner = () => {
+  // Create a style element to hide any "Edit with lovable" elements
+  const style = document.createElement('style');
+  style.textContent = `
+    [data-lovable-selector],
+    [class*="lovable"],
+    [id*="lovable"],
+    [class*="gpteng"],
+    [id*="gpteng"],
+    [class*="gpt-eng"],
+    [id*="gpt-eng"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      height: 0 !important;
+      width: 0 !important;
+      position: absolute !important;
+      overflow: hidden !important;
+      z-index: -9999 !important;
+    }
+  `;
+  document.head.appendChild(style);
+  
+  // Remove any existing lovable/gpteng elements
+  setTimeout(() => {
+    document.querySelectorAll('[data-lovable-selector], [class*="lovable"], [id*="lovable"], [class*="gpteng"], [id*="gpteng"], [class*="gpt-eng"], [id*="gpt-eng"]').forEach(el => {
+      el.remove();
+    });
+  }, 100);
+};
+
+// Execute viewport update and banner hiding
 updateViewport();
+hideEditBanner();
+
+// Also set up a mutation observer to hide any dynamically added elements
+document.addEventListener('DOMContentLoaded', () => {
+  const observer = new MutationObserver((mutations) => {
+    for (const mutation of mutations) {
+      if (mutation.addedNodes.length) {
+        hideEditBanner();
+      }
+    }
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true });
+});
 
 createRoot(document.getElementById("root")!).render(
   <ThemeProvider>

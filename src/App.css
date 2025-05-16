@@ -68,3 +68,27 @@
     padding: 0;
   }
 }
+
+/* Hide all lovable edit buttons and banners */
+[data-lovable-selector],
+[class*="lovable"],
+[id*="lovable"],
+[class*="gpteng"],
+[id*="gpteng"],
+[class*="gpt-eng"],
+[id*="gpt-eng"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  overflow: hidden !important;
+  z-index: -9999 !important;
+}
+
+/* Force hide floating buttons */
+body > div:not(#root) {
+  display: none !important;
+}
