@@ -91,6 +91,11 @@
     padding: 0.5rem 0.75rem;
     font-size: 0.875rem;
   }
+  
+  /* Fix dropdown menu z-index for mobile */
+  .dropdown-menu-content {
+    z-index: 9999;
+  }
 }
 
 /* Mobile específico para sidebar e navegação */
@@ -125,6 +130,17 @@
     width: 1.75rem;
     height: 1.75rem;
   }
+  
+  /* Fix mobile dropdown in sidebar */
+  .sidebar-dropdown {
+    z-index: 9999 !important;
+  }
+  
+  /* Ensure buttons are clickable on mobile */
+  button, a {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
 }
 
 /* Login notification styling */
@@ -136,6 +152,19 @@
 
 .login-notification:hover {
   box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+/* Fix for SheetContent z-index issue */
+.sidebar-sheet-content {
+  z-index: 999 !important;
+}
+
+/* Override dropdown menu position on mobile */
+@media screen and (max-width: 767px) {
+  [data-radix-popper-content-wrapper] {
+    z-index: 9999 !important;
+    position: fixed !important;
+  }
 }
 
 /* Hide all lovable edit buttons and banners */

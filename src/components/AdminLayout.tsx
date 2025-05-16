@@ -4,10 +4,21 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, User } from "lucide-react";
+import { Menu, User, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/hooks/useAuth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 type AdminLayoutProps = {
   children: React.ReactNode;
@@ -16,7 +27,9 @@ type AdminLayoutProps = {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   
   // Get user email or name for display
   const getUserInfo = () => {
@@ -24,6 +37,42 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
       return user.user_metadata.nome;
     }
     return user?.email?.split('@')[0] || '';
+  };
+
+  // Get user initials for avatar
+  const getUserInitials = () => {
+    if (!user) return "JG";
+    
+    const nome = user.user_metadata?.nome || user.email || "";
+    if (!nome) return "JG";
+    
+    const parts = nome.split(" ");
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    }
+    
+    return nome.substring(0, 2).toUpperCase();
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Desconectado com sucesso",
+        description: "Você foi desconectado do sistema.",
+      });
+      navigate('/');
+    } catch (error) {
+      // Erro já tratado no hook useAuth
+    }
+  };
+
+  const handleProfileClick = () => {
+    navigate('/perfil');
+  };
+
+  const handleSubscriptionClick = () => {
+    navigate('/perfil?tab=assinatura');
   };
 
   if (isMobile) {
@@ -56,9 +105,34 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             
             {user && (
               <div className="flex items-center">
-                <div className="bg-white/10 rounded-full h-8 w-8 flex items-center justify-center text-white">
-                  <User className="h-4 w-4" />
-                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative rounded-full text-white hover:bg-white/10">
+                      <Avatar className="h-8 w-8 border border-white/20">
+                        <AvatarFallback className="bg-white/10 text-white text-sm">
+                          {getUserInitials()}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 mt-1">
+                    <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleProfileClick} className="cursor-pointer">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Perfil</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleSubscriptionClick} className="cursor-pointer">
+                      <Bell className="mr-2 h-4 w-4" />
+                      <span>Notificações</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Sair</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>
@@ -87,7 +161,6 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     );
   }
 
-  // Don't forget to wrap desktop view with SidebarProvider as well
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-gray-100">

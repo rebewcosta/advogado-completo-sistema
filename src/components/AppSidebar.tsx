@@ -25,7 +25,8 @@ import {
   Settings,
   LogOut,
   User,
-  CreditCard
+  CreditCard,
+  Bell
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -91,13 +92,13 @@ export const AppSidebar = () => {
   };
 
   // Manipulador para navegação em dispositivos móveis
-  const handleMobileNavigation = (path: string) => {
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    // No mobile, fechamos o menu depois de navegação
     if (isMobile) {
-      // No mobile, não queremos redirecionamento automático para evitar navegação indesejada
-      if (location.pathname === path) {
-        return;
-      }
-      navigate(path);
+      // Fechamos o Sheet component pai
+      const closeEvent = new CustomEvent('closeMobileMenu', { bubbles: true });
+      document.dispatchEvent(closeEvent);
     }
   };
 
@@ -127,21 +128,12 @@ export const AppSidebar = () => {
                     tooltip={item.label}
                     isActive={isActive(item.path)}
                     className="px-1"
+                    onClick={() => handleNavigation(item.path)}
                   >
-                    {isMobile ? (
-                      <div 
-                        onClick={() => handleMobileNavigation(item.path)}
-                        className="flex items-center gap-4"
-                      >
-                        <item.icon className="w-5 h-5" />
-                        <span>{item.label}</span>
-                      </div>
-                    ) : (
-                      <Link to={item.path} className="flex items-center gap-4">
-                        <item.icon className="w-5 h-5" />
-                        <span>{item.label}</span>
-                      </Link>
-                    )}
+                    <div className="flex items-center gap-4 cursor-pointer">
+                      <item.icon className="w-5 h-5" />
+                      <span>{item.label}</span>
+                    </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -157,28 +149,34 @@ export const AppSidebar = () => {
               tooltip="Configurações"
               isActive={isActive("/configuracoes")}
               className="px-1"
+              onClick={() => handleNavigation("/configuracoes")}
             >
-              {isMobile ? (
-                <div 
-                  onClick={() => handleMobileNavigation("/configuracoes")}
-                  className="flex items-center gap-4"
-                >
-                  <Settings className="w-5 h-5" />
-                  <span>Configurações</span>
-                </div>
-              ) : (
-                <Link to="/configuracoes" className="flex items-center gap-4">
-                  <Settings className="w-5 h-5" />
-                  <span>Configurações</span>
-                </Link>
-              )}
+              <div className="flex items-center gap-4 cursor-pointer">
+                <Settings className="w-5 h-5" />
+                <span>Configurações</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              tooltip="Notificações"
+              isActive={isActive("/perfil?tab=notificacoes")}
+              className="px-1"
+              onClick={() => handleNavigation("/perfil?tab=notificacoes")}
+            >
+              <div className="flex items-center gap-4 cursor-pointer">
+                <Bell className="w-5 h-5" />
+                <span>Notificações</span>
+              </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
           
           <div className="px-3 py-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-700 transition-colors">
+                <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-700 transition-colors cursor-pointer">
                   <Avatar className="h-8 w-8">
                     <AvatarFallback>{getUserInitials()}</AvatarFallback>
                   </Avatar>
@@ -195,20 +193,20 @@ export const AppSidebar = () => {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/perfil" className="flex items-center cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Perfil</span>
-                  </Link>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => handleNavigation("/perfil")}>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/perfil?tab=assinatura" className="flex items-center cursor-pointer">
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    <span>Assinatura</span>
-                  </Link>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => handleNavigation("/perfil?tab=assinatura")}>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  <span>Assinatura</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="cursor-pointer" onClick={() => handleNavigation("/perfil?tab=notificacoes")}>
+                  <Bell className="mr-2 h-4 w-4" />
+                  <span>Notificações</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="flex items-center cursor-pointer text-red-600 focus:text-red-600">
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600 focus:text-red-600">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Sair</span>
                 </DropdownMenuItem>
