@@ -169,8 +169,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       setUser(data.user);
       setSession(data.session);
-      
-      return data;
     } catch (error) {
       console.error("Erro ao atualizar sessão:", error);
       throw error;
