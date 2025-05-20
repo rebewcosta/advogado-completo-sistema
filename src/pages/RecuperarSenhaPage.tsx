@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Mail, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -27,6 +27,25 @@ const RecuperarSenhaPage = () => {
     setIsLoading(true);
 
     try {
+      // Check if user exists before attempting password reset
+      const { data: userExists, error: checkError } = await supabase.rpc('get_user_by_email', { 
+        email_to_check: email 
+      });
+      
+      if (checkError) {
+        throw new Error("Erro ao verificar usuário. Por favor, tente novamente.");
+      }
+      
+      if (!userExists?.[0]?.count) {
+        toast({
+          title: "Email não encontrado",
+          description: "Não encontramos uma conta com este email. Verifique se digitou corretamente.",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/atualizar-senha`,
       });
@@ -43,7 +62,7 @@ const RecuperarSenhaPage = () => {
     } catch (error: any) {
       console.error("Erro ao enviar email de recuperação:", error);
       
-      // Se houver erro ao enviar o email, ative o modo alternativo
+      // Ative o modo de fallback para qualquer erro de envio de email
       setFallbackModeActive(true);
       
       toast({
@@ -57,7 +76,7 @@ const RecuperarSenhaPage = () => {
   };
 
   const handleContactSupport = () => {
-    // Simplesmente mostra uma mensagem de instrução
+    // Apenas mostra uma mensagem de instrução
     toast({
       title: "Instruções enviadas",
       description: "Entre em contato com o suporte através do email suporte@jusgestao.com com seu nome e email cadastrado.",
@@ -91,9 +110,7 @@ const RecuperarSenhaPage = () => {
           {enviado ? (
             <div className="mt-8 space-y-6">
               <div className="text-center">
-                <svg className="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
+                <Mail className="mx-auto h-12 w-12 text-green-500" />
                 <p className="mt-2 text-sm text-gray-600">
                   Um email com instruções para recuperar sua senha foi enviado para <strong>{email}</strong>. 
                   Verifique sua caixa de entrada e também a pasta de spam.
@@ -108,8 +125,11 @@ const RecuperarSenhaPage = () => {
           ) : fallbackModeActive ? (
             <div className="mt-8 space-y-6">
               <div className="text-center">
-                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <p className="text-sm text-yellow-700">
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex justify-center mb-3">
+                    <AlertTriangle className="h-8 w-8 text-red-500" />
+                  </div>
+                  <p className="text-sm text-red-700">
                     Estamos com problemas técnicos para enviar emails de recuperação. 
                     Por favor, use uma das opções abaixo para redefinir sua senha:
                   </p>
