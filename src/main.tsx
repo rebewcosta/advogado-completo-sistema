@@ -18,7 +18,7 @@ const updateViewport = () => {
 updateViewport();
 
 // TODA A LÓGICA RELACIONADA A 'tryRemoveLovableElements' 
-// E 'observeAndRemoveLovableBanner' FOI REMOVIDA PARA ESTE TESTE.
+// E 'observeAndRemoveLovableBanner' FOI REMOVIDA.
 
 // Mount the app
 const container = document.getElementById("root");
