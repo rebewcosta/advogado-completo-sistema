@@ -127,8 +127,7 @@ const ClientesPage = () => {
 
     try {
       let responseData: Cliente | null = null;
-      let responseError: any = null; // Para capturar o erro da chamada do Supabase
-
+      
       if (isEditing && selectedClient) {
         const { data, error } = await supabase
           .from('clientes')
@@ -137,21 +136,18 @@ const ClientesPage = () => {
           .eq('user_id', user.id)
           .select()
           .single();
+        
+        if (error) throw error; // O erro já virá com a mensagem do trigger, se aplicável
         responseData = data;
-        responseError = error;
       } else {
         const { data, error } = await supabase
           .from('clientes')
           .insert([{ ...dadosParaSupabase, user_id: user.id }])
           .select()
           .single();
+        
+        if (error) throw error; // O erro já virá com a mensagem do trigger, se aplicável
         responseData = data;
-        responseError = error;
-      }
-
-      if (responseError) {
-        // O erro agora virá com a mensagem do trigger (se for duplicidade) ou outra mensagem do Supabase
-        throw responseError; // Relança para ser pego pelo catch
       }
 
       // Se chegou aqui, a operação foi bem-sucedida
@@ -168,21 +164,20 @@ const ClientesPage = () => {
         setIsEditing(false);
       }
     } catch (error: any) { 
+      // Agora, error.message já deve conter a mensagem personalizada do trigger
+      // em caso de duplicidade de CPF/CNPJ, ou a mensagem padrão do Supabase para outros erros.
       console.error("Erro ao salvar cliente:", error);
-      // O erro.message aqui já deve ser a mensagem personalizada do trigger em caso de duplicidade,
-      // ou a mensagem de erro padrão do Supabase para outros problemas.
       toast({
         title: isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente",
-        description: error.message || "Ocorreu um erro inesperado.",
-        variant: "destructive", // Mantém o variant destructive para erros
+        description: error.message || "Ocorreu um erro inesperado.", // error.message será nossa mensagem customizada
+        variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // ... (resto do código de ClientesPage.tsx permanece o mesmo) ...
-  // handleEditClient, handleViewClient, handleToggleStatus, handleDeleteClient, e o JSX de retorno
+  // ... (o restante do código de ClientesPage.tsx, como handleEditClient, handleViewClient, etc., permanece o mesmo) ...
 
  const handleEditClient = (client: Cliente) => {
     const formDataForEdit = {
