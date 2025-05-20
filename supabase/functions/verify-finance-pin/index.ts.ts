@@ -3,7 +3,7 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // Para localhost. EM PRODUÇÃO: 'https://sisjusgestao.com.br'
+  'Access-Control-Allow-Origin': '*', 
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -30,9 +30,15 @@ serve(async (req: Request) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     const pinSalt = Deno.env.get('PIN_SALT');
 
-    if (!supabaseUrl || !serviceRoleKey || !pinSalt) {
-      console.error("verify-finance-pin: ERRO - Variáveis de ambiente críticas ausentes.");
-      return new Response(JSON.stringify({ error: "Configuração crítica do servidor ausente." }), {
+    if (!supabaseUrl || !serviceRoleKey ) {
+      console.error("verify-finance-pin: ERRO - Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas.");
+      return new Response(JSON.stringify({ error: "Configuração crítica do servidor ausente (URL/KEY)." }), {
+        status: 500, headers: responseHeaders,
+      });
+    }
+    if (!pinSalt) {
+      console.error("verify-finance-pin: ERRO CRÍTICO - PIN_SALT não configurado nas variáveis de ambiente da função!");
+      return new Response(JSON.stringify({ error: "Configuração de segurança crítica (PIN_SALT) ausente." }), {
         status: 500, headers: responseHeaders,
       });
     }
@@ -60,44 +66,60 @@ serve(async (req: Request) => {
 
     const userPinHash = user.user_metadata?.finance_pin_hash;
 
-    // Se o usuário (qualquer usuário, incluindo admin) NÃO configurou um PIN pessoal,
-    // o acesso é permitido, mas o front-end será informado para sugerir a configuração.
     if (!userPinHash) {
-      console.log(`verify-finance-pin: Usuário ${user.id} não tem PIN configurado. Acesso permitido.`);
+      console.log(`verify-finance-pin: Usuário ${user.id} não tem PIN configurado. Acesso permitido (pinNotSet).`);
       return new Response(JSON.stringify({ 
         verified: true, 
         pinNotSet: true, 
         message: 'Nenhum PIN financeiro configurado para esta conta. Acesso permitido.' 
       }), { status: 200, headers: responseHeaders });
     }
-
-    // Se um PIN está configurado para este usuário, ele é OBRIGATÓRIO.
-    // Esperamos uma tentativa de PIN no corpo da requisição.
+    
+    console.log(`verify-finance-pin: Usuário ${user.id} tem PIN configurado. Esperando pinAttempt.`);
     let payload;
     try {
-        payload = await req.json();
+        // Só tenta ler o corpo se não for uma chamada inicial de verificação de status
+        // (que o front-end agora faz sem corpo para verify-finance-pin)
+        // Se o método não for GET e houver um content-type, assume-se que há um corpo
+        if (req.method !== 'GET' && req.headers.get('content-type')) {
+            payload = await req.json();
+        } else {
+            // Para a chamada inicial da FinanceiroPage (sem corpo), pinAttempt será undefined.
+            // A lógica abaixo tratará isso se um PIN for necessário.
+            console.log(`verify-finance-pin: Chamada para usuário ${user.id} sem corpo JSON (provável verificação inicial).`);
+        }
     } catch (e) {
-        // Se não há corpo JSON e um PIN é esperado, isso é um erro do cliente.
-        console.warn(`verify-finance-pin: Usuário ${user.id} tem PIN, mas não foi fornecido pinAttempt no corpo JSON.`);
+        console.warn(`verify-finance-pin: Erro ao parsear corpo JSON para pinAttempt (ou corpo inesperado): ${e.message}. Usuário ${user.id}.`);
+         // Se não conseguiu ler o corpo e um PIN é esperado, solicita o PIN.
         return new Response(JSON.stringify({ 
             verified: false, 
-            pinRequired: true, // Indica que um PIN é necessário
-            pinNotSet: false,  // O PIN está configurado
-            message: 'PIN é necessário para acesso. Tentativa de PIN não fornecida no corpo da requisição.' 
+            pinRequired: true,
+            pinNotSet: false,  
+            message: 'PIN é necessário. Erro ao processar tentativa.' 
         }), {
-            status: 400, // Bad Request
+            status: 400, 
             headers: responseHeaders,
         });
     }
     const pinAttempt = payload?.pinAttempt;
 
+    // Se userPinHash existe, E não recebemos um pinAttempt (o PinLock deveria ter enviado)
     if (!pinAttempt) {
-      return new Response(JSON.stringify({ verified: false, pinRequired: true, pinNotSet: false, message: 'Tentativa de PIN (pinAttempt) é obrigatória.' }), {
-        status: 400, headers: responseHeaders,
+      console.warn(`verify-finance-pin: Usuário ${user.id} tem PIN, mas pinAttempt não foi encontrado no payload. Respondendo que PIN é necessário.`);
+      return new Response(JSON.stringify({ 
+          verified: false, 
+          pinRequired: true, // Indica que um PIN é necessário
+          pinNotSet: false,  // O PIN está configurado
+          message: 'PIN é necessário para acesso.' 
+      }), {
+        status: 200, // HTTP 200, o front-end decide mostrar o PinLock
+        headers: responseHeaders,
       });
     }
 
+
     if (typeof pinAttempt !== 'string' || pinAttempt.length !== 4) {
+        console.warn(`verify-finance-pin: Formato de pinAttempt inválido para usuário ${user.id}. Recebido: '${pinAttempt}'`);
         return new Response(JSON.stringify({ verified: false, message: 'Formato do PIN inválido. Deve ser uma string de 4 dígitos.' }), {
             status: 400, headers: responseHeaders,
         });
@@ -114,8 +136,7 @@ serve(async (req: Request) => {
     } else {
       console.warn(`verify-finance-pin: Tentativa de PIN pessoal incorreta para usuário ${user.id}.`);
       return new Response(JSON.stringify({ verified: false, message: 'PIN pessoal incorreto.' }), {
-        status: 200, // HTTP 200, mas com verified: false
-        headers: responseHeaders,
+        status: 200, headers: responseHeaders,
       });
     }
 
