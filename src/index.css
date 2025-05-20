@@ -1,43 +1,134 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/lovable-uploads/f43e275d-744e-43eb-a2c7-bbf3c17b3fc5.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestão para Advogados</title>
-    <style>
-      /* CSS para ocultar o banner da Lovable o mais cedo possível.
-        Estes seletores são baseados na estrutura do banner identificada.
-      */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-      /* Alvo principal: o link (<a>) com ID começando em "lovable-" E href para lovable.dev */
-      a[id^="lovable-"][href*="lovable.dev"],
-      /* Alvo secundário: qualquer link para lovable.dev com position fixed (conforme visto no inspetor) */
-      a[href*="lovable.dev/projects/"][style*="position: fixed"],
-      /* Alvo para o ID #lovable-badge, caso seja usado diretamente no banner ou em um wrapper */
-      #lovable-badge,
-      /* Seletores genéricos que você já tinha, como fallback */
-      [class*="lovable-banner"], [id*="lovable-banner"],
-      [class*="lovable-editor"], [id*="lovable-editor"],
-      [class*="lovable-tagger"], [id*="lovable-tagger"],
-      /* Seletor específico de estilo que você identificou, caso o banner seja um div */
-      div[style*="z-index: 999999999 !important"][style*="position: fixed !important"][style*="bottom: 20px !important"][style*="right: 20px !important"],
-      div[style*="z-index: 1000000"][style*="position: fixed"] /* z-index visto na imagem */
-      {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        /* Para garantir que não ocupe espaço e não seja clicável */
-        width: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
-      }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 84% 4.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+
+    --primary: 221.2 83.2% 53.3%;
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: var(--accent-hsl, 221.2 83.2% 53.3%);
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 221.2 83.2% 53.3%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: var(--accent-hsl, 217.2 91.2% 59.8%);
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-lawyer-background text-foreground;
+  }
+  
+  /* Tamanhos de fonte */
+  .text-small {
+    font-size: 0.875rem;
+  }
+  
+  .text-medium {
+    font-size: 1rem;
+  }
+  
+  .text-large {
+    font-size: 1.125rem;
+  }
+  
+  /* Modo compacto */
+  .compact .card-content {
+    @apply py-2;
+  }
+  
+  .compact .space-y-6 {
+    @apply space-y-3;
+  }
+  
+  .compact .p-6 {
+    @apply p-3;
+  }
+}
+
+.feature-card {
+  @apply bg-white p-6 rounded-lg shadow-md transition-all hover:shadow-lg;
+}
+
+.feature-icon {
+  @apply text-lawyer-primary w-8 h-8 mb-4;
+}
+
+.feature-title {
+  @apply text-xl font-semibold mb-2;
+}
+
+.feature-description {
+  @apply text-gray-600 mb-4;
+}
+
+.feature-link {
+  @apply text-lawyer-primary flex items-center gap-1 font-medium hover:underline;
+}
+
+.btn-primary {
+  @apply bg-lawyer-primary text-white px-6 py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors;
+}
+
+.section-title {
+  @apply text-2xl md:text-3xl font-bold text-center mb-12;
+}
+
+.benefit-item {
+  @apply flex items-center gap-2 text-gray-700 mb-2;
+}
