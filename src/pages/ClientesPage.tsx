@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import ClienteForm from '@/components/ClienteForm';
 import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2 } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast"; // Certifique-se que está usando o seu hook customizado
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -46,7 +46,7 @@ type ClienteFormDataFromForm = {
 };
 
 const ClientesPage = () => {
-  const { toast } = useToast(); // Nosso hook de toast
+  const { toast } = useToast();
   const { user } = useAuth();
 
   const [clients, setClients] = useState<Cliente[]>([]);
@@ -124,7 +124,7 @@ const ClientesPage = () => {
       status_cliente: formDataFromForm.status_cliente || 'Ativo',
     };
 
-    let operationSuccessful = false; // Flag para controlar o fechamento do formulário
+    let operationSuccessful = false;
 
     try {
       if (isEditing && selectedClient) {
@@ -137,12 +137,14 @@ const ClientesPage = () => {
           .single();
 
         if (error) {
+            // Verifica se o erro é de chave duplicada no CPF/CNPJ
             if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
-                toast({
+                toast({ // Mostra o toast amigável
                     title: "Erro ao Atualizar Cliente",
                     description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
                     variant: "destructive",
                 });
+                // Não relança o erro, apenas impede que a operação seja marcada como bem-sucedida
             } else {
                 throw error; // Relança outros erros para o catch genérico
             }
@@ -152,6 +154,7 @@ const ClientesPage = () => {
           operationSuccessful = true;
         }
       } else {
+        // Lógica de inserção
         const { data: newClient, error } = await supabase
           .from('clientes')
           .insert([{ ...dadosParaSupabase, user_id: user.id }])
@@ -160,12 +163,12 @@ const ClientesPage = () => {
 
         if (error) {
             if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
-                toast({ // Exibe o toast amigável aqui
+                toast({ // Mostra o toast amigável
                     title: "Erro ao Cadastrar Cliente",
                     description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
                     variant: "destructive",
                 });
-                // Não relança o erro, pois já tratamos e exibimos o toast amigável
+                // Não relança o erro, apenas impede que a operação seja marcada como bem-sucedida
             } else {
                 throw error; // Relança outros erros para o catch genérico
             }
@@ -182,16 +185,15 @@ const ClientesPage = () => {
         setIsEditing(false);
       }
 
-    } catch (error: any) { // Este catch agora só pegará erros não tratados acima (ou seja, não o '23505' da inserção)
-      console.error("Erro não tratado ao salvar cliente:", error);
-      // Evita exibir um segundo toast se o erro de CPF duplicado já foi tratado
-      if (!(error.message && error.message.includes("Já existe um cliente cadastrado com este CPF/CNPJ."))) {
-          toast({
-            title: isEditing ? "Erro ao Atualizar" : "Erro ao Cadastrar",
-            description: error.message || "Ocorreu um erro inesperado ao salvar os dados do cliente.",
-            variant: "destructive",
-          });
-      }
+    } catch (error: any) { 
+      // Este catch agora só pegará erros não tratados acima (ou seja, não o '23505')
+      // ou se o erro de CPF duplicado não foi tratado especificamente acima (improvável com a lógica atual)
+      console.error("Erro genérico ao salvar cliente:", error);
+      toast({
+        title: isEditing ? "Erro ao Atualizar" : "Erro ao Cadastrar",
+        description: error.message || "Ocorreu um erro inesperado ao salvar os dados do cliente.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
