@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ClienteForm from '@/components/ClienteForm';
-import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2 } from 'lucide-react';
+import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2, RefreshCw } from 'lucide-react'; // Adicionado RefreshCw
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -30,16 +30,17 @@ import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
 
-// Certifique-se que o tipo Cliente em types.ts foi atualizado para refletir 'cpfCnpj'
-// Se você editou types.ts manualmente, a linha abaixo funcionará corretamente.
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 
+// Assegure-se que o nome da coluna aqui ('cpfCnpj') corresponde ao que é usado no formulário
+// e o que você espera manipular no estado do componente.
+// O objeto 'dadosParaSupabase' abaixo deve usar o nome da coluna como ela existe no SEU BANCO DE DADOS.
 type ClienteFormDataFromForm = {
   nome: string;
   email: string;
   telefone: string;
   tipo: string;
-  cpfCnpj: string; // Esta é a propriedade que vem do formulário
+  cpfCnpj: string; // Campo como vem do formulário (camelCase)
   endereco?: string | null;
   cidade?: string | null;
   estado?: string | null;
@@ -60,14 +61,19 @@ const ClientesPage = () => {
   const [selectedClient, setSelectedClient] = useState<Cliente | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showClientDetails, setShowClientDetails] = useState(false);
+  const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
-  const fetchClients = useCallback(async () => {
+
+  const fetchClients = useCallback(async (showLoadingSpinner = true) => {
     if (!user) {
       setClients([]);
-      setIsLoading(false);
+      if (showLoadingSpinner) setIsLoading(false);
+      setIsRefreshingManually(false);
       return;
     }
-    setIsLoading(true);
+    if (showLoadingSpinner) setIsLoading(true);
+    setIsRefreshingManually(true);
+
     try {
       const { data, error } = await supabase
         .from('clientes')
@@ -86,18 +92,60 @@ const ClientesPage = () => {
       });
       setClients([]);
     } finally {
-      setIsLoading(false);
+      if (showLoadingSpinner) setIsLoading(false);
+      setIsRefreshingManually(false);
     }
   }, [user, toast]);
 
+  // Efeito para buscar clientes inicialmente e configurar Realtime
   useEffect(() => {
-    fetchClients();
-  }, [fetchClients]);
+    if (user) {
+      fetchClients(); // Busca inicial
+
+      // Configuração do Supabase Realtime
+      const channel = supabase
+        .channel('public:clientes')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'clientes', filter: `user_id=eq.${user.id}` },
+          (payload) => {
+            console.log('Realtime: Mudança recebida na tabela clientes:', payload);
+            // Para simplicidade, vamos re-fazer o fetch para atualizar a lista.
+            // Para otimizações, você pode manipular o estado 'clients' diretamente com base no payload.
+            toast({
+                title: "Atualização Automática",
+                description: "A lista de clientes foi atualizada.",
+                duration: 3000,
+            });
+            fetchClients(false); // Não mostrar o spinner de loading principal para atualizações realtime
+          }
+        )
+        .subscribe((status, err) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Realtime: Conectado ao canal de clientes!');
+          }
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+            console.error('Realtime: Erro no canal de clientes:', err || status);
+            toast({ title: "Erro de Conexão Realtime", description: "Não foi possível sincronizar os dados de clientes em tempo real.", variant: "destructive"});
+          }
+        });
+
+      // Limpeza ao desmontar o componente ou quando o usuário mudar
+      return () => {
+        console.log("Realtime: Desinscrevendo do canal de clientes.");
+        supabase.removeChannel(channel);
+      };
+    } else {
+      // Se não há usuário, limpa a lista e para o loading
+      setClients([]);
+      setIsLoading(false);
+    }
+  }, [user, fetchClients, toast]); // fetchClients e toast são dependências
 
   const filteredClients = clients.filter(client =>
     client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (client.cpfCnpj && client.cpfCnpj.toLowerCase().includes(searchTerm.toLowerCase())) // Assumindo que types.ts foi atualizado para cpfCnpj
+    (client.cpfCnpj && client.cpfCnpj.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleAddClient = () => {
@@ -114,14 +162,13 @@ const ClientesPage = () => {
     }
     setIsSubmitting(true);
 
-    // O objeto enviado ao Supabase DEVE usar o nome da coluna como definido no BANCO DE DADOS.
-    // Se no seu banco de dados a coluna é 'cpfCnpj' (camelCase):
+    // O nome da coluna no seu banco de dados é 'cpfCnpj' (camelCase)
     const dadosParaSupabase = {
       nome: formDataFromForm.nome,
       email: formDataFromForm.email,
       telefone: formDataFromForm.telefone,
-      tipo_cliente: formDataFromForm.tipo, // Supabase types.ts usa tipo_cliente
-      cpfCnpj: formDataFromForm.cpfCnpj,   // Coluna no DB é cpfCnpj (camelCase)
+      tipo_cliente: formDataFromForm.tipo, // No schema Supabase, 'tipo_cliente' é snake_case
+      cpfCnpj: formDataFromForm.cpfCnpj,   // Coluna no DB é 'cpfCnpj' (camelCase)
       endereco: formDataFromForm.endereco,
       cidade: formDataFromForm.cidade,
       estado: formDataFromForm.estado,
@@ -155,14 +202,14 @@ const ClientesPage = () => {
         responseData = data;
       }
 
+      // Realtime cuidará da atualização da lista, mas podemos dar um feedback imediato se desejado
+      // ou confiar que fetchClients será chamado pelo Realtime.
+      // Por simplicidade, o Realtime chamará fetchClients.
       if (responseData) {
-        if (isEditing) {
-          setClients(prevClients => prevClients.map(c => c.id === responseData!.id ? responseData : c));
-          toast({ title: "Cliente atualizado!", description: `Os dados de ${responseData.nome} foram atualizados.` });
-        } else {
-          setClients(prevClients => [responseData, ...prevClients].sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")));
-          toast({ title: "Cliente cadastrado!", description: `${responseData.nome} foi salvo com sucesso.` });
-        }
+        toast({ 
+            title: isEditing ? "Cliente atualizado!" : "Cliente cadastrado!", 
+            description: `${responseData.nome} foi ${isEditing ? 'atualizado' : 'salvo'} com sucesso.` 
+        });
         setShowForm(false);
         setSelectedClient(null);
         setIsEditing(false);
@@ -172,16 +219,17 @@ const ClientesPage = () => {
       let toastTitle = isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente";
       let toastDescription = error.message || "Ocorreu um erro inesperado.";
 
-      // Verificação para erro de duplicidade de CPF/CNPJ (considerando coluna 'cpfCnpj')
-      if (error.message && 
+      if (error.message && error.message.includes('Já existe um cliente cadastrado com este CPF/CNPJ para sua conta.')) {
+        toastDescription = error.message;
+      } 
+      else if (error.message && 
           error.message.toLowerCase().includes('duplicate key value violates unique constraint') &&
-          (error.message.toLowerCase().includes('cpfnnpj') || // Verifica a coluna 'cpfCnpj' na mensagem de erro (case-insensitive)
-           error.message.toLowerCase().includes("unique constraint") && error.message.toLowerCase().includes("clientes"))) { // Genérico para constraint na tabela clientes
+          (error.message.toLowerCase().includes('cpfnnpj') ||
+           error.message.toLowerCase().includes("unique constraint") && error.message.toLowerCase().includes("clientes"))) { 
         toastDescription = "Este CPF/CNPJ já está cadastrado. Por favor, verifique os dados.";
-      } else if (error.message && error.message.includes("Could not find the 'cpf_cnpj' column")) {
-        toastDescription = "Inconsistência no schema (esperando 'cpf_cnpj'). Por favor, recarregue o schema no Supabase e regenere os tipos.";
-      } else if (error.message && error.message.includes("Could not find the 'cpfCnpj' column")) {
-        toastDescription = "Erro de schema cache (não encontrou 'cpfCnpj'). Por favor, recarregue o schema no Supabase.";
+      }
+      else if (error.message && error.message.toLowerCase().includes('record "new" has no field "cpfcnpj"')) {
+        toastDescription = "Erro interno no banco de dados ao verificar CPF/CNPJ (trigger). Contate o suporte.";
       }
 
       toast({
@@ -200,7 +248,7 @@ const ClientesPage = () => {
         email: client.email || '',
         telefone: client.telefone || '',
         tipo: client.tipo_cliente,
-        cpfCnpj: client.cpfCnpj || '', // Se types.ts for atualizado para cpfCnpj, isso estará correto
+        cpfCnpj: client.cpfCnpj || '', // Usa cpfCnpj aqui para popular o formulário
         endereco: client.endereco || '',
         cidade: client.cidade || '',
         estado: client.estado || '',
@@ -232,9 +280,9 @@ const ClientesPage = () => {
         .single();
 
       if (error) throw error;
+      // O Realtime deve pegar essa mudança.
       if (updatedClient) {
-        setClients(prev => prev.map(c => c.id === updatedClient.id ? updatedClient : c));
-        toast({
+         toast({
           title: "Status atualizado",
           description: `Cliente ${updatedClient.nome} agora está ${newStatus}.`
         });
@@ -258,7 +306,7 @@ const ClientesPage = () => {
           .eq('user_id', user.id);
 
         if (error) throw error;
-        setClients(prev => prev.filter(client => client.id !== clientToDelete.id));
+        // O Realtime deve pegar essa mudança.
         toast({
           title: "Cliente excluído",
           description: `O cliente ${clientToDelete.nome} foi excluído com sucesso.`,
@@ -271,6 +319,11 @@ const ClientesPage = () => {
       }
     }
   };
+  
+  const handleManualRefresh = () => {
+    fetchClients(true); // Mostrar spinner de loading ao atualizar manualmente
+  };
+
 
   return (
     <AdminLayout>
@@ -290,6 +343,10 @@ const ClientesPage = () => {
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
             </div>
+            <Button onClick={handleManualRefresh} variant="outline" disabled={isRefreshingManually || isLoading} className="w-full sm:w-auto">
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingManually ? 'animate-spin' : ''}`} />
+              {isRefreshingManually ? 'Atualizando...' : 'Atualizar'}
+            </Button>
             <Button onClick={handleAddClient} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Novo Cliente
@@ -323,7 +380,7 @@ const ClientesPage = () => {
                       <TableCell className="hidden md:table-cell py-3 px-4">{client.email}</TableCell>
                       <TableCell className="hidden lg:table-cell py-3 px-4">{client.telefone}</TableCell>
                       <TableCell className="py-3 px-4">{client.tipo_cliente}</TableCell>
-                      <TableCell className="hidden md:table-cell py-3 px-4">{client.cpfCnpj}</TableCell> {/* Assumindo que types.ts será atualizado para cpfCnpj */}
+                      <TableCell className="hidden md:table-cell py-3 px-4">{client.cpfCnpj}</TableCell>
                       <TableCell className="py-3 px-4">
                         <Badge
                           variant={client.status_cliente === "Ativo" ? "default" : "destructive"}
@@ -381,11 +438,10 @@ const ClientesPage = () => {
           setShowForm(open);
         }}>
           <DialogContent className="max-w-2xl p-0 overflow-auto max-h-[90vh]">
-            {/* O componente ClienteForm recebe 'cliente' que já tem 'cpfCnpj' */}
             <ClienteForm
               onSave={handleSaveClient}
               onCancel={() => { setShowForm(false); setSelectedClient(null); setIsEditing(false); }}
-              cliente={selectedClient} 
+              cliente={selectedClient}
               isEdit={isEditing}
             />
           </DialogContent>
@@ -405,7 +461,7 @@ const ClientesPage = () => {
                   <p><strong>Email:</strong> {selectedClient.email || 'N/A'}</p>
                   <p><strong>Telefone:</strong> {selectedClient.telefone || 'N/A'}</p>
                   <p><strong>Tipo:</strong> {selectedClient.tipo_cliente}</p>
-                  <p><strong>CPF/CNPJ:</strong> {selectedClient.cpfCnpj || 'N/A'}</p> {/* Assumindo que types.ts será atualizado para cpfCnpj */}
+                  <p><strong>CPF/CNPJ:</strong> {selectedClient.cpfCnpj || 'N/A'}</p>
                   <p><strong>Endereço:</strong> {selectedClient.endereco || 'N/A'}</p>
                   <p><strong>Cidade:</strong> {selectedClient.cidade || 'N/A'}</p>
                   <p><strong>Estado:</strong> {selectedClient.estado || 'N/A'}</p>
