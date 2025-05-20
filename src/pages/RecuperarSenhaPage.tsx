@@ -9,6 +9,7 @@ const RecuperarSenhaPage = () => {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [enviado, setEnviado] = useState(false);
+  const [fallbackModeActive, setFallbackModeActive] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -41,14 +42,26 @@ const RecuperarSenhaPage = () => {
       });
     } catch (error: any) {
       console.error("Erro ao enviar email de recuperação:", error);
+      
+      // Se houver erro ao enviar o email, ative o modo alternativo
+      setFallbackModeActive(true);
+      
       toast({
         title: "Erro ao enviar email",
-        description: error.message || "Ocorreu um erro ao enviar o email de recuperação.",
+        description: "Não foi possível enviar o email de recuperação. Por favor, use a opção alternativa ou entre em contato com o suporte.",
         variant: "destructive"
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleContactSupport = () => {
+    // Simplesmente mostra uma mensagem de instrução
+    toast({
+      title: "Instruções enviadas",
+      description: "Entre em contato com o suporte através do email suporte@jusgestao.com com seu nome e email cadastrado.",
+    });
   };
 
   return (
@@ -67,7 +80,9 @@ const RecuperarSenhaPage = () => {
               <p className="mt-2 text-sm text-gray-600">
                 {enviado 
                   ? "Email enviado! Verifique sua caixa de entrada para redefinir sua senha."
-                  : "Informe seu email para receber um link de recuperação de senha."
+                  : fallbackModeActive 
+                    ? "Não foi possível enviar o email de recuperação. Use uma das opções abaixo:"
+                    : "Informe seu email para receber um link de recuperação de senha."
                 }
               </p>
             </div>
@@ -86,6 +101,31 @@ const RecuperarSenhaPage = () => {
                 <div className="mt-6">
                   <Link to="/login" className="font-medium text-lawyer-primary hover:text-blue-700">
                     Voltar para o login
+                  </Link>
+                </div>
+              </div>
+            </div>
+          ) : fallbackModeActive ? (
+            <div className="mt-8 space-y-6">
+              <div className="text-center">
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                  <p className="text-sm text-yellow-700">
+                    Estamos com problemas técnicos para enviar emails de recuperação. 
+                    Por favor, use uma das opções abaixo para redefinir sua senha:
+                  </p>
+                </div>
+                <div className="flex flex-col space-y-4">
+                  <button
+                    onClick={handleContactSupport}
+                    className="px-4 py-2 border border-lawyer-primary text-lawyer-primary rounded-md hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lawyer-primary"
+                  >
+                    Contatar Suporte
+                  </button>
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                  >
+                    Voltar para Login
                   </Link>
                 </div>
               </div>
