@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ClienteForm from '@/components/ClienteForm';
-import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2, RefreshCw } from 'lucide-react'; // Adicionado RefreshCw
+import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2, RefreshCw } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -30,17 +30,18 @@ import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
 
-type Cliente = Database['public']['Tables']['clientes']['Row'];
+// CONFIRME QUE SEU types.ts AGORA TEM 'cpfCnpj' AQUI
+type Cliente = Database['public']['Tables']['clientes']['Row'] & {
+    cpfCnpj?: string; // Adicionado para garantir que o tipo espere cpfCnpj se types.ts não foi atualizado
+};
 
-// Assegure-se que o nome da coluna aqui ('cpfCnpj') corresponde ao que é usado no formulário
-// e o que você espera manipular no estado do componente.
-// O objeto 'dadosParaSupabase' abaixo deve usar o nome da coluna como ela existe no SEU BANCO DE DADOS.
+
 type ClienteFormDataFromForm = {
   nome: string;
   email: string;
   telefone: string;
   tipo: string;
-  cpfCnpj: string; // Campo como vem do formulário (camelCase)
+  cpfCnpj: string;
   endereco?: string | null;
   cidade?: string | null;
   estado?: string | null;
@@ -63,14 +64,17 @@ const ClientesPage = () => {
   const [showClientDetails, setShowClientDetails] = useState(false);
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
+  console.log('ClientesPage: Componente renderizado/montado. Usuário atual:', user?.id);
 
   const fetchClients = useCallback(async (showLoadingSpinner = true) => {
     if (!user) {
+      console.log('fetchClients: Usuário não disponível, limpando clientes.');
       setClients([]);
       if (showLoadingSpinner) setIsLoading(false);
       setIsRefreshingManually(false);
       return;
     }
+    console.log(`WorkspaceClients: Buscando clientes para user ID: ${user.id}. Mostrar Spinner: ${showLoadingSpinner}`);
     if (showLoadingSpinner) setIsLoading(true);
     setIsRefreshingManually(true);
 
@@ -81,10 +85,14 @@ const ClientesPage = () => {
         .eq('user_id', user.id)
         .order('nome', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error("fetchClients: Erro ao buscar clientes do Supabase:", error);
+        throw error;
+      }
+      console.log('fetchClients: Dados recebidos do Supabase:', data);
       setClients(data || []);
     } catch (error: any) {
-      console.error("Erro ao buscar clientes:", error);
+      console.error("fetchClients: Erro no bloco catch:", error);
       toast({
         title: "Erro ao carregar clientes",
         description: error.message || "Não foi possível buscar os dados dos clientes.",
@@ -92,60 +100,85 @@ const ClientesPage = () => {
       });
       setClients([]);
     } finally {
+      console.log('fetchClients: Finalizado.');
       if (showLoadingSpinner) setIsLoading(false);
       setIsRefreshingManually(false);
     }
   }, [user, toast]);
 
-  // Efeito para buscar clientes inicialmente e configurar Realtime
   useEffect(() => {
     if (user) {
-      fetchClients(); // Busca inicial
+      console.log('ClientesPage useEffect[user, fetchClients, toast]: Usuário existe. USER ID PARA FILTRO REALTIME:', user.id);
+      fetchClients(); 
 
-      // Configuração do Supabase Realtime
       const channel = supabase
         .channel('public:clientes')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'clientes', filter: `user_id=eq.${user.id}` },
           (payload) => {
-            console.log('Realtime: Mudança recebida na tabela clientes:', payload);
-            // Para simplicidade, vamos re-fazer o fetch para atualizar a lista.
-            // Para otimizações, você pode manipular o estado 'clients' diretamente com base no payload.
+            console.log('REALTIME PAYLOAD CLIENTES:', payload);
             toast({
                 title: "Atualização Automática",
-                description: "A lista de clientes foi atualizada.",
-                duration: 3000,
+                description: `Lista de clientes atualizada devido a um evento de ${payload.eventType}.`,
+                duration: 4000,
             });
-            fetchClients(false); // Não mostrar o spinner de loading principal para atualizações realtime
+            // Opção 1: Simplesmente re-fazer o fetch (como estava)
+            fetchClients(false);
+
+            // Opção 2: Manipulação direta do estado (mais otimizado, mas mais complexo)
+            // Descomente e adapte se a Opção 1 não for responsiva o suficiente
+            /*
+            setClients(prevClients => {
+              let newClients = [...prevClients];
+              if (payload.eventType === 'INSERT') {
+                // @ts-ignore
+                if (!newClients.find(c => c.id === payload.new.id)) {
+                  // @ts-ignore
+                  newClients.push(payload.new);
+                }
+              } else if (payload.eventType === 'UPDATE') {
+                // @ts-ignore
+                newClients = newClients.map(c => (c.id === payload.new.id ? payload.new : c));
+              } else if (payload.eventType === 'DELETE') {
+                // @ts-ignore
+                newClients = newClients.filter(c => c.id !== payload.old.id);
+              }
+              return newClients.sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? ""));
+            });
+            */
           }
         )
         .subscribe((status, err) => {
           if (status === 'SUBSCRIBED') {
             console.log('Realtime: Conectado ao canal de clientes!');
-          }
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.error('Realtime: Erro no canal de clientes:', err || status);
-            toast({ title: "Erro de Conexão Realtime", description: "Não foi possível sincronizar os dados de clientes em tempo real.", variant: "destructive"});
+          } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.error(`Realtime: Erro/Status no canal de clientes: ${status}`, err);
+            toast({ title: "Erro de Conexão Realtime", description: `Status do canal: ${status}. A sincronização de clientes pode não funcionar.`, variant: "destructive", duration: 7000});
+          } else {
+            console.log(`Realtime: Status do canal de clientes: ${status}`);
           }
         });
 
-      // Limpeza ao desmontar o componente ou quando o usuário mudar
       return () => {
         console.log("Realtime: Desinscrevendo do canal de clientes.");
-        supabase.removeChannel(channel);
+        supabase.removeChannel(channel).catch(err => console.error("Erro ao remover canal realtime", err));
       };
     } else {
-      // Se não há usuário, limpa a lista e para o loading
+      console.log('ClientesPage useEffect[user, fetchClients, toast]: Sem usuário, limpando clientes.');
       setClients([]);
       setIsLoading(false);
     }
-  }, [user, fetchClients, toast]); // fetchClients e toast são dependências
+  }, [user, fetchClients, toast]);
 
-  const filteredClients = clients.filter(client =>
-    client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (client.cpfCnpj && client.cpfCnpj.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredClients = clients.filter(client => {
+    const searchTermLower = searchTerm.toLowerCase();
+    // Lembre-se: se types.ts tem cpf_cnpj, use client.cpf_cnpj aqui. Se você atualizou types.ts para cpfCnpj, use client.cpfCnpj.
+    // Usando client.cpfCnpj baseado na sua confirmação de que a coluna no DB é cpfCnpj.
+    return client.nome?.toLowerCase().includes(searchTermLower) ||
+           (client.email && client.email.toLowerCase().includes(searchTermLower)) ||
+           (client.cpfCnpj && client.cpfCnpj.toLowerCase().includes(searchTermLower));
+    }
   );
 
   const handleAddClient = () => {
@@ -161,14 +194,16 @@ const ClientesPage = () => {
       return;
     }
     setIsSubmitting(true);
+    console.log("handleSaveClient: Dados do formulário recebidos:", formDataFromForm);
 
-    // O nome da coluna no seu banco de dados é 'cpfCnpj' (camelCase)
+    // Objeto para Supabase. As chaves DEVEM corresponder aos nomes das colunas no SEU BANCO DE DADOS.
+    // Se a coluna é 'cpfCnpj', use 'cpfCnpj'. Se for 'tipo_cliente', use 'tipo_cliente'.
     const dadosParaSupabase = {
       nome: formDataFromForm.nome,
       email: formDataFromForm.email,
       telefone: formDataFromForm.telefone,
-      tipo_cliente: formDataFromForm.tipo, // No schema Supabase, 'tipo_cliente' é snake_case
-      cpfCnpj: formDataFromForm.cpfCnpj,   // Coluna no DB é 'cpfCnpj' (camelCase)
+      tipo_cliente: formDataFromForm.tipo, // 'tipo_cliente' conforme types.ts
+      cpfCnpj: formDataFromForm.cpfCnpj,   // 'cpfCnpj' conforme sua confirmação
       endereco: formDataFromForm.endereco,
       cidade: formDataFromForm.cidade,
       estado: formDataFromForm.estado,
@@ -176,11 +211,12 @@ const ClientesPage = () => {
       observacoes: formDataFromForm.observacoes,
       status_cliente: formDataFromForm.status_cliente || 'Ativo',
     };
+    console.log("handleSaveClient: Objeto sendo enviado para o Supabase:", dadosParaSupabase);
 
     try {
       let responseData: Cliente | null = null;
-      
       if (isEditing && selectedClient) {
+        console.log(`handleSaveClient: Atualizando cliente ID: ${selectedClient.id}`);
         const { data, error } = await supabase
           .from('clientes')
           .update(dadosParaSupabase)
@@ -188,23 +224,21 @@ const ClientesPage = () => {
           .eq('user_id', user.id)
           .select()
           .single();
-        
         if (error) throw error;
         responseData = data;
       } else {
+        console.log("handleSaveClient: Inserindo novo cliente.");
         const { data, error } = await supabase
           .from('clientes')
           .insert([{ ...dadosParaSupabase, user_id: user.id }])
           .select()
           .single();
-        
         if (error) throw error;
         responseData = data;
       }
 
-      // Realtime cuidará da atualização da lista, mas podemos dar um feedback imediato se desejado
-      // ou confiar que fetchClients será chamado pelo Realtime.
-      // Por simplicidade, o Realtime chamará fetchClients.
+      console.log("handleSaveClient: Resposta do Supabase (sucesso):", responseData);
+      // O Realtime deve cuidar de atualizar a lista, não precisa chamar fetchClients() aqui.
       if (responseData) {
         toast({ 
             title: isEditing ? "Cliente atualizado!" : "Cliente cadastrado!", 
@@ -215,7 +249,7 @@ const ClientesPage = () => {
         setIsEditing(false);
       }
     } catch (error: any) { 
-      console.error("Erro ao salvar cliente:", error);
+      console.error("handleSaveClient: Erro ao salvar cliente:", error);
       let toastTitle = isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente";
       let toastDescription = error.message || "Ocorreu um erro inesperado.";
 
@@ -225,12 +259,16 @@ const ClientesPage = () => {
       else if (error.message && 
           error.message.toLowerCase().includes('duplicate key value violates unique constraint') &&
           (error.message.toLowerCase().includes('cpfnnpj') ||
-           error.message.toLowerCase().includes("unique constraint") && error.message.toLowerCase().includes("clientes"))) { 
+           (error.message.toLowerCase().includes("unique constraint") && error.message.toLowerCase().includes("clientes")))) { 
         toastDescription = "Este CPF/CNPJ já está cadastrado. Por favor, verifique os dados.";
       }
       else if (error.message && error.message.toLowerCase().includes('record "new" has no field "cpfcnpj"')) {
-        toastDescription = "Erro interno no banco de dados ao verificar CPF/CNPJ (trigger). Contate o suporte.";
+        toastDescription = "Erro interno no trigger (campo 'cpfcnpj'). Contate o suporte.";
       }
+      else if (error.message && error.message.toLowerCase().includes("could not find the column 'cpfnnpj'")) {
+        toastDescription = "Erro de schema: coluna 'cpfCnpj' não encontrada como esperado. Recarregue o schema no Supabase e verifique types.ts.";
+      }
+
 
       toast({
         title: toastTitle,
@@ -243,12 +281,13 @@ const ClientesPage = () => {
   };
 
   const handleEditClient = (client: Cliente) => {
+    console.log("handleEditClient: Editando cliente:", client);
     const formDataForEdit = {
         nome: client.nome,
         email: client.email || '',
         telefone: client.telefone || '',
-        tipo: client.tipo_cliente,
-        cpfCnpj: client.cpfCnpj || '', // Usa cpfCnpj aqui para popular o formulário
+        tipo: client.tipo_cliente, // Corresponde a 'tipo_cliente' em types.ts
+        cpfCnpj: client.cpfCnpj || '', // Assumindo que types.ts tem 'cpfCnpj' ou você mapeia aqui
         endereco: client.endereco || '',
         cidade: client.cidade || '',
         estado: client.estado || '',
@@ -262,6 +301,7 @@ const ClientesPage = () => {
   };
 
   const handleViewClient = (client: Cliente) => {
+    console.log("handleViewClient: Visualizando cliente:", client);
     setSelectedClient(client);
     setShowClientDetails(true);
   };
@@ -270,6 +310,7 @@ const ClientesPage = () => {
     if (!user) return;
     setIsSubmitting(true); 
     const newStatus = clientToToggle.status_cliente === "Ativo" ? "Inativo" : "Ativo";
+    console.log(`handleToggleStatus: Alterando status do cliente ${clientToToggle.id} para ${newStatus}`);
     try {
       const { data: updatedClient, error } = await supabase
         .from('clientes')
@@ -288,6 +329,7 @@ const ClientesPage = () => {
         });
       }
     } catch (error: any) {
+      console.error("handleToggleStatus: Erro ao atualizar status:", error);
       toast({ title: "Erro ao atualizar status", description: error.message || "Ocorreu um erro.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
@@ -298,6 +340,7 @@ const ClientesPage = () => {
     if (!user) return;
     if (window.confirm(`Tem certeza que deseja excluir o cliente ${clientToDelete.nome}? Esta ação não pode ser desfeita.`)) {
       setIsSubmitting(true); 
+      console.log(`handleDeleteClient: Excluindo cliente ID: ${clientToDelete.id}`);
       try {
         const { error } = await supabase
           .from('clientes')
@@ -312,7 +355,7 @@ const ClientesPage = () => {
           description: `O cliente ${clientToDelete.nome} foi excluído com sucesso.`,
         });
       } catch (error: any) {
-        console.error("Erro ao excluir cliente:", error);
+        console.error("handleDeleteClient: Erro ao excluir cliente:", error);
         toast({ title: "Erro ao excluir", description: error.message || "Ocorreu um erro.", variant: "destructive" });
       } finally {
         setIsSubmitting(false);
@@ -321,9 +364,11 @@ const ClientesPage = () => {
   };
   
   const handleManualRefresh = () => {
-    fetchClients(true); // Mostrar spinner de loading ao atualizar manualmente
+    console.log("handleManualRefresh: Atualização manual solicitada.");
+    fetchClients(true);
   };
 
+  console.log('ClientesPage: Renderizando. isLoading:', isLoading, 'Número de clientes no estado:', clients.length);
 
   return (
     <AdminLayout>
