@@ -1,5 +1,5 @@
 // src/pages/ConfiguracoesPage.tsx
-import React, { useState, useEffect, useCallback } from 'react'; // Adicionado useCallback
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
@@ -18,7 +18,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Spinner } from '@/components/ui/spinner';
 import { User, Building, Bell, Shield, CreditCard } from 'lucide-react';
 
-// Definindo tipos para as configurações para clareza
 interface ProfileSettings {
   name: string;
   email: string;
@@ -31,7 +30,6 @@ interface OfficeSettings {
   cnpj: string;
   address: string;
   website: string;
-  // logo_url é tratado pelo LogoUpload e user_metadata.logo_url
 }
 
 interface NotificationPreferences {
@@ -42,46 +40,48 @@ interface NotificationPreferences {
 
 interface SecurityPreferences {
   pref_seguranca_dois_fatores: boolean;
-  pref_seguranca_tempo_sessao_min: string; // Manter como string para o input number
+  pref_seguranca_tempo_sessao_min: string;
   pref_seguranca_restricao_ip: boolean;
-  // pref_seguranca_ips_permitidos: string[]; // Para o futuro
 }
-
 
 const ConfiguracoesPage = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("perfil");
-  const [isSaving, setIsSaving] = useState(false); // Renomeado de 'saving' para 'isSaving'
-  const { user, signOut, refreshSession } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+  const { user, signOut, refreshSession, session } = useAuth();
   const [loggingOut, setLoggingOut] = useState(false);
   const [isLoadingPageData, setIsLoadingPageData] = useState(true);
-
+  
+  const [hasFinancePin, setHasFinancePin] = useState(false);
+  const [isLoadingPinStatus, setIsLoadingPinStatus] = useState(true);
 
   const [profileSettings, setProfileSettings] = useState<ProfileSettings>({
     name: "", email: "", phone: "", oab: "",
   });
-
   const [officeSettings, setOfficeSettings] = useState<OfficeSettings>({
     companyName: "Meu Escritório de Advocacia", cnpj: "", address: "", website: "",
   });
-
-  // Estados para as novas preferências, inicializados com valores padrão
   const [notificationSettings, setNotificationSettings] = useState<NotificationPreferences>({
     pref_notificacoes_push: true,
     pref_alertas_prazo: true,
     pref_relatorio_semanal: false,
   });
-
   const [securitySettings, setSecuritySettings] = useState<SecurityPreferences>({
     pref_seguranca_dois_fatores: false,
     pref_seguranca_tempo_sessao_min: "30",
     pref_seguranca_restricao_ip: false,
   });
 
-  // Carregar todas as configurações dos user_metadata
+  const simpleClientHash = async (text: string, salt: string): Promise<string> => {
+      const buffer = new TextEncoder().encode(text + salt);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const loadUserSettings = useCallback(() => {
     if (user && user.user_metadata) {
-      console.log("Carregando configurações do user.user_metadata:", user.user_metadata);
+      // console.log("Carregando configurações do user.user_metadata:", user.user_metadata);
       setProfileSettings({
         name: user.user_metadata.nome || user.email?.split('@')[0] || "",
         email: user.email || "",
@@ -106,11 +106,28 @@ const ConfiguracoesPage = () => {
       });
     }
     setIsLoadingPageData(false);
-  }, [user]); // Dependência 'user'
+  }, [user]);
+
+  const checkExistingPin = useCallback(async () => {
+    if (user?.user_metadata?.finance_pin_hash) {
+      setHasFinancePin(true);
+    } else {
+      setHasFinancePin(false);
+    }
+    setIsLoadingPinStatus(false);
+  }, [user]);
 
   useEffect(() => {
-    loadUserSettings();
-  }, [loadUserSettings]); // Executa ao montar e quando 'loadUserSettings' (que depende de 'user') muda
+    setIsLoadingPageData(true);
+    setIsLoadingPinStatus(true);
+    if (user) {
+      loadUserSettings();
+      checkExistingPin();
+    } else {
+      setIsLoadingPageData(false);
+      setIsLoadingPinStatus(false);
+    }
+  }, [user, loadUserSettings, checkExistingPin]);
 
   const handleSaveAllSettings = async () => {
     if (!user) {
@@ -118,42 +135,31 @@ const ConfiguracoesPage = () => {
       return;
     }
     setIsSaving(true);
-    console.log("Salvando configurações:", { profileSettings, officeSettings, notificationSettings, securitySettings });
     try {
       const { error } = await supabase.auth.updateUser({
         data: {
-          // Perfil
           nome: profileSettings.name,
           telefone: profileSettings.phone,
           oab: profileSettings.oab,
-          // Escritório (logo_url é tratado separadamente pelo LogoUpload)
           empresa: officeSettings.companyName,
           cnpj: officeSettings.cnpj,
           endereco: officeSettings.address,
           website: officeSettings.website,
-          // Notificações
           pref_notificacoes_push: notificationSettings.pref_notificacoes_push,
           pref_alertas_prazo: notificationSettings.pref_alertas_prazo,
           pref_relatorio_semanal: notificationSettings.pref_relatorio_semanal,
-          // Segurança
           pref_seguranca_dois_fatores: securitySettings.pref_seguranca_dois_fatores,
           pref_seguranca_tempo_sessao_min: parseInt(securitySettings.pref_seguranca_tempo_sessao_min, 10) || 30,
           pref_seguranca_restricao_ip: securitySettings.pref_seguranca_restricao_ip,
         }
       });
-
       if (error) throw error;
-      
-      await refreshSession(); // Importante para atualizar o user.user_metadata no useAuth
-      // loadUserSettings(); // Re-carrega as configurações para refletir o estado atualizado do user.user_metadata
-                           // O refreshSession no useAuth já deve disparar o useEffect que chama loadUserSettings
-
+      await refreshSession();
       toast({
         title: "Configurações salvas",
         description: "Suas configurações foram atualizadas com sucesso.",
       });
     } catch (error: any) {
-      console.error("Erro ao salvar configurações:", error);
       toast({
         title: "Erro ao salvar configurações",
         description: error.message || "Ocorreu um erro ao tentar salvar.",
@@ -168,16 +174,60 @@ const ConfiguracoesPage = () => {
     setLoggingOut(true);
     try {
       await signOut();
-      // A navegação já é feita pelo signOut no useAuth
     } catch (error) {
-      console.error("Erro ao fazer logout na página de configurações:", error);
-      // O toast de erro já é mostrado pelo useAuth se necessário
+      // Erro já tratado no useAuth
     } finally {
       setLoggingOut(false);
     }
   };
 
-  if (isLoadingPageData && !user) { // Mostra spinner apenas se estiver carregando e user ainda não definido
+  const handleChangeFinanceiroPin = async (currentPinPlainText: string | null, newPinPlainText: string) => {
+    if (!session) {
+        toast({ title: "Erro de Autenticação", description: "Sessão não encontrada.", variant: "destructive" });
+        return false;
+    }
+    if (newPinPlainText.length !== 4) {
+        toast({ title: "PIN Inválido", description: "O novo PIN deve ter 4 dígitos.", variant: "destructive" });
+        return false;
+    }
+
+    setIsSaving(true);
+    try {
+        // Não precisamos mais fazer hash no cliente para enviar para set-finance-pin
+        // A Edge Function set-finance-pin agora espera os PINs em texto plano
+        const { data, error } = await supabase.functions.invoke('set-finance-pin', {
+            body: { 
+                currentPin: hasFinancePin ? currentPinPlainText : null, // Envia null se for a primeira definição
+                newPin: newPinPlainText 
+            },
+        });
+
+        if (error || (data && data.error)) {
+            const errorMessage = (data && data.error) || error?.message || "Erro desconhecido ao definir PIN.";
+            throw new Error(errorMessage);
+        }
+
+        toast({
+            title: "PIN do Financeiro Atualizado",
+            description: data.message || "O PIN de acesso à página Financeiro foi atualizado.",
+        });
+        await refreshSession(); 
+        await checkExistingPin(); 
+        setIsSaving(false);
+        return true;
+
+    } catch (error: any) {
+        toast({
+            title: "Erro ao Alterar PIN",
+            description: error.message,
+            variant: "destructive",
+        });
+        setIsSaving(false);
+        return false;
+    }
+  };
+
+  if ((isLoadingPageData && !user) || isLoadingPinStatus) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-screen">
@@ -197,7 +247,6 @@ const ConfiguracoesPage = () => {
           onSave={handleSaveAllSettings}
           onSignOut={handleSignOut}
         />
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 p-1 rounded-lg bg-gray-100">
             <TabsTrigger value="perfil" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm">
@@ -223,14 +272,12 @@ const ConfiguracoesPage = () => {
               setProfileSettings={setProfileSettings}
             />
           </TabsContent>
-
           <TabsContent value="escritorio">
             <EscritorioTab
               officeSettings={officeSettings}
               setOfficeSettings={setOfficeSettings}
             />
           </TabsContent>
-
           <TabsContent value="assinatura">
             <Card>
               <CardHeader>
@@ -244,52 +291,30 @@ const ConfiguracoesPage = () => {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent value="notificacoes">
-            {/* Passando os nomes corretos das props para NotificacoesTab */}
             <NotificacoesTab
-              notificationSettings={{ // Objeto esperado por NotificacoesTab
+              notificationSettings={{
                 pushNotifications: notificationSettings.pref_notificacoes_push,
                 deadlineAlerts: notificationSettings.pref_alertas_prazo,
                 weeklyReport: notificationSettings.pref_relatorio_semanal,
               }}
               setNotificationSettings={(newSettings) => {
-                // newSettings virá com as chaves de NotificacoesTab (pushNotifications, etc.)
-                // Precisamos mapear de volta para as chaves do nosso estado (pref_notificacoes_push, etc.)
                 setNotificationSettings(prev => ({
                   ...prev,
-                  // @ts-ignore newSettings pode ser um callback (value) => {}
                   pref_notificacoes_push: typeof newSettings.pushNotifications === 'boolean' ? newSettings.pushNotifications : prev.pref_notificacoes_push,
-                  // @ts-ignore
                   pref_alertas_prazo: typeof newSettings.deadlineAlerts === 'boolean' ? newSettings.deadlineAlerts : prev.pref_alertas_prazo,
-                  // @ts-ignore
                   pref_relatorio_semanal: typeof newSettings.weeklyReport === 'boolean' ? newSettings.weeklyReport : prev.pref_relatorio_semanal,
                 }));
               }}
             />
           </TabsContent>
-
           <TabsContent value="seguranca">
-             {/* Passando os nomes corretos das props para SegurancaTab */}
             <SegurancaTab
-              securitySettings={{ // Objeto esperado por SegurancaTab
-                  twoFactor: securitySettings.pref_seguranca_dois_fatores,
-                  sessionTimeout: securitySettings.pref_seguranca_tempo_sessao_min,
-                  ipRestriction: securitySettings.pref_seguranca_restricao_ip,
-              }}
-              setSecuritySettings={(newSettings) => {
-                // newSettings virá com as chaves de SegurancaTab (twoFactor, etc.)
-                // Precisamos mapear de volta para as chaves do nosso estado
-                 setSecuritySettings(prev => ({
-                    ...prev,
-                    // @ts-ignore
-                    pref_seguranca_dois_fatores: typeof newSettings.twoFactor === 'boolean' ? newSettings.twoFactor : prev.pref_seguranca_dois_fatores,
-                    // @ts-ignore
-                    pref_seguranca_tempo_sessao_min: typeof newSettings.sessionTimeout === 'string' ? newSettings.sessionTimeout : prev.pref_seguranca_tempo_sessao_min,
-                    // @ts-ignore
-                    pref_seguranca_restricao_ip: typeof newSettings.ipRestriction === 'boolean' ? newSettings.ipRestriction : prev.pref_seguranca_restricao_ip,
-                 }));
-              }}
+              securitySettings={securitySettings}
+              setSecuritySettings={setSecuritySettings}
+              hasFinancePin={hasFinancePin}
+              onChangeFinanceiroPin={handleChangeFinanceiroPin}
+              isSavingPin={isSaving}
             />
           </TabsContent>
         </Tabs>
