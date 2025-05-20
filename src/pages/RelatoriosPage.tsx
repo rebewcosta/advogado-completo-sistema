@@ -2,16 +2,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import {
-  Info,
   FileText,
   Users,
   Clock,
-  // Download, // Removido pois não haverá botão de download por enquanto
-} from 'lucide-react';
+} from 'lucide-react'; // Removido Info de lucide-react
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import type { Database } from '@/integrations/supabase/types';
+// import type { Database } from '@/integrations/supabase/types'; // Database não é mais usado diretamente aqui
 import {
   BarChart,
   Bar,
@@ -25,10 +23,10 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button"; // Mantido para os botões de período
+// import { Alert, AlertDescription } from "@/components/ui/alert"; // Removido Alert
+import { Button } from "@/components/ui/button";
 import { Spinner } from '@/components/ui/spinner';
-import { format, subDays, subMonths, subYears, parseISO } from 'date-fns';
+import { format, subDays, subMonths, subYears, parseISO, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns'; // Removido eachMonthOfInterval, getYear, getMonth
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -36,14 +34,13 @@ type MonthlyData = { month: string, receitas: number, despesas: number, saldo?: 
 type ChartNameValueData = { name: string, value: number };
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#DD60AE', '#8A2BE2', '#FF6347'];
-type FinancialPeriodOption = '15days' | '30days' | '3months' | '6months' | '1year';
+type FinancialPeriodOption = '15days' | '30days' | '3months' | '6months' | '1year' | 'current_month' | 'current_year' | 'all_time';
 
 const RelatoriosPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [financialChartPeriod, setFinancialChartPeriod] = useState<FinancialPeriodOption>('30days');
+  const [globalPeriod, setGlobalPeriod] = useState<FinancialPeriodOption>('30days');
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingFinancialChart, setIsLoadingFinancialChart] = useState(false);
 
   const [financialChartData, setFinancialChartData] = useState<MonthlyData[]>([]);
   const [processTypeData, setProcessTypeData] = useState<ChartNameValueData[]>([]);
@@ -53,26 +50,42 @@ const RelatoriosPage = () => {
   const [totalClientCount, setTotalClientCount] = useState(0);
   const [scheduledEventCount, setScheduledEventCount] = useState(0);
 
-  const getPeriodRange = useCallback((periodKey: FinancialPeriodOption | string) => {
+  const getPeriodRange = useCallback((periodKey: FinancialPeriodOption) => {
     const now = new Date();
     let startDate: Date;
+    let endDate: Date = now;
+
     switch (periodKey) {
       case '15days': startDate = subDays(now, 14); break;
       case '30days': startDate = subDays(now, 29); break;
       case '3months': startDate = subMonths(now, 3); break;
+      case '6months': startDate = subMonths(now, 6); break;
       case '1year': startDate = subYears(now, 1); break;
-      case '6months': default: startDate = subMonths(now, 6); break;
+      case 'current_month':
+        startDate = startOfMonth(now);
+        endDate = endOfMonth(now);
+        break;
+      case 'current_year':
+        startDate = startOfYear(now);
+        endDate = endOfYear(now);
+        break;
+      case 'all_time':
+        startDate = new Date(1970, 0, 1); // Data bem antiga para pegar tudo
+        break;
+      default: startDate = subMonths(now, 6); break;
     }
-    return { startDate, endDate: now };
+    return { startDate, endDate };
   }, []);
 
-  const fetchFinancialData = useCallback(async (period: FinancialPeriodOption) => {
+  const fetchDataForPeriod = useCallback(async (period: FinancialPeriodOption) => {
     if (!user) return;
-    setIsLoadingFinancialChart(true);
+    setIsLoading(true);
     const { startDate, endDate } = getPeriodRange(period);
     const queryStartDate = format(startDate, 'yyyy-MM-dd');
     const queryEndDate = format(endDate, 'yyyy-MM-dd');
+
     try {
+      // Dados Financeiros
       const { data: transacoes, error: transError } = await supabase
         .from('transacoes_financeiras')
         .select('tipo_transacao, valor, data_transacao')
@@ -80,8 +93,10 @@ const RelatoriosPage = () => {
         .gte('data_transacao', queryStartDate)
         .lte('data_transacao', queryEndDate);
       if (transError) throw transError;
+
       const monthlyData: { [key: string]: MonthlyData } = {};
       const monthYearFormatter = (date: Date): string => format(date, 'MMM/yy', { locale: ptBR });
+
       (transacoes || []).forEach(t => {
         if (!t.data_transacao) return;
         const transactionDate = parseISO(t.data_transacao);
@@ -96,30 +111,28 @@ const RelatoriosPage = () => {
         }
         monthlyData[monthKey].saldo = monthlyData[monthKey].receitas - monthlyData[monthKey].despesas;
       });
-      const sortedData = Object.values(monthlyData).sort((a,b) => {
+       const sortedFinancialData = Object.values(monthlyData).sort((a,b) => {
         const [m1str, y1str] = a.month.split('/');
         const [m2str, y2str] = b.month.split('/');
-        const d1 = new Date(Number('20'+y1str), ptBR.match.months?.findIndex( (m:any) => m.test(m1str)) || 0);
-        const d2 = new Date(Number('20'+y2str), ptBR.match.months?.findIndex( (m:any) => m.test(m2str)) || 0);
+         // Encontra o índice do mês pelo nome abreviado (case-insensitive)
+        const monthIndex1 = ptBR.localize?.month(ptBR.match.months?.findIndex( (m:any) => new RegExp(m1str, 'i').test(m)) || 0, { width: 'abbreviated'});
+        const monthIndex2 = ptBR.localize?.month(ptBR.match.months?.findIndex( (m:any) => new RegExp(m2str, 'i').test(m)) || 0, { width: 'abbreviated'});
+
+        const d1 = new Date(Number('20'+y1str), ptBR.match.months?.findIndex( (m:any) => new RegExp(m1str, 'i').test(m)) || 0);
+        const d2 = new Date(Number('20'+y2str), ptBR.match.months?.findIndex( (m:any) => new RegExp(m2str, 'i').test(m)) || 0);
         return d1.getTime() - d2.getTime();
       });
-      setFinancialChartData(sortedData);
-    } catch (error: any) {
-      toast({ title: "Erro ao carregar dados financeiros", description: error.message, variant: "destructive" });
-      setFinancialChartData([]);
-    } finally {
-      setIsLoadingFinancialChart(false);
-    }
-  }, [user, toast, getPeriodRange]);
+      setFinancialChartData(sortedFinancialData);
 
-  const fetchSummaryAndOtherChartsData = useCallback(async () => {
-    if (!user) return;
-    try {
+      // Dados de Processos (Tipo e Status) e Contagem de Processos Ativos
       const { data: processos, error: procError } = await supabase
         .from('processos')
-        .select('tipo_processo, status_processo')
-        .eq('user_id', user.id);
+        .select('tipo_processo, status_processo, created_at')
+        .eq('user_id', user.id)
+        .gte('created_at', queryStartDate + 'T00:00:00.000Z')
+        .lte('created_at', queryEndDate + 'T23:59:59.999Z');
       if (procError) throw procError;
+
       const typeCount: Record<string, number> = {};
       const statusCount: Record<string, number> = {};
       let currentActiveProcesses = 0;
@@ -134,77 +147,137 @@ const RelatoriosPage = () => {
       setProcessStatusData(Object.entries(statusCount).map(([name, value]) => ({ name, value })));
       setActiveProcessCount(currentActiveProcesses);
 
-      const { data: clientes, error: cliError, count: totalClientes } = await supabase
+
+      // Dados de Clientes (Tipo e Contagem Total)
+       const { data: clientesData, error: cliError, count: totalClientes } = await supabase
         .from('clientes')
-        .select('tipo_cliente', {count: 'exact'})
-        .eq('user_id', user.id);
+        .select('tipo_cliente, created_at', { count: 'exact' })
+        .eq('user_id', user.id)
+        .gte('created_at', queryStartDate + 'T00:00:00.000Z')
+        .lte('created_at', queryEndDate + 'T23:59:59.999Z');
       if (cliError) throw cliError;
       const clientTypeCount: Record<string, number> = {};
-      (clientes || []).forEach(c => {
+      (clientesData || []).forEach(c => {
         const type = c.tipo_cliente || 'Não especificado';
         clientTypeCount[type] = (clientTypeCount[type] || 0) + 1;
       });
       setClientTypeData(Object.entries(clientTypeCount).map(([name, value]) => ({ name, value })));
       setTotalClientCount(totalClientes || 0);
 
-      const today = format(new Date(), 'yyyy-MM-dd');
-      const thirtyDaysFromNow = format(subDays(new Date(), -30), 'yyyy-MM-dd');
+
+      // Dados de Eventos (Contagem Agendada para os próximos 30 dias A PARTIR DO FINAL DO PERÍODO SELECIONADO)
+      const eventStartDate = endDate;
+      const eventEndDate = subDays(endDate, -30);
+
       const { error: eventosError, count: eventosCount } = await supabase
         .from('agenda_eventos')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', user.id)
-        .gte('data_hora_inicio', today + 'T00:00:00Z')
-        .lte('data_hora_inicio', thirtyDaysFromNow + 'T23:59:59Z');
+        .gte('data_hora_inicio', format(eventStartDate, 'yyyy-MM-dd') + 'T00:00:00Z')
+        .lte('data_hora_inicio', format(eventEndDate, 'yyyy-MM-dd') + 'T23:59:59Z');
       if (eventosError) throw eventosError;
       setScheduledEventCount(eventosCount || 0);
+
     } catch (error: any) {
-      toast({ title: "Erro ao carregar dados sumários", description: error.message, variant: "destructive" });
+      toast({ title: "Erro ao carregar dados dos relatórios", description: error.message, variant: "destructive" });
+      setFinancialChartData([]);
+      setProcessTypeData([]);
+      setClientTypeData([]);
+      setProcessStatusData([]);
+      setActiveProcessCount(0);
+      setTotalClientCount(0);
+      setScheduledEventCount(0);
+    } finally {
+      setIsLoading(false);
     }
-  }, [user, toast]);
+  }, [user, toast, getPeriodRange]);
+
 
   useEffect(() => {
     if (user) {
-      setIsLoading(true);
-      fetchFinancialData(financialChartPeriod);
-      fetchSummaryAndOtherChartsData().finally(() => setIsLoading(false));
+      fetchDataForPeriod(globalPeriod);
     } else {
       setIsLoading(false);
       setFinancialChartData([]); setProcessTypeData([]); setClientTypeData([]); setProcessStatusData([]);
       setActiveProcessCount(0); setTotalClientCount(0); setScheduledEventCount(0);
     }
-  }, [user, financialChartPeriod, fetchFinancialData, fetchSummaryAndOtherChartsData]);
+  }, [user, globalPeriod, fetchDataForPeriod]);
 
-  // Função de download removida/simplificada para não exportar
-  // const handleDownloadReport = (reportType: string, dataToExport?: any[], title?: string) => {
-  //   console.log("Tentativa de exportar relatório (desabilitado):", reportType, dataToExport, title);
-  //   toast({ title: "Exportação desabilitada", description: "A funcionalidade de exportar relatórios está temporariamente desabilitada." });
-  // };
 
   const emptyData = [{ name: 'Sem dados', value: 1 }];
   const periodOptions: { label: string; value: FinancialPeriodOption }[] = [
     { label: '15d', value: '15days' }, { label: '30d', value: '30days' },
     { label: '3m', value: '3months' }, { label: '6m', value: '6months' },
     { label: '1a', value: '1year' },
+    { label: 'Mês Atual', value: 'current_month' },
+    { label: 'Ano Atual', value: 'current_year' },
+    { label: 'Tudo', value: 'all_time' },
   ];
+
+  const CustomPieLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }: any) => {
+    const RADIAN = Math.PI / 180;
+    // Ajustar o raio para posicionar o texto um pouco mais para fora se necessário, ou mais para dentro.
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.6; // Aumentado de 0.5 para 0.6
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const textAnchor = x > cx ? 'start' : 'end';
+
+    if (percent < 0.03 && name.length > 10) return null; // Não exibir se muito pequeno e nome longo
+    if (percent < 0.05) return null; // Não exibir se a fatia for muito pequena
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="#333" // Cor do texto alterada para cinza escuro
+        textAnchor={textAnchor}
+        dominantBaseline="central"
+        fontSize="10px" // Pode ajustar o tamanho da fonte se necessário
+        fontWeight="bold"
+      >
+        {`${name.length > 15 ? name.substring(0,12) + '...' : name}`} {/* Trunca nomes longos */}
+        {`(${(percent * 100).toFixed(0)}%)`}
+      </text>
+    );
+  };
+
 
   return (
     <AdminLayout>
       <main className="py-8 px-4 md:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
-          <div>
+        {/* Cabeçalho da página com título e filtros de período */}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start mb-6 gap-4">
+          {/* Título e Subtítulo alinhados à esquerda */}
+          <div className="text-left">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Relatórios</h1>
-            <p className="text-gray-600">Visualize dados sobre seu escritório</p> {/* Alterado */}
+            <p className="text-gray-600">Visualize dados sobre seu escritório</p>
+          </div>
+
+          {/* Botões de Período */}
+          <div className="flex flex-wrap items-center gap-2 mt-4 md:mt-0 md:ml-auto">
+            <span className="text-sm font-medium text-gray-700 mr-2 hidden sm:inline">Período:</span>
+            {periodOptions.map(opt => (
+              <Button
+                key={opt.value}
+                variant={globalPeriod === opt.value ? "default" : "outline"}
+                size="sm"
+                onClick={() => setGlobalPeriod(opt.value)}
+                className={cn(
+                  "text-xs px-2 py-1 h-auto", // Tamanho e padding consistentes
+                  globalPeriod === opt.value
+                    ? "bg-lawyer-primary text-white hover:bg-lawyer-primary/90"
+                    : "border-gray-300 text-gray-600 hover:bg-gray-100"
+                )}
+              >
+                {opt.label}
+              </Button>
+            ))}
           </div>
         </div>
 
-        <Alert className="mb-6 bg-blue-50 border-blue-200 text-blue-800">
-          <Info className="h-5 w-5" />
-          <AlertDescription>
-            Os relatórios abaixo são gerados com base nos dados reais cadastrados no Supabase.
-          </AlertDescription>
-        </Alert>
+        {/* Removido o Alert que continha a mensagem sobre os dados do Supabase */}
 
-        {isLoading && financialChartData.length === 0 ? (
+        {isLoading ? (
           <div className="flex flex-col items-center justify-center h-96">
             <Spinner size="lg" />
             <p className="mt-3 text-gray-500">Carregando dados dos relatórios...</p>
@@ -227,18 +300,9 @@ const RelatoriosPage = () => {
               <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
                   <h3 className="font-semibold text-gray-700 mb-2 sm:mb-0">Receitas x Despesas</h3>
-                  <div className="flex space-x-1">
-                    {periodOptions.map(opt => (
-                      <Button key={opt.value} variant={financialChartPeriod === opt.value ? "default" : "outline"} size="sm" onClick={() => setFinancialChartPeriod(opt.value)}
-                        className={cn("text-xs px-2 py-1 h-auto", financialChartPeriod === opt.value ? "bg-lawyer-primary text-white hover:bg-lawyer-primary/90" : "border-gray-300 text-gray-600 hover:bg-gray-100")}>
-                        {opt.label}
-                      </Button>
-                    ))}
-                  </div>
                 </div>
-                {/* Botão de Exportar Removido */}
-                <div className="flex-grow relative mt-4"> {/* Adicionado mt-4 para espaço */}
-                  {isLoadingFinancialChart && ( <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10"><Spinner /></div> )}
+                <div className="flex-grow relative mt-4">
+                  {isLoading && ( <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10"><Spinner /></div> )}
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={financialChartData.length > 0 ? financialChartData : [{ month: 'N/D', receitas: 0, despesas: 0, saldo: 0 }]}>
                       <CartesianGrid strokeDasharray="3 3" />
@@ -256,16 +320,24 @@ const RelatoriosPage = () => {
               <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-700">Distribuição de Processos (Tipo)</h3>
-                   {/* Botão de Exportar Removido */}
                 </div>
                 <div className="flex-grow">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={processTypeData.length > 0 ? processTypeData : emptyData} cx="50%" cy="50%" labelLine={false} outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} >
+                       <Pie
+                        data={processTypeData.length > 0 ? processTypeData : emptyData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={<CustomPieLabel />}
+                        outerRadius="80%"
+                        dataKey="value"
+                        nameKey="name"
+                      >
                         {(processTypeData.length > 0 ? processTypeData : emptyData).map((_entry, index) => (<Cell key={`cell-proc-${index}`} fill={COLORS[index % COLORS.length]} /> ))}
                       </Pie>
                       <RechartsTooltip formatter={(value: number) => `${value} processos`} />
-                      <Legend wrapperStyle={{fontSize: "10px"}} />
+                      <Legend wrapperStyle={{fontSize: "10px", overflow: "auto", maxHeight: "50px"}}/>
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -276,16 +348,24 @@ const RelatoriosPage = () => {
                 <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-gray-700">Tipos de Cliente</h3>
-                        {/* Botão de Exportar Removido */}
                     </div>
                     <div className="flex-grow">
                       <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                              <Pie data={clientTypeData.length > 0 ? clientTypeData : emptyData} cx="50%" cy="50%" labelLine={false} outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} >
+                              <Pie
+                                data={clientTypeData.length > 0 ? clientTypeData : emptyData}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={<CustomPieLabel />}
+                                outerRadius="80%"
+                                dataKey="value"
+                                nameKey="name"
+                              >
                               {(clientTypeData.length > 0 ? clientTypeData : emptyData).map((_entry, index) => (<Cell key={`cell-cli-${index}`} fill={COLORS[index % COLORS.length]} /> ))}
                               </Pie>
                               <RechartsTooltip formatter={(value: number) => `${value} clientes`} />
-                              <Legend wrapperStyle={{fontSize: "10px"}} />
+                              <Legend wrapperStyle={{fontSize: "10px", overflow: "auto", maxHeight: "50px"}} />
                           </PieChart>
                       </ResponsiveContainer>
                     </div>
@@ -293,16 +373,24 @@ const RelatoriosPage = () => {
                 <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                         <h3 className="font-semibold text-gray-700">Status dos Processos</h3>
-                        {/* Botão de Exportar Removido */}
                     </div>
                     <div className="flex-grow">
                       <ResponsiveContainer width="100%" height="100%">
                           <PieChart>
-                              <Pie data={processStatusData.length > 0 ? processStatusData : emptyData} cx="50%" cy="50%" labelLine={false} outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} >
+                              <Pie
+                                data={processStatusData.length > 0 ? processStatusData : emptyData}
+                                cx="50%"
+                                cy="50%"
+                                labelLine={false}
+                                label={<CustomPieLabel />}
+                                outerRadius="80%"
+                                dataKey="value"
+                                nameKey="name"
+                               >
                               {(processStatusData.length > 0 ? processStatusData : emptyData).map((_entry, index) => (<Cell key={`cell-stat-${index}`} fill={COLORS[index % COLORS.length]} /> ))}
                               </Pie>
                               <RechartsTooltip formatter={(value: number) => `${value} processos`} />
-                              <Legend wrapperStyle={{fontSize: "10px"}} />
+                              <Legend wrapperStyle={{fontSize: "10px", overflow: "auto", maxHeight: "50px"}} />
                           </PieChart>
                       </ResponsiveContainer>
                     </div>
