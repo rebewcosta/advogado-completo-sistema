@@ -94,7 +94,7 @@ const ClientesPage = () => {
   const filteredClients = clients.filter(client =>
     client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (client.cpf_cnpj && client.cpf_cnpj.toLowerCase().includes(searchTerm.toLowerCase()))
+    (client.cpfCnpj && client.cpfCnpj.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleAddClient = () => {
@@ -115,7 +115,7 @@ const ClientesPage = () => {
       email: formDataFromForm.email,
       telefone: formDataFromForm.telefone,
       tipo_cliente: formDataFromForm.tipo,
-      cpf_cnpj: formDataFromForm.cpfCnpj, // Nome da coluna no DB é cpf_cnpj
+      cpfCnpj: formDataFromForm.cpfCnpj, // Nome da coluna no DB é cpfCnpj
       endereco: formDataFromForm.endereco,
       cidade: formDataFromForm.cidade,
       estado: formDataFromForm.estado,
@@ -174,7 +174,7 @@ const ClientesPage = () => {
         email: client.email || '',
         telefone: client.telefone || '',
         tipo: client.tipo_cliente,
-        cpfCnpj: client.cpf_cnpj || '', // Coluna no banco é cpf_cnpj
+        cpfCnpj: client.cpfCnpj || '', // Coluna no banco é cpfCnpj
         endereco: client.endereco || '',
         cidade: client.cidade || '',
         estado: client.estado || '',
@@ -297,7 +297,7 @@ const ClientesPage = () => {
                       <TableCell className="hidden md:table-cell py-3 px-4">{client.email}</TableCell>
                       <TableCell className="hidden lg:table-cell py-3 px-4">{client.telefone}</TableCell>
                       <TableCell className="py-3 px-4">{client.tipo_cliente}</TableCell>
-                      <TableCell className="hidden md:table-cell py-3 px-4">{client.cpf_cnpj}</TableCell>
+                      <TableCell className="hidden md:table-cell py-3 px-4">{client.cpfCnpj}</TableCell>
                       <TableCell className="py-3 px-4">
                         <Badge
                           className={client.status_cliente === "Ativo" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
@@ -377,7 +377,7 @@ const ClientesPage = () => {
                   <p><strong>Email:</strong> {selectedClient.email || 'N/A'}</p>
                   <p><strong>Telefone:</strong> {selectedClient.telefone || 'N/A'}</p>
                   <p><strong>Tipo:</strong> {selectedClient.tipo_cliente}</p>
-                  <p><strong>CPF/CNPJ:</strong> {selectedClient.cpf_cnpj}</p>
+                  <p><strong>CPF/CNPJ:</strong> {selectedClient.cpfCnpj}</p>
                   <p><strong>Endereço:</strong> {selectedClient.endereco || 'N/A'}</p>
                   <p><strong>Status:</strong> {selectedClient.status_cliente}</p>
                   <p><strong>Observações:</strong> {selectedClient.observacoes || 'Nenhuma'}</p>
