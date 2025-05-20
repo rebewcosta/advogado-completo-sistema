@@ -7,11 +7,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestão para Advogados</title>
     <style>
-      /* Hide any potential Lovable banners */
+      /* Camuflar o banner Lovable de forma mais agressiva */
       [class*="lovable-banner"], [id*="lovable-banner"], 
       [class*="lovable-editor"], [id*="lovable-editor"],
-      [class*="lovable-tagger"], [id*="lovable-tagger"] {
+      [class*="lovable-tagger"], [id*="lovable-tagger"],
+      [class*="gpte"], [id*="gpte"],
+      [class*="gpt-engineer"], [id*="gpt-engineer"],
+      a[href*="lovable.dev"],
+      div[style*="z-index: 999999"][style*="position: fixed"],
+      div[style*="bottom: 20px"][style*="right: 20px"],
+      div#gpt-engineer-container div[style*="position: fixed"] {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        clip: rect(0, 0, 0, 0) !important;
+        clip-path: polygon(0px 0px, 0px 0px, 0px 0px) !important;
       }
     </style>
   </head>

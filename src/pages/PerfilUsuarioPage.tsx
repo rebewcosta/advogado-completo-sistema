@@ -1,4 +1,4 @@
-// Caminho: advogado-completo-sistema-main/src/pages/PerfilUsuarioPage.tsx
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -99,7 +99,6 @@ const PerfilUsuarioPage = () => {
     }
   };
 
-
   if (isLoading && !user) { // Ajuste: mostra loading apenas se o usuário ainda não carregou
     return (
       <AdminLayout>
@@ -183,7 +182,7 @@ const PerfilUsuarioPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <GerenciarAssinatura /> {/* Nosso componente modificado! */}
+                <GerenciarAssinatura />
               </CardContent>
             </Card>
           </TabsContent>
@@ -198,10 +197,41 @@ const PerfilUsuarioPage = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleChangePassword} className="space-y-6 max-w-lg">
-                  {/* O campo "Senha atual" foi removido pois supabase.auth.updateUser não o valida diretamente
-                      Para implementar isso de forma segura, seria necessário um fluxo de reautenticação
-                      ou uma Edge Function que valide a senha atual antes de tentar a atualização.
-                      Para simplificar, permitiremos a mudança direta se o usuário estiver logado.
                   <div className="space-y-2">
-                    <Label htmlFor="current-password">Senha atual (necessária para alterar)</Label>
-                    <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrent
+                    <Label htmlFor="new-password">Nova senha</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Informe sua nova senha"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-new-password">Confirme a nova senha</Label>
+                    <Input
+                      id="confirm-new-password"
+                      type="password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="Confirme sua nova senha"
+                    />
+                  </div>
+                  <Button type="submit" disabled={isSaving} className="w-full sm:w-auto">
+                    {isSaving ? (
+                      <><Spinner size="sm" className="mr-2" /> Salvando...</>
+                    ) : (
+                      'Alterar Senha'
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default PerfilUsuarioPage;
