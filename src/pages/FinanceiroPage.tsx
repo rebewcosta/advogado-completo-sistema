@@ -1,10 +1,10 @@
 // src/pages/FinanceiroPage.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import PinLock from '@/components/PinLock';
 import {
   Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Filter,
-  DollarSign, TrendingUp, TrendingDown, FileText, X, Loader2, KeyRound
+  DollarSign, TrendingUp, TrendingDown, FileText, X, Loader2, KeyRound, AlertCircle
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,22 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert } from 'lucide-react';
+import type { Database } from '@/integrations/supabase/types'; // Importar tipos do Supabase
+
+// Definindo o tipo para uma transação como ela virá do Supabase
+type TransacaoSupabase = Database['public']['Tables']['transacoes_financeiras']['Row'];
+
+// Definindo o tipo para os dados do formulário
+interface TransacaoFormData {
+  tipo: 'Receita' | 'Despesa';
+  descricao: string;
+  valor: number;
+  categoria: string;
+  data_transacao: string; // Formato YYYY-MM-DD
+  status_pagamento: 'Pendente' | 'Pago' | 'Recebido' | 'Atrasado'; // Ajustar conforme seus status
+  cliente_nome_temp?: string; // Campo temporário para o nome do cliente, se não for usar IDs
+}
+
 
 const PAGE_NAME_FOR_PIN_SESSION_STORAGE = "Financeiro_UserPinAccess";
 
@@ -24,13 +40,15 @@ const FinanceiroPage = () => {
     message?: string;
   } | null>(null);
   const [isLoadingAccess, setIsLoadingAccess] = useState(true);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
 
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<TransacaoSupabase[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentTransaction, setCurrentTransaction] = useState<any>(null);
+  const [currentTransaction, setCurrentTransaction] = useState<TransacaoSupabase | null>(null);
   const { toast } = useToast();
 
+  // Hook de Autenticação e PIN (igual ao anterior)
   useEffect(() => {
     const checkAccessOrPinStatus = async () => {
       if (!user || !session) {
@@ -38,151 +56,208 @@ const FinanceiroPage = () => {
         setPinCheckResult({ verified: false, message: "Usuário não autenticado. Por favor, faça login." });
         return;
       }
-
       const userSpecificSessionKey = `${PAGE_NAME_FOR_PIN_SESSION_STORAGE}_${user.id}`;
       if (sessionStorage.getItem(userSpecificSessionKey) === 'true') {
         setPinCheckResult({ verified: true, pinNotSet: false });
         setIsLoadingAccess(false);
         return;
       }
-
       setIsLoadingAccess(true);
       try {
         const { data, error: funcError } = await supabase.functions.invoke('verify-finance-pin');
-
-        if (funcError) {
-            let toastMessage = "Erro ao verificar status do PIN.";
-            if (funcError.message.includes("Failed to fetch") || funcError.message.toLowerCase().includes("cors")) {
-                toastMessage = "Falha de rede ou CORS ao verificar PIN. Verifique as configurações da Edge Function e sua conexão.";
-            } else if (funcError.message) {
-                toastMessage = funcError.message;
-            }
-            console.error("Erro ao invocar verify-finance-pin (funcError):", funcError);
-            toast({ title: "Erro de Verificação", description: toastMessage, variant: "destructive", duration: 7000 });
-            setPinCheckResult({ verified: false, message: toastMessage });
-            return;
-        }
-        
-        if (data && data.error) {
-            console.error("Erro retornado pela função verify-finance-pin (data.error):", data.error);
-            toast({ title: "Erro de Verificação", description: data.error, variant: "destructive" });
-            setPinCheckResult({ verified: false, message: data.error });
-            return;
-        }
-        
+        if (funcError) throw funcError;
+        if (data && data.error) throw new Error(data.error);
         setPinCheckResult(data);
-
+        if (data.pinNotSet) {
+            toast({
+                title: "Acesso ao Financeiro",
+                description: "Você ainda não configurou um PIN para esta seção. Considere adicionar um em Configurações > Segurança para maior privacidade.",
+                duration: 7000,
+                className: "bg-blue-50 border-blue-200 text-blue-700",
+            });
+        }
       } catch (err: any) {
-        console.error("Catch geral ao verificar status do PIN na FinanceiroPage:", err);
-        toast({ title: "Erro Inesperado na Verificação", description: err.message || "Ocorreu um erro desconhecido.", variant: "destructive" });
+        console.error("Erro ao verificar status do PIN na FinanceiroPage:", err);
+        toast({ title: "Erro de Verificação", description: err.message || "Ocorreu um erro.", variant: "destructive" });
         setPinCheckResult({ verified: false, message: err.message || "Erro desconhecido." });
       } finally {
         setIsLoadingAccess(false);
       }
     };
-
     checkAccessOrPinStatus();
   }, [user, session, toast]);
 
-  useEffect(() => {
-    if (pinCheckResult?.verified) {
-      const savedTransactions = localStorage.getItem('transactions_v2');
-      setTransactions(savedTransactions ? JSON.parse(savedTransactions) : []);
-      if (pinCheckResult.pinNotSet) {
-        toast({
-            title: "Acesso ao Financeiro",
-            description: "Você ainda não configurou um PIN para esta seção. Considere adicionar um em Configurações > Segurança para maior privacidade.",
-            duration: 7000,
-            className: "bg-blue-50 border-blue-200 text-blue-700", // Exemplo de customização do toast
-        });
-      }
-    } else {
+  // Função para buscar transações do Supabase
+  const fetchTransactions = useCallback(async () => {
+    if (!user || !pinCheckResult?.verified) {
       setTransactions([]);
+      return;
     }
-  }, [pinCheckResult, toast]);
+    setIsLoadingTransactions(true);
+    try {
+      const { data, error } = await supabase
+        .from('transacoes_financeiras')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('data_transacao', { ascending: false });
 
+      if (error) {
+        throw error;
+      }
+      setTransactions(data || []);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao buscar transações",
+        description: error.message || "Não foi possível carregar os dados financeiros.",
+        variant: "destructive",
+      });
+      setTransactions([]);
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  }, [user, pinCheckResult?.verified, toast]);
+
+  // useEffect para buscar transações quando o acesso for verificado
   useEffect(() => {
     if (pinCheckResult?.verified) {
-      localStorage.setItem('transactions_v2', JSON.stringify(transactions));
+      fetchTransactions();
     }
-  }, [transactions, pinCheckResult]);
+  }, [pinCheckResult?.verified, fetchTransactions]);
+  
+  // REMOVIDO: useEffects que usavam localStorage
 
   const handlePinSuccessfullyVerified = () => {
     setPinCheckResult({ verified: true, pinNotSet: false });
     if(user) {
         sessionStorage.setItem(`${PAGE_NAME_FOR_PIN_SESSION_STORAGE}_${user.id}`, 'true');
     }
+    // fetchTransactions(); // Agora será chamado pelo useEffect acima
   };
   
   const filteredTransactions = transactions.filter(transaction =>
     (transaction.descricao && transaction.descricao.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (transaction.cliente && transaction.cliente.toLowerCase().includes(searchTerm.toLowerCase()))
+    // Adicionar busca por outros campos se necessário, ex: categoria.
+    // Se você adicionar cliente_nome_temp à tabela ou fizer join, pode buscar por ele também.
+    (transaction.categoria && transaction.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Cálculos de resumo (ajustar se necessário, especialmente 'valor')
   const receitas = transactions
-    .filter(t => t.tipo === "Receita")
-    .reduce((sum, t) => sum + parseFloat(t.valor || 0), 0);
+    .filter(t => t.tipo_transacao === "Receita") // Usar nome da coluna do DB
+    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
   const despesas = transactions
-    .filter(t => t.tipo === "Despesa")
-    .reduce((sum, t) => sum + parseFloat(t.valor || 0), 0);
+    .filter(t => t.tipo_transacao === "Despesa") // Usar nome da coluna do DB
+    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
   const saldo = receitas - despesas;
 
   const receitasPendentes = transactions
-    .filter(t => t.tipo === "Receita" && t.status === "Pendente")
-    .reduce((sum, t) => sum + parseFloat(t.valor || 0), 0);
+    .filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente") // Usar nome da coluna do DB
+    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
-  const handleEditTransaction = (transaction: any) => {
+  const handleEditTransaction = (transaction: TransacaoSupabase) => {
     setCurrentTransaction(transaction);
     setIsModalOpen(true);
   };
 
-  const handleDeleteTransaction = (id: number) => {
-    if (window.confirm("Tem certeza que deseja excluir esta transação?")) {
-      setTransactions(transactions.filter(transaction => transaction.id !== id));
-      toast({
-        title: "Transação excluída",
-        description: "A transação foi removida com sucesso.",
-      });
+  const handleDeleteTransaction = async (id: string) => {
+    if (!user) return;
+    const transactionToDelete = transactions.find(t => t.id === id);
+    if (transactionToDelete && window.confirm("Tem certeza que deseja excluir esta transação?")) {
+      try {
+        const { error } = await supabase
+          .from('transacoes_financeiras')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+        
+        setTransactions(prev => prev.filter(transaction => transaction.id !== id));
+        toast({
+          title: "Transação excluída",
+          description: "A transação foi removida com sucesso.",
+        });
+      } catch (error: any) {
+        toast({
+          title: "Erro ao excluir",
+          description: error.message || "Não foi possível excluir a transação.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleAddOrUpdateTransaction = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddOrUpdateTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.target as HTMLFormElement);
-    const transactionData = Object.fromEntries(formData.entries()) as any;
-    transactionData.valor = parseFloat(transactionData.valor);
+    if (!user) {
+        toast({ title: "Usuário não autenticado", variant: "destructive" });
+        return;
+    }
 
-    if (currentTransaction) {
-      setTransactions(transactions.map(transaction =>
-        transaction.id === currentTransaction.id ? {...transaction, ...transactionData, id: transaction.id} : transaction
-      ));
+    const formData = new FormData(e.target as HTMLFormElement);
+    const formValues = Object.fromEntries(formData.entries()) as { [key: string]: string };
+
+    // Mapeamento e conversão de dados do formulário para o formato do Supabase
+    const transactionDataForSupabase = {
+      user_id: user.id,
+      tipo_transacao: formValues.tipo as 'Receita' | 'Despesa', // tipo_transacao na tabela
+      descricao: formValues.descricao,
+      valor: parseFloat(formValues.valor),
+      categoria: formValues.categoria,
+      data_transacao: formValues.data, // data_transacao na tabela
+      status_pagamento: formValues.status as TransacaoSupabase['status_pagamento'], // status_pagamento na tabela
+      // cliente_associado_id: null, // Manter null por enquanto
+      // processo_associado_id: null, // Manter null por enquanto
+      // A coluna 'transacoes_financeiras' (text) não está no formulário, será default ou null no DB.
+    };
+
+    try {
+      if (currentTransaction) { // Atualizar transação existente
+        const { data: updatedData, error } = await supabase
+          .from('transacoes_financeiras')
+          .update(transactionDataForSupabase)
+          .eq('id', currentTransaction.id)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        setTransactions(prev => prev.map(t => t.id === currentTransaction.id ? updatedData : t));
+        toast({ title: "Transação atualizada", description: "Os dados da transação foram atualizados." });
+
+      } else { // Adicionar nova transação
+        const { data: insertedData, error } = await supabase
+          .from('transacoes_financeiras')
+          .insert(transactionDataForSupabase)
+          .select()
+          .single();
+        
+        if (error) throw error;
+
+        setTransactions(prev => [insertedData, ...prev].sort((a, b) => new Date(b.data_transacao).getTime() - new Date(a.data_transacao).getTime()));
+        toast({ title: "Transação adicionada", description: "A nova transação foi registrada." });
+      }
+      setIsModalOpen(false);
+      setCurrentTransaction(null);
+      (e.target as HTMLFormElement).reset();
+    } catch (error: any) {
       toast({
-        title: "Transação atualizada",
-        description: "Os dados da transação foram atualizados com sucesso.",
-      });
-    } else {
-      setTransactions([...transactions, {
-        ...transactionData,
-        id: Date.now()
-      }]);
-      toast({
-        title: "Transação adicionada",
-        description: "A nova transação foi adicionada com sucesso.",
+        title: "Erro ao salvar transação",
+        description: error.message || "Ocorreu um erro.",
+        variant: "destructive",
       });
     }
-    setIsModalOpen(false);
-    setCurrentTransaction(null);
-    (e.target as HTMLFormElement).reset();
   };
+
 
   if (isLoadingAccess) {
     return ( <AdminLayout><div className="flex items-center justify-center min-h-[calc(100vh-150px)]"><Loader2 className="h-12 w-12 animate-spin text-lawyer-primary" /></div></AdminLayout> );
   }
 
   if (!user || (pinCheckResult && !pinCheckResult.verified && !pinCheckResult.pinNotSet) ) {
-    // Se não há usuário, ou se o resultado da verificação indica que o PIN é necessário e não foi verificado (e não é o caso de pinNotSet)
     if (!user) {
         return ( <AdminLayout><div className="flex items-center justify-center min-h-[calc(100vh-150px)] p-4">
             <Alert variant="destructive" className="max-w-lg">
@@ -192,7 +267,6 @@ const FinanceiroPage = () => {
             </Alert>
         </div></AdminLayout> );
     }
-    // Se há usuário, mas o PIN é necessário (pinCheckResult.verified é false e pinNotSet é false)
     return (
       <AdminLayout>
         <PinLock
@@ -203,7 +277,6 @@ const FinanceiroPage = () => {
     );
   }
   
-  // Se chegou aqui, pinCheckResult.verified é true OU pinCheckResult.pinNotSet é true
   return (
     <AdminLayout>
       <main className="flex-grow py-8 px-4">
@@ -239,7 +312,7 @@ const FinanceiroPage = () => {
               <p className="text-2xl font-bold">R$ {receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               <p className="text-sm text-gray-500 mt-2">
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{
-                  transactions.filter(t => t.tipo === "Receita").length
+                  transactions.filter(t => t.tipo_transacao === "Receita").length
                 } transações</span>
               </p>
             </div>
@@ -254,7 +327,7 @@ const FinanceiroPage = () => {
               <p className="text-2xl font-bold">R$ {despesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               <p className="text-sm text-gray-500 mt-2">
                 <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{
-                  transactions.filter(t => t.tipo === "Despesa").length
+                  transactions.filter(t => t.tipo_transacao === "Despesa").length
                 } transações</span>
               </p>
             </div>
@@ -282,7 +355,7 @@ const FinanceiroPage = () => {
               <p className="text-2xl font-bold">R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
               <p className="text-sm text-gray-500 mt-2">
                 <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">{
-                  transactions.filter(t => t.tipo === "Receita" && t.status === "Pendente").length
+                  transactions.filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente").length
                 } pendentes</span>
               </p>
             </div>
@@ -310,6 +383,12 @@ const FinanceiroPage = () => {
             </div>
 
             <div className="overflow-x-auto">
+            {isLoadingTransactions ? (
+                <div className="flex justify-center items-center py-10">
+                    <Loader2 className="h-8 w-8 animate-spin text-lawyer-primary" />
+                    <span className="ml-2 text-gray-500">Carregando transações...</span>
+                </div>
+            ) : (
               <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
@@ -319,7 +398,7 @@ const FinanceiroPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Categoria</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Cliente</th>
+                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Cliente</th> */}
                     <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Ações</th>
                   </tr>
                 </thead>
@@ -329,32 +408,32 @@ const FinanceiroPage = () => {
                       <tr key={transaction.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className={`flex items-center ${
-                            transaction.tipo === "Receita" ? 'text-green-600' : 'text-red-600'
+                            transaction.tipo_transacao === "Receita" ? 'text-green-600' : 'text-red-600'
                           }`}>
-                            {transaction.tipo === "Receita" ?
+                            {transaction.tipo_transacao === "Receita" ?
                               <TrendingUp className="h-4 w-4 mr-1" /> :
                               <TrendingDown className="h-4 w-4 mr-1" />
                             }
-                            {transaction.tipo}
+                            {transaction.tipo_transacao}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">{transaction.descricao}</td>
                         <td className="px-6 py-4 whitespace-nowrap font-medium">
-                          R$ {parseFloat(transaction.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                          R$ {Number(transaction.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">{transaction.categoria}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{new Date(transaction.data).toLocaleDateString('pt-BR')}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{new Date(transaction.data_transacao).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 rounded-full text-xs ${
-                            transaction.status === 'Pago' || transaction.status === 'Recebido' ? 'bg-green-100 text-green-800' :
-                            transaction.status === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
-                            transaction.status === 'Atrasado' ? 'bg-orange-100 text-orange-800' : 
+                            transaction.status_pagamento === 'Pago' || transaction.status_pagamento === 'Recebido' ? 'bg-green-100 text-green-800' :
+                            transaction.status_pagamento === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
+                            transaction.status_pagamento === 'Atrasado' ? 'bg-orange-100 text-orange-800' : 
                             'bg-gray-100 text-gray-800'
                           }`}>
-                            {transaction.status}
+                            {transaction.status_pagamento}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">{transaction.cliente || "-"}</td>
+                        {/* <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">{transaction.cliente_nome_temp || "-"}</td> */}
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="flex justify-center gap-1">
                             <Button
@@ -381,13 +460,14 @@ const FinanceiroPage = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
-                        Nenhuma transação encontrada
+                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                        Nenhuma transação encontrada.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+            )}
             </div>
 
             <div className="px-6 py-4 flex items-center justify-between border-t">
@@ -430,9 +510,9 @@ const FinanceiroPage = () => {
                         <label className="inline-flex items-center mr-6">
                           <input
                             type="radio"
-                            name="tipo"
+                            name="tipo" // Nome do campo no formulário
                             value="Receita"
-                            defaultChecked={currentTransaction?.tipo === "Receita" || !currentTransaction}
+                            defaultChecked={currentTransaction?.tipo_transacao === "Receita" || !currentTransaction}
                             className="mr-2 form-radio h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
                           />
                           <span>Receita</span>
@@ -440,9 +520,9 @@ const FinanceiroPage = () => {
                         <label className="inline-flex items-center">
                           <input
                             type="radio"
-                            name="tipo"
+                            name="tipo" // Nome do campo no formulário
                             value="Despesa"
-                            defaultChecked={currentTransaction?.tipo === "Despesa"}
+                            defaultChecked={currentTransaction?.tipo_transacao === "Despesa"}
                             className="mr-2 form-radio h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
                           />
                           <span>Despesa</span>
@@ -468,7 +548,7 @@ const FinanceiroPage = () => {
                         name="valor"
                         min="0"
                         step="0.01"
-                        defaultValue={currentTransaction?.valor || ''}
+                        defaultValue={currentTransaction?.valor ? String(currentTransaction.valor) : ''}
                         required
                         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
                       />
@@ -479,7 +559,7 @@ const FinanceiroPage = () => {
                         <select
                           id="categoria"
                           name="categoria"
-                          defaultValue={currentTransaction?.categoria || ''}
+                          defaultValue={currentTransaction?.categoria || 'Honorários'}
                           className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white"
                         >
                           <option value="Honorários">Honorários</option>
@@ -499,20 +579,20 @@ const FinanceiroPage = () => {
                         <Input
                           type="date"
                           id="data"
-                          name="data"
-                          defaultValue={currentTransaction?.data || new Date().toISOString().split('T')[0]}
+                          name="data" // Nome do campo no formulário
+                          defaultValue={currentTransaction?.data_transacao || new Date().toISOString().split('T')[0]}
                           required
                           className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4"> {/* Simplificado para 1 coluna, cliente não está sendo associado via ID por enquanto */}
                       <div>
                         <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                         <select
                           id="status"
-                          name="status"
-                          defaultValue={currentTransaction?.status || 'Pendente'}
+                          name="status" // Nome do campo no formulário
+                          defaultValue={currentTransaction?.status_pagamento || 'Pendente'}
                           className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white"
                         >
                           <option value="Pendente">Pendente</option>
@@ -521,16 +601,11 @@ const FinanceiroPage = () => {
                           <option value="Atrasado">Atrasado</option>
                         </select>
                       </div>
-                      <div>
-                        <label htmlFor="cliente" className="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
-                        <Input
-                          type="text"
-                          id="cliente"
-                          name="cliente"
-                          defaultValue={currentTransaction?.cliente || ''}
-                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                        />
-                      </div>
+                      {/* O campo 'Cliente' como texto livre foi removido do formulário, 
+                          pois a tabela espera um cliente_associado_id (UUID).
+                          Se quiser manter um campo de texto para nome do cliente temporário, adicione-o aqui
+                          e na interface TransacaoFormData.
+                      */}
                     </div>
                   </div>
                    <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-white z-10">
