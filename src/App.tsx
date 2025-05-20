@@ -21,6 +21,7 @@ import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
 import AdminPage from './pages/AdminPage';
 import RecuperarSenhaPage from './pages/RecuperarSenhaPage';
 import AtualizarSenhaPage from './pages/AtualizarSenhaPage';
+import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
 import './App.css';
 
 import { AuthProvider } from './hooks/useAuth';
@@ -57,6 +58,7 @@ function App() {
             <Route path="/admin" element={<AdminPage />} />
             {/* A página de perfil/configurações geralmente é acessível por todos os usuários logados */}
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="/perfil" element={<PerfilUsuarioPage />} />
 
             {/* Rotas que requerem autenticação E verificação de assinatura/acesso especial */}
             <Route element={<VerificarAssinatura />}>
