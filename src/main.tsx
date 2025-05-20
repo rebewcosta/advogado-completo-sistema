@@ -17,11 +17,8 @@ const updateViewport = () => {
 
 updateViewport();
 
-// As funções tryRemoveLovableElements e observeAndRemoveLovableBanner
-// foram removidas, pois o script principal da Lovable que injeta o banner
-// foi removido do index.html para este teste.
-// O CSS no index.html deve ser suficiente para ocultar qualquer resquício,
-// caso algo inesperado ocorra, mas a fonte principal do banner foi removida.
+// TODA A LÓGICA RELACIONADA A 'tryRemoveLovableElements' 
+// E 'observeAndRemoveLovableBanner' FOI REMOVIDA PARA ESTE TESTE.
 
 // Mount the app
 const container = document.getElementById("root");

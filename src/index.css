@@ -5,36 +5,7 @@
     <link rel="icon" type="image/png" href="/lovable-uploads/f43e275d-744e-43eb-a2c7-bbf3c17b3fc5.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gestão para Advogados</title>
-    <style>
-      /* CSS para ocultar o banner da Lovable o mais cedo possível.
-        Estes seletores são baseados na estrutura do banner identificada.
-      */
-
-      /* Alvo principal: o link (<a>) com ID começando em "lovable-" E href para lovable.dev */
-      a[id^="lovable-"][href*="lovable.dev"],
-      /* Alvo secundário: qualquer link para lovable.dev com position fixed (conforme visto no inspetor) */
-      a[href*="lovable.dev/projects/"][style*="position: fixed"],
-      /* Alvo para o ID #lovable-badge, caso seja usado diretamente no banner ou em um wrapper */
-      #lovable-badge,
-      /* Seletores genéricos que você já tinha, como fallback */
-      [class*="lovable-banner"], [id*="lovable-banner"],
-      [class*="lovable-editor"], [id*="lovable-editor"],
-      [class*="lovable-tagger"], [id*="lovable-tagger"],
-      /* Seletor específico de estilo que você identificou, caso o banner seja um div */
-      div[style*="z-index: 999999999 !important"][style*="position: fixed !important"][style*="bottom: 20px !important"][style*="right: 20px !important"],
-      div[style*="z-index: 1000000"][style*="position: fixed"] /* z-index visto na imagem */
-      {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        /* Para garantir que não ocupe espaço e não seja clicável */
-        width: 0 !important;
-        height: 0 !important;
-        overflow: hidden !important;
-      }
-    </style>
-  </head>
+    </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
