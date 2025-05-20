@@ -106,7 +106,7 @@ const ClientesPage = () => {
   const handleSaveClient = async (formDataFromForm: ClienteFormDataFromForm) => {
     if (!user) {
       toast({ title: "Erro de Autenticação", description: "Você precisa estar logado para salvar um cliente.", variant: "destructive" });
-      setIsSubmitting(false); // Certifique-se de resetar o estado de submitting
+      setIsSubmitting(false);
       return;
     }
     setIsSubmitting(true);
@@ -125,47 +125,46 @@ const ClientesPage = () => {
       status_cliente: formDataFromForm.status_cliente || 'Ativo',
     };
 
+    let operationSuccessful = false;
+    let errorHandledSpecifically = false; // Nova flag
+
     try {
       let responseError: any = null;
       let responseData: Cliente | null = null;
 
       if (isEditing && selectedClient) {
-        const { data, error } = await supabase
+        const response = await supabase
           .from('clientes')
           .update(dadosParaSupabase)
           .eq('id', selectedClient.id)
           .eq('user_id', user.id)
           .select()
           .single();
-        responseData = data;
-        responseError = error;
+        responseData = response.data;
+        responseError = response.error;
       } else {
-        const { data, error } = await supabase
+        const response = await supabase
           .from('clientes')
           .insert([{ ...dadosParaSupabase, user_id: user.id }])
           .select()
           .single();
-        responseData = data;
-        responseError = error;
+        responseData = response.data;
+        responseError = response.error;
       }
 
       if (responseError) {
-        // Trata o erro de CPF/CNPJ duplicado primeiro e retorna
         if (responseError.code === '23505' && responseError.message.includes('clientes_cpf_cnpj_key')) {
           toast({
               title: isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente",
               description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
               variant: "destructive",
           });
-          setIsSubmitting(false); // Reseta o estado de submitting
-          return; // Interrompe a execução aqui para não cair no catch genérico
+          errorHandledSpecifically = true; // Marca que o erro específico foi tratado
+        } else {
+          // Para outros erros do Supabase, relança para o catch genérico
+          throw responseError;
         }
-        // Se não for o erro de CPF duplicado, relança para o catch genérico
-        throw responseError;
-      }
-
-      // Se chegou aqui, a operação foi bem-sucedida
-      if (responseData) {
+      } else if (responseData) { // Sucesso
         if (isEditing) {
           setClients(prevClients => prevClients.map(c => c.id === responseData!.id ? responseData : c));
           toast({ title: "Cliente atualizado!", description: `Os dados de ${responseData.nome} foram atualizados.` });
@@ -173,14 +172,14 @@ const ClientesPage = () => {
           setClients(prevClients => [responseData, ...prevClients].sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")));
           toast({ title: "Cliente cadastrado!", description: `${responseData.nome} foi salvo com sucesso.` });
         }
-        setShowForm(false);
-        setSelectedClient(null);
-        setIsEditing(false);
+        operationSuccessful = true;
       }
     } catch (error: any) { 
-      // Este catch agora SÓ deve ser acionado para erros que NÃO são o '23505' (CPF duplicado)
-      // ou para erros na lógica JavaScript antes da chamada ao Supabase.
-      console.error("Erro ao salvar cliente (catch genérico):", error);
+      // Este catch SÓ será acionado se o erro foi relançado (ou seja, não era o 23505)
+      // OU se ocorreu um erro de JavaScript antes da chamada ao Supabase.
+      console.error("Erro genérico ao salvar cliente:", error);
+      // Não precisamos mais da verificação 'if (!errorHandledSpecifically)' aqui, 
+      // porque se o erro específico foi tratado, não chegaremos a este catch.
       toast({
         title: isEditing ? "Erro ao Atualizar" : "Erro ao Cadastrar",
         description: error.message || "Ocorreu um erro inesperado.",
@@ -188,8 +187,16 @@ const ClientesPage = () => {
       });
     } finally {
       setIsSubmitting(false);
+      if (operationSuccessful) {
+        setShowForm(false);
+        setSelectedClient(null);
+        setIsEditing(false);
+      }
     }
   };
+
+  // ... (resto do código de ClientesPage.tsx permanece o mesmo que na última versão fornecida) ...
+  // handleEditClient, handleViewClient, handleToggleStatus, handleDeleteClient, e o JSX de retorno
 
   const handleEditClient = (client: Cliente) => {
     const formDataForEdit = {
