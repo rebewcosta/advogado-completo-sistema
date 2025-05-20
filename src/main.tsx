@@ -36,11 +36,6 @@ const tryRemoveLovableElements = () => {
     'div[style*="z-index: 1000000"]',
     'div[style*="z-index: 999999999"]',
     
-    // O seletor específico que você mencionou ter funcionado para um DIV antes,
-    // agora adaptado para 'a' e com os estilos exatos do seu screenshot (bottom/right 10px, z-index 1000000)
-    // Este é um seletor muito específico e pode quebrar se eles mudarem um pixel.
-    // 'a[style*="position: fixed"][style*="bottom: 10px"][style*="right: 10px"][style*="z-index: 1000000"]',
-
     // Seu seletor de div que funcionou antes, mantido caso o <a> esteja dentro de um div com esses estilos
     'div[style*="z-index: 999999999 !important"][style*="position: fixed !important"][style*="bottom: 20px !important"][style*="right: 20px !important"]',
     
@@ -91,6 +86,13 @@ const tryRemoveLovableElements = () => {
   // }
 };
 
+// Definindo a lista de seletores fora para ser acessível no callback do MutationObserver
+const LOVABLE_SELECTORS_FOR_OBSERVER = [
+  'a[id^="lovable-"]',
+  'a[href*="lovable.dev/projects/"][style*="position: fixed"]',
+  '#lovable-badge'
+  // Adicione outros seletores chave se necessário para a verificação do observer
+];
 
 const observeAndRemoveLovableBanner = () => {
   tryRemoveLovableElements(); // Tentativa inicial
@@ -109,41 +111,33 @@ const observeAndRemoveLovableBanner = () => {
   }
 
   const observer = new MutationObserver((mutationsList, observerInstance) => {
-    let nodesAdded = false;
+    let
+     nodesPotentiallyLovableAdded = false;
     for (const mutation of mutationsList) {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        // Verifica se algum dos nós adicionados ou seus descendentes correspondem aos seletores problemáticos
         mutation.addedNodes.forEach(node => {
             if (node.nodeType === Node.ELEMENT_NODE) {
                 const element = node as Element;
-                // Verifica o próprio nó adicionado
-                if (selectors.some(sel => element.matches(sel)) || (element.id && element.id.startsWith('lovable-'))) {
-                    nodesAdded = true;
-                }
-                // Verifica os descendentes do nó adicionado
-                if (!nodesAdded) {
-                    selectors.forEach(sel => {
-                        if (element.querySelector(sel)) {
-                            nodesAdded = true;
-                        }
-                    });
-                    if (element.querySelectorAll('[id^="lovable-"]').length > 0) {
-                        nodesAdded = true;
-                    }
+                if (LOVABLE_SELECTORS_FOR_OBSERVER.some(sel => element.matches(sel)) || 
+                    (element.id && element.id.startsWith('lovable-')) ||
+                    LOVABLE_SELECTORS_FOR_OBSERVER.some(sel => element.querySelector(sel)) ||
+                    element.querySelectorAll('[id^="lovable-"]').length > 0
+                   ) {
+                    nodesPotentiallyLovableAdded = true;
                 }
             }
         });
-        if (nodesAdded) break; 
+        if (nodesPotentiallyLovableAdded) break; 
       }
     }
-    if (nodesAdded) {
+    if (nodesPotentiallyLovableAdded) {
       tryRemoveLovableElements();
     }
   });
 
   const startObserving = () => {
     if (document.body) {
-      observer.observe(document.body, { childList: true, subtree: true, attributes: false }); // attributes: false pode otimizar um pouco se não precisamos observar mudanças de atributos para isso
+      observer.observe(document.body, { childList: true, subtree: true });
       // console.log("Lovable banner observer iniciado no document.body.");
     } else {
       // console.log("document.body ainda não disponível, tentando observar em breve.");
@@ -151,14 +145,6 @@ const observeAndRemoveLovableBanner = () => {
     }
   };
   
-  // Lista de seletores que será usada no MutationObserver (precisa ser definida aqui também)
-  const selectors = [
-    'a[id^="lovable-"]',
-    'a[href*="lovable.dev/projects/"][style*="position: fixed"]',
-    '#lovable-badge' 
-    // Adicione outros seletores chave se necessário
-  ];
-
   if (document.readyState === 'loading') {
     window.addEventListener('DOMContentLoaded', () => {
       tryRemoveLovableElements(); 
