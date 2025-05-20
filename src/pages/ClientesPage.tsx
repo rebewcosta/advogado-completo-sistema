@@ -126,6 +126,7 @@ const ClientesPage = () => {
 
     try {
       if (isEditing && selectedClient) {
+        // Lógica de atualização
         const { data: updatedClient, error } = await supabase
           .from('clientes')
           .update(dadosParaSupabase)
@@ -134,7 +135,14 @@ const ClientesPage = () => {
           .select()
           .single();
 
-        if (error) throw error; // Relança o erro para ser pego pelo catch
+        if (error) { // Se o Supabase retornar um erro
+            // Verifica se o erro é de chave duplicada no CPF/CNPJ
+            if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
+                throw new Error("Já existe um cliente cadastrado com este CPF/CNPJ.");
+            }
+            throw error; // Relança outros erros
+        }
+        
         if (updatedClient) {
           setClients(prevClients => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
           toast({ title: "Cliente atualizado!", description: `Os dados de ${updatedClient.nome} foram atualizados.` });
@@ -142,14 +150,23 @@ const ClientesPage = () => {
         setShowForm(false);
         setSelectedClient(null);
         setIsEditing(false);
+
       } else {
+        // Lógica de inserção
         const { data: newClient, error } = await supabase
           .from('clientes')
           .insert([{ ...dadosParaSupabase, user_id: user.id }])
           .select()
           .single();
 
-        if (error) throw error; // Relança o erro para ser pego pelo catch
+        if (error) { // Se o Supabase retornar um erro
+            // Verifica se o erro é de chave duplicada no CPF/CNPJ
+            if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
+                throw new Error("Já existe um cliente cadastrado com este CPF/CNPJ.");
+            }
+            throw error; // Relança outros erros
+        }
+
         if (newClient) {
           setClients(prevClients => [newClient, ...prevClients].sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")));
           toast({ title: "Cliente cadastrado!", description: `${newClient.nome} foi salvo com sucesso.` });
@@ -158,20 +175,12 @@ const ClientesPage = () => {
       }
     } catch (error: any) {
       console.error("Erro ao salvar cliente:", error);
-      // MODIFICAÇÃO AQUI: Tratar o erro de chave duplicada
-      if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
-        toast({
-          title: "Erro ao Cadastrar Cliente",
-          description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: isEditing ? "Erro ao atualizar" : "Erro ao cadastrar",
-          description: error.message || "Ocorreu um erro ao salvar os dados do cliente.",
-          variant: "destructive",
-        });
-      }
+      // O toast agora será mais específico devido ao throw new Error personalizado acima
+      toast({
+        title: isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente",
+        description: error.message || "Ocorreu um erro ao salvar os dados do cliente.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -191,7 +200,7 @@ const ClientesPage = () => {
         observacoes: client.observacoes || '',
         status_cliente: client.status_cliente,
     };
-    setSelectedClient({ ...client, ...formDataForEdit }); // Mantém o ID do cliente original
+    setSelectedClient({ ...client, ...formDataForEdit });
     setIsEditing(true);
     setShowForm(true);
   };
@@ -203,7 +212,7 @@ const ClientesPage = () => {
 
   const handleToggleStatus = async (clientToToggle: Cliente) => {
     if (!user) return;
-    setIsSubmitting(true); // Pode-se usar um estado de loading específico para esta ação
+    setIsSubmitting(true);
     const newStatus = clientToToggle.status_cliente === "Ativo" ? "Inativo" : "Ativo";
     try {
       const { data: updatedClient, error } = await supabase
@@ -232,7 +241,7 @@ const ClientesPage = () => {
   const handleDeleteClient = async (clientToDelete: Cliente) => {
     if (!user) return;
     if (window.confirm(`Tem certeza que deseja excluir o cliente ${clientToDelete.nome}? Esta ação não pode ser desfeita.`)) {
-      setIsSubmitting(true); // Pode-se usar um estado de loading específico para esta ação
+      setIsSubmitting(true);
       try {
         const { error } = await supabase
           .from('clientes')
@@ -367,7 +376,7 @@ const ClientesPage = () => {
             <ClienteForm
               onSave={handleSaveClient}
               onCancel={() => { setShowForm(false); setSelectedClient(null); setIsEditing(false); }}
-              cliente={selectedClient} // Passa o cliente completo para o formulário
+              cliente={selectedClient}
               isEdit={isEditing}
             />
           </DialogContent>
