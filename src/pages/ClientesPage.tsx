@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import ClienteForm from '@/components/ClienteForm';
-import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2 } from 'lucide-react'; // <<<< ADICIONADO Trash2 AQUI
+import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -36,7 +36,7 @@ type ClienteFormDataFromForm = {
   email: string;
   telefone: string;
   tipo: string;
-  cpfCnpj: string; // Mantendo camelCase como vem do formulário
+  cpfCnpj: string;
   endereco?: string | null;
   cidade?: string | null;
   estado?: string | null;
@@ -94,7 +94,7 @@ const ClientesPage = () => {
   const filteredClients = clients.filter(client =>
     client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (client.cpfCnpj && client.cpfCnpj.toLowerCase().includes(searchTerm.toLowerCase()))
+    (client.cpf_cnpj && client.cpf_cnpj.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleAddClient = () => {
@@ -115,7 +115,7 @@ const ClientesPage = () => {
       email: formDataFromForm.email,
       telefone: formDataFromForm.telefone,
       tipo_cliente: formDataFromForm.tipo,
-      cpfCnpj: formDataFromForm.cpfCnpj, // Nome da coluna no DB é cpfCnpj
+      cpf_cnpj: formDataFromForm.cpfCnpj,
       endereco: formDataFromForm.endereco,
       cidade: formDataFromForm.cidade,
       estado: formDataFromForm.estado,
@@ -124,8 +124,8 @@ const ClientesPage = () => {
       status_cliente: formDataFromForm.status_cliente || 'Ativo',
     };
 
-    if (isEditing && selectedClient) {
-      try {
+    try {
+      if (isEditing && selectedClient) {
         const { data: updatedClient, error } = await supabase
           .from('clientes')
           .update(dadosParaSupabase)
@@ -134,7 +134,7 @@ const ClientesPage = () => {
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) throw error; // Relança o erro para ser pego pelo catch
         if (updatedClient) {
           setClients(prevClients => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
           toast({ title: "Cliente atualizado!", description: `Os dados de ${updatedClient.nome} foram atualizados.` });
@@ -142,30 +142,39 @@ const ClientesPage = () => {
         setShowForm(false);
         setSelectedClient(null);
         setIsEditing(false);
-      } catch (error: any) {
-        console.error("Erro ao atualizar cliente:", error);
-        toast({ title: "Erro ao atualizar", description: error.message || "Ocorreu um erro.", variant: "destructive" });
-      }
-    } else {
-      try {
+      } else {
         const { data: newClient, error } = await supabase
           .from('clientes')
           .insert([{ ...dadosParaSupabase, user_id: user.id }])
           .select()
           .single();
 
-        if (error) throw error;
+        if (error) throw error; // Relança o erro para ser pego pelo catch
         if (newClient) {
-          setClients(prevClients => [newClient, ...prevClients].sort((a, b) => a.nome.localeCompare(b.nome)));
+          setClients(prevClients => [newClient, ...prevClients].sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")));
           toast({ title: "Cliente cadastrado!", description: `${newClient.nome} foi salvo com sucesso.` });
         }
         setShowForm(false);
-      } catch (error: any) {
-        console.error("Erro ao cadastrar cliente:", error);
-        toast({ title: "Erro ao cadastrar", description: error.message || "Ocorreu um erro.", variant: "destructive" });
       }
+    } catch (error: any) {
+      console.error("Erro ao salvar cliente:", error);
+      // MODIFICAÇÃO AQUI: Tratar o erro de chave duplicada
+      if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
+        toast({
+          title: "Erro ao Cadastrar Cliente",
+          description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: isEditing ? "Erro ao atualizar" : "Erro ao cadastrar",
+          description: error.message || "Ocorreu um erro ao salvar os dados do cliente.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleEditClient = (client: Cliente) => {
@@ -174,7 +183,7 @@ const ClientesPage = () => {
         email: client.email || '',
         telefone: client.telefone || '',
         tipo: client.tipo_cliente,
-        cpfCnpj: client.cpfCnpj || '', // Coluna no banco é cpfCnpj
+        cpfCnpj: client.cpf_cnpj || '',
         endereco: client.endereco || '',
         cidade: client.cidade || '',
         estado: client.estado || '',
@@ -182,7 +191,7 @@ const ClientesPage = () => {
         observacoes: client.observacoes || '',
         status_cliente: client.status_cliente,
     };
-    setSelectedClient({ ...client, ...formDataForEdit });
+    setSelectedClient({ ...client, ...formDataForEdit }); // Mantém o ID do cliente original
     setIsEditing(true);
     setShowForm(true);
   };
@@ -194,7 +203,7 @@ const ClientesPage = () => {
 
   const handleToggleStatus = async (clientToToggle: Cliente) => {
     if (!user) return;
-    setIsSubmitting(true);
+    setIsSubmitting(true); // Pode-se usar um estado de loading específico para esta ação
     const newStatus = clientToToggle.status_cliente === "Ativo" ? "Inativo" : "Ativo";
     try {
       const { data: updatedClient, error } = await supabase
@@ -223,7 +232,7 @@ const ClientesPage = () => {
   const handleDeleteClient = async (clientToDelete: Cliente) => {
     if (!user) return;
     if (window.confirm(`Tem certeza que deseja excluir o cliente ${clientToDelete.nome}? Esta ação não pode ser desfeita.`)) {
-      setIsSubmitting(true);
+      setIsSubmitting(true); // Pode-se usar um estado de loading específico para esta ação
       try {
         const { error } = await supabase
           .from('clientes')
@@ -297,9 +306,10 @@ const ClientesPage = () => {
                       <TableCell className="hidden md:table-cell py-3 px-4">{client.email}</TableCell>
                       <TableCell className="hidden lg:table-cell py-3 px-4">{client.telefone}</TableCell>
                       <TableCell className="py-3 px-4">{client.tipo_cliente}</TableCell>
-                      <TableCell className="hidden md:table-cell py-3 px-4">{client.cpfCnpj}</TableCell>
+                      <TableCell className="hidden md:table-cell py-3 px-4">{client.cpf_cnpj}</TableCell>
                       <TableCell className="py-3 px-4">
                         <Badge
+                          variant={client.status_cliente === "Ativo" ? "default" : "destructive"}
                           className={client.status_cliente === "Ativo" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}
                         >
                           {client.status_cliente}
@@ -325,9 +335,9 @@ const ClientesPage = () => {
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDeleteClient(client)}
-                              className="text-red-600 hover:!bg-red-50 hover:!text-red-700" // Adicionado ! para priorizar o hover
+                              className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-700"
                             >
-                              <Trash2 className="mr-2 h-4 w-4" /> Excluir {/* Trash2 sendo usado aqui */}
+                              <Trash2 className="mr-2 h-4 w-4" /> Excluir
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -357,7 +367,7 @@ const ClientesPage = () => {
             <ClienteForm
               onSave={handleSaveClient}
               onCancel={() => { setShowForm(false); setSelectedClient(null); setIsEditing(false); }}
-              cliente={selectedClient}
+              cliente={selectedClient} // Passa o cliente completo para o formulário
               isEdit={isEditing}
             />
           </DialogContent>
@@ -377,10 +387,14 @@ const ClientesPage = () => {
                   <p><strong>Email:</strong> {selectedClient.email || 'N/A'}</p>
                   <p><strong>Telefone:</strong> {selectedClient.telefone || 'N/A'}</p>
                   <p><strong>Tipo:</strong> {selectedClient.tipo_cliente}</p>
-                  <p><strong>CPF/CNPJ:</strong> {selectedClient.cpfCnpj}</p>
+                  <p><strong>CPF/CNPJ:</strong> {selectedClient.cpf_cnpj || 'N/A'}</p>
                   <p><strong>Endereço:</strong> {selectedClient.endereco || 'N/A'}</p>
+                  <p><strong>Cidade:</strong> {selectedClient.cidade || 'N/A'}</p>
+                  <p><strong>Estado:</strong> {selectedClient.estado || 'N/A'}</p>
+                  <p><strong>CEP:</strong> {selectedClient.cep || 'N/A'}</p>
                   <p><strong>Status:</strong> {selectedClient.status_cliente}</p>
                   <p><strong>Observações:</strong> {selectedClient.observacoes || 'Nenhuma'}</p>
+                  <p><strong>Cadastrado em:</strong> {new Date(selectedClient.created_at).toLocaleDateString('pt-BR')}</p>
                 </div>
                 <div className="mt-6 flex justify-end gap-2">
                   <Button variant="outline" onClick={() => {
