@@ -18,31 +18,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Spinner } from '@/components/ui/spinner';
 import { User, Building, Bell, Shield, CreditCard } from 'lucide-react';
 
-interface ProfileSettings {
-  name: string;
-  email: string;
-  phone: string;
-  oab: string;
-}
-
-interface OfficeSettings {
-  companyName: string;
-  cnpj: string;
-  address: string;
-  website: string;
-}
-
-interface NotificationPreferences {
-  pref_notificacoes_push: boolean;
-  pref_alertas_prazo: boolean;
-  pref_relatorio_semanal: boolean;
-}
-
-interface SecurityPreferences {
-  pref_seguranca_dois_fatores: boolean;
-  pref_seguranca_tempo_sessao_min: string;
-  pref_seguranca_restricao_ip: boolean;
-}
+interface ProfileSettings { name: string; email: string; phone: string; oab: string; }
+interface OfficeSettings { companyName: string; cnpj: string; address: string; website: string; }
+interface NotificationPreferences { pref_notificacoes_push: boolean; pref_alertas_prazo: boolean; pref_relatorio_semanal: boolean; }
+interface SecurityPreferences { pref_seguranca_dois_fatores: boolean; pref_seguranca_tempo_sessao_min: string; pref_seguranca_restricao_ip: boolean; }
 
 const ConfiguracoesPage = () => {
   const { toast } = useToast();
@@ -72,16 +51,8 @@ const ConfiguracoesPage = () => {
     pref_seguranca_restricao_ip: false,
   });
 
-  const simpleClientHash = async (text: string, salt: string): Promise<string> => {
-      const buffer = new TextEncoder().encode(text + salt);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  };
-
   const loadUserSettings = useCallback(() => {
     if (user && user.user_metadata) {
-      // console.log("Carregando configurações do user.user_metadata:", user.user_metadata);
       setProfileSettings({
         name: user.user_metadata.nome || user.email?.split('@')[0] || "",
         email: user.email || "",
@@ -104,30 +75,20 @@ const ConfiguracoesPage = () => {
         pref_seguranca_tempo_sessao_min: String(user.user_metadata.pref_seguranca_tempo_sessao_min || "30"),
         pref_seguranca_restricao_ip: typeof user.user_metadata.pref_seguranca_restricao_ip === 'boolean' ? user.user_metadata.pref_seguranca_restricao_ip : false,
       });
+      setHasFinancePin(!!user.user_metadata.finance_pin_hash);
     }
     setIsLoadingPageData(false);
-  }, [user]);
-
-  const checkExistingPin = useCallback(async () => {
-    if (user?.user_metadata?.finance_pin_hash) {
-      setHasFinancePin(true);
-    } else {
-      setHasFinancePin(false);
-    }
     setIsLoadingPinStatus(false);
   }, [user]);
 
   useEffect(() => {
-    setIsLoadingPageData(true);
-    setIsLoadingPinStatus(true);
     if (user) {
       loadUserSettings();
-      checkExistingPin();
     } else {
       setIsLoadingPageData(false);
       setIsLoadingPinStatus(false);
     }
-  }, [user, loadUserSettings, checkExistingPin]);
+  }, [user, loadUserSettings]);
 
   const handleSaveAllSettings = async () => {
     if (!user) {
@@ -190,14 +151,16 @@ const ConfiguracoesPage = () => {
         toast({ title: "PIN Inválido", description: "O novo PIN deve ter 4 dígitos.", variant: "destructive" });
         return false;
     }
+    if (hasFinancePin && (!currentPinPlainText || currentPinPlainText.length !== 4)) {
+        toast({ title: "PIN Atual Inválido", description: "O PIN atual é obrigatório e deve ter 4 dígitos.", variant: "destructive" });
+        return false;
+    }
 
-    setIsSaving(true);
+    setIsSaving(true); // Reutiliza o estado isSaving ou crie um específico para PIN se preferir
     try {
-        // Não precisamos mais fazer hash no cliente para enviar para set-finance-pin
-        // A Edge Function set-finance-pin agora espera os PINs em texto plano
         const { data, error } = await supabase.functions.invoke('set-finance-pin', {
             body: { 
-                currentPin: hasFinancePin ? currentPinPlainText : null, // Envia null se for a primeira definição
+                currentPin: hasFinancePin ? currentPinPlainText : null, 
                 newPin: newPinPlainText 
             },
         });
@@ -208,17 +171,19 @@ const ConfiguracoesPage = () => {
         }
 
         toast({
-            title: "PIN do Financeiro Atualizado",
-            description: data.message || "O PIN de acesso à página Financeiro foi atualizado.",
+            title: hasFinancePin ? "PIN do Financeiro Alterado" : "PIN do Financeiro Definido",
+            description: data.message || `O PIN de acesso à página Financeiro foi ${hasFinancePin ? 'atualizado' : 'definido'}.`,
         });
         await refreshSession(); 
-        await checkExistingPin(); 
+        // A função loadUserSettings será chamada novamente pelo useEffect que depende de 'user' (após refreshSession)
+        // e atualizará 'hasFinancePin'
+        setHasFinancePin(true); // Pode adiantar a atualização do estado local
         setIsSaving(false);
         return true;
 
     } catch (error: any) {
         toast({
-            title: "Erro ao Alterar PIN",
+            title: "Erro ao Salvar PIN",
             description: error.message,
             variant: "destructive",
         });
@@ -227,7 +192,7 @@ const ConfiguracoesPage = () => {
     }
   };
 
-  if ((isLoadingPageData && !user) || isLoadingPinStatus) {
+  if (isLoadingPageData || (user && isLoadingPinStatus)) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-screen">
@@ -301,8 +266,11 @@ const ConfiguracoesPage = () => {
               setNotificationSettings={(newSettings) => {
                 setNotificationSettings(prev => ({
                   ...prev,
+                  // @ts-ignore
                   pref_notificacoes_push: typeof newSettings.pushNotifications === 'boolean' ? newSettings.pushNotifications : prev.pref_notificacoes_push,
+                  // @ts-ignore
                   pref_alertas_prazo: typeof newSettings.deadlineAlerts === 'boolean' ? newSettings.deadlineAlerts : prev.pref_alertas_prazo,
+                  // @ts-ignore
                   pref_relatorio_semanal: typeof newSettings.weeklyReport === 'boolean' ? newSettings.weeklyReport : prev.pref_relatorio_semanal,
                 }));
               }}
@@ -312,9 +280,9 @@ const ConfiguracoesPage = () => {
             <SegurancaTab
               securitySettings={securitySettings}
               setSecuritySettings={setSecuritySettings}
-              hasFinancePin={hasFinancePin}
-              onChangeFinanceiroPin={handleChangeFinanceiroPin}
-              isSavingPin={isSaving}
+              hasFinancePin={hasFinancePin} 
+              onChangeFinanceiroPin={handleChangeFinanceiroPin} 
+              isSavingPin={isSaving} 
             />
           </TabsContent>
         </Tabs>

@@ -14,12 +14,9 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface PinLockProps {
   onPinVerified: () => void;
-  pageName: string;
+  pageName: string; // Recebe algo como "Financeiro_userId" para a chave do sessionStorage
   pinLength?: number;
 }
-
-// REMOVA A FUNÇÃO simpleClientHash DESTE ARQUIVO
-// const simpleClientHash = async (text: string): Promise<string> => { ... };
 
 const PinLock: React.FC<PinLockProps> = ({ onPinVerified, pageName, pinLength = 4 }) => {
   const [pin, setPin] = useState('');
@@ -31,7 +28,7 @@ const PinLock: React.FC<PinLockProps> = ({ onPinVerified, pageName, pinLength = 
   const handlePinChange = (value: string) => {
     setPin(value);
     if (value.length === pinLength) {
-      handleSubmit(value); // Chama handleSubmit quando o PIN atinge o comprimento correto
+      handleSubmit(value);
     }
     if (error) setError('');
   };
@@ -43,9 +40,12 @@ const PinLock: React.FC<PinLockProps> = ({ onPinVerified, pageName, pinLength = 
         setIsLoading(false);
         return;
     }
-     if (currentPin.length !== pinLength) {
-        // Esta verificação pode ser redundante se handleSubmit só é chamado quando o comprimento é correto
-        // setError(`O PIN deve ter ${pinLength} dígitos.`);
+    // A validação de comprimento é feita pelo botão de submit e pelo handlePinChange
+    if (currentPin.length !== pinLength) {
+        // Este caso não deve acontecer se o botão de submit estiver desabilitado
+        // e handlePinChange chamar handleSubmit apenas com o comprimento correto.
+        // Mas como uma salvaguarda:
+        setError(`O PIN deve ter ${pinLength} dígitos.`);
         return;
     }
 
@@ -53,26 +53,33 @@ const PinLock: React.FC<PinLockProps> = ({ onPinVerified, pageName, pinLength = 
     setError('');
 
     try {
-        // Envia o PIN em texto plano para a Edge Function
         const { data, error: funcError } = await supabase.functions.invoke('verify-finance-pin', {
-            body: { pinAttempt: currentPin }, // Alterado de pinAttemptHash para pinAttempt
+            body: { pinAttempt: currentPin }, // Envia o PIN em texto plano
         });
 
-        if (funcError || (data && data.error)) {
-            const errorMessage = (data && data.error) || funcError?.message || `Erro ao verificar PIN.`;
-            throw new Error(errorMessage);
+        if (funcError) { // Erro na chamada da função (rede, CORS, etc.)
+            console.error("Erro ao invocar verify-finance-pin (funcError):", funcError);
+            const toastMessage = funcError.message.includes("Failed to fetch") || funcError.message.toLowerCase().includes("cors")
+                ? "Falha de rede ou CORS. Verifique as configurações da Edge Function e sua conexão."
+                : funcError.message || "Erro desconhecido ao verificar PIN.";
+            throw new Error(toastMessage);
+        }
+        
+        if (data && data.error) { // Erro retornado pela lógica interna da função
+            console.error("Erro retornado pela função verify-finance-pin (data.error):", data.error);
+            throw new Error(data.error);
         }
 
         if (data && data.verified === true) {
-            sessionStorage.setItem(`pinVerified_${pageName}`, 'true');
+            sessionStorage.setItem(pageName, 'true');
             onPinVerified();
             toast({
                 title: "Acesso Liberado",
-                description: `Você acessou a página ${pageName}.`,
+                description: `Você acessou a página Financeiro.`,
             });
         } else {
             setError(data.message || 'PIN incorreto. Tente novamente.');
-            setPin(''); // Limpa o campo
+            setPin('');
             toast({
                 title: "PIN Incorreto",
                 description: data.message || "O PIN digitado está incorreto.",
@@ -80,14 +87,16 @@ const PinLock: React.FC<PinLockProps> = ({ onPinVerified, pageName, pinLength = 
             });
         }
     } catch (err: any) {
-        console.error('Erro ao verificar PIN:', err);
+        console.error('Erro ao verificar PIN no PinLock (catch geral):', err);
         setError(err.message || 'Ocorreu um erro ao tentar verificar o PIN.');
-        toast({
-            title: "Erro na Verificação",
-            description: err.message || 'Não foi possível verificar o PIN.',
-            variant: "destructive",
-        });
-        setPin(''); // Limpa o campo
+        if (!err.message.includes("PIN incorreto")) { // Evita toast duplicado se o erro já foi tratado
+            toast({
+                title: "Erro na Verificação do PIN",
+                description: err.message || 'Não foi possível verificar o PIN.',
+                variant: "destructive",
+            });
+        }
+        setPin('');
     } finally {
         setIsLoading(false);
     }
@@ -100,14 +109,16 @@ const PinLock: React.FC<PinLockProps> = ({ onPinVerified, pageName, pinLength = 
           <KeyRound className="mx-auto h-12 w-12 text-lawyer-primary mb-4" />
           <CardTitle className="text-2xl">Acesso Restrito</CardTitle>
           <CardDescription>
-            Por favor, insira o PIN de {pinLength} dígitos para acessar a página {pageName}.
+            Por favor, insira o PIN de {pinLength} dígitos para acessar a página Financeiro.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSubmit(pin);
+              if (pin.length === pinLength) {
+                handleSubmit(pin);
+              }
             }}
             className="space-y-6"
           >
@@ -115,7 +126,7 @@ const PinLock: React.FC<PinLockProps> = ({ onPinVerified, pageName, pinLength = 
               <InputOTP
                 maxLength={pinLength}
                 value={pin}
-                onChange={handlePinChange} // handlePinChange agora também chama handleSubmit
+                onChange={handlePinChange}
                 disabled={isLoading}
               >
                 <InputOTPGroup>

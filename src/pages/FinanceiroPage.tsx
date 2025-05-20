@@ -4,9 +4,7 @@ import AdminLayout from '@/components/AdminLayout';
 import PinLock from '@/components/PinLock';
 import {
   Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Filter,
-  DollarSign, TrendingUp, TrendingDown, FileText, X, Loader2, 
-  ShieldCheck, Gift, Crown, KeyRound, // Adicionado KeyRound que estava faltando no PinLock e aqui
-  ShieldAlert // <<< ADICIONADO ShieldAlert AQUI
+  DollarSign, TrendingUp, TrendingDown, FileText, X, Loader2, KeyRound
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
@@ -14,13 +12,18 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShieldAlert } from 'lucide-react';
 
-const PAGE_NAME_FOR_PIN = "Financeiro";
+const PAGE_NAME_FOR_PIN_SESSION_STORAGE = "Financeiro_UserPinAccess";
 
 const FinanceiroPage = () => {
   const { user, session } = useAuth();
-  const [accessState, setAccessState] = useState<'loading' | 'granted' | 'pin_required' | 'setup_required' | 'denied'>('loading');
-  const [accessType, setAccessType] = useState<string | null>(null);
+  const [pinCheckResult, setPinCheckResult] = useState<{
+    verified: boolean;
+    pinNotSet?: boolean;
+    message?: string;
+  } | null>(null);
+  const [isLoadingAccess, setIsLoadingAccess] = useState(true);
 
   const [transactions, setTransactions] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,70 +32,91 @@ const FinanceiroPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const checkAccess = async () => {
+    const checkAccessOrPinStatus = async () => {
       if (!user || !session) {
-        setAccessState('denied');
+        setIsLoadingAccess(false);
+        setPinCheckResult({ verified: false, message: "Usuário não autenticado. Por favor, faça login." });
         return;
       }
 
-      setAccessState('loading');
+      const userSpecificSessionKey = `${PAGE_NAME_FOR_PIN_SESSION_STORAGE}_${user.id}`;
+      if (sessionStorage.getItem(userSpecificSessionKey) === 'true') {
+        setPinCheckResult({ verified: true, pinNotSet: false });
+        setIsLoadingAccess(false);
+        return;
+      }
+
+      setIsLoadingAccess(true);
       try {
-        const { data, error: funcError } = await supabase.functions.invoke('verify-finance-pin', {
-          body: { checkStatusOnly: true },
-        });
+        const { data, error: funcError } = await supabase.functions.invoke('verify-finance-pin');
 
-        if (funcError || (data && data.error)) {
-          // Verifica se o erro é de CORS para dar uma mensagem mais específica
-          if (funcError?.message.includes("Failed to fetch") || (data && data.error && typeof data.error === 'string' && data.error.includes("CORS"))) {
-             toast({ title: "Erro de Rede ou CORS", description: "Não foi possível conectar à função de verificação. Verifique as configurações de CORS da Edge Function.", variant: "destructive", duration: 7000 });
-             setAccessState('denied'); // Bloqueia o acesso se não consegue verificar
-             return;
-          }
-          throw new Error((data && data.error) || funcError?.message || "Erro ao verificar acesso.");
-        }
-
-        if (data.verified === true) {
-          setAccessState('granted');
-          setAccessType(data.accessType || 'Premium');
-        } else if (data.pinRequired === true) {
-          if (data.needsPinSetup === true) {
-            setAccessState('setup_required');
-          } else {
-            if (sessionStorage.getItem(`pinVerified_${PAGE_NAME_FOR_PIN}`) === 'true') {
-                setAccessState('granted');
-                setAccessType('PIN');
-            } else {
-                setAccessState('pin_required');
+        if (funcError) {
+            let toastMessage = "Erro ao verificar status do PIN.";
+            if (funcError.message.includes("Failed to fetch") || funcError.message.toLowerCase().includes("cors")) {
+                toastMessage = "Falha de rede ou CORS ao verificar PIN. Verifique as configurações da Edge Function e sua conexão.";
+            } else if (funcError.message) {
+                toastMessage = funcError.message;
             }
-          }
-        } else {
-          setAccessState('denied');
+            console.error("Erro ao invocar verify-finance-pin (funcError):", funcError);
+            toast({ title: "Erro de Verificação", description: toastMessage, variant: "destructive", duration: 7000 });
+            setPinCheckResult({ verified: false, message: toastMessage });
+            return;
         }
+        
+        if (data && data.error) {
+            console.error("Erro retornado pela função verify-finance-pin (data.error):", data.error);
+            toast({ title: "Erro de Verificação", description: data.error, variant: "destructive" });
+            setPinCheckResult({ verified: false, message: data.error });
+            return;
+        }
+        
+        setPinCheckResult(data);
+
       } catch (err: any) {
-        toast({ title: "Erro de Acesso", description: err.message, variant: "destructive" });
-        setAccessState('denied');
+        console.error("Catch geral ao verificar status do PIN na FinanceiroPage:", err);
+        toast({ title: "Erro Inesperado na Verificação", description: err.message || "Ocorreu um erro desconhecido.", variant: "destructive" });
+        setPinCheckResult({ verified: false, message: err.message || "Erro desconhecido." });
+      } finally {
+        setIsLoadingAccess(false);
       }
     };
 
-    checkAccess();
+    checkAccessOrPinStatus();
   }, [user, session, toast]);
 
   useEffect(() => {
-    if (accessState === 'granted') {
+    if (pinCheckResult?.verified) {
       const savedTransactions = localStorage.getItem('transactions_v2');
       setTransactions(savedTransactions ? JSON.parse(savedTransactions) : []);
+      if (pinCheckResult.pinNotSet) {
+        toast({
+            title: "Acesso ao Financeiro",
+            description: "Você ainda não configurou um PIN para esta seção. Considere adicionar um em Configurações > Segurança para maior privacidade.",
+            duration: 7000,
+            className: "bg-blue-50 border-blue-200 text-blue-700", // Exemplo de customização do toast
+        });
+      }
+    } else {
+      setTransactions([]);
     }
-  }, [accessState]);
+  }, [pinCheckResult, toast]);
 
   useEffect(() => {
-    if (accessState === 'granted') {
+    if (pinCheckResult?.verified) {
       localStorage.setItem('transactions_v2', JSON.stringify(transactions));
     }
-  }, [transactions, accessState]);
+  }, [transactions, pinCheckResult]);
 
+  const handlePinSuccessfullyVerified = () => {
+    setPinCheckResult({ verified: true, pinNotSet: false });
+    if(user) {
+        sessionStorage.setItem(`${PAGE_NAME_FOR_PIN_SESSION_STORAGE}_${user.id}`, 'true');
+    }
+  };
+  
   const filteredTransactions = transactions.filter(transaction =>
-    transaction.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
+    (transaction.descricao && transaction.descricao.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (transaction.cliente && transaction.cliente.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const receitas = transactions
@@ -153,70 +177,33 @@ const FinanceiroPage = () => {
     (e.target as HTMLFormElement).reset();
   };
 
-  const handlePinSuccessfullyVerified = () => {
-    setAccessState('granted');
-    setAccessType('PIN');
-  };
-
-  if (accessState === 'loading') {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
-          <Loader2 className="h-12 w-12 animate-spin text-lawyer-primary" />
-        </div>
-      </AdminLayout>
-    );
+  if (isLoadingAccess) {
+    return ( <AdminLayout><div className="flex items-center justify-center min-h-[calc(100vh-150px)]"><Loader2 className="h-12 w-12 animate-spin text-lawyer-primary" /></div></AdminLayout> );
   }
 
-  if (accessState === 'denied') {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[calc(100vh-150px)] p-4">
-          <Alert variant="destructive" className="max-w-lg">
-            <ShieldAlert className="h-5 w-5" /> {/* Agora ShieldAlert está importado */}
-            <AlertTitle>Acesso Negado</AlertTitle>
-            <AlertDescription>
-              Você não tem permissão para acessar esta página, sua sessão pode ter expirado, ou houve um problema de comunicação com o servidor. Por favor, tente recarregar ou faça login novamente.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  if (accessState === 'setup_required') {
-     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-[calc(100vh-150px)] p-4">
-          <Alert className="max-w-lg border-orange-400 text-orange-700">
-             <ShieldAlert className="h-5 w-5 text-orange-600" /> {/* Agora ShieldAlert está importado */}
-            <AlertTitle className="font-semibold">Configuração de PIN Pendente</AlertTitle>
-            <AlertDescription>
-              O acesso via PIN para a página Financeiro ainda não foi configurado pelo administrador.
-              Se você é o administrador, vá para Configurações {'>'} Segurança para definir um PIN.
-            </AlertDescription>
-          </Alert>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  if (accessState === 'pin_required') {
+  if (!user || (pinCheckResult && !pinCheckResult.verified && !pinCheckResult.pinNotSet) ) {
+    // Se não há usuário, ou se o resultado da verificação indica que o PIN é necessário e não foi verificado (e não é o caso de pinNotSet)
+    if (!user) {
+        return ( <AdminLayout><div className="flex items-center justify-center min-h-[calc(100vh-150px)] p-4">
+            <Alert variant="destructive" className="max-w-lg">
+                <ShieldAlert className="h-5 w-5" />
+                <AlertTitle>Autenticação Necessária</AlertTitle>
+                <AlertDescription>Por favor, faça login para acessar esta página.</AlertDescription>
+            </Alert>
+        </div></AdminLayout> );
+    }
+    // Se há usuário, mas o PIN é necessário (pinCheckResult.verified é false e pinNotSet é false)
     return (
       <AdminLayout>
         <PinLock
           onPinVerified={handlePinSuccessfullyVerified}
-          pageName={PAGE_NAME_FOR_PIN}
+          pageName={`${PAGE_NAME_FOR_PIN_SESSION_STORAGE}_${user.id}`}
         />
       </AdminLayout>
     );
   }
-
-  let accessIcon = <KeyRound className="h-4 w-4" />;
-  if (accessType === 'Admin') accessIcon = <ShieldCheck className="h-4 w-4 text-purple-600" />;
-  else if (accessType === 'Membro Amigo') accessIcon = <Gift className="h-4 w-4 text-blue-600" />;
-  else if (accessType === 'Membro Premium') accessIcon = <Crown className="h-4 w-4 text-green-600" />;
-
+  
+  // Se chegou aqui, pinCheckResult.verified é true OU pinCheckResult.pinNotSet é true
   return (
     <AdminLayout>
       <main className="flex-grow py-8 px-4">
@@ -224,18 +211,15 @@ const FinanceiroPage = () => {
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Controle Financeiro</h1>
-                    <p className="text-gray-600 flex items-center">
-                        {accessIcon}
-                        <span className="ml-1.5 text-xs">
-                            Acesso como: {accessType || 'Verificado por PIN'}
-                        </span>
-                    </p>
+                     {pinCheckResult?.pinNotSet && (
+                        <p className="text-xs text-orange-600 flex items-center mt-1">
+                            <ShieldAlert className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span>Para maior segurança, configure um PIN para esta seção em Configurações {'>'} Segurança.</span>
+                        </p>
+                    )}
                 </div>
                 <Button
-                onClick={() => {
-                    setCurrentTransaction(null);
-                    setIsModalOpen(true);
-                }}
+                onClick={() => { setCurrentTransaction(null); setIsModalOpen(true); }}
                 className="btn-primary w-full sm:w-auto"
                 >
                 <Plus className="h-5 w-5 mr-1" />
@@ -243,7 +227,6 @@ const FinanceiroPage = () => {
                 </Button>
             </div>
           
-          {/* Conteúdo da página Financeiro (cards, tabela, modal) */}
           {/* Cards de Resumo */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-lg shadow-md p-6">
@@ -569,7 +552,6 @@ const FinanceiroPage = () => {
               </div>
             </div>
           )}
-
         </div>
       </main>
     </AdminLayout>

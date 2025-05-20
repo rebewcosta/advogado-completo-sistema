@@ -1,12 +1,21 @@
 // supabase/functions/set-finance-pin/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'; // Ou a versão que você está usando
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'; // Ou a versão que você está usando
 
-const corsHeaders = { /* ... (sem alterações) ... */ };
-// --- COPIE OS HEADERS ACIMA DO SEU CÓDIGO ATUAL ---
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*', // Para desenvolvimento. EM PRODUÇÃO: 'https://sisjusgestao.com.br'
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 async function simpleHash(text: string): Promise<string> {
-  const salt = Deno.env.get("PIN_SALT") || "default_salt_please_change_me_in_env"; // Use o salt do ambiente
+  const salt = Deno.env.get("PIN_SALT");
+  if (!salt) {
+    console.error("set-finance-pin: PIN_SALT não está definido nas variáveis de ambiente da função!");
+    // Lançar um erro aqui ou usar um default menos seguro é uma decisão de design,
+    // mas para segurança, é melhor falhar se o salt não estiver definido.
+    throw new Error("Configuração de segurança do servidor incompleta (salt ausente).");
+  }
   const buffer = new TextEncoder().encode(text + salt);
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
@@ -14,6 +23,7 @@ async function simpleHash(text: string): Promise<string> {
 }
 
 serve(async (req: Request) => {
+  // Tratar requisições OPTIONS (CORS preflight) explicitamente no início
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
   }
@@ -22,62 +32,100 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!supabaseUrl || !serviceRoleKey) { /* ... (sem alterações) ... */ }
-    // --- COPIE A VERIFICAÇÃO DE URL E KEY ACIMA DO SEU CÓDIGO ATUAL ---
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("set-finance-pin: Supabase URL ou Service Role Key não encontradas.");
+      // Não precisa de JSON.stringify aqui se o corpo for uma string simples
+      return new Response("Configuração do servidor da função incompleta.", {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }, // Manter JSON para consistência
+      });
+    }
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey);
+    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
+    });
+
     const authHeader = req.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) { /* ... (sem alterações) ... */ }
-    // --- COPIE A VERIFICAÇÃO DO AUTH HEADER ACIMA DO SEU CÓDIGO ATUAL ---
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Token de autenticação ausente ou malformado.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
     const token = authHeader.replace('Bearer ', '');
 
     const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-    if (userError || !user) { /* ... (sem alterações) ... */ }
-    // --- COPIE A VERIFICAÇÃO DO USUÁRIO ACIMA DO SEU CÓDIGO ATUAL ---
-
-    const { currentPin, newPin } = await req.json(); // Agora recebe PINs em texto plano
-
-    if ((!currentPin && user.user_metadata?.finance_pin_hash) || !newPin) {
-      return new Response(JSON.stringify({ error: 'PIN atual e novo PIN são obrigatórios se um PIN já existir.' }), {
-        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    if (userError || !user) {
+      console.error("set-finance-pin: Erro ao obter usuário ou usuário não encontrado:", userError?.message);
+      return new Response(JSON.stringify({ error: userError?.message || 'Usuário não autenticado ou não encontrado.' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-    if (newPin.length !== 4) {
-         return new Response(JSON.stringify({ error: 'Novo PIN deve ter 4 dígitos.' }), {
-            status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-    }
-    if (user.user_metadata?.finance_pin_hash && (!currentPin || currentPin.length !== 4)) {
-        return new Response(JSON.stringify({ error: 'PIN atual é obrigatório e deve ter 4 dígitos para alterar.' }), {
+
+    // Garantir que o corpo da requisição é JSON
+    let payload;
+    try {
+        payload = await req.json();
+    } catch (e) {
+        console.error("set-finance-pin: Erro ao parsear corpo da requisição JSON:", e.message);
+        return new Response(JSON.stringify({ error: 'Corpo da requisição inválido ou não é JSON.' }), {
             status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
     }
 
+    const { currentPin, newPin } = payload;
 
-    // Verificar o PIN atual se já existir um PIN configurado
-    if (user.user_metadata?.finance_pin_hash) {
+    if (!newPin || typeof newPin !== 'string' || newPin.length !== 4) {
+      return new Response(JSON.stringify({ error: 'Novo PIN é obrigatório e deve ser uma string de 4 dígitos.' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const existingPinHash = user.user_metadata?.finance_pin_hash;
+
+    if (existingPinHash) {
+      if (!currentPin || typeof currentPin !== 'string' || currentPin.length !== 4) {
+        return new Response(JSON.stringify({ error: 'PIN atual é obrigatório e deve ser uma string de 4 dígitos para alterar um PIN existente.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
       const currentPinHashAttempt = await simpleHash(currentPin);
-      if (user.user_metadata.finance_pin_hash !== currentPinHashAttempt) {
+      if (existingPinHash !== currentPinHashAttempt) {
         return new Response(JSON.stringify({ error: 'PIN atual incorreto.' }), {
-          status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 403, // Forbidden
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
     }
 
-    const newPinHashed = await simpleHash(newPin); // Faz o hash do novo PIN
+    const newPinHashed = await simpleHash(newPin);
 
-    const { data: updateData, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
       user.id,
-      { user_metadata: { ...user.user_metadata, finance_pin_hash: newPinHashed } } // Salva o hash
+      { user_metadata: { ...user.user_metadata, finance_pin_hash: newPinHashed } }
     );
 
-    if (updateError) { /* ... (sem alterações) ... */ }
-    // --- COPIE O TRATAMENTO DE ERRO DE UPDATE ACIMA DO SEU CÓDIGO ATUAL ---
+    if (updateError) {
+      console.error("set-finance-pin: Erro ao atualizar metadados do usuário:", updateError.message);
+      return new Response(JSON.stringify({ error: `Erro ao atualizar PIN: ${updateError.message}` }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     return new Response(JSON.stringify({ message: 'PIN financeiro atualizado com sucesso.' }), {
-      status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
-  } catch (error) { /* ... (sem alterações) ... */ }
-    // --- COPIE O CATCH FINAL ACIMA DO SEU CÓDIGO ATUAL ---
+  } catch (error) {
+    console.error('set-finance-pin: Erro inesperado na função:', error.message, error.stack);
+    return new Response(JSON.stringify({ error: error.message || 'Erro interno do servidor ao definir PIN.' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
 });

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client'; // Mantido para alteração de senha
+import { supabase } from '@/integrations/supabase/client';
 import {
   Card,
   CardHeader,
@@ -32,9 +32,9 @@ interface SegurancaTabProps {
     sessionTimeout: string;
     ipRestriction: boolean;
   }>>;
-  hasFinancePin: boolean; // Informa se um PIN financeiro já está configurado
-  onChangeFinanceiroPin: (currentPin: string | null, newPin: string) => Promise<boolean>; // Função para alterar o PIN
-  isSavingPin: boolean; // Estado de carregamento para a operação de PIN
+  hasFinancePin: boolean;
+  onChangeFinanceiroPin: (currentPin: string | null, newPin: string) => Promise<boolean>;
+  isSavingPin: boolean;
 }
 
 const SegurancaTab = ({
@@ -56,7 +56,8 @@ const SegurancaTab = ({
   const [confirmaNovoPinFinanceiro, setConfirmaNovoPinFinanceiro] = useState("");
   const [pinErrorMessage, setPinErrorMessage] = useState("");
 
-  const handleChangePassword = async () => { // ... (sem alterações, mas certifique-se de que está funcionando)
+  const handleChangePassword = async (e: React.FormEvent) => { // Adicionado 'e' e tipo
+    e.preventDefault(); // Prevenir comportamento padrão do formulário
     if (!passwordData.newPassword) {
       toast({ title: "Campo obrigatório", description: "Digite sua nova senha.", variant: "destructive" });
       return;
@@ -107,6 +108,7 @@ const SegurancaTab = ({
       setPinAtualFinanceiro("");
       setNovoPinFinanceiro("");
       setConfirmaNovoPinFinanceiro("");
+      setPinErrorMessage(""); // Limpa a mensagem de erro em caso de sucesso
     }
   };
 
@@ -119,18 +121,19 @@ const SegurancaTab = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* ... (seções existentes de 2FA, Senha, etc.) ... */}
+        {/* Seção Autenticação em Dois Fatores */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label>Autenticação em Dois Fatores</Label>
+            <Label htmlFor="twoFactorSwitch">Autenticação em Dois Fatores</Label>
             <p className="text-sm text-muted-foreground">
-              Adicione uma camada extra de segurança à sua conta (funcionalidade futura)
+              Adicione uma camada extra de segurança à sua conta (funcionalidade futura).
             </p>
           </div>
           <Switch
+            id="twoFactorSwitch"
             checked={securitySettings.twoFactor}
             onCheckedChange={(checked) =>
-              setSecuritySettings({...securitySettings, twoFactor: !!checked})
+              setSecuritySettings(prev => ({...prev, twoFactor: !!checked}))
             }
             disabled // Desabilitado por enquanto
           />
@@ -138,10 +141,11 @@ const SegurancaTab = ({
 
         <Separator />
 
+        {/* Seção Tempo de Sessão */}
         <div className="space-y-2">
           <Label htmlFor="sessionTimeout">Tempo de Sessão (minutos)</Label>
           <p className="text-sm text-muted-foreground mb-2">
-            Defina por quanto tempo sua sessão permanecerá ativa sem atividade (funcionalidade futura)
+            Defina por quanto tempo sua sessão permanecerá ativa sem atividade (funcionalidade futura).
           </p>
           <Input
             id="sessionTimeout"
@@ -149,24 +153,26 @@ const SegurancaTab = ({
             min="5"
             max="120"
             value={securitySettings.sessionTimeout}
-            onChange={(e) => setSecuritySettings({...securitySettings, sessionTimeout: e.target.value})}
+            onChange={(e) => setSecuritySettings(prev => ({...prev, sessionTimeout: e.target.value}))}
             disabled // Desabilitado por enquanto
           />
         </div>
 
         <Separator />
 
+        {/* Seção Restrição de IP */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
-            <Label>Restrição de IP</Label>
+            <Label htmlFor="ipRestrictionSwitch">Restrição de IP</Label>
             <p className="text-sm text-muted-foreground">
-              Limite o acesso a endereços IP específicos (funcionalidade futura)
+              Limite o acesso a endereços IP específicos (funcionalidade futura).
             </p>
           </div>
           <Switch
+            id="ipRestrictionSwitch"
             checked={securitySettings.ipRestriction}
             onCheckedChange={(checked) =>
-              setSecuritySettings({...securitySettings, ipRestriction: !!checked})
+              setSecuritySettings(prev => ({...prev, ipRestriction: !!checked}))
             }
             disabled // Desabilitado por enquanto
           />
@@ -174,32 +180,35 @@ const SegurancaTab = ({
 
         <Separator />
 
+        {/* Seção Alteração de Senha do Sistema */}
         <form onSubmit={handleChangePassword} className="space-y-4">
           <h3 className="text-lg font-medium">Alteração de Senha do Sistema</h3>
           <div className="space-y-2">
             <Label htmlFor="newPassword">Nova senha</Label>
             <Input
               id="newPassword"
-              name="newPassword" // Adicionado name para formulário
+              name="newPassword"
               type="password"
               value={passwordData.newPassword}
               onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
               required
+              minLength={6}
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
             <Input
               id="confirmPassword"
-              name="confirmPassword" // Adicionado name
+              name="confirmPassword"
               type="password"
               value={passwordData.confirmPassword}
               onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
               required
+              minLength={6}
             />
           </div>
           <Button
-            type="submit" // Mudado para submit
+            type="submit"
             disabled={changingPassword}
           >
             {changingPassword ? (
@@ -212,6 +221,7 @@ const SegurancaTab = ({
 
         <Separator />
 
+        {/* Seção PIN de Acesso ao Financeiro */}
         <form onSubmit={handleAlterarPinFinanceiroSubmit} className="space-y-4 pt-4">
           <h3 className="text-lg font-medium">PIN de Acesso ao Financeiro</h3>
           <p className="text-sm text-muted-foreground">
@@ -227,11 +237,13 @@ const SegurancaTab = ({
                 onChange={(value) => setPinAtualFinanceiro(value)}
                 name="pinAtualFinanceiro"
                 id="pinAtualFinanceiro"
-                containerClassName="justify-start"
+                containerClassName="justify-start" /* Para alinhar à esquerda */
               >
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} /> <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} /> <InputOTPSlot index={3} />
+                  <InputOTPSlot index={0} />
+                  <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} />
+                  <InputOTPSlot index={3} />
                 </InputOTPGroup>
               </InputOTP>
             </div>
@@ -248,8 +260,10 @@ const SegurancaTab = ({
               containerClassName="justify-start"
             >
               <InputOTPGroup>
-                <InputOTPSlot index={0} /> <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} /> <InputOTPSlot index={3} />
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
               </InputOTPGroup>
             </InputOTP>
           </div>
@@ -265,12 +279,14 @@ const SegurancaTab = ({
               containerClassName="justify-start"
             >
               <InputOTPGroup>
-                <InputOTPSlot index={0} /> <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} /> <InputOTPSlot index={3} />
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
               </InputOTPGroup>
             </InputOTP>
           </div>
-            {pinErrorMessage && <p className="text-sm text-red-500">{pinErrorMessage}</p>}
+            {pinErrorMessage && <p className="text-sm text-red-500 text-left">{pinErrorMessage}</p>} {/* Alinhado à esquerda */}
           <Button
             type="submit"
             disabled={isSavingPin || (hasFinancePin && pinAtualFinanceiro.length !== 4) || novoPinFinanceiro.length !== 4 || confirmaNovoPinFinanceiro.length !== 4}
