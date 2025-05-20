@@ -132,3 +132,30 @@
 .benefit-item {
   @apply flex items-center gap-2 text-gray-700 mb-2;
 }
+
+/* ADIÇÃO PARA REMOVER MARCADOR DE LISTA DO SIDEBAR */
+[data-sidebar="menu-item"]::marker,
+.group\/menu-item::marker { /* Usando a classe que você identificou no inspetor */
+  content: "" !important;
+  font-size: 0 !important;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+[data-sidebar="menu-item"],
+.group\/menu-item {
+  list-style-type: none !important;
+  list-style: none !important;
+  padding-left: 0 !important;
+  text-indent: 0 !important;
+}
+
+[data-sidebar="menu"] {
+  list-style-type: none !important;
+  padding-left: 0 !important;
+  margin-left: 0 !important;
+}
+/* FIM DA ADIÇÃO PARA REMOVER MARCADOR */
