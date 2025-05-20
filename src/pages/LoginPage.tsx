@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
@@ -115,9 +116,9 @@ const LoginPage = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-lawyer-primary hover:text-blue-700">
+                <Link to="/recuperar-senha" className="font-medium text-lawyer-primary hover:text-blue-700">
                   Esqueceu sua senha?
-                </a>
+                </Link>
               </div>
             </div>
 
