@@ -18,71 +18,86 @@ const updateViewport = () => {
 updateViewport();
 
 const tryRemoveLovableElements = () => {
-  // **IMPORTANTE:** Verifique no inspetor do navegador se existem classes ou IDs mais específicos
-  // para o banner da Lovable e adicione-os aqui.
   const selectors = [
-    '[class*="lovable-banner"]', '[id*="lovable-banner"]',
-    '[class*="lovable-editor"]', '[id*="lovable-editor"]',
-    '[class*="lovable-tagger"]', '[id*="lovable-tagger"]',
-    // Seletor específico para o banner "Edit with Lovable" se ele for um link <a>
+    '[class*="lovable-banner"]', 
+    '[class*="lovable-editor"]', 
+    '[class*="lovable-tagger"]',
+    'a[id^="lovable-"]',
     'a[href*="lovable.dev/projects/"][style*="position: fixed"]',
-    // Seu seletor que funcionou em testes para o banner específico:
+    'a[href*="cdn.gpteng.co"][style*="position: fixed"]',
+    'div[style*="z-index: 1000000"]',
+    'div[style*="z-index: 999999999"]',
     'div[style*="z-index: 999999999 !important"][style*="position: fixed !important"][style*="bottom: 20px !important"][style*="right: 20px !important"]',
-    // Tenta pegar o contêiner do GPT Engineer se ele injetar o banner
     'div#gpt-engineer-container div[style*="position: fixed"]',
-    // Adicione aqui quaisquer novos seletores identificados via inspeção
-    // Exemplo: '#lovable-specific-id', '.some-unique-lovable-class'
+    '#lovable-badge' 
   ];
 
-  let removed = false;
   try {
     selectors.forEach(selector => {
       document.querySelectorAll(selector).forEach(el => {
-        if (el.tagName !== 'SCRIPT' && el.id !== 'root' && !el.closest('#root')) {
-          if (el.tagName !== 'BODY' && el.tagName !== 'HTML') {
-            el.remove();
-            removed = true;
-            // console.log("Elemento Lovable removido:", selector, el); 
-          }
+        if (el.tagName === 'SCRIPT' || el.id === 'root' || el.closest('#root') || el.tagName === 'BODY' || el.tagName === 'HTML') {
+          return; 
         }
+        
+        if (el.tagName === 'A' && (el as HTMLAnchorElement).href.includes('lovable.dev')) {
+            el.remove();
+            return;
+        }
+
+        if (el.id && el.id.startsWith('lovable-')) {
+            el.remove();
+            return;
+        }
+        
+        el.remove();
       });
     });
   } catch (e) {
     console.warn("Erro ao tentar remover elementos Lovable com seletores:", e);
   }
-
-  // if (removed) {
-  //   console.log("Uma ou mais tentativas de remover elementos da Lovable foram feitas.");
-  // }
 };
 
+const LOVABLE_SELECTORS_FOR_OBSERVER = [
+  'a[id^="lovable-"]',
+  'a[href*="lovable.dev/projects/"][style*="position: fixed"]',
+  '#lovable-badge'
+];
 
 const observeAndRemoveLovableBanner = () => {
-  tryRemoveLovableElements(); // Tentativa inicial
+  tryRemoveLovableElements(); 
 
   if (typeof MutationObserver === 'undefined') {
-    // console.warn("MutationObserver não está disponível. Remoção persistente do banner pode não funcionar.");
     let attempts = 0;
     const intervalId = setInterval(() => {
       tryRemoveLovableElements();
       attempts++;
-      if (attempts > 50) { // Tenta por 5 segundos (50 * 100ms) se não houver MutationObserver
+      if (attempts > 50) { 
         clearInterval(intervalId);
       }
     }, 100);
     return;
   }
 
-  const observer = new MutationObserver((mutationsList, observerInstance) => {
-    // Otimização: apenas executa se houver nós adicionados, para não rodar em cada mínima alteração.
-    let nodesAdded = false;
+  const observer = new MutationObserver((mutationsList) => {
+    let nodesPotentiallyLovableAdded = false;
     for (const mutation of mutationsList) {
       if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        nodesAdded = true;
-        break;
+        mutation.addedNodes.forEach(node => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+                const element = node as Element;
+                if (LOVABLE_SELECTORS_FOR_OBSERVER.some(sel => element.matches(sel)) || 
+                    (element.id && element.id.startsWith('lovable-')) ||
+                    LOVABLE_SELECTORS_FOR_OBSERVER.some(sel => element.querySelector(sel)) ||
+                    element.querySelectorAll('[id^="lovable-"]').length > 0
+                   ) {
+                    nodesPotentiallyLovableAdded = true;
+                }
+            }
+        });
+        if (nodesPotentiallyLovableAdded) break; 
       }
     }
-    if (nodesAdded) {
+    if (nodesPotentiallyLovableAdded) {
       tryRemoveLovableElements();
     }
   });
@@ -90,31 +105,26 @@ const observeAndRemoveLovableBanner = () => {
   const startObserving = () => {
     if (document.body) {
       observer.observe(document.body, { childList: true, subtree: true });
-      // console.log("Lovable banner observer iniciado no document.body.");
     } else {
-      // console.log("document.body ainda não disponível, tentando observar em breve.");
       setTimeout(startObserving, 50);
     }
   };
-
-  // Tenta remover assim que o DOM interativo estiver pronto
+  
   if (document.readyState === 'loading') {
     window.addEventListener('DOMContentLoaded', () => {
       tryRemoveLovableElements(); 
       startObserving();
     });
-  } else { // Se já carregou
+  } else { 
     tryRemoveLovableElements(); 
     startObserving();
   }
 
-  // Tentativas iniciais adicionais para pegar elementos que podem aparecer um pouco depois do DOMContentLoaded
-  // mas antes do MutationObserver estar totalmente ativo ou em casos de scripts que demoram um pouco mais.
   let initialAttempts = 0;
   const initialIntervalId = setInterval(() => {
     tryRemoveLovableElements();
     initialAttempts++;
-    if (initialAttempts > 30) { // Tenta por 3 segundos (30 * 100ms)
+    if (initialAttempts > 30) { 
       clearInterval(initialIntervalId);
     }
   }, 100);
@@ -122,8 +132,6 @@ const observeAndRemoveLovableBanner = () => {
 
 observeAndRemoveLovableBanner();
 
-
-// Mount the app
 const container = document.getElementById("root");
 if (container) {
   const root = createRoot(container);
