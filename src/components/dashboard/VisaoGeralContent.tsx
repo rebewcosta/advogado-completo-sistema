@@ -4,13 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import { format, parseISO, addDays, startOfDay } from 'date-fns';
+import { format, parseISO, addDays, startOfDay, endOfDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { CalendarClock, AlertTriangle, ListChecks, ActivityIcon, Briefcase, Users } from 'lucide-react';
+import { CalendarClock, AlertTriangle, ListChecks, ActivityIcon, Briefcase, Users, Calendar } from 'lucide-react';
 import StatsCards from './StatsCards'; // Importado aqui
 import { Spinner } from '@/components/ui/spinner';
+import { Badge } from '@/components/ui/badge';
 
 type ProximoEvento = {
   id: string;
