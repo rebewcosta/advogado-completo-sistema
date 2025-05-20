@@ -79,7 +79,7 @@ const RecuperarSenhaPage = () => {
     // Apenas mostra uma mensagem de instrução
     toast({
       title: "Instruções enviadas",
-      description: "Entre em contato com o suporte através do email suporte@jusgestao.com com seu nome e email cadastrado.",
+      description: "Entre em contato com o suporte através do email suporte@sisjusgestao.com.br com seu nome e email cadastrado.",
     });
   };
 
