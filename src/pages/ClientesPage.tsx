@@ -125,46 +125,37 @@ const ClientesPage = () => {
       status_cliente: formDataFromForm.status_cliente || 'Ativo',
     };
 
-    let operationSuccessful = false;
-    let errorHandledSpecifically = false; // Nova flag
-
     try {
-      let responseError: any = null;
       let responseData: Cliente | null = null;
+      let responseError: any = null; // Para capturar o erro da chamada do Supabase
 
       if (isEditing && selectedClient) {
-        const response = await supabase
+        const { data, error } = await supabase
           .from('clientes')
           .update(dadosParaSupabase)
           .eq('id', selectedClient.id)
           .eq('user_id', user.id)
           .select()
           .single();
-        responseData = response.data;
-        responseError = response.error;
+        responseData = data;
+        responseError = error;
       } else {
-        const response = await supabase
+        const { data, error } = await supabase
           .from('clientes')
           .insert([{ ...dadosParaSupabase, user_id: user.id }])
           .select()
           .single();
-        responseData = response.data;
-        responseError = response.error;
+        responseData = data;
+        responseError = error;
       }
 
       if (responseError) {
-        if (responseError.code === '23505' && responseError.message.includes('clientes_cpf_cnpj_key')) {
-          toast({
-              title: isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente",
-              description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
-              variant: "destructive",
-          });
-          errorHandledSpecifically = true; // Marca que o erro específico foi tratado
-        } else {
-          // Para outros erros do Supabase, relança para o catch genérico
-          throw responseError;
-        }
-      } else if (responseData) { // Sucesso
+        // O erro agora virá com a mensagem do trigger (se for duplicidade) ou outra mensagem do Supabase
+        throw responseError; // Relança para ser pego pelo catch
+      }
+
+      // Se chegou aqui, a operação foi bem-sucedida
+      if (responseData) {
         if (isEditing) {
           setClients(prevClients => prevClients.map(c => c.id === responseData!.id ? responseData : c));
           toast({ title: "Cliente atualizado!", description: `Os dados de ${responseData.nome} foram atualizados.` });
@@ -172,33 +163,28 @@ const ClientesPage = () => {
           setClients(prevClients => [responseData, ...prevClients].sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")));
           toast({ title: "Cliente cadastrado!", description: `${responseData.nome} foi salvo com sucesso.` });
         }
-        operationSuccessful = true;
-      }
-    } catch (error: any) { 
-      // Este catch SÓ será acionado se o erro foi relançado (ou seja, não era o 23505)
-      // OU se ocorreu um erro de JavaScript antes da chamada ao Supabase.
-      console.error("Erro genérico ao salvar cliente:", error);
-      // Não precisamos mais da verificação 'if (!errorHandledSpecifically)' aqui, 
-      // porque se o erro específico foi tratado, não chegaremos a este catch.
-      toast({
-        title: isEditing ? "Erro ao Atualizar" : "Erro ao Cadastrar",
-        description: error.message || "Ocorreu um erro inesperado.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-      if (operationSuccessful) {
         setShowForm(false);
         setSelectedClient(null);
         setIsEditing(false);
       }
+    } catch (error: any) { 
+      console.error("Erro ao salvar cliente:", error);
+      // O erro.message aqui já deve ser a mensagem personalizada do trigger em caso de duplicidade,
+      // ou a mensagem de erro padrão do Supabase para outros problemas.
+      toast({
+        title: isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente",
+        description: error.message || "Ocorreu um erro inesperado.",
+        variant: "destructive", // Mantém o variant destructive para erros
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // ... (resto do código de ClientesPage.tsx permanece o mesmo que na última versão fornecida) ...
+  // ... (resto do código de ClientesPage.tsx permanece o mesmo) ...
   // handleEditClient, handleViewClient, handleToggleStatus, handleDeleteClient, e o JSX de retorno
 
-  const handleEditClient = (client: Cliente) => {
+ const handleEditClient = (client: Cliente) => {
     const formDataForEdit = {
         nome: client.nome,
         email: client.email || '',
