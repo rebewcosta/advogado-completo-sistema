@@ -1,4 +1,4 @@
-
+// src/components/configuracoes/SegurancaTab.tsx
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Spinner } from '@/components/ui/spinner'; // Mantido caso use em outro lugar
 
 interface SegurancaTabProps {
   securitySettings: {
@@ -31,24 +32,14 @@ interface SegurancaTabProps {
 const SegurancaTab = ({ securitySettings, setSecuritySettings }: SegurancaTabProps) => {
   const { toast } = useToast();
   const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
+    currentPassword: "", // Você pode querer remover este se não estiver usando para validar
     newPassword: "",
     confirmPassword: ""
   });
   const [changingPassword, setChangingPassword] = useState(false);
 
   const handleChangePassword = async () => {
-    // Validações básicas
-    if (!passwordData.currentPassword) {
-      toast({
-        title: "Campo obrigatório",
-        description: "Digite sua senha atual.",
-        variant: "destructive",
-      });
-      return;
-    }
-    
-    if (!passwordData.newPassword) {
+    if (!passwordData.newPassword) { // Removida verificação de currentPassword se não for usada
       toast({
         title: "Campo obrigatório",
         description: "Digite sua nova senha.",
@@ -79,13 +70,13 @@ const SegurancaTab = ({ securitySettings, setSecuritySettings }: SegurancaTabPro
     
     try {
       // Atualizar senha usando a API do Supabase
+      // A API updateUser do Supabase para senha não requer a senha antiga se o usuário já estiver autenticado.
       const { error } = await supabase.auth.updateUser({
         password: passwordData.newPassword
       });
       
       if (error) throw error;
       
-      // Limpar campos de senha
       setPasswordData({
         currentPassword: "",
         newPassword: "",
@@ -126,7 +117,7 @@ const SegurancaTab = ({ securitySettings, setSecuritySettings }: SegurancaTabPro
           <Switch 
             checked={securitySettings.twoFactor}
             onCheckedChange={(checked) => 
-              setSecuritySettings({...securitySettings, twoFactor: checked})
+              setSecuritySettings({...securitySettings, twoFactor: !!checked}) // Garantir boolean
             }
           />
         </div>
@@ -160,7 +151,7 @@ const SegurancaTab = ({ securitySettings, setSecuritySettings }: SegurancaTabPro
           <Switch 
             checked={securitySettings.ipRestriction}
             onCheckedChange={(checked) => 
-              setSecuritySettings({...securitySettings, ipRestriction: checked})
+              setSecuritySettings({...securitySettings, ipRestriction: !!checked}) // Garantir boolean
             }
           />
         </div>
@@ -168,9 +159,10 @@ const SegurancaTab = ({ securitySettings, setSecuritySettings }: SegurancaTabPro
         <Separator />
         
         <div className="space-y-4">
-          <h3 className="text-lg font-medium">Alteração de Senha</h3>
+          <h3 className="text-lg font-medium">Alteração de Senha do Sistema</h3>
           
-          <div className="space-y-2">
+          {/* O campo "Senha atual" foi mantido, mas você pode removê-lo se a lógica de validação não for necessária/implementada */}
+          {/* <div className="space-y-2">
             <Label htmlFor="currentPassword">Senha atual</Label>
             <Input 
               id="currentPassword" 
@@ -179,6 +171,7 @@ const SegurancaTab = ({ securitySettings, setSecuritySettings }: SegurancaTabPro
               onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
             />
           </div>
+          */}
           
           <div className="space-y-2">
             <Label htmlFor="newPassword">Nova senha</Label>
@@ -206,7 +199,7 @@ const SegurancaTab = ({ securitySettings, setSecuritySettings }: SegurancaTabPro
           >
             {changingPassword ? (
               <>
-                <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full"></div>
+                <Spinner size="sm" className="mr-2" /> {/* Usando Spinner importado */}
                 Alterando...
               </>
             ) : (

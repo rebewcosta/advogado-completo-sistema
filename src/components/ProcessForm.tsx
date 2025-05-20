@@ -1,4 +1,4 @@
-
+// src/components/ProcessForm.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +12,15 @@ import {
 } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { X } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, parse, isValid } from 'date-fns';
+import type { Database } from '@/integrations/supabase/types';
 
-interface Process {
-  id: string;
+type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
+
+interface ProcessoFormInput {
   numero: string;
-  cliente: string;
+  cliente_id: string | null;
+  nome_cliente_text?: string;
   tipo: string;
   vara: string;
   status: 'Em andamento' | 'Concluído' | 'Suspenso';
@@ -25,73 +28,105 @@ interface Process {
 }
 
 interface ProcessFormProps {
-  onSave: (data: Omit<Process, "id">) => void;
+  onSave: (data: ProcessoFormInput) => void;
   onCancel: () => void;
-  process: Process | null;
+  processoParaEditar?: Partial<ProcessoFormInput> & { id?: string , cliente?: any};
   isEdit: boolean;
+  clientesDoUsuario: ClienteParaSelect[] | undefined;
+  isLoadingClientes?: boolean;
 }
 
-const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, isEdit }) => {
-  const [numero, setNumero] = useState(process?.numero || "");
-  const [cliente, setCliente] = useState(process?.cliente || "");
-  const [tipo, setTipo] = useState(process?.tipo || "");
-  const [vara, setVara] = useState(process?.vara || "");
-  const [status, setStatus] = useState<'Em andamento' | 'Concluído' | 'Suspenso'>(process?.status || "Em andamento");
-  const [prazoDate, setPrazoDate] = useState<Date | undefined>(
-    process?.prazo ? new Date(process.prazo) : undefined
-  );
-  const [clienteOptions, setClienteOptions] = useState<string[]>([]);
+const ProcessForm: React.FC<ProcessFormProps> = ({
+  onSave,
+  onCancel,
+  processoParaEditar,
+  isEdit,
+  clientesDoUsuario = [], // Valor padrão como array vazio
+  isLoadingClientes = false
+}) => {
+  const [numero, setNumero] = useState("");
+  const [clienteIdSelecionado, setClienteIdSelecionado] = useState<string | null>(null);
+  const [tipo, setTipo] = useState("Cível");
+  const [vara, setVara] = useState("");
+  const [status, setStatus] = useState<'Em andamento' | 'Concluído' | 'Suspenso'>("Em andamento");
+  const [prazoDate, setPrazoDate] = useState<Date | undefined>(undefined);
 
-  // Carregar clientes do localStorage
+  console.log("ProcessForm: Props no início - clientesDoUsuario:", clientesDoUsuario, "isLoadingClientes:", isLoadingClientes, "processoParaEditar:", processoParaEditar, "isEdit:", isEdit);
+
+  const stringToDate = (dateString?: string): Date | undefined => {
+    if (!dateString || dateString.trim() === "") return undefined;
+    let parsedDate = parse(dateString, 'dd/MM/yyyy', new Date());
+    if (isValid(parsedDate)) return parsedDate;
+    parsedDate = parse(dateString, 'yyyy-MM-dd', new Date());
+    return isValid(parsedDate) ? parsedDate : undefined;
+  };
+
+  const dateToString = (date?: Date): string => {
+    if (!date) return "";
+    return format(date, 'dd/MM/yyyy');
+  };
+
   useEffect(() => {
-    const savedClients = localStorage.getItem('clients');
-    if (savedClients) {
-      try {
-        const clients = JSON.parse(savedClients);
-        const clientNames = clients.map((client: any) => client.nome);
-        setClienteOptions(clientNames);
-        console.log("Clientes carregados:", clientNames.length);
-      } catch (error) {
-        console.error("Erro ao carregar clientes:", error);
-      }
+    console.log("ProcessForm useEffect [processoParaEditar, isEdit] - processoParaEditar:", processoParaEditar, "isEdit:", isEdit);
+    if (isEdit && processoParaEditar) {
+      setNumero(processoParaEditar.numero || "");
+      setClienteIdSelecionado(processoParaEditar.cliente_id || null);
+      setTipo(processoParaEditar.tipo || "Cível");
+      setVara(processoParaEditar.vara || "");
+      setStatus(processoParaEditar.status || "Em andamento");
+      setPrazoDate(stringToDate(processoParaEditar.prazo));
+      console.log("ProcessForm useEffect - Formulário populado para edição. clienteIdSelecionado:", processoParaEditar.cliente_id || null);
     } else {
-      console.log("Nenhum cliente encontrado no localStorage");
+      console.log("ProcessForm useEffect - Resetando formulário para novo processo.");
+      setNumero("");
+      setClienteIdSelecionado(null);
+      setTipo("Cível");
+      setVara("");
+      setStatus("Em andamento");
+      setPrazoDate(undefined);
     }
-  }, []);
+  }, [processoParaEditar, isEdit]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with data:", { numero, cliente, tipo, vara, status, prazoDate });
-    
-    const processData = {
+    if (!numero || !tipo || !status) {
+        alert("Por favor, preencha os campos obrigatórios: Número do Processo, Tipo e Status.");
+        return;
+    }
+
+    const selectedClienteObj = Array.isArray(clientesDoUsuario) ? clientesDoUsuario.find(c => c.id === clienteIdSelecionado) : undefined;
+
+    const processData: ProcessoFormInput = {
       numero,
-      cliente,
+      cliente_id: clienteIdSelecionado,
+      nome_cliente_text: clienteIdSelecionado && selectedClienteObj ? selectedClienteObj.nome : (clienteIdSelecionado === null ? undefined : 'Cliente não encontrado'),
       tipo,
       vara,
       status,
-      prazo: prazoDate ? format(prazoDate, 'dd/MM/yyyy') : ""
+      prazo: prazoDate ? dateToString(prazoDate) : "",
     };
-    
+    console.log("ProcessForm handleSubmit, enviando processData:", processData);
     onSave(processData);
   };
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">{isEdit ? "Editar Processo" : "Novo Processo"}</h2>
-        <Button 
-          variant="ghost" 
-          size="sm" 
+        <h2 className="text-xl md:text-2xl font-bold">{isEdit ? "Editar Processo" : "Novo Processo"}</h2>
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onCancel}
+          className="-mr-2 -mt-2 md:mr-0 md:mt-0"
         >
           <X className="h-5 w-5" />
         </Button>
       </div>
-      
+
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div>
-            <Label htmlFor="numero">Número do Processo</Label>
+            <Label htmlFor="numero">Número do Processo <span className="text-red-500">*</span></Label>
             <Input
               id="numero"
               value={numero}
@@ -101,27 +136,37 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
               required
             />
           </div>
-          
+
           <div>
-            <Label htmlFor="cliente">Cliente</Label>
-            <Select value={cliente} onValueChange={setCliente} required>
-              <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Selecione o cliente" />
+            <Label htmlFor="cliente_id">Cliente</Label>
+            {console.log("ProcessForm: Renderizando Select de Clientes - isLoadingClientes:", isLoadingClientes, "clientesDoUsuario (tipo):", typeof clientesDoUsuario, "clientesDoUsuario (valor):", clientesDoUsuario)}
+            <Select
+              value={clienteIdSelecionado || ""}
+              onValueChange={(value) => setClienteIdSelecionado(value === "" ? null : value)}
+            >
+              <SelectTrigger className="mt-1" disabled={isLoadingClientes}>
+                <SelectValue placeholder={isLoadingClientes ? "Carregando clientes..." : "Selecione o cliente"} />
               </SelectTrigger>
               <SelectContent>
-                {clienteOptions.length > 0 ? (
-                  clienteOptions.map((nome, index) => (
-                    <SelectItem key={index} value={nome}>{nome}</SelectItem>
-                  ))
+                {isLoadingClientes ? (
+                  <SelectItem value="loading" disabled>Carregando...</SelectItem>
                 ) : (
-                  <SelectItem value="no_clients_available" disabled>Nenhum cliente cadastrado</SelectItem>
+                  Array.isArray(clientesDoUsuario) && clientesDoUsuario.length > 0 ? (
+                    clientesDoUsuario.map((cliente) => (
+                      <SelectItem key={cliente.id} value={cliente.id}>{cliente.nome}</SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="no_clients_available" disabled>Nenhum cliente cadastrado</SelectItem>
+                  )
                 )}
               </SelectContent>
             </Select>
+            {clienteIdSelecionado === null && !isLoadingClientes && (!clientesDoUsuario || clientesDoUsuario.length === 0) && <p className="text-xs text-gray-500 mt-1">Cadastre clientes na aba "Clientes" para selecioná-los aqui.</p>}
+            {clienteIdSelecionado === null && !isLoadingClientes && clientesDoUsuario && clientesDoUsuario.length > 0 && <p className="text-xs text-gray-500 mt-1">Ou prossiga sem selecionar um cliente formal.</p>}
           </div>
-          
+
           <div>
-            <Label htmlFor="tipo">Tipo de Processo</Label>
+            <Label htmlFor="tipo">Tipo de Processo <span className="text-red-500">*</span></Label>
             <Select value={tipo} onValueChange={setTipo} required>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Selecione o tipo" />
@@ -134,10 +179,11 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
                 <SelectItem value="Família">Família</SelectItem>
                 <SelectItem value="Empresarial">Empresarial</SelectItem>
                 <SelectItem value="Administrativo">Administrativo</SelectItem>
+                <SelectItem value="Outro">Outro</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label htmlFor="vara">Vara ou Tribunal</Label>
             <Input
@@ -146,12 +192,11 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
               onChange={(e) => setVara(e.target.value)}
               placeholder="Ex: 2ª Vara Cível"
               className="mt-1"
-              required
             />
           </div>
-          
+
           <div>
-            <Label htmlFor="status">Status</Label>
+            <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
             <Select value={status} onValueChange={(value: 'Em andamento' | 'Concluído' | 'Suspenso') => setStatus(value)} required>
               <SelectTrigger className="mt-1">
                 <SelectValue placeholder="Selecione o status" />
@@ -163,21 +208,21 @@ const ProcessForm: React.FC<ProcessFormProps> = ({ onSave, onCancel, process, is
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label htmlFor="prazo">Próximo Prazo</Label>
-            <DatePicker 
+            <DatePicker
               date={prazoDate}
               setDate={setPrazoDate}
-              className="mt-1"
+              className="mt-1 w-full"
             />
           </div>
         </div>
-        
+
         <div className="flex justify-end space-x-3 mt-8">
-          <Button 
-            variant="outline" 
-            type="button" 
+          <Button
+            variant="outline"
+            type="button"
             onClick={onCancel}
           >
             Cancelar

@@ -1,19 +1,17 @@
-
-import React, { useState, useEffect } from 'react';
+// src/pages/RelatoriosPage.tsx
+import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
-import { 
-  BarChart2,
-  Download,
+import {
+  Info,
   FileText,
-  Calendar,
-  Filter,
-  ArrowRight,
   Users,
-  DollarSign,
   Clock,
-  Info
+  // Download, // Removido pois não haverá botão de download por enquanto
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
+import type { Database } from '@/integrations/supabase/types';
 import {
   BarChart,
   Bar,
@@ -28,562 +26,287 @@ import {
   Cell
 } from 'recharts';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button"; // Mantido para os botões de período
+import { Spinner } from '@/components/ui/spinner';
+import { format, subDays, subMonths, subYears, parseISO } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+type MonthlyData = { month: string, receitas: number, despesas: number, saldo?: number };
+type ChartNameValueData = { name: string, value: number };
 
-// Função para filtrar dados por período
-const filterDataByPeriod = (data: any[], period: string) => {
-  const now = new Date();
-  let startDate: Date;
-
-  switch(period) {
-    case '30days':
-      startDate = new Date(now.setDate(now.getDate() - 30));
-      break;
-    case '3months':
-      startDate = new Date(now.setMonth(now.getMonth() - 3));
-      break;
-    case '6months':
-      startDate = new Date(now.setMonth(now.getMonth() - 6));
-      break;
-    case '1year':
-      startDate = new Date(now.setFullYear(now.getFullYear() - 1));
-      break;
-    default:
-      startDate = new Date(now.setMonth(now.getMonth() - 6)); // Default to 6 months
-  }
-
-  return data.filter(item => new Date(item.created_at || item.data || Date.now()) >= startDate);
-};
-
-// Função para gerar dados financeiros a partir do localStorage
-const generateFinancialData = (period: string) => {
-  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-  const financeData = localStorage.getItem('financialData') ? 
-    JSON.parse(localStorage.getItem('financialData') || '[]') : 
-    [];
-  
-  const filteredData = filterDataByPeriod(financeData, period);
-  
-  // Agrupar por mês
-  const monthlyData = months.map(month => {
-    const monthData = filteredData.filter((item: any) => {
-      const date = new Date(item.data);
-      return months[date.getMonth()] === month;
-    });
-    
-    const receitas = monthData
-      .filter((item: any) => item.tipo === 'receita')
-      .reduce((acc: number, curr: any) => acc + parseFloat(curr.valor || 0), 0);
-      
-    const despesas = monthData
-      .filter((item: any) => item.tipo === 'despesa')
-      .reduce((acc: number, curr: any) => acc + parseFloat(curr.valor || 0), 0);
-    
-    return { month, receitas, despesas };
-  });
-
-  return monthlyData;
-};
-
-// Função para gerar dados de processos
-const generateProcessData = () => {
-  const processes = localStorage.getItem('processes') ? 
-    JSON.parse(localStorage.getItem('processes') || '[]') : 
-    [];
-  
-  if (processes.length === 0) {
-    return [{ name: 'Sem dados', value: 1 }];
-  }
-
-  // Agrupar por tipo
-  const typeCount: Record<string, number> = {};
-  processes.forEach((process: any) => {
-    const type = process.tipo || 'Não especificado';
-    typeCount[type] = (typeCount[type] || 0) + 1;
-  });
-  
-  return Object.keys(typeCount).map(type => ({
-    name: type,
-    value: typeCount[type]
-  }));
-};
-
-// Função para gerar dados de clientes
-const generateClientData = () => {
-  const clients = localStorage.getItem('clients') ? 
-    JSON.parse(localStorage.getItem('clients') || '[]') : 
-    [];
-  
-  if (clients.length === 0) {
-    return [{ name: 'Sem dados', value: 1 }];
-  }
-
-  // Agrupar por tipo
-  const typeCount: Record<string, number> = {};
-  clients.forEach((client: any) => {
-    const type = client.tipo || 'Não especificado';
-    typeCount[type] = (typeCount[type] || 0) + 1;
-  });
-  
-  return Object.keys(typeCount).map(type => ({
-    name: type,
-    value: typeCount[type]
-  }));
-};
-
-// Função para gerar dados de status de processos
-const generateStatusData = () => {
-  const processes = localStorage.getItem('processes') ? 
-    JSON.parse(localStorage.getItem('processes') || '[]') : 
-    [];
-  
-  if (processes.length === 0) {
-    return [{ name: 'Sem dados', value: 1 }];
-  }
-
-  // Agrupar por status
-  const statusCount: Record<string, number> = {};
-  processes.forEach((process: any) => {
-    const status = process.status || 'Não especificado';
-    statusCount[status] = (statusCount[status] || 0) + 1;
-  });
-  
-  return Object.keys(statusCount).map(status => ({
-    name: status,
-    value: statusCount[status]
-  }));
-};
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#DD60AE', '#8A2BE2', '#FF6347'];
+type FinancialPeriodOption = '15days' | '30days' | '3months' | '6months' | '1year';
 
 const RelatoriosPage = () => {
-  const [period, setPeriod] = useState('6months');
-  const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
   const { toast } = useToast();
-  
-  // Estados para os dados
-  const [financialData, setFinancialData] = useState<any[]>([]);
-  const [processData, setProcessData] = useState<any[]>([]);
-  const [clientData, setClientData] = useState<any[]>([]);
-  const [statusData, setStatusData] = useState<any[]>([]);
-  const [clientCount, setClientCount] = useState(0);
-  const [processCount, setProcessCount] = useState(0);
-  const [eventCount, setEventCount] = useState(0);
+  const [financialChartPeriod, setFinancialChartPeriod] = useState<FinancialPeriodOption>('30days');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingFinancialChart, setIsLoadingFinancialChart] = useState(false);
 
-  // Carregar dados ao iniciar e quando o período mudar
-  useEffect(() => {
-    setIsLoading(true);
-    
-    // Simular carregamento
-    setTimeout(() => {
-      // Atualizar dados com base no período selecionado
-      setFinancialData(generateFinancialData(period));
-      setProcessData(generateProcessData());
-      setClientData(generateClientData());
-      setStatusData(generateStatusData());
-      
-      // Contar clientes, processos e eventos
-      const clients = localStorage.getItem('clients') ? 
-        JSON.parse(localStorage.getItem('clients') || '[]') : 
-        [];
-      
-      const processes = localStorage.getItem('processes') ? 
-        JSON.parse(localStorage.getItem('processes') || '[]') : 
-        [];
-        
-      const events = localStorage.getItem('events') ? 
-        JSON.parse(localStorage.getItem('events') || '[]') : 
-        [];
-      
-      setClientCount(clients.length);
-      setProcessCount(processes.length);
-      setEventCount(events.length);
-      
-      setIsLoading(false);
-    }, 800);
-  }, [period]);
-  
-  const handleDownloadReport = (reportType: string) => {
-    // Gerar dados do relatório
-    let reportData: any = {};
-    
-    switch(reportType) {
-      case 'financeiro':
-      case 'financeiro completo':
-        reportData = financialData;
-        break;
-      case 'processos':
-      case 'processos completo':
-        reportData = processData;
-        break;
-      case 'clientes':
-      case 'clientes completo':
-        reportData = clientData;
-        break;
-      case 'status':
-        reportData = statusData;
-        break;
-      case 'agenda':
-        reportData = localStorage.getItem('events') ? 
-          JSON.parse(localStorage.getItem('events') || '[]') : 
-          [];
-        break;
-      default:
-        reportData = { message: 'Relatório personalizado' };
+  const [financialChartData, setFinancialChartData] = useState<MonthlyData[]>([]);
+  const [processTypeData, setProcessTypeData] = useState<ChartNameValueData[]>([]);
+  const [clientTypeData, setClientTypeData] = useState<ChartNameValueData[]>([]);
+  const [processStatusData, setProcessStatusData] = useState<ChartNameValueData[]>([]);
+  const [activeProcessCount, setActiveProcessCount] = useState(0);
+  const [totalClientCount, setTotalClientCount] = useState(0);
+  const [scheduledEventCount, setScheduledEventCount] = useState(0);
+
+  const getPeriodRange = useCallback((periodKey: FinancialPeriodOption | string) => {
+    const now = new Date();
+    let startDate: Date;
+    switch (periodKey) {
+      case '15days': startDate = subDays(now, 14); break;
+      case '30days': startDate = subDays(now, 29); break;
+      case '3months': startDate = subMonths(now, 3); break;
+      case '1year': startDate = subYears(now, 1); break;
+      case '6months': default: startDate = subMonths(now, 6); break;
     }
-    
-    // Converter para CSV ou JSON
-    const filename = `relatorio-${reportType}-${new Date().toISOString().split('T')[0]}.json`;
-    const jsonStr = JSON.stringify(reportData, null, 2);
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(jsonStr);
-    
-    // Criar elemento para download
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", filename);
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-    
-    toast({
-      title: "Relatório gerado",
-      description: `O relatório ${reportType} foi baixado com sucesso.`,
-    });
-  };
+    return { startDate, endDate: now };
+  }, []);
 
-  // Dados para gráficos vazios
-  const emptyFinancialData = [
-    { month: 'Jan', receitas: 0, despesas: 0 },
-    { month: 'Fev', receitas: 0, despesas: 0 },
-    { month: 'Mar', receitas: 0, despesas: 0 },
-    { month: 'Abr', receitas: 0, despesas: 0 },
-    { month: 'Mai', receitas: 0, despesas: 0 },
-    { month: 'Jun', receitas: 0, despesas: 0 },
-  ];
+  const fetchFinancialData = useCallback(async (period: FinancialPeriodOption) => {
+    if (!user) return;
+    setIsLoadingFinancialChart(true);
+    const { startDate, endDate } = getPeriodRange(period);
+    const queryStartDate = format(startDate, 'yyyy-MM-dd');
+    const queryEndDate = format(endDate, 'yyyy-MM-dd');
+    try {
+      const { data: transacoes, error: transError } = await supabase
+        .from('transacoes_financeiras')
+        .select('tipo_transacao, valor, data_transacao')
+        .eq('user_id', user.id)
+        .gte('data_transacao', queryStartDate)
+        .lte('data_transacao', queryEndDate);
+      if (transError) throw transError;
+      const monthlyData: { [key: string]: MonthlyData } = {};
+      const monthYearFormatter = (date: Date): string => format(date, 'MMM/yy', { locale: ptBR });
+      (transacoes || []).forEach(t => {
+        if (!t.data_transacao) return;
+        const transactionDate = parseISO(t.data_transacao);
+        const monthKey = monthYearFormatter(transactionDate);
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { month: monthKey, receitas: 0, despesas: 0, saldo: 0 };
+        }
+        if (t.tipo_transacao === 'Receita') {
+          monthlyData[monthKey].receitas += Number(t.valor);
+        } else if (t.tipo_transacao === 'Despesa') {
+          monthlyData[monthKey].despesas += Number(t.valor);
+        }
+        monthlyData[monthKey].saldo = monthlyData[monthKey].receitas - monthlyData[monthKey].despesas;
+      });
+      const sortedData = Object.values(monthlyData).sort((a,b) => {
+        const [m1str, y1str] = a.month.split('/');
+        const [m2str, y2str] = b.month.split('/');
+        const d1 = new Date(Number('20'+y1str), ptBR.match.months?.findIndex( (m:any) => m.test(m1str)) || 0);
+        const d2 = new Date(Number('20'+y2str), ptBR.match.months?.findIndex( (m:any) => m.test(m2str)) || 0);
+        return d1.getTime() - d2.getTime();
+      });
+      setFinancialChartData(sortedData);
+    } catch (error: any) {
+      toast({ title: "Erro ao carregar dados financeiros", description: error.message, variant: "destructive" });
+      setFinancialChartData([]);
+    } finally {
+      setIsLoadingFinancialChart(false);
+    }
+  }, [user, toast, getPeriodRange]);
+
+  const fetchSummaryAndOtherChartsData = useCallback(async () => {
+    if (!user) return;
+    try {
+      const { data: processos, error: procError } = await supabase
+        .from('processos')
+        .select('tipo_processo, status_processo')
+        .eq('user_id', user.id);
+      if (procError) throw procError;
+      const typeCount: Record<string, number> = {};
+      const statusCount: Record<string, number> = {};
+      let currentActiveProcesses = 0;
+      (processos || []).forEach(p => {
+        const type = p.tipo_processo || 'Não especificado';
+        typeCount[type] = (typeCount[type] || 0) + 1;
+        const status = p.status_processo || 'Não especificado';
+        statusCount[status] = (statusCount[status] || 0) + 1;
+        if (p.status_processo === 'Em andamento') currentActiveProcesses++;
+      });
+      setProcessTypeData(Object.entries(typeCount).map(([name, value]) => ({ name, value })));
+      setProcessStatusData(Object.entries(statusCount).map(([name, value]) => ({ name, value })));
+      setActiveProcessCount(currentActiveProcesses);
+
+      const { data: clientes, error: cliError, count: totalClientes } = await supabase
+        .from('clientes')
+        .select('tipo_cliente', {count: 'exact'})
+        .eq('user_id', user.id);
+      if (cliError) throw cliError;
+      const clientTypeCount: Record<string, number> = {};
+      (clientes || []).forEach(c => {
+        const type = c.tipo_cliente || 'Não especificado';
+        clientTypeCount[type] = (clientTypeCount[type] || 0) + 1;
+      });
+      setClientTypeData(Object.entries(clientTypeCount).map(([name, value]) => ({ name, value })));
+      setTotalClientCount(totalClientes || 0);
+
+      const today = format(new Date(), 'yyyy-MM-dd');
+      const thirtyDaysFromNow = format(subDays(new Date(), -30), 'yyyy-MM-dd');
+      const { error: eventosError, count: eventosCount } = await supabase
+        .from('agenda_eventos')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .gte('data_hora_inicio', today + 'T00:00:00Z')
+        .lte('data_hora_inicio', thirtyDaysFromNow + 'T23:59:59Z');
+      if (eventosError) throw eventosError;
+      setScheduledEventCount(eventosCount || 0);
+    } catch (error: any) {
+      toast({ title: "Erro ao carregar dados sumários", description: error.message, variant: "destructive" });
+    }
+  }, [user, toast]);
+
+  useEffect(() => {
+    if (user) {
+      setIsLoading(true);
+      fetchFinancialData(financialChartPeriod);
+      fetchSummaryAndOtherChartsData().finally(() => setIsLoading(false));
+    } else {
+      setIsLoading(false);
+      setFinancialChartData([]); setProcessTypeData([]); setClientTypeData([]); setProcessStatusData([]);
+      setActiveProcessCount(0); setTotalClientCount(0); setScheduledEventCount(0);
+    }
+  }, [user, financialChartPeriod, fetchFinancialData, fetchSummaryAndOtherChartsData]);
+
+  // Função de download removida/simplificada para não exportar
+  // const handleDownloadReport = (reportType: string, dataToExport?: any[], title?: string) => {
+  //   console.log("Tentativa de exportar relatório (desabilitado):", reportType, dataToExport, title);
+  //   toast({ title: "Exportação desabilitada", description: "A funcionalidade de exportar relatórios está temporariamente desabilitada." });
+  // };
 
   const emptyData = [{ name: 'Sem dados', value: 1 }];
-
-  // Calcular novos registros no último período
-  const newClients = clientCount > 0 ? 
-    `${clientCount} cliente${clientCount > 1 ? 's' : ''} cadastrado${clientCount > 1 ? 's' : ''}` : 
-    "Nenhum cliente cadastrado";
-    
-  const newProcesses = processCount > 0 ? 
-    `${processCount} processo${processCount > 1 ? 's' : ''} cadastrado${processCount > 1 ? 's' : ''}` : 
-    "Nenhum processo cadastrado";
-    
-  const newEvents = eventCount > 0 ? 
-    `${eventCount} compromisso${eventCount > 1 ? 's' : ''} agendado${eventCount > 1 ? 's' : ''}` : 
-    "Nenhum compromisso agendado";
+  const periodOptions: { label: string; value: FinancialPeriodOption }[] = [
+    { label: '15d', value: '15days' }, { label: '30d', value: '30days' },
+    { label: '3m', value: '3months' }, { label: '6m', value: '6months' },
+    { label: '1a', value: '1year' },
+  ];
 
   return (
     <AdminLayout>
-      <main className="py-8 px-6">
-        <div className="flex justify-between items-center mb-6">
+      <main className="py-8 px-4 md:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-3">
           <div>
-            <h1 className="text-2xl font-bold">Relatórios</h1>
-            <p className="text-gray-600">Visualize e exporte dados reais sobre seu escritório</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-500">Período:</span>
-            <select 
-              className="border rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-              value={period}
-              onChange={(e) => setPeriod(e.target.value)}
-            >
-              <option value="30days">Últimos 30 dias</option>
-              <option value="3months">Últimos 3 meses</option>
-              <option value="6months">Últimos 6 meses</option>
-              <option value="1year">Último ano</option>
-              <option value="custom">Personalizado</option>
-            </select>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Relatórios</h1>
+            <p className="text-gray-600">Visualize dados sobre seu escritório</p> {/* Alterado */}
           </div>
         </div>
-        
-        <Alert className="mb-6 bg-blue-50 border-blue-100">
-          <Info className="h-4 w-4 text-blue-800" />
-          <AlertDescription className="text-blue-800">
-            Os relatórios abaixo são gerados com base nos dados reais cadastrados no sistema. À medida que você adiciona clientes, processos e eventos financeiros, os gráficos são atualizados automaticamente.
+
+        <Alert className="mb-6 bg-blue-50 border-blue-200 text-blue-800">
+          <Info className="h-5 w-5" />
+          <AlertDescription>
+            Os relatórios abaixo são gerados com base nos dados reais cadastrados no Supabase.
           </AlertDescription>
         </Alert>
-        
-        {isLoading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-lawyer-primary"></div>
+
+        {isLoading && financialChartData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-96">
+            <Spinner size="lg" />
+            <p className="mt-3 text-gray-500">Carregando dados dos relatórios...</p>
           </div>
         ) : (
           <>
-            {/* Dashboard Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center mb-4">
-                  <div className="bg-blue-100 p-3 rounded-full mr-4">
-                    <FileText className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Processos Ativos</h3>
-                    <p className="text-3xl font-bold">{processCount}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500">{newProcesses}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
+              <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+                <div className="flex items-center mb-3"><div className="bg-blue-100 p-2.5 rounded-full mr-3"><FileText className="h-5 w-5 text-blue-600" /></div><div><h3 className="font-semibold text-gray-700">Processos Ativos</h3><p className="text-2xl font-bold">{activeProcessCount}</p></div></div>
               </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center mb-4">
-                  <div className="bg-green-100 p-3 rounded-full mr-4">
-                    <Users className="h-6 w-6 text-green-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Total de Clientes</h3>
-                    <p className="text-3xl font-bold">{clientCount}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500">{newClients}</p>
+              <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+                <div className="flex items-center mb-3"><div className="bg-green-100 p-2.5 rounded-full mr-3"><Users className="h-5 w-5 text-green-600" /></div><div><h3 className="font-semibold text-gray-700">Total de Clientes</h3><p className="text-2xl font-bold">{totalClientCount}</p></div></div>
               </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center mb-4">
-                  <div className="bg-yellow-100 p-3 rounded-full mr-4">
-                    <Clock className="h-6 w-6 text-yellow-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Compromissos Agendados</h3>
-                    <p className="text-3xl font-bold">{eventCount}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500">{newEvents}</p>
+              <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+                <div className="flex items-center mb-3"><div className="bg-yellow-100 p-2.5 rounded-full mr-3"><Clock className="h-5 w-5 text-yellow-600" /></div><div><h3 className="font-semibold text-gray-700">Eventos (Próx. 30d)</h3><p className="text-2xl font-bold">{scheduledEventCount}</p></div></div>
               </div>
             </div>
-            
-            {/* Charts */}
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-              <div className="bg-white rounded-lg shadow-md p-6 h-96">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Receitas x Despesas</h3>
-                  <button 
-                    onClick={() => handleDownloadReport('financeiro')}
-                    className="text-sm text-lawyer-primary hover:underline flex items-center gap-1"
-                  >
-                    <Download className="h-4 w-4" /> Exportar
-                  </button>
+              <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2">
+                  <h3 className="font-semibold text-gray-700 mb-2 sm:mb-0">Receitas x Despesas</h3>
+                  <div className="flex space-x-1">
+                    {periodOptions.map(opt => (
+                      <Button key={opt.value} variant={financialChartPeriod === opt.value ? "default" : "outline"} size="sm" onClick={() => setFinancialChartPeriod(opt.value)}
+                        className={cn("text-xs px-2 py-1 h-auto", financialChartPeriod === opt.value ? "bg-lawyer-primary text-white hover:bg-lawyer-primary/90" : "border-gray-300 text-gray-600 hover:bg-gray-100")}>
+                        {opt.label}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-                <ResponsiveContainer width="100%" height="85%">
-                  <BarChart data={financialData.length > 0 ? financialData : emptyFinancialData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="month" />
-                    <YAxis />
-                    <RechartsTooltip formatter={(value) => `R$ ${value.toLocaleString('pt-BR')}`} />
-                    <Legend />
-                    <Bar dataKey="receitas" name="Receitas" fill="#4CAF50" />
-                    <Bar dataKey="despesas" name="Despesas" fill="#F44336" />
-                  </BarChart>
-                </ResponsiveContainer>
+                {/* Botão de Exportar Removido */}
+                <div className="flex-grow relative mt-4"> {/* Adicionado mt-4 para espaço */}
+                  {isLoadingFinancialChart && ( <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10"><Spinner /></div> )}
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={financialChartData.length > 0 ? financialChartData : [{ month: 'N/D', receitas: 0, despesas: 0, saldo: 0 }]}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" fontSize={10} />
+                      <YAxis fontSize={10} tickFormatter={(value) => `R$${value / 1000}k`} />
+                      <RechartsTooltip formatter={(value: number, name: string) => [`R$ ${Number(value || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`, name === 'receitas' ? 'Receitas' : name === 'despesas' ? 'Despesas' : 'Saldo']} />
+                      <Legend wrapperStyle={{fontSize: "10px", paddingTop: "10px"}} />
+                      <Bar dataKey="receitas" name="Receitas" fill="#4CAF50" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="despesas" name="Despesas" fill="#F44336" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6 h-96">
+
+              <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Distribuição de Processos</h3>
-                  <button 
-                    onClick={() => handleDownloadReport('processos')}
-                    className="text-sm text-lawyer-primary hover:underline flex items-center gap-1"
-                  >
-                    <Download className="h-4 w-4" /> Exportar
-                  </button>
+                  <h3 className="font-semibold text-gray-700">Distribuição de Processos (Tipo)</h3>
+                   {/* Botão de Exportar Removido */}
                 </div>
-                <div className="h-[85%] flex items-center justify-center">
+                <div className="flex-grow">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie
-                        data={processData.length > 1 ? processData : emptyData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {(processData.length > 1 ? processData : emptyData).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
+                      <Pie data={processTypeData.length > 0 ? processTypeData : emptyData} cx="50%" cy="50%" labelLine={false} outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} >
+                        {(processTypeData.length > 0 ? processTypeData : emptyData).map((_entry, index) => (<Cell key={`cell-proc-${index}`} fill={COLORS[index % COLORS.length]} /> ))}
                       </Pie>
-                      <RechartsTooltip formatter={(value) => `${value} processos`} />
-                      <Legend />
+                      <RechartsTooltip formatter={(value: number) => `${value} processos`} />
+                      <Legend wrapperStyle={{fontSize: "10px"}} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             </div>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Tipos de Cliente</h3>
-                  <button 
-                    onClick={() => handleDownloadReport('clientes')}
-                    className="text-sm text-lawyer-primary hover:underline flex items-center gap-1"
-                  >
-                    <Download className="h-4 w-4" /> Exportar
-                  </button>
-                </div>
-                <div className="h-64 flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={clientData.length > 1 ? clientData : emptyData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {(clientData.length > 1 ? clientData : emptyData).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip formatter={(value) => `${value} clientes`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="font-semibold">Status dos Processos</h3>
-                  <button 
-                    onClick={() => handleDownloadReport('status')}
-                    className="text-sm text-lawyer-primary hover:underline flex items-center gap-1"
-                  >
-                    <Download className="h-4 w-4" /> Exportar
-                  </button>
-                </div>
-                <div className="h-64 flex items-center justify-center">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusData.length > 1 ? statusData : emptyData}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      >
-                        {(statusData.length > 1 ? statusData : emptyData).map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <RechartsTooltip formatter={(value) => `${value} processos`} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
-            
-            {/* Available Reports */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h3 className="font-semibold mb-6">Relatórios Disponíveis</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-blue-100 p-2 rounded-full mr-3">
-                      <FileText className="h-5 w-5 text-blue-600" />
+                <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-gray-700">Tipos de Cliente</h3>
+                        {/* Botão de Exportar Removido */}
                     </div>
-                    <h4 className="font-medium">Relatório de Processos</h4>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">Visão detalhada de todos os processos por tipo, status e prazos.</p>
-                  <button 
-                    onClick={() => handleDownloadReport('processos completo')}
-                    className="text-lawyer-primary hover:underline text-sm flex items-center"
-                  >
-                    Gerar relatório <ArrowRight className="h-4 w-4 ml-1" />
-                  </button>
-                </div>
-                
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-green-100 p-2 rounded-full mr-3">
-                      <DollarSign className="h-5 w-5 text-green-600" />
+                    <div className="flex-grow">
+                      <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                              <Pie data={clientTypeData.length > 0 ? clientTypeData : emptyData} cx="50%" cy="50%" labelLine={false} outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} >
+                              {(clientTypeData.length > 0 ? clientTypeData : emptyData).map((_entry, index) => (<Cell key={`cell-cli-${index}`} fill={COLORS[index % COLORS.length]} /> ))}
+                              </Pie>
+                              <RechartsTooltip formatter={(value: number) => `${value} clientes`} />
+                              <Legend wrapperStyle={{fontSize: "10px"}} />
+                          </PieChart>
+                      </ResponsiveContainer>
                     </div>
-                    <h4 className="font-medium">Relatório Financeiro</h4>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">Análise completa de receitas, despesas e resultados financeiros.</p>
-                  <button 
-                    onClick={() => handleDownloadReport('financeiro completo')}
-                    className="text-lawyer-primary hover:underline text-sm flex items-center"
-                  >
-                    Gerar relatório <ArrowRight className="h-4 w-4 ml-1" />
-                  </button>
                 </div>
-                
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-purple-100 p-2 rounded-full mr-3">
-                      <Users className="h-5 w-5 text-purple-600" />
+                <div className="bg-white rounded-lg shadow-md p-6 h-96 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-semibold text-gray-700">Status dos Processos</h3>
+                        {/* Botão de Exportar Removido */}
                     </div>
-                    <h4 className="font-medium">Relatório de Clientes</h4>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">Informações sobre a base de clientes, novos cadastros e processos por cliente.</p>
-                  <button 
-                    onClick={() => handleDownloadReport('clientes completo')}
-                    className="text-lawyer-primary hover:underline text-sm flex items-center"
-                  >
-                    Gerar relatório <ArrowRight className="h-4 w-4 ml-1" />
-                  </button>
-                </div>
-                
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-yellow-100 p-2 rounded-full mr-3">
-                      <Calendar className="h-5 w-5 text-yellow-600" />
+                    <div className="flex-grow">
+                      <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                              <Pie data={processStatusData.length > 0 ? processStatusData : emptyData} cx="50%" cy="50%" labelLine={false} outerRadius={80} dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} >
+                              {(processStatusData.length > 0 ? processStatusData : emptyData).map((_entry, index) => (<Cell key={`cell-stat-${index}`} fill={COLORS[index % COLORS.length]} /> ))}
+                              </Pie>
+                              <RechartsTooltip formatter={(value: number) => `${value} processos`} />
+                              <Legend wrapperStyle={{fontSize: "10px"}} />
+                          </PieChart>
+                      </ResponsiveContainer>
                     </div>
-                    <h4 className="font-medium">Relatório de Agenda</h4>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">Resumo de compromissos, prazos e atividades agendadas.</p>
-                  <button 
-                    onClick={() => handleDownloadReport('agenda')}
-                    className="text-lawyer-primary hover:underline text-sm flex items-center"
-                  >
-                    Gerar relatório <ArrowRight className="h-4 w-4 ml-1" />
-                  </button>
                 </div>
-                
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-red-100 p-2 rounded-full mr-3">
-                      <Clock className="h-5 w-5 text-red-600" />
-                    </div>
-                    <h4 className="font-medium">Relatório de Produtividade</h4>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">Análise de eficiência, tempos médios e cumprimento de prazos.</p>
-                  <button 
-                    onClick={() => handleDownloadReport('produtividade')}
-                    className="text-lawyer-primary hover:underline text-sm flex items-center"
-                  >
-                    Gerar relatório <ArrowRight className="h-4 w-4 ml-1" />
-                  </button>
-                </div>
-                
-                <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-center mb-3">
-                    <div className="bg-indigo-100 p-2 rounded-full mr-3">
-                      <BarChart2 className="h-5 w-5 text-indigo-600" />
-                    </div>
-                    <h4 className="font-medium">Relatório Personalizado</h4>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-3">Crie um relatório sob medida com as métricas que você precisa.</p>
-                  <button 
-                    onClick={() => handleDownloadReport('personalizado')}
-                    className="text-lawyer-primary hover:underline text-sm flex items-center"
-                  >
-                    Criar relatório <ArrowRight className="h-4 w-4 ml-1" />
-                  </button>
-                </div>
-              </div>
             </div>
           </>
         )}

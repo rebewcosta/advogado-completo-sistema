@@ -1,7 +1,7 @@
-
+// src/pages/FinanceiroPage.tsx
 import React, { useState, useEffect } from 'react';
-import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
+import Navbar from '../components/Navbar'; // Usando Navbar original
+import Footer from '../components/Footer';   // Usando Footer original
 import { 
   Search, 
   Plus, 
@@ -13,16 +13,17 @@ import {
   DollarSign,
   TrendingUp,
   TrendingDown,
-  FileText,
+  FileText, // Mantido como FileText pois era o original
   User,
   Calendar,
   X
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+// Removido AdminLayout e imports relacionados à nova funcionalidade de senha
 
 const FinanceiroPage = () => {
   const [transactions, setTransactions] = useState<any[]>(() => {
-    const savedTransactions = localStorage.getItem('transactions');
+    const savedTransactions = localStorage.getItem('transactions'); // Usando 'transactions' como era originalmente
     return savedTransactions ? JSON.parse(savedTransactions) : [];
   });
   
@@ -31,7 +32,6 @@ const FinanceiroPage = () => {
   const [currentTransaction, setCurrentTransaction] = useState<any>(null);
   const { toast } = useToast();
   
-  // Save transactions to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem('transactions', JSON.stringify(transactions));
   }, [transactions]);
@@ -41,7 +41,6 @@ const FinanceiroPage = () => {
     transaction.cliente?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate totals
   const receitas = transactions
     .filter(t => t.tipo === "Receita")
     .reduce((sum, t) => sum + t.valor, 0);
@@ -62,7 +61,7 @@ const FinanceiroPage = () => {
   };
 
   const handleDeleteTransaction = (id: number) => {
-    if (confirm("Tem certeza que deseja excluir esta transação?")) {
+    if (window.confirm("Tem certeza que deseja excluir esta transação?")) { // Usando window.confirm
       setTransactions(transactions.filter(transaction => transaction.id !== id));
       toast({
         title: "Transação excluída",
@@ -78,7 +77,6 @@ const FinanceiroPage = () => {
     transactionData.valor = parseFloat(transactionData.valor);
     
     if (currentTransaction) {
-      // Update existing transaction
       setTransactions(transactions.map(transaction => 
         transaction.id === currentTransaction.id ? {...transaction, ...transactionData, id: transaction.id} : transaction
       ));
@@ -87,10 +85,9 @@ const FinanceiroPage = () => {
         description: "Os dados da transação foram atualizados com sucesso.",
       });
     } else {
-      // Add new transaction
       setTransactions([...transactions, {
         ...transactionData,
-        id: Date.now() // Use timestamp for unique ID
+        id: Date.now() 
       }]);
       toast({
         title: "Transação adicionada",
@@ -117,14 +114,13 @@ const FinanceiroPage = () => {
                 setCurrentTransaction(null);
                 setIsModalOpen(true);
               }} 
-              className="btn-primary"
+              className="btn-primary" // Mantendo sua classe original
             >
               <Plus className="h-5 w-5 mr-1" />
               Nova Transação
             </button>
           </div>
           
-          {/* Dashboard Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
@@ -294,7 +290,6 @@ const FinanceiroPage = () => {
         </div>
       </main>
       
-      {/* Modal para adicionar/editar transação */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
@@ -339,13 +334,13 @@ const FinanceiroPage = () => {
                 </div>
                 <div>
                   <label htmlFor="descricao" className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                  <input 
+                  <input // Alterado de Input para input (HTML nativo) ou use o componente Input se ele estiver no escopo
                     type="text" 
                     id="descricao" 
                     name="descricao" 
                     defaultValue={currentTransaction?.descricao || ''}
                     required
-                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
+                    className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary" // Adicionei classes de estilização
                   />
                 </div>
                 <div>
@@ -364,7 +359,7 @@ const FinanceiroPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
-                    <select 
+                    <select // Alterado de Select para select (HTML nativo) ou use o componente Select se ele estiver no escopo
                       id="categoria" 
                       name="categoria" 
                       defaultValue={currentTransaction?.categoria || ''}
@@ -424,11 +419,11 @@ const FinanceiroPage = () => {
                     setIsModalOpen(false);
                     setCurrentTransaction(null);
                   }}
-                  className="px-4 py-2 border rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 border rounded-md hover:bg-gray-50" // Mantido como estava
                 >
                   Cancelar
                 </button>
-                <button type="submit" className="btn-primary">
+                <button type="submit" className="btn-primary"> {/* Mantido como estava */}
                   {currentTransaction ? 'Atualizar' : 'Adicionar'}
                 </button>
               </div>
