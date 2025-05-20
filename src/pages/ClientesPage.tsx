@@ -136,19 +136,9 @@ const ClientesPage = () => {
           .select()
           .single();
 
-        if (error) {
-            // Verifica se o erro é de chave duplicada no CPF/CNPJ
-            if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
-                toast({ // Mostra o toast amigável
-                    title: "Erro ao Atualizar Cliente",
-                    description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
-                    variant: "destructive",
-                });
-                // Não relança o erro, apenas impede que a operação seja marcada como bem-sucedida
-            } else {
-                throw error; // Relança outros erros para o catch genérico
-            }
-        } else if (updatedClient) {
+        if (error) throw error; // Relança o erro para ser pego pelo catch
+        
+        if (updatedClient) {
           setClients(prevClients => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
           toast({ title: "Cliente atualizado!", description: `Os dados de ${updatedClient.nome} foram atualizados.` });
           operationSuccessful = true;
@@ -161,18 +151,9 @@ const ClientesPage = () => {
           .select()
           .single();
 
-        if (error) {
-            if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
-                toast({ // Mostra o toast amigável
-                    title: "Erro ao Cadastrar Cliente",
-                    description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
-                    variant: "destructive",
-                });
-                // Não relança o erro, apenas impede que a operação seja marcada como bem-sucedida
-            } else {
-                throw error; // Relança outros erros para o catch genérico
-            }
-        } else if (newClient) {
+        if (error) throw error; // Relança o erro para ser pego pelo catch
+
+        if (newClient) {
           setClients(prevClients => [newClient, ...prevClients].sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")));
           toast({ title: "Cliente cadastrado!", description: `${newClient.nome} foi salvo com sucesso.` });
           operationSuccessful = true;
@@ -186,12 +167,19 @@ const ClientesPage = () => {
       }
 
     } catch (error: any) { 
-      // Este catch agora só pegará erros não tratados acima (ou seja, não o '23505')
-      // ou se o erro de CPF duplicado não foi tratado especificamente acima (improvável com a lógica atual)
-      console.error("Erro genérico ao salvar cliente:", error);
+      console.error("Erro ao salvar cliente:", error);
+      // MODIFICAÇÃO PRINCIPAL AQUI:
+      let toastTitle = isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente";
+      let toastDescription = error.message || "Ocorreu um erro ao salvar os dados do cliente.";
+
+      if (error.code === '23505' && error.message.includes('clientes_cpf_cnpj_key')) {
+        toastDescription = "Já existe um cliente cadastrado com este CPF/CNPJ.";
+        // O título já está apropriado (Erro ao Cadastrar/Atualizar)
+      }
+      
       toast({
-        title: isEditing ? "Erro ao Atualizar" : "Erro ao Cadastrar",
-        description: error.message || "Ocorreu um erro inesperado ao salvar os dados do cliente.",
+        title: toastTitle,
+        description: toastDescription,
         variant: "destructive",
       });
     } finally {
