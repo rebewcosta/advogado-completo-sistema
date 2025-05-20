@@ -125,73 +125,77 @@ const ClientesPage = () => {
     };
 
     let operationSuccessful = false;
-    let errorToShow: { title: string, description: string, variant: "destructive" } | null = null;
 
     try {
-      let errorFromSupabase: any = null;
       if (isEditing && selectedClient) {
-        const response = await supabase
+        const { data: updatedClient, error: updateError } = await supabase
           .from('clientes')
           .update(dadosParaSupabase)
           .eq('id', selectedClient.id)
           .eq('user_id', user.id)
           .select()
           .single();
-        errorFromSupabase = response.error;
-        if (!errorFromSupabase && response.data) {
-          setClients(prevClients => prevClients.map(c => c.id === response.data.id ? response.data : c));
-          toast({ title: "Cliente atualizado!", description: `Os dados de ${response.data.nome} foram atualizados.` });
+
+        if (updateError) {
+            if (updateError.code === '23505' && updateError.message.includes('clientes_cpf_cnpj_key')) {
+                toast({
+                    title: "Erro ao Atualizar Cliente",
+                    description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
+                    variant: "destructive",
+                });
+                // Não relança o erro, pois já foi tratado com um toast específico.
+                // operationSuccessful permanecerá false, impedindo o fechamento do formulário.
+            } else {
+                throw updateError; // Relança outros erros para o catch genérico.
+            }
+        } else if (updatedClient) {
+          setClients(prevClients => prevClients.map(c => c.id === updatedClient.id ? updatedClient : c));
+          toast({ title: "Cliente atualizado!", description: `Os dados de ${updatedClient.nome} foram atualizados.` });
           operationSuccessful = true;
         }
       } else {
-        const response = await supabase
+        // Lógica de inserção
+        const { data: newClient, error: insertError } = await supabase
           .from('clientes')
           .insert([{ ...dadosParaSupabase, user_id: user.id }])
           .select()
           .single();
-        errorFromSupabase = response.error;
-        if (!errorFromSupabase && response.data) {
-          setClients(prevClients => [response.data, ...prevClients].sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")));
-          toast({ title: "Cliente cadastrado!", description: `${response.data.nome} foi salvo com sucesso.` });
+
+        if (insertError) {
+            if (insertError.code === '23505' && insertError.message.includes('clientes_cpf_cnpj_key')) {
+                toast({ 
+                    title: "Erro ao Cadastrar Cliente",
+                    description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
+                    variant: "destructive",
+                });
+                // Não relança o erro. operationSuccessful permanecerá false.
+            } else {
+                throw insertError; 
+            }
+        } else if (newClient) {
+          setClients(prevClients => [newClient, ...prevClients].sort((a, b) => (a.nome ?? "").localeCompare(b.nome ?? "")));
+          toast({ title: "Cliente cadastrado!", description: `${newClient.nome} foi salvo com sucesso.` });
           operationSuccessful = true;
         }
       }
 
-      if (errorFromSupabase) {
-        if (errorFromSupabase.code === '23505' && errorFromSupabase.message.includes('clientes_cpf_cnpj_key')) {
-          errorToShow = {
-              title: isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente",
-              description: "Já existe um cliente cadastrado com este CPF/CNPJ.",
-              variant: "destructive",
-          };
-        } else {
-          // Para outros erros do Supabase, preparamos uma mensagem genérica mas ainda usamos o error.message
-           errorToShow = {
-              title: isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente",
-              description: errorFromSupabase.message || "Ocorreu um erro ao salvar os dados.",
-              variant: "destructive",
-          };
-        }
-      }
-
-    } catch (catchAllError: any) { 
-      // Este catch é para erros inesperados na lógica do JavaScript, não erros do Supabase tratados acima.
-      console.error("Erro inesperado no Javascript ao salvar cliente:", catchAllError);
-      errorToShow = {
-        title: isEditing ? "Erro Inesperado ao Atualizar" : "Erro Inesperado ao Cadastrar",
-        description: "Ocorreu um erro inesperado na aplicação.",
-        variant: "destructive",
-      };
-    } finally {
-      setIsSubmitting(false);
-      if (errorToShow) {
-        toast(errorToShow); // Dispara o toast aqui, APENAS SE errorToShow foi definido.
-      }
       if (operationSuccessful) {
         setShowForm(false);
         setSelectedClient(null);
         setIsEditing(false);
       }
+
+    } catch (error: any) { 
+      // Este catch agora só será acionado para erros que foram explicitamente relançados (throw updateError/insertError)
+      // e que não foram o erro de CPF duplicado (pois esse não é relançado).
+      console.error("Erro genérico ao salvar cliente (não tratado especificamente):", error);
+      toast({
+        title: isEditing ? "Erro ao Atualizar" : "Erro ao Cadastrar",
+        description: error.message || "Ocorreu um erro inesperado.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
