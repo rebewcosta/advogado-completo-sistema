@@ -10,25 +10,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import ClienteForm from '@/components/ClienteForm';
+import ClienteForm from '@/components/ClienteForm'; //
 import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2 } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"; //
 import {
   Dialog,
   DialogContent,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"; //
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
-import AdminLayout from '@/components/AdminLayout';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import type { Database } from '@/integrations/supabase/types';
-import { Spinner } from '@/components/ui/spinner';
+} from "@/components/ui/dropdown-menu"; //
+import { Badge } from "@/components/ui/badge"; //
+import AdminLayout from '@/components/AdminLayout'; //
+import { supabase } from '@/integrations/supabase/client'; //
+import { useAuth } from '@/hooks/useAuth'; //
+import type { Database } from '@/integrations/supabase/types'; //
+import { Spinner } from '@/components/ui/spinner'; //
 
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 type ClienteFormDataFromForm = {
@@ -36,7 +36,7 @@ type ClienteFormDataFromForm = {
   email: string;
   telefone: string;
   tipo: string;
-  cpfCnpj: string;
+  cpfCnpj: string; // Mantém camelCase como vem do formulário
   endereco?: string | null;
   cidade?: string | null;
   estado?: string | null;
@@ -94,7 +94,7 @@ const ClientesPage = () => {
   const filteredClients = clients.filter(client =>
     client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (client.cpf_cnpj && client.cpf_cnpj.toLowerCase().includes(searchTerm.toLowerCase()))
+    (client.cpfCnpj && client.cpfCnpj.toLowerCase().includes(searchTerm.toLowerCase())) // Ajustado para cpfCnpj se essa for a coluna real
   );
 
   const handleAddClient = () => {
@@ -111,12 +111,17 @@ const ClientesPage = () => {
     }
     setIsSubmitting(true);
 
+    // Ajustado para usar 'cpfCnpj' consistentemente se essa for a coluna no DB
+    // E 'tipo_cliente' para o tipo.
+    // É CRUCIAL que as chaves aqui correspondam EXATAMENTE às colunas no seu DB Supabase
+    // Se types.ts diz 'cpf_cnpj', então aqui DEVE ser 'cpf_cnpj'.
+    // Baseado na sua confirmação que no DB é 'cpfCnpj':
     const dadosParaSupabase = {
       nome: formDataFromForm.nome,
       email: formDataFromForm.email,
       telefone: formDataFromForm.telefone,
-      tipo_cliente: formDataFromForm.tipo,
-      cpf_cnpj: formDataFromForm.cpfCnpj,
+      tipo_cliente: formDataFromForm.tipo, // Assumindo que no DB é tipo_cliente
+      cpfCnpj: formDataFromForm.cpfCnpj,   // Usando cpfCnpj como você confirmou
       endereco: formDataFromForm.endereco,
       cidade: formDataFromForm.cidade,
       estado: formDataFromForm.estado,
@@ -131,13 +136,13 @@ const ClientesPage = () => {
       if (isEditing && selectedClient) {
         const { data, error } = await supabase
           .from('clientes')
-          .update(dadosParaSupabase)
+          .update(dadosParaSupabase) // Supabase JS client usa camelCase para colunas se a API estiver configurada para isso ou se for a convenção do JS
           .eq('id', selectedClient.id)
           .eq('user_id', user.id)
           .select()
           .single();
         
-        if (error) throw error; // O erro já virá com a mensagem do trigger, se aplicável
+        if (error) throw error;
         responseData = data;
       } else {
         const { data, error } = await supabase
@@ -146,11 +151,10 @@ const ClientesPage = () => {
           .select()
           .single();
         
-        if (error) throw error; // O erro já virá com a mensagem do trigger, se aplicável
+        if (error) throw error;
         responseData = data;
       }
 
-      // Se chegou aqui, a operação foi bem-sucedida
       if (responseData) {
         if (isEditing) {
           setClients(prevClients => prevClients.map(c => c.id === responseData!.id ? responseData : c));
@@ -164,12 +168,30 @@ const ClientesPage = () => {
         setIsEditing(false);
       }
     } catch (error: any) { 
-      // Agora, error.message já deve conter a mensagem personalizada do trigger
-      // em caso de duplicidade de CPF/CNPJ, ou a mensagem padrão do Supabase para outros erros.
       console.error("Erro ao salvar cliente:", error);
+      let toastTitle = isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente";
+      let toastDescription = error.message || "Ocorreu um erro inesperado.";
+
+      // Se a coluna no DB é 'cpfCnpj' (camelCase) e tem constraint UNIQUE:
+      if (error.message && 
+          error.message.toLowerCase().includes('duplicate key value violates unique constraint') &&
+          (error.message.toLowerCase().includes('cpfnnpj') || // Verifica a coluna `cpfCnpj` (case-insensitive para a string de erro)
+           error.message.toLowerCase().includes('clientes_cpfnnpj'))) { // E também a tabela e coluna (case-insensitive)
+        toastDescription = "Este CPF/CNPJ já está cadastrado. Por favor, verifique os dados.";
+      } else if (error.message && error.message.includes("Could not find the 'cpf_cnpj' column")) {
+        // Este erro (com underscore) indica que o types.ts está correto e o DB tem 'cpf_cnpj'
+        // ou o schema cache está dessincronizado e a API está procurando por 'cpf_cnpj'.
+        toastDescription = "Erro de configuração da tabela 'clientes' (coluna CPF/CNPJ não encontrada como 'cpf_cnpj'). Verifique o schema e recarregue.";
+      } else if (error.message && error.message.includes("Could not find the 'cpfCnpj' column")) {
+        // Este erro (com camelCase) indicaria que types.ts está errado (mostrando cpf_cnpj) mas o DB tem cpfCnpj,
+        // e a API ainda não a encontrou (problema de cache).
+        toastDescription = "Erro de configuração da tabela 'clientes' (coluna CPF/CNPJ não encontrada como 'cpfCnpj'). Verifique o schema e recarregue.";
+      }
+
+
       toast({
-        title: isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente",
-        description: error.message || "Ocorreu um erro inesperado.", // error.message será nossa mensagem customizada
+        title: toastTitle,
+        description: toastDescription,
         variant: "destructive",
       });
     } finally {
@@ -177,15 +199,15 @@ const ClientesPage = () => {
     }
   };
 
-  // ... (o restante do código de ClientesPage.tsx, como handleEditClient, handleViewClient, etc., permanece o mesmo) ...
-
- const handleEditClient = (client: Cliente) => {
+  const handleEditClient = (client: Cliente) => {
+    // Se a coluna no DB e em types.ts for realmente 'cpfCnpj'
+    // e o tipo Cliente em types.ts for atualizado para refletir 'cpfCnpj'
     const formDataForEdit = {
         nome: client.nome,
         email: client.email || '',
         telefone: client.telefone || '',
         tipo: client.tipo_cliente,
-        cpfCnpj: client.cpf_cnpj || '',
+        cpfCnpj: client.cpfCnpj || '', // Usando 'cpfCnpj' se for o nome da propriedade em Cliente
         endereco: client.endereco || '',
         cidade: client.cidade || '',
         estado: client.estado || '',
@@ -308,7 +330,7 @@ const ClientesPage = () => {
                       <TableCell className="hidden md:table-cell py-3 px-4">{client.email}</TableCell>
                       <TableCell className="hidden lg:table-cell py-3 px-4">{client.telefone}</TableCell>
                       <TableCell className="py-3 px-4">{client.tipo_cliente}</TableCell>
-                      <TableCell className="hidden md:table-cell py-3 px-4">{client.cpf_cnpj}</TableCell>
+                      <TableCell className="hidden md:table-cell py-3 px-4">{client.cpfCnpj}</TableCell> {/* Ajustado para cpfCnpj se essa for a coluna real */}
                       <TableCell className="py-3 px-4">
                         <Badge
                           variant={client.status_cliente === "Ativo" ? "default" : "destructive"}
@@ -389,7 +411,7 @@ const ClientesPage = () => {
                   <p><strong>Email:</strong> {selectedClient.email || 'N/A'}</p>
                   <p><strong>Telefone:</strong> {selectedClient.telefone || 'N/A'}</p>
                   <p><strong>Tipo:</strong> {selectedClient.tipo_cliente}</p>
-                  <p><strong>CPF/CNPJ:</strong> {selectedClient.cpf_cnpj || 'N/A'}</p>
+                  <p><strong>CPF/CNPJ:</strong> {selectedClient.cpfCnpj || 'N/A'}</p> {/* Ajustado para cpfCnpj se essa for a coluna real */}
                   <p><strong>Endereço:</strong> {selectedClient.endereco || 'N/A'}</p>
                   <p><strong>Cidade:</strong> {selectedClient.cidade || 'N/A'}</p>
                   <p><strong>Estado:</strong> {selectedClient.estado || 'N/A'}</p>
