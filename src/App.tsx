@@ -18,15 +18,11 @@ import TermosPrivacidadePage from './pages/TermosPrivacidadePage';
 import SuportePage from './pages/SuportePage';
 import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
 import AdminPage from './pages/AdminPage';
-import RecuperarSenhaPage from './pages/RecuperarSenhaPage';
-import AtualizarSenhaPage from './pages/AtualizarSenhaPage';
-import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
-import RedefinirPinFinanceiroPage from './pages/RedefinirPinFinanceiroPage'; // Import da nova página
 import './App.css';
 
 import { AuthProvider } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
-import VerificarAssinatura from './components/VerificarAssinatura';
+import VerificarAssinatura from './components/VerificarAssinatura'; // Importado
 import { Toaster } from '@/components/ui/toaster';
 
 function App() {
@@ -38,11 +34,6 @@ function App() {
           <Route path="/" element={<Index />} />
           <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
           <Route path="/suporte" element={<SuportePage />} />
-          <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-          <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
-          {/* NOVA ROTA PÚBLICA (mas requer token) PARA REDEFINIR PIN FINANCEIRO */}
-          <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
-
 
           {/* Rotas de autenticação - acessíveis apenas quando não logado */}
           <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
@@ -60,11 +51,20 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/admin" element={<AdminPage />} />
             {/* A página de perfil/configurações geralmente é acessível por todos os usuários logados */}
+            {/* Se /perfil estiver dentro de VerificarAssinatura e o usuário não for assinante, ele pode ser redirecionado
+                Para evitar isso, /configuracoes e /perfil podem ficar fora do VerificarAssinatura se todos logados puderem acessar,
+                ou a lógica em VerificarAssinatura precisa ser ajustada para permitir essas rotas.
+                No momento, /perfil está em rotasPermitidas em VerificarAssinatura.tsx.
+                Vamos assumir que /configuracoes também deve ser acessível para todos os logados
+                para que possam gerenciar a assinatura.
+            */}
             <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-            <Route path="/perfil" element={<PerfilUsuarioPage />} />
+            {/* Adicione /perfil aqui se for uma página separada e todos os logados puderem acessar */}
+            {/* <Route path="/perfil" element={<PerfilPage />} /> */}
+
 
             {/* Rotas que requerem autenticação E verificação de assinatura/acesso especial */}
-            <Route element={<VerificarAssinatura />}>
+            <Route element={<VerificarAssinatura />}> {/* VerificarAssinatura agora renderiza <Outlet /> */}
               <Route path="/meus-processos" element={<MeusProcessosPage />} />
               <Route path="/clientes" element={<ClientesPage />} />
               <Route path="/agenda" element={<AgendaPage />} />
@@ -72,6 +72,10 @@ function App() {
               <Route path="/documentos" element={<DocumentosPage />} />
               <Route path="/relatorios" element={<RelatoriosPage />} />
               <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
+              {/* Se /configuracoes fosse SÓ para assinantes, ela estaria aqui dentro.
+                  Mas como permite gerenciar assinatura, faz sentido estar acessível
+                  para usuários logados mas não assinantes também.
+              */}
             </Route>
           </Route>
 

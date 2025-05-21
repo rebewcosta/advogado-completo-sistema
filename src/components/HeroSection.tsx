@@ -112,9 +112,9 @@ const HeroSection = () => {
                       </label>
                     </div>
                     <div>
-                      <Link to="/recuperar-senha" className="font-medium text-lawyer-accent hover:text-lawyer-accent/90">
+                      <a href="#" className="font-medium text-lawyer-accent hover:text-lawyer-accent/90">
                         Esqueceu sua senha?
-                      </Link>
+                      </a>
                     </div>
                   </div>
                   <button

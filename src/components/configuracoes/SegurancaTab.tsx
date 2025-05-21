@@ -14,26 +14,23 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Spinner, Loader2 } from '@/components/ui/spinner'; // Adicionado Loader2
+import { Spinner } from '@/components/ui/spinner';
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { useAuth } from '@/hooks/useAuth'; // Importar useAuth para pegar o token da sessão
 
 interface SegurancaTabProps {
-  // ... (props existentes)
   securitySettings: {
-    // Mantido como estava, mesmo que alguns campos não sejam usados diretamente no formulário de PIN
-    pref_seguranca_dois_fatores: boolean; // Renomeado para corresponder à ConfiguraçõesPage
-    pref_seguranca_tempo_sessao_min: string;
-    pref_seguranca_restricao_ip: boolean;
+    twoFactor: boolean;
+    sessionTimeout: string;
+    ipRestriction: boolean;
   };
   setSecuritySettings: React.Dispatch<React.SetStateAction<{
-    pref_seguranca_dois_fatores: boolean;
-    pref_seguranca_tempo_sessao_min: string;
-    pref_seguranca_restricao_ip: boolean;
+    twoFactor: boolean;
+    sessionTimeout: string;
+    ipRestriction: boolean;
   }>>;
   hasFinancePin: boolean;
   onChangeFinanceiroPin: (currentPin: string | null, newPin: string) => Promise<boolean>;
@@ -48,7 +45,6 @@ const SegurancaTab = ({
   isSavingPin
 }: SegurancaTabProps) => {
   const { toast } = useToast();
-  const { session } = useAuth(); // Pegar a sessão para o token JWT
   const [passwordData, setPasswordData] = useState({
     newPassword: "",
     confirmPassword: ""
@@ -59,10 +55,9 @@ const SegurancaTab = ({
   const [novoPinFinanceiro, setNovoPinFinanceiro] = useState("");
   const [confirmaNovoPinFinanceiro, setConfirmaNovoPinFinanceiro] = useState("");
   const [pinErrorMessage, setPinErrorMessage] = useState("");
-  const [isRequestingPinReset, setIsRequestingPinReset] = useState(false); // Novo estado
 
-  const handleChangePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleChangePassword = async (e: React.FormEvent) => { // Adicionado 'e' e tipo
+    e.preventDefault(); // Prevenir comportamento padrão do formulário
     if (!passwordData.newPassword) {
       toast({ title: "Campo obrigatório", description: "Digite sua nova senha.", variant: "destructive" });
       return;
@@ -113,51 +108,16 @@ const SegurancaTab = ({
       setPinAtualFinanceiro("");
       setNovoPinFinanceiro("");
       setConfirmaNovoPinFinanceiro("");
-      setPinErrorMessage("");
+      setPinErrorMessage(""); // Limpa a mensagem de erro em caso de sucesso
     }
   };
-
-  // Nova função para solicitar reset de PIN
-  const handleRequestPinReset = async () => {
-    if (!session) {
-      toast({ title: "Não autenticado", description: "Você precisa estar logado para solicitar a redefinição do PIN.", variant: "destructive" });
-      return;
-    }
-    setIsRequestingPinReset(true);
-    setPinErrorMessage(''); // Limpar erros anteriores
-    try {
-      const { data, error: funcError } = await supabase.functions.invoke('request-finance-pin-reset');
-
-      if (funcError || (data && data.error)) {
-        const errMsg = (data && data.error) || funcError?.message || "Erro ao solicitar redefinição.";
-        throw new Error(errMsg);
-      }
-      
-      toast({
-        title: "Solicitação Enviada",
-        description: data.message || "Se sua conta for encontrada, um email será enviado com instruções.",
-        duration: 7000,
-      });
-      // console.log("DEBUG Link (remover em prod):", data.DEBUG_ONLY_link); // Para debug local
-
-    } catch (err: any) {
-      toast({
-        title: "Erro na Solicitação",
-        description: err.message || "Não foi possível processar sua solicitação de redefinição de PIN.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsRequestingPinReset(false);
-    }
-  };
-
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Configurações de Segurança</CardTitle>
         <CardDescription>
-          Proteja sua conta e dados do escritório. Lembre-se de salvar todas as alterações no botão no topo da página.
+          Proteja sua conta e dados do escritório
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -171,11 +131,11 @@ const SegurancaTab = ({
           </div>
           <Switch
             id="twoFactorSwitch"
-            checked={securitySettings.pref_seguranca_dois_fatores}
+            checked={securitySettings.twoFactor}
             onCheckedChange={(checked) =>
-              setSecuritySettings(prev => ({...prev, pref_seguranca_dois_fatores: !!checked}))
+              setSecuritySettings(prev => ({...prev, twoFactor: !!checked}))
             }
-            disabled
+            disabled // Desabilitado por enquanto
           />
         </div>
 
@@ -192,9 +152,9 @@ const SegurancaTab = ({
             type="number"
             min="5"
             max="120"
-            value={securitySettings.pref_seguranca_tempo_sessao_min}
-            onChange={(e) => setSecuritySettings(prev => ({...prev, pref_seguranca_tempo_sessao_min: e.target.value}))}
-            disabled
+            value={securitySettings.sessionTimeout}
+            onChange={(e) => setSecuritySettings(prev => ({...prev, sessionTimeout: e.target.value}))}
+            disabled // Desabilitado por enquanto
           />
         </div>
 
@@ -210,11 +170,11 @@ const SegurancaTab = ({
           </div>
           <Switch
             id="ipRestrictionSwitch"
-            checked={securitySettings.pref_seguranca_restricao_ip}
+            checked={securitySettings.ipRestriction}
             onCheckedChange={(checked) =>
-              setSecuritySettings(prev => ({...prev, pref_seguranca_restricao_ip: !!checked}))
+              setSecuritySettings(prev => ({...prev, ipRestriction: !!checked}))
             }
-            disabled
+            disabled // Desabilitado por enquanto
           />
         </div>
 
@@ -224,9 +184,9 @@ const SegurancaTab = ({
         <form onSubmit={handleChangePassword} className="space-y-4">
           <h3 className="text-lg font-medium">Alteração de Senha do Sistema</h3>
           <div className="space-y-2">
-            <Label htmlFor="newPassword_config">Nova senha</Label>
+            <Label htmlFor="newPassword">Nova senha</Label>
             <Input
-              id="newPassword_config"
+              id="newPassword"
               name="newPassword"
               type="password"
               value={passwordData.newPassword}
@@ -236,9 +196,9 @@ const SegurancaTab = ({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword_config">Confirmar nova senha</Label>
+            <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
             <Input
-              id="confirmPassword_config"
+              id="confirmPassword"
               name="confirmPassword"
               type="password"
               value={passwordData.confirmPassword}
@@ -254,7 +214,7 @@ const SegurancaTab = ({
             {changingPassword ? (
               <><Spinner size="sm" className="mr-2" /> Alterando...</>
             ) : (
-              'Alterar senha do sistema'
+              'Alterar senha'
             )}
           </Button>
         </form>
@@ -270,14 +230,14 @@ const SegurancaTab = ({
 
           {hasFinancePin && (
             <div className="space-y-2">
-              <Label htmlFor="pinAtualFinanceiro_config">PIN Atual</Label>
+              <Label htmlFor="pinAtualFinanceiro">PIN Atual</Label>
               <InputOTP
                 maxLength={4}
                 value={pinAtualFinanceiro}
                 onChange={(value) => setPinAtualFinanceiro(value)}
                 name="pinAtualFinanceiro"
-                id="pinAtualFinanceiro_config"
-                containerClassName="justify-start"
+                id="pinAtualFinanceiro"
+                containerClassName="justify-start" /* Para alinhar à esquerda */
               >
                 <InputOTPGroup>
                   <InputOTPSlot index={0} />
@@ -290,13 +250,13 @@ const SegurancaTab = ({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="novoPinFinanceiro_config">Novo PIN (4 dígitos)</Label>
+            <Label htmlFor="novoPinFinanceiro">Novo PIN (4 dígitos)</Label>
             <InputOTP
               maxLength={4}
               value={novoPinFinanceiro}
               onChange={(value) => setNovoPinFinanceiro(value)}
               name="novoPinFinanceiro"
-              id="novoPinFinanceiro_config"
+              id="novoPinFinanceiro"
               containerClassName="justify-start"
             >
               <InputOTPGroup>
@@ -309,13 +269,13 @@ const SegurancaTab = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmaNovoPinFinanceiro_config">Confirmar Novo PIN</Label>
+            <Label htmlFor="confirmaNovoPinFinanceiro">Confirmar Novo PIN</Label>
             <InputOTP
               maxLength={4}
               value={confirmaNovoPinFinanceiro}
               onChange={(value) => setConfirmaNovoPinFinanceiro(value)}
               name="confirmaNovoPinFinanceiro"
-              id="confirmaNovoPinFinanceiro_config"
+              id="confirmaNovoPinFinanceiro"
               containerClassName="justify-start"
             >
               <InputOTPGroup>
@@ -326,30 +286,17 @@ const SegurancaTab = ({
               </InputOTPGroup>
             </InputOTP>
           </div>
-          {pinErrorMessage && <p className="text-sm text-red-500 text-left">{pinErrorMessage}</p>}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <Button
-                type="submit"
-                disabled={isSavingPin || (hasFinancePin && pinAtualFinanceiro.length !== 4) || novoPinFinanceiro.length !== 4 || confirmaNovoPinFinanceiro.length !== 4}
-            >
-                {isSavingPin ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {hasFinancePin ? 'Alterando PIN...' : 'Definindo PIN...'}</>
-                ) : (
-                hasFinancePin ? 'Alterar PIN do Financeiro' : 'Definir PIN do Financeiro'
-                )}
-            </Button>
-            {hasFinancePin && (
-                 <Button
-                    type="button"
-                    variant="link"
-                    className="text-sm text-blue-600 p-0 h-auto justify-start sm:ml-4"
-                    onClick={handleRequestPinReset}
-                    disabled={isRequestingPinReset}
-                  >
-                    {isRequestingPinReset ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando email...</> : "Esqueci meu PIN Financeiro"}
-                  </Button>
+            {pinErrorMessage && <p className="text-sm text-red-500 text-left">{pinErrorMessage}</p>} {/* Alinhado à esquerda */}
+          <Button
+            type="submit"
+            disabled={isSavingPin || (hasFinancePin && pinAtualFinanceiro.length !== 4) || novoPinFinanceiro.length !== 4 || confirmaNovoPinFinanceiro.length !== 4}
+          >
+            {isSavingPin ? (
+              <><Spinner size="sm" className="mr-2" /> {hasFinancePin ? 'Alterando PIN...' : 'Definindo PIN...'}</>
+            ) : (
+              hasFinancePin ? 'Alterar PIN do Financeiro' : 'Definir PIN do Financeiro'
             )}
-          </div>
+          </Button>
         </form>
       </CardContent>
     </Card>
