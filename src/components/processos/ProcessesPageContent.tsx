@@ -1,3 +1,4 @@
+
 // src/components/processos/ProcessesPageContent.tsx
 import React from 'react';
 import ProcessSearchActionBar from './ProcessSearchActionBar';
@@ -5,7 +6,11 @@ import ProcessTable from './ProcessTable';
 import ProcessDialogs from './ProcessDialogs';
 import type { Database } from '@/integrations/supabase/types';
 
-type Processo = Database['public']['Tables']['processos']['Row'] & { nome_cliente_text?: string | null; clientes?: { nome: string } | null };
+type Processo = Database['public']['Tables']['processos']['Row'];
+type ProcessoComCliente = Processo & { 
+  nome_cliente_text?: string | null; 
+  clientes?: { id: string; nome: string } | null 
+};
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
 interface ProcessesPageContentProps {
@@ -13,7 +18,7 @@ interface ProcessesPageContentProps {
   searchTerm: string;
   formDialogOpen: boolean;
   detailsDialogOpen: boolean;
-  selectedProcess: any; // Pode ser Processo ou ProcessoFormData (para edição)
+  selectedProcess: any;
   isEditing: boolean;
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFormDialogOpenChange: (open: boolean) => void;
@@ -23,7 +28,7 @@ interface ProcessesPageContentProps {
   onViewProcess: (id: string) => void;
   onToggleStatus: (id: string) => void;
   onDeleteProcess: (id: string) => void;
-  onSaveProcess: (processData: any) => void; // Ajustar tipo se ProcessoFormData for mais específico
+  onSaveProcess: (processData: any) => void;
   clientesParaForm: ClienteParaSelect[];
   isLoadingClientesParaForm: boolean;
 }
@@ -44,10 +49,24 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
   onToggleStatus,
   onDeleteProcess,
   onSaveProcess,
-  clientesParaForm, // Prop recebida
-  isLoadingClientesParaForm // Prop recebida
+  clientesParaForm,
+  isLoadingClientesParaForm
 }) => {
   console.log("ProcessesPageContent: Props recebidas - clientesParaForm:", clientesParaForm, "isLoadingClientesParaForm:", isLoadingClientesParaForm);
+
+  // Ensure the processes match the expected type for ProcessTable
+  const processesWithClientInfo = processes.map(p => {
+    // Make sure cliente property has the required structure if it exists
+    const clienteInfo = p.clientes ? {
+      ...p.clientes,
+      id: (p.clientes as any).id || p.cliente_id || ''
+    } : null;
+    
+    return {
+      ...p,
+      clientes: clienteInfo
+    } as ProcessoComCliente;
+  });
 
   return (
     <div className="p-6">
@@ -60,7 +79,7 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
       />
 
       <ProcessTable
-        processes={processes}
+        processes={processesWithClientInfo as any}
         onEdit={onEditProcess}
         onView={onViewProcess}
         onToggleStatus={onToggleStatus}
@@ -76,7 +95,6 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
         onDetailsDialogOpenChange={onDetailsDialogOpenChange}
         onSaveProcess={onSaveProcess}
         onEditProcess={onEditProcess}
-        // Passando as props para ProcessDialogs
         clientesDoUsuario={clientesParaForm}
         isLoadingClientes={isLoadingClientesParaForm}
       />

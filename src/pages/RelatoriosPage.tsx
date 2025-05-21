@@ -111,15 +111,16 @@ const RelatoriosPage = () => {
         }
         monthlyData[monthKey].saldo = monthlyData[monthKey].receitas - monthlyData[monthKey].despesas;
       });
-       const sortedFinancialData = Object.values(monthlyData).sort((a,b) => {
+      const sortedFinancialData = Object.values(monthlyData).sort((a,b) => {
         const [m1str, y1str] = a.month.split('/');
         const [m2str, y2str] = b.month.split('/');
-         // Encontra o índice do mês pelo nome abreviado (case-insensitive)
-        const monthIndex1 = ptBR.localize?.month(ptBR.match.months?.findIndex( (m:any) => new RegExp(m1str, 'i').test(m)) || 0, { width: 'abbreviated'});
-        const monthIndex2 = ptBR.localize?.month(ptBR.match.months?.findIndex( (m:any) => new RegExp(m2str, 'i').test(m)) || 0, { width: 'abbreviated'});
+        
+        // Encontra o índice do mês pelo nome abreviado (case-insensitive)
+        const monthIndex1 = ptBR.localize?.month(ptBR.match.month?.findIndex( (m:any) => new RegExp(m1str, 'i').test(m)) || 0, { width: 'abbreviated' });
+        const monthIndex2 = ptBR.localize?.month(ptBR.match.month?.findIndex( (m:any) => new RegExp(m2str, 'i').test(m)) || 0, { width: 'abbreviated' });
 
-        const d1 = new Date(Number('20'+y1str), ptBR.match.months?.findIndex( (m:any) => new RegExp(m1str, 'i').test(m)) || 0);
-        const d2 = new Date(Number('20'+y2str), ptBR.match.months?.findIndex( (m:any) => new RegExp(m2str, 'i').test(m)) || 0);
+        const d1 = new Date(Number('20'+y1str), ptBR.match.month?.findIndex( (m:any) => new RegExp(m1str, 'i').test(m)) || 0);
+        const d2 = new Date(Number('20'+y2str), ptBR.match.month?.findIndex( (m:any) => new RegExp(m2str, 'i').test(m)) || 0);
         return d1.getTime() - d2.getTime();
       });
       setFinancialChartData(sortedFinancialData);

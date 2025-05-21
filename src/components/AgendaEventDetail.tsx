@@ -1,3 +1,4 @@
+
 // src/components/AgendaEventDetail.tsx
 import React from 'react';
 import { format, parseISO } from 'date-fns'; // Adicionado parseISO
@@ -14,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarDays, Clock, MapPin, User, FileText, Activity, AlertTriangle, Info } from 'lucide-react'; // Ajustado icones
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils'; // Added the cn import
 import type { EventoAgenda } from '@/pages/AgendaPage'; // Importando o tipo da AgendaPage
 
 type AgendaEventDetailProps = {

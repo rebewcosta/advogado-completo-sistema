@@ -139,7 +139,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
 
           <div>
             <Label htmlFor="cliente_id">Cliente</Label>
-            {console.log("ProcessForm: Renderizando Select de Clientes - isLoadingClientes:", isLoadingClientes, "clientesDoUsuario (tipo):", typeof clientesDoUsuario, "clientesDoUsuario (valor):", clientesDoUsuario)}
             <Select
               value={clienteIdSelecionado || ""}
               onValueChange={(value) => setClienteIdSelecionado(value === "" ? null : value)}
