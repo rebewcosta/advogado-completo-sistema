@@ -1,4 +1,3 @@
-
 // src/App.tsx
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
@@ -22,6 +21,7 @@ import AdminPage from './pages/AdminPage';
 import RecuperarSenhaPage from './pages/RecuperarSenhaPage';
 import AtualizarSenhaPage from './pages/AtualizarSenhaPage';
 import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
+import RedefinirPinFinanceiroPage from './pages/RedefinirPinFinanceiroPage'; // Import da nova página
 import './App.css';
 
 import { AuthProvider } from './hooks/useAuth';
@@ -40,6 +40,9 @@ function App() {
           <Route path="/suporte" element={<SuportePage />} />
           <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
           <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
+          {/* NOVA ROTA PÚBLICA (mas requer token) PARA REDEFINIR PIN FINANCEIRO */}
+          <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
+
 
           {/* Rotas de autenticação - acessíveis apenas quando não logado */}
           <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
