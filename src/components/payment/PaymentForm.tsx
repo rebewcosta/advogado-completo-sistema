@@ -1,137 +1,149 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { iniciarCheckout } from '@/services/stripe';
+// A importação do 'iniciarCheckout' que chama a função internamente já usa o supabase client.
+// No entanto, se você vai chamar supabase.functions.invoke diretamente aqui, precisa do client.
+// Vamos manter a chamada via 'iniciarCheckout' por enquanto para consistência,
+// mas se você mudou para supabase.functions.invoke diretamente aqui, o import abaixo é crucial.
+import { supabase } from '@/integrations/supabase/client'; // <<<< ADICIONE ESTA LINHA
 
 interface PaymentFormProps {
   onProcessingChange: (isProcessing: boolean) => void;
   isTestEnvironment: boolean;
+  initialEmail?: string;
+  clientReferenceId?: string;
 }
 
-const PaymentForm: React.FC<PaymentFormProps> = ({ 
+const PaymentForm: React.FC<PaymentFormProps> = ({
   onProcessingChange,
-  isTestEnvironment
+  isTestEnvironment,
+  initialEmail,
+  clientReferenceId
 }) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail || '');
   const [errorDetails, setErrorDetails] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const { toast } = useToast();
-  
-  // Função para validar email
-  const isValidEmail = (email: string) => {
-    return /\S+@\S+\.\S+/.test(email);
+
+  useEffect(() => {
+    if (initialEmail) {
+      setEmail(initialEmail);
+    }
+  }, [initialEmail]);
+
+  const isValidEmail = (emailToValidate: string) => {
+    return /\S+@\S+\.\S+/.test(emailToValidate);
   };
 
-  // Função para obter o domínio atual
   const getDominio = () => {
     return window.location.origin;
   };
 
-  // Função para processar o pagamento com Stripe
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
     onProcessingChange(true);
     setErrorDetails('');
-    
+
     try {
       if (!email) {
-        throw new Error("Email necessário para prosseguir com o pagamento.");
+        throw new Error("Email é necessário para prosseguir com o pagamento.");
       }
 
       if (!isValidEmail(email)) {
         throw new Error("Por favor, insira um endereço de email válido.");
       }
-      
-      console.log('Iniciando checkout com email:', email);
-      
-      // Obter o domínio atual para redirecionamentos
+
       const dominio = getDominio();
-      console.log('Usando domínio:', dominio);
-      
-      const result = await iniciarCheckout({
+      console.log('Iniciando checkout com email:', email, 'clientReferenceId:', clientReferenceId, 'dominio:', dominio);
+
+      const checkoutData = {
         nomePlano: 'Plano Mensal JusGestão',
         valor: 12700,
         emailCliente: email,
-        modo: 'production', // Ambiente de produção
-        dominio // Passar o domínio atual
+        modo: process.env.NODE_ENV === 'production' ? 'production' : 'test', // Manteve 'test' para ambiente de desenvolvimento
+        dominio,
+        clientReferenceId: clientReferenceId || email
+      };
+
+      // Chamando a Edge Function diretamente com o cliente Supabase importado
+      const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
+        body: checkoutData
       });
-      
-      console.log('Resultado do checkout:', result);
-      
-      if (result && result.url) {
-        toast({
-          title: "Redirecionando para o pagamento",
-          description: "Você será redirecionado para a página de pagamento do Stripe.",
-        });
-        
-        // Abrir em nova aba para garantir compatibilidade
-        window.open(result.url, '_blank');
-      } else {
-        throw new Error('URL de checkout não retornada');
+
+      if (invokeError) {
+        console.error('Erro ao criar sessão de checkout (invokeError):', invokeError);
+        // Tenta pegar uma mensagem de erro mais detalhada do objeto de erro da função
+        let detailedErrorMessage = invokeError.message;
+        if (invokeError.context && typeof invokeError.context === 'object' && 'message' in invokeError.context) {
+            detailedErrorMessage = (invokeError.context as any).message || detailedErrorMessage;
+        } else if (invokeError.context && typeof invokeError.context === 'string') {
+            detailedErrorMessage = invokeError.context || detailedErrorMessage;
+        }
+        throw new Error(`Erro ao criar sessão de checkout: ${detailedErrorMessage}`);
       }
+
+      if (!data || !data.url) {
+        console.error('Resposta inválida da API de checkout:', data);
+        throw new Error('Resposta inválida da API de checkout: ' + JSON.stringify(data));
+      }
+
+      console.log('Sessão de checkout criada com sucesso:', data);
+
+      toast({
+        title: "Redirecionando para o pagamento",
+        description: "Você será redirecionado para a página de pagamento do Stripe.",
+      });
+
+      window.location.href = data.url;
+
     } catch (error) {
       console.error('Erro no pagamento:', error);
-      setIsProcessing(false);
-      onProcessingChange(false);
-      
-      // Extrair mensagem de erro mais detalhada
       let errorMessage = "Erro ao processar pagamento";
-      
-      if (error instanceof Error) {
-        errorMessage = error.message;
-      } else if (typeof error === 'object' && error !== null) {
-        // Tentar extrair mensagem de erro de uma resposta da API
-        if ('message' in error) {
-          errorMessage = error.message;
-        } else if ('error' in error) {
-          errorMessage = typeof error.error === 'string' 
-            ? error.error 
-            : JSON.stringify(error.error);
-        } else {
-          errorMessage = JSON.stringify(error);
-        }
-      }
+      if (error instanceof Error) errorMessage = error.message;
+      else if (typeof error === 'object' && error !== null && 'message' in error) errorMessage = String((error as any).message);
+      else if (typeof error === 'string') errorMessage = error;
       
       setErrorDetails(errorMessage);
-      
       toast({
         title: "Erro no pagamento",
-        description: "Houve um problema ao processar seu pagamento. Por favor, verifique os detalhes do erro abaixo.",
-        variant: "destructive"
+        description: `Houve um problema ao processar seu pagamento. Detalhes: ${errorMessage}`,
+        variant: "destructive",
+        duration: 7000,
       });
-    } finally {
-      setTimeout(() => {
-        setIsProcessing(false);
-        onProcessingChange(false);
-      }, 2000); // Ensure the UI updates even if there's a network issue
+      // Garante que o estado de loading seja resetado em caso de erro ANTES do redirect
+      setIsProcessing(false);
+      onProcessingChange(false);
     }
+    // Não colocar finally aqui para resetar loading se o redirect ocorrer,
+    // pois a página será descarregada. O reset já acontece no catch.
   };
 
   return (
     <form onSubmit={handleSubmitPayment}>
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-            Seu Email
+          <Label htmlFor="email_pagamento" className="text-sm font-medium text-gray-700">
+            Email para Cobrança
           </Label>
           <Input
             type="email"
-            id="email"
+            id="email_pagamento"
             placeholder="seu.email@exemplo.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             className="w-full"
+            disabled={!!initialEmail || isProcessing}
           />
+          {initialEmail && <p className="text-xs text-gray-500 mt-1">Usando o email informado no cadastro.</p>}
         </div>
-        
+
         <div className="pt-4">
-          <Button 
+          <Button
             type="submit"
             disabled={isProcessing || !email}
             className="w-full"
@@ -146,8 +158,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               </span>
             ) : (
               <span className="flex items-center">
-                <CreditCard className="mr-2 h-5 w-5" /> 
-                Pagar com Stripe - R$ 127,00
+                <CreditCard className="mr-2 h-5 w-5" />
+                Ir para Pagamento Seguro - R$ 127,00
               </span>
             )}
           </Button>
@@ -157,12 +169,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
             <p className="text-sm font-medium text-red-800 mb-1">Detalhes do erro:</p>
             <p className="text-sm text-red-700">{errorDetails}</p>
-            <div className="mt-3 pt-3 border-t border-red-100">
-              <p className="text-xs text-red-600">
-                Se o problema persistir, verifique se a chave de API do Stripe está configurada corretamente 
-                nas Edge Functions do Supabase.
-              </p>
-            </div>
           </div>
         )}
       </div>

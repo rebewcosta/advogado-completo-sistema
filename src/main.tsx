@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
@@ -17,111 +18,183 @@ const updateViewport = () => {
 
 updateViewport();
 
+// Função aprimorada para remover elementos Lovable
 const tryRemoveLovableElements = () => {
-  // **IMPORTANTE:** Verifique no inspetor do navegador se existem classes ou IDs mais específicos
-  // para o banner da Lovable e adicione-os aqui.
+  // Seletores mais abrangentes para pegar qualquer variante do banner
   const selectors = [
+    // Seletores originais
     '[class*="lovable-banner"]', '[id*="lovable-banner"]',
     '[class*="lovable-editor"]', '[id*="lovable-editor"]',
     '[class*="lovable-tagger"]', '[id*="lovable-tagger"]',
-    // Seletor específico para o banner "Edit with Lovable" se ele for um link <a>
     'a[href*="lovable.dev/projects/"][style*="position: fixed"]',
-    // Seu seletor que funcionou em testes para o banner específico:
     'div[style*="z-index: 999999999 !important"][style*="position: fixed !important"][style*="bottom: 20px !important"][style*="right: 20px !important"]',
-    // Tenta pegar o contêiner do GPT Engineer se ele injetar o banner
     'div#gpt-engineer-container div[style*="position: fixed"]',
-    // Adicione aqui quaisquer novos seletores identificados via inspeção
-    // Exemplo: '#lovable-specific-id', '.some-unique-lovable-class'
+    
+    // Seletores adicionais para maior abrangência
+    '[style*="position: fixed"][style*="bottom"][style*="right"]',
+    '[style*="z-index: 9999"]',
+    'a[href*="lovable.dev"]',
+    'div[style*="position: fixed"]',
+    '[data-lovable]',
+    '[class*="gpte"]',
+    '[id*="gpte"]',
+    '[class*="gpt-engineer"]',
+    '[id*="gpt-engineer"]',
+    // Seletor para SVG específico usado no banner
+    'svg[viewBox="0 0 32 32"]',
   ];
 
   let removed = false;
   try {
     selectors.forEach(selector => {
       document.querySelectorAll(selector).forEach(el => {
+        // Verifica se o elemento não é essencial para o funcionamento da aplicação
         if (el.tagName !== 'SCRIPT' && el.id !== 'root' && !el.closest('#root')) {
           if (el.tagName !== 'BODY' && el.tagName !== 'HTML') {
+            // Remove ou torna invisível
+            if (el.style) {
+              el.style.display = 'none !important';
+              el.style.visibility = 'hidden !important';
+              el.style.opacity = '0 !important';
+              el.style.pointerEvents = 'none !important';
+              el.style.width = '0 !important';
+              el.style.height = '0 !important';
+            }
             el.remove();
             removed = true;
-            // console.log("Elemento Lovable removido:", selector, el); 
           }
         }
       });
     });
+    
+    // Adiciona CSS global para ocultar elementos que possam aparecer depois
+    const style = document.createElement('style');
+    style.textContent = `
+      [class*="lovable-banner"], [id*="lovable-banner"],
+      [class*="lovable-editor"], [id*="lovable-editor"],
+      [class*="lovable-tagger"], [id*="lovable-tagger"],
+      a[href*="lovable.dev"],
+      div[style*="z-index: 999999999"][style*="position: fixed"],
+      div#gpt-engineer-container div[style*="position: fixed"],
+      [class*="gpte"], [id*="gpte"],
+      [class*="gpt-engineer"], [id*="gpt-engineer"] {
+        display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+      }
+    `;
+    document.head.appendChild(style);
   } catch (e) {
-    console.warn("Erro ao tentar remover elementos Lovable com seletores:", e);
+    console.warn("Erro ao tentar remover elementos Lovable:", e);
   }
-
-  // if (removed) {
-  //   console.log("Uma ou mais tentativas de remover elementos da Lovable foram feitas.");
-  // }
 };
 
 
+// Função aprimorada para observar e remover continuamente
 const observeAndRemoveLovableBanner = () => {
-  tryRemoveLovableElements(); // Tentativa inicial
+  // Executa inicialmente
+  tryRemoveLovableElements();
 
-  if (typeof MutationObserver === 'undefined') {
-    // console.warn("MutationObserver não está disponível. Remoção persistente do banner pode não funcionar.");
-    let attempts = 0;
-    const intervalId = setInterval(() => {
-      tryRemoveLovableElements();
-      attempts++;
-      if (attempts > 50) { // Tenta por 5 segundos (50 * 100ms) se não houver MutationObserver
-        clearInterval(intervalId);
-      }
-    }, 100);
-    return;
-  }
-
-  const observer = new MutationObserver((mutationsList, observerInstance) => {
-    // Otimização: apenas executa se houver nós adicionados, para não rodar em cada mínima alteração.
-    let nodesAdded = false;
-    for (const mutation of mutationsList) {
-      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
-        nodesAdded = true;
-        break;
-      }
-    }
-    if (nodesAdded) {
-      tryRemoveLovableElements();
-    }
-  });
-
-  const startObserving = () => {
-    if (document.body) {
-      observer.observe(document.body, { childList: true, subtree: true });
-      // console.log("Lovable banner observer iniciado no document.body.");
-    } else {
-      // console.log("document.body ainda não disponível, tentando observar em breve.");
-      setTimeout(startObserving, 50);
-    }
-  };
-
-  // Tenta remover assim que o DOM interativo estiver pronto
-  if (document.readyState === 'loading') {
-    window.addEventListener('DOMContentLoaded', () => {
-      tryRemoveLovableElements(); 
-      startObserving();
-    });
-  } else { // Se já carregou
-    tryRemoveLovableElements(); 
-    startObserving();
-  }
-
-  // Tentativas iniciais adicionais para pegar elementos que podem aparecer um pouco depois do DOMContentLoaded
-  // mas antes do MutationObserver estar totalmente ativo ou em casos de scripts que demoram um pouco mais.
-  let initialAttempts = 0;
+  // Configura para executar a cada 100ms nos primeiros 10 segundos
+  let attempts = 0;
   const initialIntervalId = setInterval(() => {
     tryRemoveLovableElements();
-    initialAttempts++;
-    if (initialAttempts > 30) { // Tenta por 3 segundos (30 * 100ms)
+    attempts++;
+    if (attempts > 100) { // 10 segundos (100 * 100ms)
       clearInterval(initialIntervalId);
     }
   }, 100);
+
+  // Configura MutationObserver para reagir a mudanças no DOM
+  if (typeof MutationObserver !== 'undefined') {
+    const observer = new MutationObserver((mutationsList) => {
+      let nodesAdded = false;
+      for (const mutation of mutationsList) {
+        if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+          nodesAdded = true;
+          break;
+        }
+      }
+      if (nodesAdded) {
+        tryRemoveLovableElements();
+      }
+    });
+
+    // Inicia a observação no body quando disponível
+    const startObserving = () => {
+      if (document.body) {
+        observer.observe(document.body, { childList: true, subtree: true });
+      } else {
+        setTimeout(startObserving, 50);
+      }
+    };
+    startObserving();
+  }
+
+  // Configura para verificar periodicamente após o carregamento (F5)
+  window.addEventListener('load', () => {
+    tryRemoveLovableElements();
+    setTimeout(tryRemoveLovableElements, 500);
+    setTimeout(tryRemoveLovableElements, 1000);
+    setTimeout(tryRemoveLovableElements, 2000);
+  });
+
+  // Intercepta possíveis tentativas de recriar o banner
+  const originalCreateElement = document.createElement;
+  document.createElement = function(tagName) {
+    const element = originalCreateElement.call(document, tagName);
+    
+    // Intercepta a criação de elementos que podem ser usados para o banner
+    setTimeout(() => {
+      if (
+        element.className?.includes?.('lovable') || 
+        element.id?.includes?.('lovable') || 
+        element.href?.includes?.('lovable.dev')
+      ) {
+        element.style.display = 'none !important';
+        element.style.visibility = 'hidden !important';
+        element.style.opacity = '0 !important';
+      }
+    }, 0);
+    
+    return element;
+  };
 };
 
+// Inicia todo o processo de remoção do banner
 observeAndRemoveLovableBanner();
 
+// Adiciona CSS na tag head para garantir que os elementos não apareçam mesmo durante o carregamento
+const addCamouflageCss = () => {
+  const style = document.createElement('style');
+  style.textContent = `
+    [class*="lovable"], [id*="lovable"],
+    [class*="gpte"], [id*="gpte"],
+    [class*="gpt-engineer"], [id*="gpt-engineer"],
+    a[href*="lovable.dev"],
+    div[style*="z-index: 999999"][style*="position: fixed"] {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      width: 0 !important;
+      height: 0 !important;
+      position: absolute !important;
+      left: -9999px !important;
+    }
+  `;
+  document.head.appendChild(style);
+};
+
+// Executa a adição do CSS imediatamente e após o carregamento
+addCamouflageCss();
+window.addEventListener('DOMContentLoaded', addCamouflageCss);
+window.addEventListener('load', addCamouflageCss);
 
 // Mount the app
 const container = document.getElementById("root");
