@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 type FontSize = 'small' | 'medium' | 'large';
@@ -17,10 +16,18 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+interface ThemeProviderProps {
+  children: React.ReactNode;
+  defaultTheme?: 'light' | 'dark';
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ 
+  children, 
+  defaultTheme = 'light' 
+}) => {
   // Inicializar com valores salvos ou padrões
   const [darkMode, setDarkMode] = useState<boolean>(
-    localStorage.getItem('darkMode') === 'true'
+    localStorage.getItem('darkMode') === 'true' || defaultTheme === 'dark'
   );
   const [compactMode, setCompactMode] = useState<boolean>(
     localStorage.getItem('compactMode') === 'true'

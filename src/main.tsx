@@ -58,28 +58,28 @@ document.getElementById('initial-loader')?.remove();
 
 root.render(
   <React.StrictMode>
-    <ThemeProvider defaultTheme="light">
+    <ThemeProvider>
       <BrowserRouter>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <Routes>
               <Route path="/" element={<App />} />
-              <Route path="/login" element={
-                <ProtectedRoute requireAuth={false}>
-                  <LoginPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/cadastro" element={
-                <ProtectedRoute requireAuth={false}>
-                  <CadastroPage />
-                </ProtectedRoute>
-              } />
+              <Route path="/login" element={<Navigate to="/login" replace />} />
+              <Route path="/cadastro" element={<Navigate to="/cadastro" replace />} />
               <Route path="/pagamento" element={<PagamentoPage />} />
               <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
               <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
               <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
               <Route path="/termos-e-privacidade" element={<TermosPrivacidadePage />} />
               <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
+
+              {/* Public routes that redirect authenticated users */}
+              <Route path="/login" element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
+                <Route index element={<LoginPage />} />
+              </Route>
+              <Route path="/cadastro" element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
+                <Route index element={<CadastroPage />} />
+              </Route>
 
               {/* Protected routes that also require subscription verification */}
               <Route element={<ProtectedRoute requireAuth={true} />}>
