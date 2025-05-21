@@ -1,7 +1,7 @@
 // src/components/dashboard/FinanceiroContent.tsx
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { DollarSign, TrendingUp, TrendingDown, ListFilter, History, PlusCircle, ArrowRight } from 'lucide-react'; // Ícones ajustados
+import { DollarSign, TrendingUp, TrendingDown, ListFilter, History, PlusCircle, ArrowRight, Clock } from 'lucide-react'; // << ÍCONE CLOCK ADICIONADO AQUI
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
