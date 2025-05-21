@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom';
 
 interface StatusAssinaturaProps {
   status: 'ativa' | 'pendente' | 'inativa';
-  dataProximoFaturamento?: string;
+  dataProximoFaturamento?: string | null;
   plano?: string;
   onAbrirPortalCliente?: () => void;
 }

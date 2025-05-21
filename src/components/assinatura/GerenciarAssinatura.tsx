@@ -1,3 +1,4 @@
+
 // Update imports and fix the component to support admin and amigo status types
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -6,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusAssinatura from '@/components/StatusAssinatura';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Clock } from 'lucide-react'; // Added Clock import
+import { Loader2, AlertCircle, Clock } from 'lucide-react';
 
 // Extend the StatusAssinatura component to accept our custom status types
 const GerenciarAssinatura = () => {
@@ -29,27 +30,20 @@ const GerenciarAssinatura = () => {
           return;
         }
 
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('subscription_status, subscription_data')
-          .eq('id', user.id)
-          .single();
+        // Check if there's a user in auth schema with subscription data
+        // Note: Directly querying the user's subscription status
+        // This likely requires a RLS policy or a separate table to store subscription data
+        const { data, error } = await supabase.rpc('verificar_status_assinatura', {
+          uid: user.id
+        });
 
-        if (profileError) {
-          throw new Error(profileError.message);
+        if (error) {
+          throw new Error(error.message);
         }
 
-        if (profileData) {
-          setStatus(profileData.subscription_status || 'inativa');
-          if (profileData.subscription_data) {
-            try {
-              const subData = JSON.parse(profileData.subscription_data);
-              setProximoFaturamento(subData.current_period_end ? new Date(subData.current_period_end * 1000).toLocaleDateString() : null);
-            } catch (parseError) {
-              console.error("Erro ao analisar subscription_data:", parseError);
-              setErrorMessage("Erro ao carregar detalhes da assinatura.");
-            }
-          }
+        if (data) {
+          setStatus(data.status || 'inativa');
+          setProximoFaturamento(data.proximo_faturamento || null);
         } else {
           setStatus('inativa');
         }
@@ -113,16 +107,12 @@ const GerenciarAssinatura = () => {
     }
 
     // Map the custom status types to the ones expected by StatusAssinatura
-    let statusForComponent: 'ativa' | 'pendente' | 'inativa' = 'inativa';
+    let statusForComponent: 'ativa' | 'pendente' | 'inativa';
     
-    if (status === 'ativa') {
+    if (status === 'ativa' || status === 'admin' || status === 'amigo') {
       statusForComponent = 'ativa';
     } else if (status === 'pendente') {
       statusForComponent = 'pendente';
-    } else if (status === 'admin' || status === 'amigo') {
-      // For admin/amigo users, we'll still show them as having an "active" subscription
-      // but we could customize the text in the StatusAssinatura component if needed
-      statusForComponent = 'ativa';
     } else {
       statusForComponent = 'inativa';
     }

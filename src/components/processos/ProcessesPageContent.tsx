@@ -56,10 +56,10 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
 
   // Ensure the processes match the expected type for ProcessTable
   const processesWithClientInfo = processes.map(p => {
-    // Make sure cliente property has the required structure if it exists
-    const clienteInfo = p.clientes ? {
-      ...p.clientes,
-      id: (p.clientes as any).id || p.cliente_id || ''
+    // Make sure cliente info is properly structured
+    const clienteInfo = p.cliente_id ? {
+      id: p.cliente_id, 
+      nome: p.nome_cliente_text || 'Cliente não identificado'
     } : null;
     
     return {
@@ -79,7 +79,7 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
       />
 
       <ProcessTable
-        processes={processesWithClientInfo as any}
+        processes={processesWithClientInfo}
         onEdit={onEditProcess}
         onView={onViewProcess}
         onToggleStatus={onToggleStatus}

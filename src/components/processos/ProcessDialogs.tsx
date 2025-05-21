@@ -28,7 +28,7 @@ interface ProcessFormData {
 interface ProcessDialogsProps {
   formDialogOpen: boolean;
   detailsDialogOpen: boolean;
-  selectedProcess: Processo | ProcessFormData;
+  selectedProcess: Processo | ProcessFormData | null;
   isEditing: boolean;
   onFormDialogOpenChange: (open: boolean) => void;
   onDetailsDialogOpenChange: (open: boolean) => void;
@@ -95,7 +95,9 @@ const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
               onClose={() => onDetailsDialogOpenChange(false)}
               onEdit={() => {
                 onDetailsDialogOpenChange(false);
-                onEditProcess(selectedProcess.id);
+                if (selectedProcess?.id) {
+                  onEditProcess(selectedProcess.id);
+                }
               }}
             />
           )}
