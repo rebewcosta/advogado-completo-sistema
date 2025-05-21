@@ -2,7 +2,7 @@
 // supabase/functions/request-finance-pin-reset/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { v4 as uuidv4 } from 'https://deno.land/std@0.168.0/uuid/mod.ts'; // Import UUID v4 correctly
+import { v4 as uuidv4 } from 'https://esm.sh/uuid@9.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,7 +59,7 @@ serve(async (req: Request) => {
         });
     }
 
-    // Correctly generate UUID
+    // Corrigido: Agora usando o uuidv4() corretamente
     const resetToken = uuidv4();
     console.log("request-finance-pin-reset: Token gerado:", resetToken);
 
