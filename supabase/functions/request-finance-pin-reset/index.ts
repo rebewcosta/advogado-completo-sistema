@@ -1,9 +1,8 @@
 // supabase/functions/request-finance-pin-reset/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-// Tentativa de correção para o UUID:
-// Importar o módulo v4 diretamente.
-import { v4 as uuid } from 'https://deno.land/std@0.168.0/uuid/mod.ts';
+// CORREÇÃO APLICADA: Importar 'generate' diretamente de v4.ts e renomear
+import { generate as generateUuidV4 } from 'https://deno.land/std@0.168.0/uuid/v4.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*', // Em produção, restrinja ao seu domínio
@@ -12,7 +11,7 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
-  console.log("request-finance-pin-reset: Função INVOCADA.");
+  console.log("request-finance-pin-reset: Função INVOCADA (v3 - import direto de v4.ts).");
 
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders, status: 200 });
@@ -60,23 +59,9 @@ serve(async (req: Request) => {
         });
     }
 
-    // CORREÇÃO APLICADA AQUI:
-    // O módulo uuid/v4 em si é um objeto que tem o método `generate`
-    // ou, em algumas versões/estruturas, o `v4` importado já é a função `generate`.
-    // A mensagem de erro "uuidv4.generate is not a function" sugere que o alias `uuidv4`
-    // não é o objeto esperado. Vamos usar `uuid.generate()` que é o padrão da std lib do Deno.
-    let resetToken: string;
-    if (typeof uuid.generate === 'function') {
-        resetToken = uuid.generate(); // Chamada correta para std@0.168.0
-    } else {
-        // Fallback para caso a estrutura seja diferente (improvável para esta versão da std)
-        // ou se a importação `import { v4 as uuid }` fizer com que `uuid` seja a função.
-        // Esta parte é mais uma tentativa de cobrir variações, mas o erro indica que .generate() não está em uuidv4
-        // @ts-ignore
-        resetToken = uuid(); // Tentativa alternativa, menos provável de ser a correta para std/uuid/v4
-        console.warn("request-finance-pin-reset: uuid.generate não é uma função, tentando chamar uuid() diretamente.");
-    }
-
+    // CORREÇÃO APLICADA AQUI: Usar a função importada diretamente
+    const resetToken = generateUuidV4();
+    console.log("request-finance-pin-reset: Token gerado:", resetToken);
 
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // Token expira em 1 hora
 
@@ -103,7 +88,7 @@ serve(async (req: Request) => {
 
     return new Response(JSON.stringify({
       message: 'Se um email estiver associado a esta conta, um link para redefinir o PIN financeiro foi enviado (VERIFIQUE OS LOGS DA FUNÇÃO NO SUPABASE PARA PEGAR O LINK DE DEBUG).',
-      DEBUG_ONLY_link: resetPinLink // MANTENHA PARA DEBUG ENQUANTO O EMAIL NÃO ESTÁ CONFIGURADO
+      DEBUG_ONLY_link: resetPinLink
     }), {
       status: 200, headers: responseHeaders,
     });
