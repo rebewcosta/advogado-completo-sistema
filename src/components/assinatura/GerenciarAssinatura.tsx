@@ -30,9 +30,7 @@ const GerenciarAssinatura = () => {
           return;
         }
 
-        // Check if there's a user in auth schema with subscription data
-        // Note: Directly querying the user's subscription status
-        // This likely requires a RLS policy or a separate table to store subscription data
+        // Call the RPC function to get the subscription status
         const { data, error } = await supabase.rpc('verificar_status_assinatura', {
           uid: user.id
         });
@@ -42,8 +40,10 @@ const GerenciarAssinatura = () => {
         }
 
         if (data) {
-          setStatus(data.status || 'inativa');
-          setProximoFaturamento(data.proximo_faturamento || null);
+          // Type assertion to inform TypeScript that data has the expected shape
+          const subData = data as { status: string; proximo_faturamento: string | null };
+          setStatus(subData.status as 'ativa' | 'pendente' | 'inativa' | 'admin' | 'amigo');
+          setProximoFaturamento(subData.proximo_faturamento);
         } else {
           setStatus('inativa');
         }

@@ -218,6 +218,30 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          created_at: string | null
+          id: string
+          subscription_data: Json | null
+          subscription_status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id: string
+          subscription_data?: Json | null
+          subscription_status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          subscription_data?: Json | null
+          subscription_status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       transacoes_financeiras: {
         Row: {
           categoria: string
@@ -296,6 +320,10 @@ export type Database = {
       get_user_storage_usage: {
         Args: { uid: string }
         Returns: number
+      }
+      verificar_status_assinatura: {
+        Args: { uid: string }
+        Returns: Json
       }
     }
     Enums: {
