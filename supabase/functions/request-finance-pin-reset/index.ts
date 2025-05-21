@@ -59,7 +59,7 @@ serve(async (req: Request) => {
         });
     }
 
-    // Corrigido: Agora usando o uuidv4() corretamente
+    // Gerando token de reset
     const resetToken = uuidv4();
     console.log("request-finance-pin-reset: Token gerado:", resetToken);
 
@@ -83,9 +83,36 @@ serve(async (req: Request) => {
 
     const resetPinLink = `${siteUrl}/redefinir-pin-financeiro?token=${resetToken}`;
 
+    // Enviar email usando a função de email do Supabase
+    const { error: emailError } = await supabaseAdmin.auth.admin.sendEmail(
+      user.email,
+      {
+        subject: "Redefinir PIN Financeiro - SisJus Gestão",
+        template_name: "reset-pin",
+        template_data: {
+          user_name: user.user_metadata?.nome || "Usuário",
+          reset_pin_url: resetPinLink,
+          expires_at: new Date(expiresAt).toLocaleString("pt-BR"),
+        }
+      }
+    );
+
+    if (emailError) {
+      console.error("request-finance-pin-reset: Erro ao enviar email:", emailError.message);
+      // Continuar mesmo com erro de email, para fins de debug
+      return new Response(JSON.stringify({
+        message: 'Ocorreu um erro ao enviar o email, mas o token foi gerado. DEBUG_ONLY: verifique os logs.',
+        error: emailError.message,
+        DEBUG_ONLY_link: resetPinLink
+      }), {
+        status: 200, headers: responseHeaders,
+      });
+    }
+
+    console.log(`request-finance-pin-reset: Email enviado para ${user.email} com link de redefinição de PIN.`);
+
     return new Response(JSON.stringify({
-      message: 'Se um email estiver associado a esta conta, um link para redefinir o PIN financeiro foi enviado (VERIFIQUE OS LOGS DA FUNÇÃO NO SUPABASE PARA PEGAR O LINK DE DEBUG).',
-      DEBUG_ONLY_link: resetPinLink
+      message: 'Um email com instruções para redefinir seu PIN financeiro foi enviado para o endereço associado à sua conta.',
     }), {
       status: 200, headers: responseHeaders,
     });
