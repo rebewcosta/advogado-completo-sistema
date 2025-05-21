@@ -14,19 +14,18 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Spinner, Loader2 } from '@/components/ui/spinner'; // Adicionado Loader2
+import { Spinner } from '@/components/ui/spinner';
+import { Loader2 } from 'lucide-react'; // << CORREÇÃO AQUI: Importar Loader2 de lucide-react
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { useAuth } from '@/hooks/useAuth'; // Importar useAuth para pegar o token da sessão
+import { useAuth } from '@/hooks/useAuth';
 
 interface SegurancaTabProps {
-  // ... (props existentes)
   securitySettings: {
-    // Mantido como estava, mesmo que alguns campos não sejam usados diretamente no formulário de PIN
-    pref_seguranca_dois_fatores: boolean; // Renomeado para corresponder à ConfiguraçõesPage
+    pref_seguranca_dois_fatores: boolean;
     pref_seguranca_tempo_sessao_min: string;
     pref_seguranca_restricao_ip: boolean;
   };
@@ -48,7 +47,7 @@ const SegurancaTab = ({
   isSavingPin
 }: SegurancaTabProps) => {
   const { toast } = useToast();
-  const { session } = useAuth(); // Pegar a sessão para o token JWT
+  const { session } = useAuth();
   const [passwordData, setPasswordData] = useState({
     newPassword: "",
     confirmPassword: ""
@@ -59,7 +58,7 @@ const SegurancaTab = ({
   const [novoPinFinanceiro, setNovoPinFinanceiro] = useState("");
   const [confirmaNovoPinFinanceiro, setConfirmaNovoPinFinanceiro] = useState("");
   const [pinErrorMessage, setPinErrorMessage] = useState("");
-  const [isRequestingPinReset, setIsRequestingPinReset] = useState(false); // Novo estado
+  const [isRequestingPinReset, setIsRequestingPinReset] = useState(false);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,14 +116,13 @@ const SegurancaTab = ({
     }
   };
 
-  // Nova função para solicitar reset de PIN
   const handleRequestPinReset = async () => {
     if (!session) {
       toast({ title: "Não autenticado", description: "Você precisa estar logado para solicitar a redefinição do PIN.", variant: "destructive" });
       return;
     }
     setIsRequestingPinReset(true);
-    setPinErrorMessage(''); // Limpar erros anteriores
+    setPinErrorMessage('');
     try {
       const { data, error: funcError } = await supabase.functions.invoke('request-finance-pin-reset');
 
@@ -138,7 +136,6 @@ const SegurancaTab = ({
         description: data.message || "Se sua conta for encontrada, um email será enviado com instruções.",
         duration: 7000,
       });
-      // console.log("DEBUG Link (remover em prod):", data.DEBUG_ONLY_link); // Para debug local
 
     } catch (err: any) {
       toast({
@@ -151,7 +148,6 @@ const SegurancaTab = ({
     }
   };
 
-
   return (
     <Card>
       <CardHeader>
@@ -161,7 +157,6 @@ const SegurancaTab = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Seção Autenticação em Dois Fatores */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="twoFactorSwitch">Autenticação em Dois Fatores</Label>
@@ -181,7 +176,6 @@ const SegurancaTab = ({
 
         <Separator />
 
-        {/* Seção Tempo de Sessão */}
         <div className="space-y-2">
           <Label htmlFor="sessionTimeout">Tempo de Sessão (minutos)</Label>
           <p className="text-sm text-muted-foreground mb-2">
@@ -200,7 +194,6 @@ const SegurancaTab = ({
 
         <Separator />
 
-        {/* Seção Restrição de IP */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="ipRestrictionSwitch">Restrição de IP</Label>
@@ -220,7 +213,6 @@ const SegurancaTab = ({
 
         <Separator />
 
-        {/* Seção Alteração de Senha do Sistema */}
         <form onSubmit={handleChangePassword} className="space-y-4">
           <h3 className="text-lg font-medium">Alteração de Senha do Sistema</h3>
           <div className="space-y-2">
@@ -261,7 +253,6 @@ const SegurancaTab = ({
 
         <Separator />
 
-        {/* Seção PIN de Acesso ao Financeiro */}
         <form onSubmit={handleAlterarPinFinanceiroSubmit} className="space-y-4 pt-4">
           <h3 className="text-lg font-medium">PIN de Acesso ao Financeiro</h3>
           <p className="text-sm text-muted-foreground">
