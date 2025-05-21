@@ -64,11 +64,19 @@ root.render(
           <AuthProvider>
             <Routes>
               <Route path="/" element={<App />} />
-              <Route path="/login" element={<ProtectedRoute requireAuth={false}><LoginPage /></ProtectedRoute>} />
-              <Route path="/cadastro" element={<ProtectedRoute requireAuth={false}><CadastroPage /></ProtectedRoute>} />
+              <Route path="/login" element={
+                <ProtectedRoute requireAuth={false}>
+                  <LoginPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/cadastro" element={
+                <ProtectedRoute requireAuth={false}>
+                  <CadastroPage />
+                </ProtectedRoute>
+              } />
               <Route path="/pagamento" element={<PagamentoPage />} />
               <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
-              <Route path="/recuperar-senha" element={<RecuperrarSenhaPage />} />
+              <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
               <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
               <Route path="/termos-e-privacidade" element={<TermosPrivacidadePage />} />
               <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
