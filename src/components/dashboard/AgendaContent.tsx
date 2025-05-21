@@ -1,18 +1,19 @@
 // src/components/dashboard/AgendaContent.tsx
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CalendarDays, CalendarClock, AlertOctagon, PlusCircle, ArrowRight } from 'lucide-react'; // Ícones ajustados
+import { CalendarDays, CalendarClock, AlertOctagon, PlusCircle, ArrowRight, Briefcase } from 'lucide-react'; // << BRIEFCASE ADICIONADO AQUI
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
 const cardData = [
   { title: "Compromissos para Hoje", description: "Sua agenda para o dia atual.", icon: CalendarClock, emptyIcon: CalendarClock, link: "/agenda" },
-  { title: "Próximas Audiências", description: "Audiências importantes agendadas.", icon: Briefcase, emptyIcon: Briefcase, link: "/agenda" }, // Usando Briefcase para audiências
+  { title: "Próximas Audiências", description: "Audiências importantes agendadas.", icon: Briefcase, emptyIcon: Briefcase, link: "/agenda" },
   { title: "Prazos Importantes", description: "Prazos que exigem sua atenção em breve.", icon: AlertOctagon, emptyIcon: AlertOctagon, link: "/agenda" },
 ];
 
 const AgendaContent: React.FC = () => {
-  const hasData = false; // Simula se há dados para exibir
+  // No futuro, você buscará dados reais aqui
+  // const hasData = false; // Simula se há dados para exibir
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -26,7 +27,7 @@ const AgendaContent: React.FC = () => {
               </CardDescription>
             </div>
             <Button variant="default" size="sm" asChild className="bg-lawyer-primary hover:bg-lawyer-primary/90 self-start sm:self-center">
-              <Link to="/agenda" className="flex items-center"> {/* Ajuste o link para a página de adicionar evento */}
+              <Link to="/agenda" className="flex items-center">
                 <PlusCircle className="h-3.5 w-3.5 mr-1.5" /> Novo Evento
               </Link>
             </Button>
