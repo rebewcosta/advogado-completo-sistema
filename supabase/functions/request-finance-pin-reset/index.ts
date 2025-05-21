@@ -4,7 +4,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { v4 as uuidv4 } from 'https://esm.sh/uuid@9.0.0';
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // Para desenvolvimento. Em produção, restrinja à URL do seu app.
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
@@ -22,9 +22,9 @@ serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    // O SITE_URL deve ser configurado nas variáveis de ambiente da sua Edge Function no painel do Supabase.
-    // Exemplo: https://sisjusgestao.com.br
-    const siteUrl = Deno.env.get('SITE_URL') || 'https://sisjusgestao.com.br'; // Adicionado fallback para seu domínio
+    const siteUrl = Deno.env.get('SITE_URL') || 'https://sisjusgestao.com.br';
+    // VOCÊ PRECISARÁ ADICIONAR A CHAVE DE API DO SEU SERVIÇO DE EMAIL NOS SEGREDOS DA FUNÇÃO
+    // Exemplo: const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("request-finance-pin-reset: ERRO - Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas.");
@@ -32,6 +32,13 @@ serve(async (req: Request) => {
         status: 500, headers: responseHeaders,
       });
     }
+    // Adicione a verificação da sua chave de API de email aqui
+    // if (!RESEND_API_KEY) { // Exemplo com Resend
+    //   console.error("request-finance-pin-reset: ERRO - Chave de API do serviço de email não configurada.");
+    //   return new Response(JSON.stringify({ error: "Configuração de envio de email ausente." }), {
+    //     status: 500, headers: responseHeaders,
+    //   });
+    // }
 
     const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
       auth: { autoRefreshToken: false, persistSession: false, detectSessionInUrl: false }
@@ -61,10 +68,7 @@ serve(async (req: Request) => {
         });
     }
 
-    // Gerando token de reset
     const resetToken = uuidv4();
-    console.log("request-finance-pin-reset: Token gerado:", resetToken);
-
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // Token expira em 1 hora
 
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -84,40 +88,74 @@ serve(async (req: Request) => {
     }
 
     const resetPinLink = `${siteUrl}/redefinir-pin-financeiro?token=${resetToken}`;
+    const userName = user.user_metadata?.nome || user.email?.split('@')[0] || "Usuário";
+    const expirationTimeLocale = new Date(expiresAt).toLocaleString("pt-BR", { dateStyle: 'full', timeStyle: 'short'});
 
-    // Usar inviteUserByEmail para enviar o email.
-    // Você precisará personalizar o template "Invite user" no seu painel Supabase.
-    const { error: emailError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
-      user.email, // Email do destinatário
-      {
-        data: { // Estes dados estarão disponíveis no seu template de email
-          user_name: user.user_metadata?.nome || user.email?.split('@')[0] || "Usuário",
-          reset_pin_url: resetPinLink,
-          expires_at_locale: new Date(expiresAt).toLocaleString("pt-BR", { dateStyle: 'full', timeStyle: 'short'}),
-          // O assunto do email será o que você configurar no template "Invite User" no Supabase
-        },
-        // redirectTo: resetPinLink // Opcional, se o seu template de convite tiver um botão principal
-                                 // que usa {{ .ConfirmationURL }}. Para este caso, é melhor
-                                 // ter o reset_pin_url diretamente no corpo do email.
-      }
-    );
+    // --- SUBSTITUA ESTA SEÇÃO PELA LÓGICA DE ENVIO DE EMAIL DO SEU PROVEDOR ---
+    let emailSentSuccessfully = false;
+    let emailErrorFromService: string | null = null;
 
-    if (emailError) {
-      console.error("request-finance-pin-reset: Erro ao enviar email via inviteUserByEmail:", emailError.message);
-      // Mesmo com erro de email, o token foi gerado e salvo.
-      // Considere como tratar isso: o usuário não receberá o email, mas o token é válido.
+    try {
+      // Exemplo conceitual (você precisará adaptar para o seu provedor de email, ex: Resend, SendGrid)
+      // const emailPayload = {
+      //   from: 'JusGestão <suporte@sisjusgestao.com.br>',
+      //   to: [user.email],
+      //   subject: 'Redefinir seu PIN Financeiro - JusGestão',
+      //   html: `
+      //     <h2>Redefinição de PIN Financeiro</h2>
+      //     <p>Olá ${userName},</p>
+      //     <p>Recebemos uma solicitação para redefinir o PIN financeiro da sua conta JusGestão.</p>
+      //     <p>Clique no link abaixo para criar um novo PIN:</p>
+      //     <p><a href="${resetPinLink}">Redefinir meu PIN Financeiro</a></p>
+      //     <p>Este link é válido até ${expirationTimeLocale}.</p>
+      //     <p>Se você não solicitou esta redefinição, por favor, ignore este e-mail.</p>
+      //     <p>Atenciosamente,<br>Equipe JusGestão</p>
+      //   `,
+      //   // text: `Olá ${userName}, ... seu link: ${resetPinLink}` // Versão em texto puro
+      // };
+
+      // // Supondo que você use 'fetch' para chamar a API do seu provedor de email:
+      // const response = await fetch('URL_DA_API_DO_SEU_PROVEDOR_DE_EMAIL', {
+      //   method: 'POST',
+      //   headers: {
+      //     'Authorization': `Bearer ${Deno.env.get('SUA_CHAVE_DE_API_EMAIL')}`,
+      //     'Content-Type': 'application/json',
+      //   },
+      //   body: JSON.stringify(emailPayload),
+      // });
+
+      // if (!response.ok) {
+      //   const errorData = await response.json();
+      //   throw new Error(errorData.message || `Erro ${response.status} ao enviar email.`);
+      // }
+      // const emailResponseData = await response.json();
+      // console.log("request-finance-pin-reset: Email enviado com sucesso via serviço de terceiros:", emailResponseData);
+      // emailSentSuccessfully = true;
+
+      // POR ENQUANTO, COMO NÃO TEMOS A INTEGRAÇÃO, VAMOS SIMULAR UM ERRO PARA VOCÊ IMPLEMENTAR
+      // Remova esta linha quando implementar o envio real:
+      throw new Error("Lógica de envio de email de terceiros ainda não implementada.");
+
+    } catch (err) {
+      console.error("request-finance-pin-reset: Erro ao tentar enviar email via serviço de terceiros:", err);
+      emailErrorFromService = err.message;
+    }
+    // --- FIM DA SEÇÃO DE ENVIO DE EMAIL ---
+
+
+    if (!emailSentSuccessfully) {
+      console.error("request-finance-pin-reset: Falha no envio do email:", emailErrorFromService);
       return new Response(JSON.stringify({
         message: 'Ocorreu um erro ao enviar o email de redefinição. Por favor, tente novamente mais tarde ou contate o suporte.',
-        error: emailError.message,
-        DEBUG_ONLY_link: resetPinLink // Para depuração, você pode querer ver o link gerado
+        error: emailErrorFromService || "Erro desconhecido no envio de email.",
+        DEBUG_ONLY_link: resetPinLink
       }), {
-        status: 500, // Ou 200 com uma mensagem de erro específica
+        status: 500,
         headers: responseHeaders,
       });
     }
 
-    console.log(`request-finance-pin-reset: Email de redefinição de PIN (via template de convite) enviado para ${user.email}.`);
-
+    console.log(`request-finance-pin-reset: Email de redefinição de PIN enviado para ${user.email}.`);
     return new Response(JSON.stringify({
       message: 'Um email com instruções para redefinir seu PIN financeiro foi enviado para o endereço associado à sua conta.',
     }), {
