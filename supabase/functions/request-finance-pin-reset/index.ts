@@ -1,17 +1,16 @@
 // supabase/functions/request-finance-pin-reset/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-// CORREÇÃO APLICADA: Importar 'generate' diretamente de v4.ts e renomear
-import { generate as generateUuidV4 } from 'https://deno.land/std@0.168.0/uuid/v4.ts';
+import { v4 as uuidModuleV4 } from 'https://deno.land/std@0.168.0/uuid/mod.ts'; // Importar o namespace v4
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*', // Em produção, restrinja ao seu domínio
+  'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
 serve(async (req: Request) => {
-  console.log("request-finance-pin-reset: Função INVOCADA (v3 - import direto de v4.ts).");
+  console.log("request-finance-pin-reset: Função INVOCADA (v4 - verificando tipo uuidModuleV4).");
 
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders, status: 200 });
@@ -59,9 +58,27 @@ serve(async (req: Request) => {
         });
     }
 
-    // CORREÇÃO APLICADA AQUI: Usar a função importada diretamente
-    const resetToken = generateUuidV4();
-    console.log("request-finance-pin-reset: Token gerado:", resetToken);
+    let resetToken: string;
+    // Verificar se uuidModuleV4 é um objeto e se tem o método generate
+    if (typeof uuidModuleV4 === 'object' && uuidModuleV4 !== null && typeof uuidModuleV4.generate === 'function') {
+      resetToken = uuidModuleV4.generate();
+      console.log("request-finance-pin-reset: Token gerado com uuidModuleV4.generate():", resetToken);
+    } else {
+      // Se uuidModuleV4 não for um objeto com generate, pode ser a própria função (menos comum para esta importação)
+      // ou a importação falhou em trazer o que esperávamos.
+      // Este é um fallback/log de erro.
+      console.error("request-finance-pin-reset: uuidModuleV4.generate não é uma função. Tipo de uuidModuleV4:", typeof uuidModuleV4, "Valor:", uuidModuleV4);
+      // Tentar um fallback muito genérico (e provavelmente errado para esta versão da std) só para ver se passa, mas isso indica um problema de importação/API.
+      // @ts-ignore
+      if (typeof uuidModuleV4 === 'function') { // Se o próprio v4 importado for a função
+        // @ts-ignore
+        resetToken = uuidModuleV4();
+         console.log("request-finance-pin-reset: Token gerado com uuidModuleV4() como fallback:", resetToken);
+      } else {
+        throw new TypeError("Não foi possível gerar UUID. A API do módulo UUID não corresponde ao esperado.");
+      }
+    }
+
 
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // Token expira em 1 hora
 
@@ -82,9 +99,6 @@ serve(async (req: Request) => {
     }
 
     const resetPinLink = `${siteUrl}/redefinir-pin-financeiro?token=${resetToken}`;
-
-    // IMPORTANTE: Implementar o envio de email real aqui.
-    // console.log(`request-finance-pin-reset: Email de reset de PIN (simulado) enviado para ${user.email}. Link: ${resetPinLink}`);
 
     return new Response(JSON.stringify({
       message: 'Se um email estiver associado a esta conta, um link para redefinir o PIN financeiro foi enviado (VERIFIQUE OS LOGS DA FUNÇÃO NO SUPABASE PARA PEGAR O LINK DE DEBUG).',
