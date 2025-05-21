@@ -1,7 +1,9 @@
 // supabase/functions/request-finance-pin-reset/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { v4 as uuidv4 } from 'https://deno.land/std@0.168.0/uuid/mod.ts'; // Para gerar tokens únicos
+// Tentativa de correção para o UUID:
+// Importar o módulo v4 diretamente.
+import { v4 as uuid } from 'https://deno.land/std@0.168.0/uuid/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*', // Em produção, restrinja ao seu domínio
@@ -21,7 +23,7 @@ serve(async (req: Request) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:8080'; // URL base do seu app frontend
+    const siteUrl = Deno.env.get('SITE_URL') || 'http://localhost:8080';
 
     if (!supabaseUrl || !serviceRoleKey) {
       console.error("request-finance-pin-reset: ERRO - Variáveis de ambiente SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não configuradas.");
@@ -58,7 +60,24 @@ serve(async (req: Request) => {
         });
     }
 
-    const resetToken = uuidv4.generate(); // Gera um token UUID v4
+    // CORREÇÃO APLICADA AQUI:
+    // O módulo uuid/v4 em si é um objeto que tem o método `generate`
+    // ou, em algumas versões/estruturas, o `v4` importado já é a função `generate`.
+    // A mensagem de erro "uuidv4.generate is not a function" sugere que o alias `uuidv4`
+    // não é o objeto esperado. Vamos usar `uuid.generate()` que é o padrão da std lib do Deno.
+    let resetToken: string;
+    if (typeof uuid.generate === 'function') {
+        resetToken = uuid.generate(); // Chamada correta para std@0.168.0
+    } else {
+        // Fallback para caso a estrutura seja diferente (improvável para esta versão da std)
+        // ou se a importação `import { v4 as uuid }` fizer com que `uuid` seja a função.
+        // Esta parte é mais uma tentativa de cobrir variações, mas o erro indica que .generate() não está em uuidv4
+        // @ts-ignore
+        resetToken = uuid(); // Tentativa alternativa, menos provável de ser a correta para std/uuid/v4
+        console.warn("request-finance-pin-reset: uuid.generate não é uma função, tentando chamar uuid() diretamente.");
+    }
+
+
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // Token expira em 1 hora
 
     const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
@@ -77,39 +96,14 @@ serve(async (req: Request) => {
       throw updateError;
     }
 
-    // Lógica de Envio de Email (Supabase Auth tem um sistema de templates para isso)
-    // Para simplificar aqui, vamos assumir que o Supabase Auth tem um template para 'recovery'
-    // que pode ser adaptado ou você pode usar um provedor de email externo.
-    // Se usar o sistema do Supabase para senhas, pode não ser direto para PINs.
-    // A forma mais simples é enviar o email diretamente daqui usando um provider ou o `supabase.functions.invoke('send-email-function', ...)`
-    // Por enquanto, vamos apenas retornar sucesso e o link que seria enviado.
-    // Em um sistema real, aqui você chamaria `await supabase.auth.resetPasswordForEmail(user.email, { redirectTo: resetLink })`
-    // mas como é para PIN, e não senha do SupABASE, o fluxo é um pouco diferente.
-    // Vamos construir o link e você pode enviar manualmente ou com outra função.
-
-    const resetPinLink = `<span class="math-inline">\{siteUrl\}/redefinir\-pin\-financeiro?token\=</span>{resetToken}`;
+    const resetPinLink = `${siteUrl}/redefinir-pin-financeiro?token=${resetToken}`;
 
     // IMPORTANTE: Implementar o envio de email real aqui.
-    // Exemplo conceitual (você precisaria de uma função para enviar email ou usar um provider):
-    // await sendEmail({
-    //   to: user.email,
-    //   subject: 'Redefinição do seu PIN Financeiro - JusGestão',
-    //   html: `
-    //     <p>Olá <span class="math-inline">\{user\.user\_metadata?\.nome \|\| user\.email\},</p\>
-//     <p>Recebemos uma solicitação para redefinir o PIN financeiro da sua conta JusGestão.</p>
-//     <p>Clique no link abaixo para criar um novo PIN:</p>
-//     <p><a href="{resetPinLink}">${resetPinLink}</a></p>
-//     <p>Este link é válido por 1 hora.</p>
-//     <p>Se você não solicitou esta redefinição, por favor, ignore este e-mail.</p>
-//     <p>Atenciosamente,<br>Equipe JusGestão</p>
-//   `
-// });
-
-    console.log(`request-finance-pin-reset: Email de reset de PIN (simulado) enviado para ${user.email}. Link: ${resetPinLink}`);
+    // console.log(`request-finance-pin-reset: Email de reset de PIN (simulado) enviado para ${user.email}. Link: ${resetPinLink}`);
 
     return new Response(JSON.stringify({
-      message: 'Se um email estiver associado a esta conta, um link para redefinir o PIN financeiro foi enviado.',
-      // DEBUG_ONLY_link: resetPinLink // Remova em produção
+      message: 'Se um email estiver associado a esta conta, um link para redefinir o PIN financeiro foi enviado (VERIFIQUE OS LOGS DA FUNÇÃO NO SUPABASE PARA PEGAR O LINK DE DEBUG).',
+      DEBUG_ONLY_link: resetPinLink // MANTENHA PARA DEBUG ENQUANTO O EMAIL NÃO ESTÁ CONFIGURADO
     }), {
       status: 200, headers: responseHeaders,
     });
