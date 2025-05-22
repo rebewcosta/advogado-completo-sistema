@@ -8,6 +8,7 @@ import type { Database } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from '@/components/ui/spinner';
+import { FileText } from 'lucide-react'; // Ícone para o cabeçalho
 
 type Processo = Database['public']['Tables']['processos']['Row'];
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
@@ -25,8 +26,6 @@ type ProcessoFormData = {
 const MeusProcessosPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-
-  console.log("MeusProcessosPage: Componente renderizado/montado. Usuário inicial:", user); // LOG INICIAL
 
   const [searchTerm, setSearchTerm] = useState("");
   const [formDialogOpen, setFormDialogOpen] = useState(false);
@@ -49,15 +48,12 @@ const MeusProcessosPage = () => {
   } = useProcessesStore();
 
   const fetchUserClients = useCallback(async () => {
-    console.log("MeusProcessosPage: LOG 1 - Iniciando fetchUserClients. Usuário:", user ? user.id : 'Nenhum usuário');
     if (!user) {
       setUserClients([]);
       setIsLoadingClients(false);
-      console.log("MeusProcessosPage: LOG 2 - fetchUserClients - Nenhum usuário logado, definindo clientes como [] e parando loading.");
       return;
     }
     setIsLoadingClients(true);
-    console.log("MeusProcessosPage: fetchUserClients - Definido isLoadingClients para true.");
     try {
       const { data, error } = await supabase
         .from('clientes')
@@ -65,35 +61,26 @@ const MeusProcessosPage = () => {
         .eq('user_id', user.id)
         .order('nome', { ascending: true });
 
-      console.log("MeusProcessosPage: LOG 3 - fetchUserClients - Resposta do Supabase:", { data, error });
-
       if (error) {
         toast({ title: "Erro ao carregar lista de clientes para formulário", description: error.message, variant: "destructive" });
-        // Não re-throw error aqui para que o finally seja sempre executado
       }
-      setUserClients(data || []); // Define como array vazio se data for null
-      console.log("MeusProcessosPage: LOG 4 - fetchUserClients - Clientes definidos no estado:", data || []);
+      setUserClients(data || []);
     } catch (error: any) {
       console.error("MeusProcessosPage: Erro CRÍTICO dentro do try/catch do fetchUserClients:", error);
-      setUserClients([]); // Garante que é um array em caso de erro
+      setUserClients([]);
     } finally {
       setIsLoadingClients(false);
-      console.log("MeusProcessosPage: LOG 5 - fetchUserClients - Finalizado. isLoadingClients definido para false.");
     }
   }, [user, toast]);
 
   useEffect(() => {
-    console.log("MeusProcessosPage: LOG 6 - useEffect [user, fetchUserClients] disparado. Usuário atual:", user ? user.id : 'Nenhum usuário');
     if (user) {
-        console.log("MeusProcessosPage: useEffect - Usuário existe, chamando fetchUserClients.");
         fetchUserClients();
     } else {
-        console.log("MeusProcessosPage: LOG 7 - useEffect - Usuário não disponível, definindo userClients para [] e não buscando.");
         setUserClients([]);
-        setIsLoadingClients(false); // Garante que o loading de clientes para se não houver usuário
+        setIsLoadingClients(false);
     }
   }, [user, fetchUserClients]);
-
 
   const filteredProcesses = processes.filter(process =>
     process.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -111,7 +98,6 @@ const MeusProcessosPage = () => {
   };
 
   const handleOpenNewProcessForm = () => {
-    console.log("MeusProcessosPage: handleOpenNewProcessForm chamado.");
     setProcessoParaForm(null);
     setSelectedProcess(null);
     setIsEditing(false);
@@ -119,7 +105,6 @@ const MeusProcessosPage = () => {
   };
 
   const handleSaveProcess = async (processFormData: ProcessoFormData) => {
-    console.log("MeusProcessosPage: handleSaveProcess chamado com:", processFormData);
     let result;
     if (isEditing && processoParaForm && processoParaForm.id) {
       result = await updateProcess(processoParaForm.id, processFormData);
@@ -146,7 +131,6 @@ const MeusProcessosPage = () => {
   };
 
   const handleEditProcess = (id: string) => {
-    console.log("MeusProcessosPage: handleEditProcess chamado para ID:", id);
     const process = getProcessById(id);
     if (process) {
       const formData = {
@@ -160,47 +144,37 @@ const MeusProcessosPage = () => {
         status: process.status_processo as 'Em andamento' | 'Concluído' | 'Suspenso',
         prazo: process.proximo_prazo ? new Date(process.proximo_prazo).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : '',
       };
-      console.log("MeusProcessosPage: handleEditProcess - Dados preparados para o formulário:", formData);
       setProcessoParaForm(formData);
       setSelectedProcess(null);
       setIsEditing(true);
       setFormDialogOpen(true);
-    } else {
-      console.warn("MeusProcessosPage: handleEditProcess - Processo não encontrado com ID:", id);
     }
   };
 
   const handleViewProcess = (id: string) => {
-    console.log("MeusProcessosPage: handleViewProcess chamado para ID:", id);
     const process = getProcessById(id);
     if (process) {
       setSelectedProcess(process);
       setProcessoParaForm(null);
       setDetailsDialogOpen(true);
-    } else {
-      console.warn("MeusProcessosPage: handleViewProcess - Processo não encontrado com ID:", id);
     }
   };
 
   const handleToggleStatus = async (id: string) => {
-    console.log("MeusProcessosPage: handleToggleStatus chamado para ID:", id);
     await toggleProcessStatus(id);
   };
 
   const handleDeleteProcess = async (id: string) => {
-    console.log("MeusProcessosPage: handleDeleteProcess chamado para ID:", id);
     const process = getProcessById(id);
     if (process && window.confirm(`Tem certeza que deseja excluir o processo ${process.numero_processo}?`)) {
       await deleteProcess(id);
     }
   };
 
-  console.log("MeusProcessosPage: LOG 8 - Renderizando. userClients:", userClients, "isLoadingClients:", isLoadingClients);
-
   if (isLoadingProcesses && !processes.length) {
     return (
       <AdminLayout>
-        <div className="p-6 flex justify-center items-center h-screen">
+        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex justify-center items-center">
           <Spinner size="lg" />
           <span className="ml-3 text-gray-500">Carregando processos...</span>
         </div>
@@ -210,36 +184,48 @@ const MeusProcessosPage = () => {
 
   return (
     <AdminLayout>
-      <ProcessesPageContent
-        processes={filteredProcesses}
-        searchTerm={searchTerm}
-        formDialogOpen={formDialogOpen}
-        detailsDialogOpen={detailsDialogOpen}
-        selectedProcess={detailsDialogOpen ? selectedProcess : processoParaForm }
-        isEditing={isEditing}
-        onSearchChange={handleSearchChange}
-        onFormDialogOpenChange={(open) => {
-          if (!open) {
-            setProcessoParaForm(null);
-            setIsEditing(false);
-          }
-          setFormDialogOpen(open);
-        }}
-        onDetailsDialogOpenChange={(open) => {
-          if (!open) {
-            setSelectedProcess(null);
-          }
-          setDetailsDialogOpen(open);
-        }}
-        onNewProcess={handleOpenNewProcessForm}
-        onEditProcess={handleEditProcess}
-        onViewProcess={handleViewProcess}
-        onToggleStatus={handleToggleStatus}
-        onDeleteProcess={handleDeleteProcess}
-        onSaveProcess={handleSaveProcess}
-        clientesParaForm={userClients}
-        isLoadingClientesParaForm={isLoadingClients}
-      />
+      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+            <FileText className="mr-3 h-7 w-7 text-lawyer-primary" />
+            Meus Processos
+          </h1>
+          <p className="text-gray-600 text-left mt-1">
+            Gerencie e acompanhe todos os seus processos jurídicos.
+          </p>
+        </div>
+
+        <ProcessesPageContent
+          processes={filteredProcesses}
+          searchTerm={searchTerm}
+          formDialogOpen={formDialogOpen}
+          detailsDialogOpen={detailsDialogOpen}
+          selectedProcess={detailsDialogOpen ? selectedProcess : processoParaForm }
+          isEditing={isEditing}
+          onSearchChange={handleSearchChange}
+          onFormDialogOpenChange={(open) => {
+            if (!open) {
+              setProcessoParaForm(null);
+              setIsEditing(false);
+            }
+            setFormDialogOpen(open);
+          }}
+          onDetailsDialogOpenChange={(open) => {
+            if (!open) {
+              setSelectedProcess(null);
+            }
+            setDetailsDialogOpen(open);
+          }}
+          onNewProcess={handleOpenNewProcessForm}
+          onEditProcess={handleEditProcess}
+          onViewProcess={handleViewProcess}
+          onToggleStatus={handleToggleStatus}
+          onDeleteProcess={handleDeleteProcess}
+          onSaveProcess={handleSaveProcess}
+          clientesParaForm={userClients}
+          isLoadingClientesParaForm={isLoadingClients}
+        />
+      </div>
     </AdminLayout>
   );
 };

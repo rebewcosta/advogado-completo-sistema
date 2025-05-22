@@ -4,31 +4,36 @@ import AdminLayout from '@/components/AdminLayout';
 import PinLock from '@/components/PinLock';
 import {
   Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Filter,
-  DollarSign, TrendingUp, TrendingDown, FileText, X, Loader2, KeyRound, AlertCircle
-} from 'lucide-react';
+  DollarSign, TrendingUp, TrendingDown, FileText as FileTextIcon, X, Loader2, KeyRound, AlertCircle, ShieldAlert, BadgePercent
+} from 'lucide-react'; // Adicionado BadgePercent
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { ShieldAlert } from 'lucide-react';
-import type { Database } from '@/integrations/supabase/types'; // Importar tipos do Supabase
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Import Card
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import type { Database } from '@/integrations/supabase/types';
 
-// Definindo o tipo para uma transação como ela virá do Supabase
 type TransacaoSupabase = Database['public']['Tables']['transacoes_financeiras']['Row'];
 
-// Definindo o tipo para os dados do formulário
 interface TransacaoFormData {
   tipo: 'Receita' | 'Despesa';
   descricao: string;
   valor: number;
   categoria: string;
-  data_transacao: string; // Formato YYYY-MM-DD
-  status_pagamento: 'Pendente' | 'Pago' | 'Recebido' | 'Atrasado'; // Ajustar conforme seus status
-  cliente_nome_temp?: string; // Campo temporário para o nome do cliente, se não for usar IDs
+  data_transacao: string;
+  status_pagamento: 'Pendente' | 'Pago' | 'Recebido' | 'Atrasado';
+  cliente_nome_temp?: string;
 }
-
 
 const PAGE_NAME_FOR_PIN_SESSION_STORAGE = "Financeiro_UserPinAccess";
 
@@ -48,7 +53,6 @@ const FinanceiroPage = () => {
   const [currentTransaction, setCurrentTransaction] = useState<TransacaoSupabase | null>(null);
   const { toast } = useToast();
 
-  // Hook de Autenticação e PIN (igual ao anterior)
   useEffect(() => {
     const checkAccessOrPinStatus = async () => {
       if (!user || !session) {
@@ -87,7 +91,6 @@ const FinanceiroPage = () => {
     checkAccessOrPinStatus();
   }, [user, session, toast]);
 
-  // Função para buscar transações do Supabase
   const fetchTransactions = useCallback(async () => {
     if (!user || !pinCheckResult?.verified) {
       setTransactions([]);
@@ -117,43 +120,36 @@ const FinanceiroPage = () => {
     }
   }, [user, pinCheckResult?.verified, toast]);
 
-  // useEffect para buscar transações quando o acesso for verificado
   useEffect(() => {
     if (pinCheckResult?.verified) {
       fetchTransactions();
     }
   }, [pinCheckResult?.verified, fetchTransactions]);
   
-  // REMOVIDO: useEffects que usavam localStorage
-
   const handlePinSuccessfullyVerified = () => {
     setPinCheckResult({ verified: true, pinNotSet: false });
     if(user) {
         sessionStorage.setItem(`${PAGE_NAME_FOR_PIN_SESSION_STORAGE}_${user.id}`, 'true');
     }
-    // fetchTransactions(); // Agora será chamado pelo useEffect acima
   };
   
   const filteredTransactions = transactions.filter(transaction =>
     (transaction.descricao && transaction.descricao.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    // Adicionar busca por outros campos se necessário, ex: categoria.
-    // Se você adicionar cliente_nome_temp à tabela ou fizer join, pode buscar por ele também.
     (transaction.categoria && transaction.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  // Cálculos de resumo (ajustar se necessário, especialmente 'valor')
   const receitas = transactions
-    .filter(t => t.tipo_transacao === "Receita") // Usar nome da coluna do DB
+    .filter(t => t.tipo_transacao === "Receita")
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
   const despesas = transactions
-    .filter(t => t.tipo_transacao === "Despesa") // Usar nome da coluna do DB
+    .filter(t => t.tipo_transacao === "Despesa")
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
   const saldo = receitas - despesas;
 
   const receitasPendentes = transactions
-    .filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente") // Usar nome da coluna do DB
+    .filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente")
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
   const handleEditTransaction = (transaction: TransacaoSupabase) => {
@@ -199,22 +195,18 @@ const FinanceiroPage = () => {
     const formData = new FormData(e.target as HTMLFormElement);
     const formValues = Object.fromEntries(formData.entries()) as { [key: string]: string };
 
-    // Mapeamento e conversão de dados do formulário para o formato do Supabase
     const transactionDataForSupabase = {
       user_id: user.id,
-      tipo_transacao: formValues.tipo as 'Receita' | 'Despesa', // tipo_transacao na tabela
+      tipo_transacao: formValues.tipo as 'Receita' | 'Despesa',
       descricao: formValues.descricao,
       valor: parseFloat(formValues.valor),
       categoria: formValues.categoria,
-      data_transacao: formValues.data, // data_transacao na tabela
-      status_pagamento: formValues.status as TransacaoSupabase['status_pagamento'], // status_pagamento na tabela
-      // cliente_associado_id: null, // Manter null por enquanto
-      // processo_associado_id: null, // Manter null por enquanto
-      // A coluna 'transacoes_financeiras' (text) não está no formulário, será default ou null no DB.
+      data_transacao: formValues.data,
+      status_pagamento: formValues.status as TransacaoSupabase['status_pagamento'],
     };
 
     try {
-      if (currentTransaction) { // Atualizar transação existente
+      if (currentTransaction) {
         const { data: updatedData, error } = await supabase
           .from('transacoes_financeiras')
           .update(transactionDataForSupabase)
@@ -228,7 +220,7 @@ const FinanceiroPage = () => {
         setTransactions(prev => prev.map(t => t.id === currentTransaction.id ? updatedData : t));
         toast({ title: "Transação atualizada", description: "Os dados da transação foram atualizados." });
 
-      } else { // Adicionar nova transação
+      } else {
         const { data: insertedData, error } = await supabase
           .from('transacoes_financeiras')
           .insert(transactionDataForSupabase)
@@ -251,7 +243,6 @@ const FinanceiroPage = () => {
       });
     }
   };
-
 
   if (isLoadingAccess) {
     return ( <AdminLayout><div className="flex items-center justify-center min-h-[calc(100vh-150px)]"><Loader2 className="h-12 w-12 animate-spin text-lawyer-primary" /></div></AdminLayout> );
@@ -279,261 +270,262 @@ const FinanceiroPage = () => {
   
   return (
     <AdminLayout>
-      <main className="flex-grow py-8 px-4">
-        <div className="container mx-auto">
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
-                <div>
-                    <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Controle Financeiro</h1>
-                     {pinCheckResult?.pinNotSet && (
-                        <p className="text-xs text-orange-600 flex items-center mt-1">
-                            <ShieldAlert className="h-3 w-3 mr-1 flex-shrink-0" />
-                            <span>Para maior segurança, configure um PIN para esta seção em Configurações {'>'} Segurança.</span>
-                        </p>
-                    )}
-                </div>
-                <Button
-                onClick={() => { setCurrentTransaction(null); setIsModalOpen(true); }}
-                className="btn-primary w-full sm:w-auto"
-                >
-                <Plus className="h-5 w-5 mr-1" />
-                Nova Transação
-                </Button>
-            </div>
+      <main className="py-8 px-4 md:px-6 lg:px-8 bg-lawyer-background min-h-full">
+        <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+                <BadgePercent className="mr-3 h-7 w-7 text-lawyer-primary" /> {/* Ícone atualizado */}
+                Controle Financeiro
+            </h1>
+            <p className="text-gray-600 text-left mt-1">
+                Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório.
+            </p>
+            {pinCheckResult?.pinNotSet && (
+                <Alert variant="default" className="mt-3 text-xs bg-blue-50 border-blue-200 text-blue-700 max-w-md">
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle className="font-medium">PIN de Segurança</AlertTitle>
+                    <AlertDescription>
+                        Para maior segurança, configure um PIN para esta seção em Configurações {'>'} Segurança.
+                    </AlertDescription>
+                </Alert>
+            )}
+        </div>
           
           {/* Cards de Resumo */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-500 text-sm font-medium">Receitas</h3>
-                <div className="bg-green-100 p-2 rounded-full">
-                  <TrendingUp className="h-5 w-5 text-green-600" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold">R$ {receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-              <p className="text-sm text-gray-500 mt-2">
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{
-                  transactions.filter(t => t.tipo_transacao === "Receita").length
-                } transações</span>
-              </p>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+            <Card className="shadow-md rounded-lg">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Receitas Totais</CardTitle>
+                <TrendingUp className="h-5 w-5 text-green-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-800">R$ {receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {transactions.filter(t => t.tipo_transacao === "Receita").length} transações
+                </p>
+              </CardContent>
+            </Card>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-500 text-sm font-medium">Despesas</h3>
-                <div className="bg-red-100 p-2 rounded-full">
-                  <TrendingDown className="h-5 w-5 text-red-600" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold">R$ {despesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-              <p className="text-sm text-gray-500 mt-2">
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">{
-                  transactions.filter(t => t.tipo_transacao === "Despesa").length
-                } transações</span>
-              </p>
-            </div>
+            <Card className="shadow-md rounded-lg">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Despesas Totais</CardTitle>
+                <TrendingDown className="h-5 w-5 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-800">R$ {despesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {transactions.filter(t => t.tipo_transacao === "Despesa").length} transações
+                </p>
+              </CardContent>
+            </Card>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-500 text-sm font-medium">Saldo</h3>
-                <div className={`p-2 rounded-full ${saldo >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
-                  <DollarSign className={`h-5 w-5 ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+            <Card className="shadow-md rounded-lg">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Saldo Atual</CardTitle>
+                <DollarSign className={`h-5 w-5 ${saldo >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
+              </CardHeader>
+              <CardContent>
+                <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-gray-800' : 'text-red-600'}`}>
+                  R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-              </div>
-              <p className={`text-2xl font-bold ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-              </p>
-              <p className="text-sm text-gray-500 mt-2">Balanço atual</p>
-            </div>
+                <p className="text-xs text-gray-500 mt-1">Balanço geral</p>
+              </CardContent>
+            </Card>
 
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-500 text-sm font-medium">A Receber</h3>
-                <div className="bg-yellow-100 p-2 rounded-full">
-                  <FileText className="h-5 w-5 text-yellow-600" />
-                </div>
-              </div>
-              <p className="text-2xl font-bold">R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-              <p className="text-sm text-gray-500 mt-2">
-                <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">{
-                  transactions.filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente").length
-                } pendentes</span>
-              </p>
-            </div>
+            <Card className="shadow-md rounded-lg">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Contas a Receber</CardTitle>
+                <FileTextIcon className="h-5 w-5 text-yellow-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-800">R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {transactions.filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente").length} pendentes
+                </p>
+              </CardContent>
+            </Card>
           </div>
 
-          {/* Tabela e Modal */}
-          <div className="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-            <div className="p-4 border-b flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-              <div className="relative flex-grow">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <Input
-                  type="text"
-                  placeholder="Buscar transações..."
-                  className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" className="px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-50">
-                  <Filter className="h-5 w-5" />
-                  Filtrar
-                </Button>
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-            {isLoadingTransactions ? (
-                <div className="flex justify-center items-center py-10">
-                    <Loader2 className="h-8 w-8 animate-spin text-lawyer-primary" />
-                    <span className="ml-2 text-gray-500">Carregando transações...</span>
+          <Card className="shadow-lg rounded-lg">
+            <CardContent className="p-4 md:p-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+                    <div className="relative flex-grow md:max-w-sm">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                        <Input
+                        type="text"
+                        placeholder="Buscar transações..."
+                        className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                        <Button variant="outline" className="w-full md:w-auto px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-100 text-gray-700">
+                            <Filter className="h-4 w-4" />
+                            Filtrar
+                        </Button>
+                        <Button
+                            onClick={() => { setCurrentTransaction(null); setIsModalOpen(true); }}
+                            className="w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
+                        >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Nova Transação
+                        </Button>
+                    </div>
                 </div>
-            ) : (
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Descrição</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Categoria</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    {/* <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Cliente</th> */}
-                    <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-center">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredTransactions.length > 0 ? (
-                    filteredTransactions.map((transaction) => (
-                      <tr key={transaction.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className={`flex items-center ${
-                            transaction.tipo_transacao === "Receita" ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {transaction.tipo_transacao === "Receita" ?
-                              <TrendingUp className="h-4 w-4 mr-1" /> :
-                              <TrendingDown className="h-4 w-4 mr-1" />
-                            }
-                            {transaction.tipo_transacao}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">{transaction.descricao}</td>
-                        <td className="px-6 py-4 whitespace-nowrap font-medium">
-                          R$ {Number(transaction.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">{transaction.categoria}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">{new Date(transaction.data_transacao).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs ${
-                            transaction.status_pagamento === 'Pago' || transaction.status_pagamento === 'Recebido' ? 'bg-green-100 text-green-800' :
-                            transaction.status_pagamento === 'Pendente' ? 'bg-yellow-100 text-yellow-800' :
-                            transaction.status_pagamento === 'Atrasado' ? 'bg-orange-100 text-orange-800' : 
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {transaction.status_pagamento}
-                          </span>
-                        </td>
-                        {/* <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">{transaction.cliente_nome_temp || "-"}</td> */}
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <div className="flex justify-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleEditTransaction(transaction)}
-                              className="p-1 text-blue-600 hover:bg-blue-100 rounded-full h-7 w-7"
-                              title="Editar Transação"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteTransaction(transaction.id)}
-                              className="p-1 text-red-600 hover:bg-red-100 rounded-full h-7 w-7"
-                              title="Excluir Transação"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
-                        Nenhuma transação encontrada.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
-            </div>
 
-            <div className="px-6 py-4 flex items-center justify-between border-t">
-              <div className="text-sm text-gray-500">
-                Mostrando <span className="font-medium">{filteredTransactions.length}</span> de <span className="font-medium">{transactions.length}</span> transações
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" className="p-2 border rounded-md hover:bg-gray-50 h-8 w-8">
-                  <ChevronLeft className="h-5 w-5" />
-                </Button>
-                <Button variant="outline" size="icon" className="p-2 border rounded-md hover:bg-gray-50 h-8 w-8">
-                  <ChevronRight className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-          </div>
+                <div className="overflow-x-auto">
+                {isLoadingTransactions ? (
+                    <div className="flex justify-center items-center py-10">
+                        <Loader2 className="h-8 w-8 animate-spin text-lawyer-primary" />
+                        <span className="ml-2 text-gray-500">Carregando transações...</span>
+                    </div>
+                ) : (
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead className="text-gray-600">Tipo</TableHead>
+                        <TableHead className="text-gray-600">Descrição</TableHead>
+                        <TableHead className="text-gray-600">Valor</TableHead>
+                        <TableHead className="hidden md:table-cell text-gray-600">Categoria</TableHead>
+                        <TableHead className="text-gray-600">Data</TableHead>
+                        <TableHead className="text-gray-600">Status</TableHead>
+                        <TableHead className="text-center text-gray-600">Ações</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {filteredTransactions.length > 0 ? (
+                        filteredTransactions.map((transaction) => (
+                        <TableRow key={transaction.id} className="hover:bg-gray-50 transition-colors">
+                            <TableCell className="py-3 px-4">
+                            <div className={`flex items-center text-sm ${
+                                transaction.tipo_transacao === "Receita" ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                                {transaction.tipo_transacao === "Receita" ?
+                                <TrendingUp className="h-4 w-4 mr-1 opacity-80" /> :
+                                <TrendingDown className="h-4 w-4 mr-1 opacity-80" />
+                                }
+                                {transaction.tipo_transacao}
+                            </div>
+                            </TableCell>
+                            <TableCell className="py-3 px-4 text-gray-700">{transaction.descricao}</TableCell>
+                            <TableCell className={`py-3 px-4 font-medium ${transaction.tipo_transacao === "Receita" ? 'text-green-600' : 'text-red-600'}`}>
+                            R$ {Number(transaction.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                            </TableCell>
+                            <TableCell className="hidden md:table-cell py-3 px-4 text-gray-600">{transaction.categoria}</TableCell>
+                            <TableCell className="py-3 px-4 text-gray-600">{new Date(transaction.data_transacao).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</TableCell>
+                            <TableCell className="py-3 px-4">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+                                transaction.status_pagamento === 'Pago' || transaction.status_pagamento === 'Recebido' ? 'bg-green-100 text-green-700 border border-green-200' :
+                                transaction.status_pagamento === 'Pendente' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                                transaction.status_pagamento === 'Atrasado' ? 'bg-orange-100 text-orange-700 border border-orange-200' : 
+                                'bg-gray-100 text-gray-700 border border-gray-200'
+                            }`}>
+                                {transaction.status_pagamento}
+                            </span>
+                            </TableCell>
+                            <TableCell className="py-3 px-4 text-center">
+                            <div className="flex justify-center gap-1">
+                                <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleEditTransaction(transaction)}
+                                className="p-1 text-blue-600 hover:bg-blue-100 rounded-full h-7 w-7"
+                                title="Editar Transação"
+                                >
+                                <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDeleteTransaction(transaction.id)}
+                                className="p-1 text-red-600 hover:bg-red-100 rounded-full h-7 w-7"
+                                title="Excluir Transação"
+                                >
+                                <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            </TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                        <TableCell colSpan={7} className="px-6 py-10 text-center text-gray-500">
+                            Nenhuma transação encontrada.
+                        </TableCell>
+                        </TableRow>
+                    )}
+                    </TableBody>
+                </Table>
+                )}
+                </div>
+
+                <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200">
+                <div className="text-sm text-gray-500">
+                    Mostrando <span className="font-medium">{filteredTransactions.length}</span> de <span className="font-medium">{transactions.length}</span> transações
+                </div>
+                <div className="flex gap-2">
+                    <Button variant="outline" size="icon" className="p-2 border rounded-md hover:bg-gray-100 h-8 w-8 text-gray-600">
+                    <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" className="p-2 border rounded-md hover:bg-gray-100 h-8 w-8 text-gray-600">
+                    <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+                </div>
+            </CardContent>
+          </Card>
 
           {isModalOpen && (
-             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-              <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
-                <div className="p-4 border-b flex justify-between items-center sticky top-0 bg-white z-10">
-                  <h3 className="text-lg font-semibold">{currentTransaction ? 'Editar Transação' : 'Nova Transação'}</h3>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      setIsModalOpen(false);
-                      setCurrentTransaction(null);
-                    }}
-                    className="h-7 w-7"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
+             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+              <Card className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+                <CardHeader className="p-4 border-b">
+                  <div className="flex justify-between items-center">
+                    <CardTitle className="text-lg font-semibold text-gray-800">{currentTransaction ? 'Editar Transação' : 'Nova Transação'}</CardTitle>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => {
+                        setIsModalOpen(false);
+                        setCurrentTransaction(null);
+                        }}
+                        className="h-7 w-7 text-gray-500 hover:text-gray-700"
+                    >
+                        <X className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </CardHeader>
                 <form onSubmit={handleAddOrUpdateTransaction} className="flex-grow overflow-y-auto">
-                  <div className="p-4 space-y-4">
+                  <CardContent className="p-4 space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Transação</label>
+                      <Label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Transação</Label>
                       <div className="flex">
                         <label className="inline-flex items-center mr-6">
                           <input
                             type="radio"
-                            name="tipo" // Nome do campo no formulário
+                            name="tipo"
                             value="Receita"
                             defaultChecked={currentTransaction?.tipo_transacao === "Receita" || !currentTransaction}
                             className="mr-2 form-radio h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
                           />
-                          <span>Receita</span>
+                          <span className="text-sm text-gray-700">Receita</span>
                         </label>
                         <label className="inline-flex items-center">
                           <input
                             type="radio"
-                            name="tipo" // Nome do campo no formulário
+                            name="tipo"
                             value="Despesa"
                             defaultChecked={currentTransaction?.tipo_transacao === "Despesa"}
                             className="mr-2 form-radio h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
                           />
-                          <span>Despesa</span>
+                          <span className="text-sm text-gray-700">Despesa</span>
                         </label>
                       </div>
                     </div>
                     <div>
-                      <label htmlFor="descricao" className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
+                      <Label htmlFor="descricao_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Descrição</Label>
                       <Input
                         type="text"
-                        id="descricao"
+                        id="descricao_modal_fin"
                         name="descricao"
                         defaultValue={currentTransaction?.descricao || ''}
                         required
@@ -541,10 +533,10 @@ const FinanceiroPage = () => {
                       />
                     </div>
                     <div>
-                      <label htmlFor="valor" className="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</label>
+                      <Label htmlFor="valor_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</Label>
                       <Input
                         type="number"
-                        id="valor"
+                        id="valor_modal_fin"
                         name="valor"
                         min="0"
                         step="0.01"
@@ -555,12 +547,12 @@ const FinanceiroPage = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label htmlFor="categoria" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
+                        <Label htmlFor="categoria_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Categoria</Label>
                         <select
-                          id="categoria"
+                          id="categoria_modal_fin"
                           name="categoria"
                           defaultValue={currentTransaction?.categoria || 'Honorários'}
-                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white"
+                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white text-sm"
                         >
                           <option value="Honorários">Honorários</option>
                           <option value="Consultas">Consultas</option>
@@ -575,25 +567,25 @@ const FinanceiroPage = () => {
                         </select>
                       </div>
                       <div>
-                        <label htmlFor="data" className="block text-sm font-medium text-gray-700 mb-1">Data</label>
+                        <Label htmlFor="data_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Data</Label>
                         <Input
                           type="date"
-                          id="data"
-                          name="data" // Nome do campo no formulário
+                          id="data_modal_fin"
+                          name="data"
                           defaultValue={currentTransaction?.data_transacao || new Date().toISOString().split('T')[0]}
                           required
                           className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 gap-4"> {/* Simplificado para 1 coluna, cliente não está sendo associado via ID por enquanto */}
+                    <div className="grid grid-cols-1 gap-4">
                       <div>
-                        <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <Label htmlFor="status_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Status</Label>
                         <select
-                          id="status"
-                          name="status" // Nome do campo no formulário
+                          id="status_modal_fin"
+                          name="status"
                           defaultValue={currentTransaction?.status_pagamento || 'Pendente'}
-                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white"
+                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white text-sm"
                         >
                           <option value="Pendente">Pendente</option>
                           <option value="Pago">Pago</option>
@@ -601,14 +593,9 @@ const FinanceiroPage = () => {
                           <option value="Atrasado">Atrasado</option>
                         </select>
                       </div>
-                      {/* O campo 'Cliente' como texto livre foi removido do formulário, 
-                          pois a tabela espera um cliente_associado_id (UUID).
-                          Se quiser manter um campo de texto para nome do cliente temporário, adicione-o aqui
-                          e na interface TransacaoFormData.
-                      */}
                     </div>
-                  </div>
-                   <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-white z-10">
+                  </CardContent>
+                   <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-gray-50">
                     <Button
                       type="button"
                       variant="outline"
@@ -616,19 +603,19 @@ const FinanceiroPage = () => {
                         setIsModalOpen(false);
                         setCurrentTransaction(null);
                       }}
+                      className="text-gray-700 hover:bg-gray-100"
                     >
                       Cancelar
                     </Button>
-                    <Button type="submit" className="btn-primary">
+                    <Button type="submit" className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
                       {currentTransaction ? 'Atualizar' : 'Adicionar'}
                     </Button>
                   </div>
                 </form>
-              </div>
+              </Card>
             </div>
           )}
-        </div>
-      </main>
+        </main>
     </AdminLayout>
   );
 };

@@ -1,25 +1,28 @@
-
+// src/pages/LoginPage.tsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn, user } = useAuth();
-  
+
   const from = (location.state as any)?.from?.pathname || "/dashboard";
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      console.log("User is already logged in, redirecting to:", from);
       navigate(from, { replace: true });
     }
   }, [user, navigate, from]);
@@ -34,113 +37,159 @@ const LoginPage = () => {
       });
       return;
     }
-
     setIsLoading(true);
-
     try {
-      console.log("Tentando fazer login via página de login com:", email);
       await signIn(email, password);
-      console.log("Login bem-sucedido, redirecionamento será feito pelo signIn");
-      // Navigation is now handled in the signIn function
+      // A navegação é tratada dentro do hook signIn
     } catch (error) {
-      console.error("Login error:", error);
-      // Erro já tratado no hook useAuth
+      // Erro já é tratado e exibido pelo hook signIn
+      console.error("Login error on LoginPage:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-gray-100 min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full mx-auto">
-        <div className="bg-white p-6 sm:p-8 rounded-lg shadow-md">
-          <div>
-            <Link to="/" className="flex items-center text-lawyer-primary hover:underline mb-6">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Voltar para a home
-            </Link>
-            <div className="text-center">
-              <h2 className="text-3xl font-extrabold text-gray-900">
-                Entrar na sua conta
-              </h2>
-              <p className="mt-2 text-sm text-gray-600">
-                Acesse o sistema JusGestão para gerenciar seu escritório
-              </p>
-            </div>
+    <div className="min-h-screen flex flex-col md:flex-row">
+      {/* Seção Esquerda (Informativa) - COR CORRIGIDA */}
+      <div className="w-full md:w-2/5 bg-lawyer-dark text-white p-8 sm:p-12 flex flex-col justify-center items-center md:items-start text-center md:text-left relative">
+        <Link to="/" className="absolute top-4 left-4 text-white hover:text-gray-300 flex items-center text-sm z-10 bg-black/20 hover:bg-black/40 p-2 rounded-md transition-colors">
+          <ArrowLeft className="h-4 w-4 mr-1" />
+          Voltar para a Home
+        </Link>
+        <div className="mb-8 flex flex-col items-center md:items-start">
+          {/* Logo JusGestão na parte escura */}
+          <div className="flex items-center gap-2 mb-4">
+            <img 
+              src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" // Logo claro para fundo escuro
+              alt="JusGestão Logo" 
+              className="h-10 w-10 sm:h-12 sm:w-12"
+            />
+            {/* Ajuste na cor do "Jus" para branco e "Gestão" para o azul primário para melhor contraste no fundo escuro */}
+            <span className="text-3xl sm:text-4xl font-bold">
+              <span className="text-white">Jus</span><span className="text-lawyer-primary">Gestão</span>
+            </span>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="rounded-md space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  id="email"
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-gray-100">
+            Transforme a gestão do seu escritório
+          </h1>
+          <p className="text-base sm:text-lg text-gray-300 mb-6">
+            Acesse sua conta para gerenciar clientes, processos, finanças e muito mais, de forma eficiente e organizada.
+          </p>
+        </div>
+        <div className="mt-auto w-full text-center md:text-left">
+          <p className="text-sm text-gray-300 mb-2">Não tem uma conta?</p>
+          {/* Botão de cadastro com cores que se destacam no fundo escuro */}
+          <Button
+            variant="default" // Usar a variante default para a cor primária
+            className="w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
+            onClick={() => navigate('/cadastro')}
+          >
+            Cadastre-se agora
+          </Button>
+        </div>
+      </div>
+
+      {/* Seção Direita (Formulário de Login) */}
+      <div className="w-full md:w-3/5 bg-gray-50 flex flex-col items-center justify-center p-6 sm:p-12">
+        <div className="w-full max-w-md">
+           <div className="text-center mb-6">
+             <img 
+                src="/lovable-uploads/f43e275d-744e-43eb-a2c7-bbf3c17b3fc5.png" 
+                alt="JusGestão Logo" 
+                className="h-12 w-12 mx-auto mb-2" 
+             />
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-800">
+              Entrar na sua conta
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Bem-vindo(a) de volta!
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <Label htmlFor="email-login" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+                Email
+              </Label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Mail className="h-5 w-5 text-gray-400" />
+                </div>
+                <Input
+                  id="email-login"
                   name="email"
                   type="email"
                   autoComplete="email"
                   required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary sm:text-sm"
+                  className="pl-10 block w-full border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary rounded-md"
+                  placeholder="seu.email@exemplo.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Senha
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-lawyer-primary focus:border-lawyer-primary sm:text-sm"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Lembrar de mim
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <Link to="/recuperar-senha" className="font-medium text-lawyer-primary hover:text-blue-700">
-                  Esqueceu sua senha?
-                </Link>
-              </div>
             </div>
 
             <div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-lawyer-primary hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-lawyer-primary ${isLoading ? 'opacity-75' : ''}`}
-              >
-                {isLoading ? (
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                ) : null}
-                {isLoading ? 'Entrando...' : 'Entrar'}
-              </button>
+              <Label htmlFor="password-login" className="block text-sm font-medium text-gray-700 mb-1 text-left">
+                Senha
+              </Label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Lock className="h-5 w-5 text-gray-400" />
+                </div>
+                <Input
+                  id="password-login"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  className="pl-10 block w-full border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary rounded-md"
+                  placeholder="Sua senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-500 hover:text-gray-700"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
+
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center">
+                <Checkbox id="remember-me-login" name="remember-me" className="h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary border-gray-300 rounded"/>
+                <Label htmlFor="remember-me-login" className="ml-2 block text-gray-700 font-normal"> {/* Removido font-medium para consistência */}
+                  Lembrar de mim
+                </Label>
+              </div>
+              <Link to="/recuperar-senha" className="font-medium text-lawyer-primary hover:text-blue-700">
+                Esqueceu sua senha?
+              </Link>
+            </div>
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-lawyer-primary hover:bg-lawyer-primary/90 text-white py-3 text-base rounded-md"
+            >
+              {isLoading ? (
+                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              ) : null}
+              {isLoading ? 'Entrando...' : 'Entrar'}
+            </Button>
           </form>
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Não tem uma conta?{' '}
+
+          <div className="mt-8 text-center text-sm"> {/* Aumentei o espaçamento superior */}
+            <p className="text-gray-600">
+              Ainda não tem uma conta?{' '}
               <Link to="/cadastro" className="font-medium text-lawyer-primary hover:text-blue-700">
                 Cadastre-se
               </Link>

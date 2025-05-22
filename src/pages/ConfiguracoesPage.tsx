@@ -4,7 +4,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import Footer from '@/components/Footer';
+// Footer não é mais usado diretamente aqui, mas sim dentro do AdminLayout implicitamente.
 
 import ConfiguracoesHeader from '@/components/configuracoes/ConfiguracoesHeader';
 import PerfilTab from '@/components/configuracoes/PerfilTab';
@@ -16,7 +16,7 @@ import GerenciarAssinatura from '@/components/assinatura/GerenciarAssinatura';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
-import { User, Building, Bell, Shield, CreditCard } from 'lucide-react';
+import { User, Building, Bell, Shield, CreditCard, Settings as SettingsPageIcon } from 'lucide-react'; // Ícone para o cabeçalho
 
 interface ProfileSettings { name: string; email: string; phone: string; oab: string; }
 interface OfficeSettings { companyName: string; cnpj: string; address: string; website: string; }
@@ -51,7 +51,7 @@ const ConfiguracoesPage = () => {
     pref_seguranca_restricao_ip: false,
   });
 
-  const loadUserSettings = useCallback(() => {
+  const loadUserSettings = useCallback(async () => { // Marcado como async
     if (user && user.user_metadata) {
       setProfileSettings({
         name: user.user_metadata.nome || user.email?.split('@')[0] || "",
@@ -78,13 +78,16 @@ const ConfiguracoesPage = () => {
       setHasFinancePin(!!user.user_metadata.finance_pin_hash);
     }
     setIsLoadingPageData(false);
-    setIsLoadingPinStatus(false);
+    setIsLoadingPinStatus(false); // Certifique-se que este também é resetado
   }, [user]);
 
   useEffect(() => {
+    setIsLoadingPageData(true); // Inicia loading
+    setIsLoadingPinStatus(true);
     if (user) {
       loadUserSettings();
     } else {
+      // Se não houver usuário, os loadings devem ser falsos para não mostrar spinner indefinidamente
       setIsLoadingPageData(false);
       setIsLoadingPinStatus(false);
     }
@@ -97,15 +100,16 @@ const ConfiguracoesPage = () => {
     }
     setIsSaving(true);
     try {
+      // Garante que todos os campos que não podem ser null/undefined tenham um valor padrão se vazios
       const { error } = await supabase.auth.updateUser({
         data: {
-          nome: profileSettings.name,
-          telefone: profileSettings.phone,
-          oab: profileSettings.oab,
-          empresa: officeSettings.companyName,
-          cnpj: officeSettings.cnpj,
-          endereco: officeSettings.address,
-          website: officeSettings.website,
+          nome: profileSettings.name || null,
+          telefone: profileSettings.phone || null,
+          oab: profileSettings.oab || null,
+          empresa: officeSettings.companyName || null,
+          cnpj: officeSettings.cnpj || null,
+          endereco: officeSettings.address || null,
+          website: officeSettings.website || null,
           pref_notificacoes_push: notificationSettings.pref_notificacoes_push,
           pref_alertas_prazo: notificationSettings.pref_alertas_prazo,
           pref_relatorio_semanal: notificationSettings.pref_relatorio_semanal,
@@ -115,7 +119,7 @@ const ConfiguracoesPage = () => {
         }
       });
       if (error) throw error;
-      await refreshSession();
+      await refreshSession(); // Isso deve recarregar os dados do usuário e disparar o useEffect
       toast({
         title: "Configurações salvas",
         description: "Suas configurações foram atualizadas com sucesso.",
@@ -156,7 +160,7 @@ const ConfiguracoesPage = () => {
         return false;
     }
 
-    setIsSaving(true); // Reutiliza o estado isSaving ou crie um específico para PIN se preferir
+    setIsSaving(true);
     try {
         const { data, error } = await supabase.functions.invoke('set-finance-pin', {
             body: { 
@@ -174,10 +178,8 @@ const ConfiguracoesPage = () => {
             title: hasFinancePin ? "PIN do Financeiro Alterado" : "PIN do Financeiro Definido",
             description: data.message || `O PIN de acesso à página Financeiro foi ${hasFinancePin ? 'atualizado' : 'definido'}.`,
         });
-        await refreshSession(); 
-        // A função loadUserSettings será chamada novamente pelo useEffect que depende de 'user' (após refreshSession)
-        // e atualizará 'hasFinancePin'
-        setHasFinancePin(true); // Pode adiantar a atualização do estado local
+        await refreshSession();
+        setHasFinancePin(true);
         setIsSaving(false);
         return true;
 
@@ -192,12 +194,12 @@ const ConfiguracoesPage = () => {
     }
   };
 
-  if (isLoadingPageData || (user && isLoadingPinStatus)) {
+  if (isLoadingPageData || isLoadingPinStatus) { // Verifica ambos os loadings
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-screen">
           <Spinner size="lg" />
-          <p className="ml-2">Carregando configurações...</p>
+          <p className="ml-2 text-gray-600">Carregando configurações...</p>
         </div>
       </AdminLayout>
     );
@@ -205,49 +207,64 @@ const ConfiguracoesPage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8">
+      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+        <div className="mb-6 md:mb-8">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+                <SettingsPageIcon className="mr-3 h-7 w-7 text-lawyer-primary" />
+                Configurações da Conta
+            </h1>
+            <p className="text-gray-600 text-left mt-1">
+                Personalize suas informações e preferências do sistema.
+            </p>
+        </div>
+        
         <ConfiguracoesHeader
           saving={isSaving}
           loggingOut={loggingOut}
           onSave={handleSaveAllSettings}
           onSignOut={handleSignOut}
         />
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 p-1 rounded-lg bg-gray-100">
-            <TabsTrigger value="perfil" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm">
+        
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 p-1.5 rounded-lg bg-gray-200 mb-6">
+            <TabsTrigger value="perfil" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-sm rounded-md">
               <User className="h-4 w-4" /> Perfil
             </TabsTrigger>
-            <TabsTrigger value="escritorio" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="escritorio" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-sm rounded-md">
               <Building className="h-4 w-4" /> Escritório
             </TabsTrigger>
-            <TabsTrigger value="assinatura" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="assinatura" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-sm rounded-md">
               <CreditCard className="h-4 w-4" /> Assinatura
             </TabsTrigger>
-            <TabsTrigger value="notificacoes" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="notificacoes" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-sm rounded-md">
               <Bell className="h-4 w-4" /> Notificações
             </TabsTrigger>
-            <TabsTrigger value="seguranca" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm">
+            <TabsTrigger value="seguranca" className="flex items-center justify-center gap-1.5 sm:gap-2 px-2 py-1.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-sm rounded-md">
               <Shield className="h-4 w-4" /> Segurança
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="perfil">
-            <PerfilTab
-              profileSettings={profileSettings}
-              setProfileSettings={setProfileSettings}
-            />
+            <Card className="shadow-lg rounded-lg">
+              <PerfilTab
+                profileSettings={profileSettings}
+                setProfileSettings={setProfileSettings}
+              />
+            </Card>
           </TabsContent>
           <TabsContent value="escritorio">
-            <EscritorioTab
-              officeSettings={officeSettings}
-              setOfficeSettings={setOfficeSettings}
-            />
+            <Card className="shadow-lg rounded-lg">
+              <EscritorioTab
+                officeSettings={officeSettings}
+                setOfficeSettings={setOfficeSettings}
+              />
+            </Card>
           </TabsContent>
           <TabsContent value="assinatura">
-            <Card>
+            <Card className="shadow-lg rounded-lg">
               <CardHeader>
-                <CardTitle>Minha Conta e Assinatura</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-gray-700">Minha Conta e Assinatura</CardTitle>
+                <CardDescription className="text-gray-500">
                   Visualize o status da sua conta e os detalhes da sua assinatura.
                 </CardDescription>
               </CardHeader>
@@ -257,42 +274,37 @@ const ConfiguracoesPage = () => {
             </Card>
           </TabsContent>
           <TabsContent value="notificacoes">
-            <NotificacoesTab
-              notificationSettings={{
-                pushNotifications: notificationSettings.pref_notificacoes_push,
-                deadlineAlerts: notificationSettings.pref_alertas_prazo,
-                weeklyReport: notificationSettings.pref_relatorio_semanal,
-              }}
-              setNotificationSettings={(newSettings) => {
-                setNotificationSettings(prev => ({
-                  ...prev,
-                  // @ts-ignore
-                  pref_notificacoes_push: typeof newSettings.pushNotifications === 'boolean' ? newSettings.pushNotifications : prev.pref_notificacoes_push,
-                  // @ts-ignore
-                  pref_alertas_prazo: typeof newSettings.deadlineAlerts === 'boolean' ? newSettings.deadlineAlerts : prev.pref_alertas_prazo,
-                  // @ts-ignore
-                  pref_relatorio_semanal: typeof newSettings.weeklyReport === 'boolean' ? newSettings.weeklyReport : prev.pref_relatorio_semanal,
-                }));
-              }}
-            />
+            <Card className="shadow-lg rounded-lg">
+              <NotificacoesTab
+                notificationSettings={{ // Mapeamento correto
+                  pushNotifications: notificationSettings.pref_notificacoes_push,
+                  deadlineAlerts: notificationSettings.pref_alertas_prazo,
+                  weeklyReport: notificationSettings.pref_relatorio_semanal,
+                }}
+                setNotificationSettings={(newSettings) => {
+                  setNotificationSettings(prev => ({
+                    ...prev,
+                    pref_notificacoes_push: typeof newSettings.pushNotifications === 'boolean' ? newSettings.pushNotifications : prev.pref_notificacoes_push,
+                    pref_alertas_prazo: typeof newSettings.deadlineAlerts === 'boolean' ? newSettings.deadlineAlerts : prev.pref_alertas_prazo,
+                    pref_relatorio_semanal: typeof newSettings.weeklyReport === 'boolean' ? newSettings.weeklyReport : prev.pref_relatorio_semanal,
+                  }));
+                }}
+              />
+            </Card>
           </TabsContent>
           <TabsContent value="seguranca">
-            <SegurancaTab
-              securitySettings={securitySettings}
-              setSecuritySettings={setSecuritySettings}
-              hasFinancePin={hasFinancePin} 
-              onChangeFinanceiroPin={handleChangeFinanceiroPin} 
-              isSavingPin={isSaving} 
-            />
+            <Card className="shadow-lg rounded-lg">
+              <SegurancaTab
+                securitySettings={securitySettings}
+                setSecuritySettings={setSecuritySettings}
+                hasFinancePin={hasFinancePin} 
+                onChangeFinanceiroPin={handleChangeFinanceiroPin} 
+                isSavingPin={isSaving} 
+              />
+            </Card>
           </TabsContent>
         </Tabs>
       </div>
-      <Footer
-        companyName={officeSettings.companyName}
-        address={officeSettings.address}
-        cnpj={officeSettings.cnpj}
-        website={officeSettings.website}
-      />
     </AdminLayout>
   );
 };

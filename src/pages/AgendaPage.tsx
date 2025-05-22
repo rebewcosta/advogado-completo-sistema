@@ -2,9 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
-// Input não está sendo usado diretamente aqui, pode ser removido se não for adicionar busca
-// import { Input } from "@/components/ui/input";
-import { Calendar as CalendarIconLucide, Plus, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIconLucide, Plus, MoreVertical, Eye, Edit, Trash2, CalendarDays } from 'lucide-react';
 import {
   Table,
   TableBody,
@@ -24,10 +22,11 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
-import { Badge } from "@/components/ui/badge"; // <<<< IMPORTAÇÃO ADICIONADA AQUI
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from 'date-fns'; // parseISO já estava no Detail, bom ter aqui também
+import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { supabase } from '@/integrations/supabase/client';
@@ -245,7 +244,7 @@ const AgendaPage = () => {
 
   const formatTime = (isoString: string) => {
     try {
-        return format(parseISO(isoString), 'HH:mm'); // Usar parseISO aqui
+        return format(parseISO(isoString), 'HH:mm');
     } catch (e) {
         console.warn("Erro ao formatar hora:", isoString, e);
         return "Inválida";
@@ -262,88 +261,99 @@ const AgendaPage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
-          <h1 className="text-2xl md:text-3xl font-bold">Agenda</h1>
-          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant={"outline"} className={cn("w-full sm:w-auto justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
-                  <CalendarIconLucide className="mr-2 h-4 w-4" />
-                  {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <ShadcnCalendar mode="single" selected={selectedDate} onSelect={setSelectedDate} locale={ptBR} initialFocus />
-              </PopoverContent>
-            </Popover>
-            <Button onClick={() => handleOpenForm()} className="w-full sm:w-auto btn-primary">
-              <Plus className="mr-2 h-4 w-4" /> Novo Evento
-            </Button>
-          </div>
+      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+            <CalendarDays className="mr-3 h-7 w-7 text-lawyer-primary" />
+            Agenda de Compromissos
+          </h1>
+          <p className="text-gray-600 text-left mt-1">
+            Organize seus prazos, audiências e reuniões.
+          </p>
         </div>
 
-        {isLoading ? (
-          <div className="text-center py-10 flex justify-center items-center">
-            <Spinner size="lg" /> <span className="ml-2 text-gray-500">Carregando eventos...</span>
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow-md overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Hora</TableHead>
-                  <TableHead>Título</TableHead>
-                  <TableHead className="hidden md:table-cell">Tipo</TableHead>
-                  <TableHead className="hidden lg:table-cell">Cliente</TableHead>
-                  <TableHead className="hidden lg:table-cell">Prioridade</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {events.length > 0 ? (
-                  events.map(event => (
-                    <TableRow key={event.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium">{formatTime(event.data_hora_inicio)}</TableCell>
-                      <TableCell>{event.titulo}</TableCell>
-                      <TableCell className="hidden md:table-cell">{event.tipo_evento || '-'}</TableCell>
-                      <TableCell className="hidden lg:table-cell">{event.clientes?.nome || '-'}</TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <Badge variant="outline" className={cn("text-xs", getPriorityBadgeClass(event.prioridade))}>{event.prioridade || 'N/D'}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleViewDetails(event)}>
-                              <Eye className="mr-2 h-4 w-4" /> Detalhes
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleOpenForm(event)}>
-                              <Edit className="mr-2 h-4 w-4" /> Editar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDeleteEvent(event.id)} className="text-red-600 hover:!text-red-700 hover:!bg-red-50">
-                              <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
+        <Card className="shadow-lg rounded-lg">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant={"outline"} className={cn("w-full sm:w-auto justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
+                    <CalendarIconLucide className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <ShadcnCalendar mode="single" selected={selectedDate} onSelect={setSelectedDate} locale={ptBR} initialFocus />
+                </PopoverContent>
+              </Popover>
+              <Button onClick={() => handleOpenForm()} className="w-full sm:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
+                <Plus className="mr-2 h-4 w-4" /> Novo Evento
+              </Button>
+            </div>
+
+            {isLoading ? (
+              <div className="text-center py-10 flex justify-center items-center">
+                <Spinner size="lg" /> <span className="ml-2 text-gray-500">Carregando eventos...</span>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[100px] text-gray-600">Hora</TableHead>
+                      <TableHead className="text-gray-600">Título</TableHead>
+                      <TableHead className="hidden md:table-cell text-gray-600">Tipo</TableHead>
+                      <TableHead className="hidden lg:table-cell text-gray-600">Cliente</TableHead>
+                      <TableHead className="hidden lg:table-cell text-gray-600">Prioridade</TableHead>
+                      <TableHead className="text-right text-gray-600">Ações</TableHead>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10 text-gray-500">
-                      {isLoading ? "Carregando..." : "Nenhum evento para esta data."}
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                  </TableHeader>
+                  <TableBody>
+                    {events.length > 0 ? (
+                      events.map(event => (
+                        <TableRow key={event.id} className="hover:bg-gray-50 transition-colors">
+                          <TableCell className="font-medium py-3 px-4 text-gray-700">{formatTime(event.data_hora_inicio)}</TableCell>
+                          <TableCell className="py-3 px-4 text-gray-700">{event.titulo}</TableCell>
+                          <TableCell className="hidden md:table-cell py-3 px-4 text-gray-600">{event.tipo_evento || '-'}</TableCell>
+                          <TableCell className="hidden lg:table-cell py-3 px-4 text-gray-600">{event.clientes?.nome || '-'}</TableCell>
+                          <TableCell className="hidden lg:table-cell py-3 px-4">
+                            <Badge variant="outline" className={cn("text-xs", getPriorityBadgeClass(event.prioridade))}>{event.prioridade || 'N/D'}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right py-3 px-4">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-lawyer-primary">
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleViewDetails(event)} className="cursor-pointer">
+                                  <Eye className="mr-2 h-4 w-4" /> Detalhes
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenForm(event)} className="cursor-pointer">
+                                  <Edit className="mr-2 h-4 w-4" /> Editar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleDeleteEvent(event.id)} className="text-red-600 hover:!text-red-700 hover:!bg-red-50 cursor-pointer">
+                                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={6} className="text-center py-10 text-gray-500">
+                          {isLoading ? "Carregando..." : "Nenhum evento para esta data."}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {isFormOpen && (
             <AgendaEventForm

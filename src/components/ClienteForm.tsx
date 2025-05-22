@@ -1,5 +1,5 @@
-
-import React, { useState } from 'react';
+// src/components/ClienteForm.tsx
+import React, { useState, useEffect } from 'react'; // Adicionado useEffect
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,24 +24,59 @@ import { useToast } from "@/hooks/use-toast";
 interface ClienteFormProps {
   onSave: (cliente: any) => void;
   onCancel: () => void;
-  cliente?: any;
+  cliente?: any; // Mantendo 'any' por enquanto para flexibilidade com a estrutura vinda da página
   isEdit?: boolean;
 }
 
 const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormProps) => {
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    nome: cliente?.nome || '',
-    email: cliente?.email || '',
-    telefone: cliente?.telefone || '',
-    tipo: cliente?.tipo || 'Pessoa Física',
-    cpfCnpj: cliente?.cpfCnpj || '',
-    endereco: cliente?.endereco || '',
-    cidade: cliente?.cidade || '',
-    estado: cliente?.estado || '',
-    cep: cliente?.cep || '',
-    observacoes: cliente?.observacoes || '',
+    nome: '',
+    email: '',
+    telefone: '',
+    tipo: 'Pessoa Física', // Valor padrão
+    cpfCnpj: '',
+    endereco: '',
+    cidade: '',
+    estado: '',
+    cep: '',
+    observacoes: '',
+    status_cliente: 'Ativo' // Valor padrão
   });
+
+  useEffect(() => {
+    if (isEdit && cliente) {
+      setFormData({
+        nome: cliente.nome || '',
+        email: cliente.email || '',
+        telefone: cliente.telefone || '',
+        tipo: cliente.tipo_cliente || cliente.tipo || 'Pessoa Física', // Prioriza tipo_cliente se existir
+        cpfCnpj: cliente.cpfCnpj || '', // Usa o campo correto que vem do DB
+        endereco: cliente.endereco || '',
+        cidade: cliente.cidade || '',
+        estado: cliente.estado || '',
+        cep: cliente.cep || '',
+        observacoes: cliente.observacoes || '',
+        status_cliente: cliente.status_cliente || 'Ativo'
+      });
+    } else {
+      // Reset para novo cliente ou se não houver dados
+      setFormData({
+        nome: '',
+        email: '',
+        telefone: '',
+        tipo: 'Pessoa Física',
+        cpfCnpj: '',
+        endereco: '',
+        cidade: '',
+        estado: '',
+        cep: '',
+        observacoes: '',
+        status_cliente: 'Ativo'
+      });
+    }
+  }, [cliente, isEdit]);
+
 
   const estados = [
     "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", 
@@ -76,6 +111,17 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
       });
       return false;
     }
+    
+    // Validação de email (simples)
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        toast({
+            title: "Email inválido",
+            description: "Por favor, insira um endereço de email válido.",
+            variant: "destructive"
+        });
+        return false;
+    }
+
 
     if (!formData.telefone.trim()) {
       toast({
@@ -85,6 +131,16 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
       });
       return false;
     }
+    
+    if (!formData.cpfCnpj.trim()) {
+        toast({
+            title: "Campo obrigatório",
+            description: `O ${formData.tipo === "Pessoa Física" ? "CPF" : "CNPJ"} é obrigatório.`,
+            variant: "destructive"
+        });
+        return false;
+    }
+
 
     return true;
   };
@@ -94,56 +150,51 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
     if (!validateForm()) return;
 
     onSave(formData);
-    toast({
-      title: isEdit ? "Cliente atualizado" : "Cliente cadastrado",
-      description: isEdit 
-        ? "Os dados do cliente foram atualizados com sucesso." 
-        : "O cliente foi cadastrado com sucesso.",
-    });
+    // O toast de sucesso será chamado na página principal após o save bem-sucedido
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
+    <Card className="w-full max-w-4xl mx-auto border-0 shadow-none rounded-none md:rounded-lg md:shadow-md">
+      <CardHeader className="px-4 py-4 md:px-6 md:py-5 border-b">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle>{isEdit ? 'Editar Cliente' : 'Novo Cliente'}</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-lg md:text-xl">{isEdit ? 'Editar Cliente' : 'Novo Cliente'}</CardTitle>
+            <CardDescription className="text-xs md:text-sm">
               {isEdit 
                 ? 'Atualize os dados do cliente no formulário abaixo.' 
                 : 'Preencha os dados do cliente no formulário abaixo.'}
             </CardDescription>
           </div>
-          <Button variant="ghost" size="icon" onClick={onCancel}>
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon" onClick={onCancel} className="h-7 w-7 md:h-8 md:w-8">
+            <X className="h-4 w-4 md:h-5 md:w-5" />
           </Button>
         </div>
       </CardHeader>
       <form onSubmit={handleSubmit}>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="nome">
+        <CardContent className="p-4 md:p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="nome_cliente_form">
                   Nome <span className="text-red-500">*</span>
-                </label>
+                </Label>
                 <Input 
-                  id="nome" 
+                  id="nome_cliente_form" 
                   name="nome" 
                   value={formData.nome}
                   onChange={handleChange}
                   placeholder="Nome completo ou Razão Social"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="tipo">
+              <div className="space-y-1">
+                <Label htmlFor="tipo_cliente_form">
                   Tipo de Cliente <span className="text-red-500">*</span>
-                </label>
+                </Label>
                 <Select 
                   value={formData.tipo}
                   onValueChange={(value) => handleSelectChange('tipo', value)}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="tipo_cliente_form">
                     <SelectValue placeholder="Selecione o tipo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -152,24 +203,24 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="cpfCnpj">
+              <div className="space-y-1">
+                <Label htmlFor="cpfCnpj_cliente_form">
                   {formData.tipo === "Pessoa Física" ? "CPF" : "CNPJ"} <span className="text-red-500">*</span>
-                </label>
+                </Label>
                 <Input 
-                  id="cpfCnpj" 
+                  id="cpfCnpj_cliente_form" 
                   name="cpfCnpj" 
                   value={formData.cpfCnpj}
                   onChange={handleChange}
                   placeholder={formData.tipo === "Pessoa Física" ? "000.000.000-00" : "00.000.000/0000-00"}
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="email">
+              <div className="space-y-1">
+                <Label htmlFor="email_cliente_form">
                   Email <span className="text-red-500">*</span>
-                </label>
+                </Label>
                 <Input 
-                  id="email" 
+                  id="email_cliente_form" 
                   name="email" 
                   type="email"
                   value={formData.email}
@@ -177,52 +228,53 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
                   placeholder="cliente@exemplo.com"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="telefone">
+              <div className="space-y-1">
+                <Label htmlFor="telefone_cliente_form">
                   Telefone <span className="text-red-500">*</span>
-                </label>
+                </Label>
                 <Input 
-                  id="telefone" 
+                  id="telefone_cliente_form" 
                   name="telefone" 
                   value={formData.telefone}
                   onChange={handleChange}
                   placeholder="(00) 00000-0000"
                 />
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium" htmlFor="endereco">
+              <div className="space-y-1">
+                <Label htmlFor="endereco_cliente_form">
                   Endereço
-                </label>
+                </Label>
                 <Input 
-                  id="endereco" 
+                  id="endereco_cliente_form" 
                   name="endereco" 
                   value={formData.endereco}
                   onChange={handleChange}
                   placeholder="Rua, número, complemento"
                 />
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="cidade">
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="cidade_cliente_form">
                     Cidade
-                  </label>
+                  </Label>
                   <Input 
-                    id="cidade" 
+                    id="cidade_cliente_form" 
                     name="cidade" 
                     value={formData.cidade}
                     onChange={handleChange}
                     placeholder="Cidade"
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="estado">
+                <div className="space-y-1">
+                  <Label htmlFor="estado_cliente_form">
                     Estado
-                  </label>
+                  </Label>
                   <Select 
                     value={formData.estado}
                     onValueChange={(value) => handleSelectChange('estado', value)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger id="estado_cliente_form">
                       <SelectValue placeholder="UF" />
                     </SelectTrigger>
                     <SelectContent>
@@ -234,41 +286,40 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium" htmlFor="cep">
+                <div className="space-y-1">
+                  <Label htmlFor="cep_cliente_form">
                     CEP
-                  </label>
+                  </Label>
                   <Input 
-                    id="cep" 
+                    id="cep_cliente_form" 
                     name="cep" 
                     value={formData.cep}
                     onChange={handleChange}
                     placeholder="00000-000"
                   />
                 </div>
-              </div>
             </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="observacoes">
+            <div className="space-y-1">
+              <Label htmlFor="observacoes_cliente_form">
                 Observações
-              </label>
+              </Label>
               <Textarea 
-                id="observacoes" 
+                id="observacoes_cliente_form" 
                 name="observacoes" 
                 value={formData.observacoes}
                 onChange={handleChange}
                 placeholder="Observações adicionais sobre o cliente"
-                rows={4}
+                rows={3}
               />
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className="flex justify-end gap-2 px-4 py-3 md:px-6 md:py-4 border-t">
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button type="submit">
-            {isEdit ? 'Salvar alterações' : 'Cadastrar cliente'}
+          <Button type="submit" className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
+            {isEdit ? 'Salvar Alterações' : 'Cadastrar Cliente'}
           </Button>
         </CardFooter>
       </form>

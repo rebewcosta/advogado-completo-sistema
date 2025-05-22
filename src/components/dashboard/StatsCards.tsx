@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 
 interface Stats {
   clientesAtivos: number | null;
@@ -14,6 +15,36 @@ interface Stats {
   compromissosHoje: number | null;
   receitaMes: number | null;
 }
+
+interface StatCardProps {
+  title: string;
+  value: string | number | null;
+  description: string;
+  icon: React.ReactNode;
+  isLoading: boolean;
+  bgColorClass: string; // e.g., 'bg-lawyer-primary'
+  iconColorClass?: string; // e.g., 'text-blue-300'
+}
+
+const StatCard: React.FC<StatCardProps> = ({ title, value, description, icon, isLoading, bgColorClass, iconColorClass = 'text-white/70' }) => {
+  return (
+    <Card className={cn("shadow-lg rounded-lg text-white", bgColorClass)}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className={cn(iconColorClass)}>
+          {icon}
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? <Spinner size="sm" className="text-white"/> : <div className="text-2xl font-bold">{value ?? 0}</div>}
+        <p className="text-xs text-white/80">
+          {isLoading ? "Carregando..." : description}
+        </p>
+      </CardContent>
+    </Card>
+  );
+};
+
 
 const StatsCards: React.FC = () => {
   const { user } = useAuth();
@@ -36,7 +67,6 @@ const StatsCards: React.FC = () => {
 
     setIsLoading(true);
     setError(null);
-    console.log("StatsCards: Buscando estatísticas...");
 
     try {
       const today = new Date();
@@ -64,13 +94,6 @@ const StatsCards: React.FC = () => {
 
       const receitaTotalMes = transacoesRes.data?.reduce((sum, t) => sum + Number(t.valor || 0), 0) || 0;
 
-      console.log("StatsCards: Dados recebidos:", {
-        clientesAtivos: clientesRes.count,
-        processosAndamento: processosRes.count,
-        compromissosHoje: compromissosRes.count,
-        receitaMes: receitaTotalMes,
-      });
-
       setStats({
         clientesAtivos: clientesRes.count,
         processosAndamento: processosRes.count,
@@ -79,7 +102,6 @@ const StatsCards: React.FC = () => {
       });
 
     } catch (err: any) {
-      console.error("StatsCards: Erro ao buscar estatísticas:", err);
       setError(err.message || "Erro ao carregar estatísticas.");
       toast({
         title: "Erro ao carregar estatísticas do Dashboard",
@@ -97,19 +119,19 @@ const StatsCards: React.FC = () => {
 
   if (error) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
             {Array(4).fill(0).map((_, index) => (
-                <Card key={index}>
+                <Card key={index} className="bg-red-700 text-white shadow-lg rounded-lg">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium text-destructive">Erro</CardTitle>
-                        <AlertCircle className="h-4 w-4 text-destructive" />
+                        <CardTitle className="text-sm font-medium">Erro ao Carregar</CardTitle>
+                        <AlertCircle className="h-4 w-4 text-red-300" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-xs text-destructive truncate">
-                            Falha ao carregar
+                        <div className="text-xs text-red-200 truncate">
+                            Falha ao buscar dados.
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Tente atualizar.
+                        <p className="text-xs text-white/70 mt-1">
+                            Tente atualizar a página.
                         </p>
                     </CardContent>
                 </Card>
@@ -117,60 +139,49 @@ const StatsCards: React.FC = () => {
         </div>
     );
   }
+  
+  const cardBgColors = {
+    clientes: 'bg-lawyer-primary', // Azul primário do sistema
+    processos: 'bg-slate-700',     // Um cinza escuro elegante
+    compromissos: 'bg-sky-700',   // Um azul mais claro, mas ainda escuro
+    receita: 'bg-emerald-700'      // Verde escuro para receita
+  };
+
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
-          <Users className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {isLoading ? <Spinner size="sm" /> : <div className="text-2xl font-bold">{stats.clientesAtivos ?? 0}</div>}
-          <p className="text-xs text-muted-foreground">
-            {isLoading ? "Carregando..." : (stats.clientesAtivos ?? 0) === 0 ? "Nenhum cliente ativo" : `Total de ${stats.clientesAtivos} clientes`}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Processos em Andamento</CardTitle>
-          <FileText className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {isLoading ? <Spinner size="sm" /> : <div className="text-2xl font-bold">{stats.processosAndamento ?? 0}</div>}
-          <p className="text-xs text-muted-foreground">
-             {isLoading ? "Carregando..." : (stats.processosAndamento ?? 0) === 0 ? "Nenhum processo ativo" : `Total de ${stats.processosAndamento} processos`}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Compromissos Hoje</CardTitle>
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {isLoading ? <Spinner size="sm" /> : <div className="text-2xl font-bold">{stats.compromissosHoje ?? 0}</div>}
-          <p className="text-xs text-muted-foreground">
-            {isLoading ? "Carregando..." : (stats.compromissosHoje ?? 0) === 0 ? "Nenhum compromisso hoje" : `Total de ${stats.compromissosHoje} para hoje`}
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Receita no Mês</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          {isLoading ? <Spinner size="sm" /> : <div className="text-2xl font-bold">R$ {(stats.receitaMes ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>}
-          <p className="text-xs text-muted-foreground">
-            {isLoading ? "Carregando..." : (stats.receitaMes ?? 0) === 0 ? "Nenhuma receita este mês" : "Receita acumulada do mês atual"}
-          </p>
-        </CardContent>
-      </Card>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+      <StatCard
+        title="Clientes Ativos"
+        value={stats.clientesAtivos}
+        description={(stats.clientesAtivos ?? 0) === 0 ? "Nenhum cliente ativo" : `Total de ${stats.clientesAtivos} clientes`}
+        icon={<Users className="h-5 w-5" />}
+        isLoading={isLoading}
+        bgColorClass={cardBgColors.clientes}
+      />
+      <StatCard
+        title="Processos em Andamento"
+        value={stats.processosAndamento}
+        description={(stats.processosAndamento ?? 0) === 0 ? "Nenhum processo ativo" : `Total de ${stats.processosAndamento} processos`}
+        icon={<FileText className="h-5 w-5" />}
+        isLoading={isLoading}
+        bgColorClass={cardBgColors.processos}
+      />
+      <StatCard
+        title="Compromissos Hoje"
+        value={stats.compromissosHoje}
+        description={(stats.compromissosHoje ?? 0) === 0 ? "Nenhum compromisso hoje" : `Total de ${stats.compromissosHoje} para hoje`}
+        icon={<Calendar className="h-5 w-5" />}
+        isLoading={isLoading}
+        bgColorClass={cardBgColors.compromissos}
+      />
+      <StatCard
+        title="Receita no Mês"
+        value={`R$ ${(stats.receitaMes ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        description={(stats.receitaMes ?? 0) === 0 ? "Nenhuma receita este mês" : "Receita acumulada do mês atual"}
+        icon={<DollarSign className="h-5 w-5" />}
+        isLoading={isLoading}
+        bgColorClass={cardBgColors.receita}
+      />
     </div>
   );
 };

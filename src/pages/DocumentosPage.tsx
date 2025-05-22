@@ -1,4 +1,4 @@
-
+// src/pages/DocumentosPage.tsx
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import DocumentoWarning from '@/components/DocumentoWarning';
@@ -11,6 +11,8 @@ import DocumentError from '@/components/documentos/DocumentError';
 import LowStorageWarning from '@/components/documentos/LowStorageWarning';
 import { useDocumentos } from '@/hooks/useDocumentos';
 import { useToast } from '@/hooks/use-toast';
+import { Card, CardContent } from '@/components/ui/card'; // Import Card e CardContent
+import { FileArchive } from 'lucide-react'; // Ícone para o cabeçalho
 
 const DocumentosPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -25,24 +27,23 @@ const DocumentosPage = () => {
     espacoDisponivel, 
     listarDocumentos,
     calcularEspacoDisponivel,
-    error
+    error // Certifique-se de que `error` é o erro combinado de useDocumentos
   } = useDocumentos();
 
-  // Verificar e atualizar o espaço disponível quando o componente for montado
   useEffect(() => {
     const fetchData = async () => {
       try {
         await listarDocumentos();
         await calcularEspacoDisponivel();
       } catch (err) {
-        console.error('Erro ao carregar documentos:', err);
+        // Erro já tratado dentro de useDocumentos e refletido no `error` state
+        console.error('Erro inicial ao carregar documentos na DocumentosPage:', err);
       }
     };
     
     fetchData();
-  }, []);
+  }, [listarDocumentos, calcularEspacoDisponivel]); // Removida dependência duplicada de listarDocumentos
 
-  // Filtrar documentos com base na pesquisa e tipo
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          doc.cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -59,16 +60,27 @@ const DocumentosPage = () => {
       await calcularEspacoDisponivel();
       toast({
         title: "Dados atualizados",
-        description: "Os documentos foram atualizados com sucesso",
+        description: "Os documentos foram atualizados com sucesso.",
       });
     } catch (err) {
-      console.error('Erro ao atualizar dados:', err);
+      // Erro já tratado em useDocumentos
+      console.error('Erro ao atualizar dados na DocumentosPage:', err);
     }
   };
 
   return (
     <AdminLayout>
-      <div className="p-8">
+      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+        <div className="mb-6 md:mb-8">
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+            <FileArchive className="mr-3 h-7 w-7 text-lawyer-primary" />
+            Gestão de Documentos
+          </h1>
+          <p className="text-gray-600 text-left mt-1">
+            Organize e acesse os arquivos importantes do seu escritório.
+          </p>
+        </div>
+        
         <DocumentHeader 
           onUploadClick={() => setIsUploadDialogOpen(true)} 
           isLoading={isLoading} 
@@ -77,37 +89,37 @@ const DocumentosPage = () => {
         
         <DocumentoWarning />
         
-        {/* Informações de armazenamento */}
         <DocumentoStorageInfo />
         
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <DocumentError error={error} />
-          
-          <DocumentSearchBar 
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filterType={filterType}
-            setFilterType={setFilterType}
-            handleRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-          />
-          
-          <DocumentList 
-            documents={filteredDocuments}
-            isLoading={isLoading}
-            isRefreshing={isRefreshing}
-            searchTerm={searchTerm}
-            filterType={filterType}
-            onRefresh={handleRefresh}
-            onUploadClick={() => setIsUploadDialogOpen(true)}
-            error={error}
-          />
-          
-          <LowStorageWarning espacoDisponivel={espacoDisponivel} />
-        </div>
+        <Card className="shadow-lg rounded-lg">
+          <CardContent className="p-4 md:p-6">
+            <DocumentError error={error} />
+            
+            <DocumentSearchBar 
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filterType={filterType}
+              setFilterType={setFilterType}
+              handleRefresh={handleRefresh}
+              isRefreshing={isRefreshing}
+            />
+            
+            <DocumentList 
+              documents={filteredDocuments}
+              isLoading={isLoading} // Passando o estado de loading principal
+              isRefreshing={isRefreshing}
+              searchTerm={searchTerm}
+              filterType={filterType}
+              onRefresh={handleRefresh}
+              onUploadClick={() => setIsUploadDialogOpen(true)}
+              error={error}
+            />
+            
+            <LowStorageWarning espacoDisponivel={espacoDisponivel} />
+          </CardContent>
+        </Card>
       </div>
       
-      {/* Modal de Upload */}
       <DocumentUploadDialog 
         isOpen={isUploadDialogOpen} 
         onOpenChange={setIsUploadDialogOpen}
