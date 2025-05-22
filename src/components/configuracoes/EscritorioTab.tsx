@@ -11,90 +11,95 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Building, Image as ImageIcon } from 'lucide-react'; // Ícones
+
+interface OfficeSettings {
+  companyName: string;
+  cnpj: string;
+  address: string;
+  website: string;
+  logo_url?: string | null;
+}
 
 interface EscritorioTabProps {
-  officeSettings: {
-    companyName: string;
-    cnpj: string;
-    address: string;
-    website: string;
-  };
-  setOfficeSettings: React.Dispatch<React.SetStateAction<{
-    companyName: string;
-    cnpj: string;
-    address: string;
-    website: string;
-    logo_url?: string | null; // Adicionado para receber do pai
-  }>>;
+  officeSettings: OfficeSettings;
+  setOfficeSettings: React.Dispatch<React.SetStateAction<OfficeSettings>>;
   currentLogoUrl?: string | null; // Receber a URL do logo
   onLogoUpdate: () => Promise<void>; // Callback para quando o logo for atualizado
 }
 
-const EscritorioTab = ({ officeSettings, setOfficeSettings, currentLogoUrl, onLogoUpdate }: EscritorioTabProps) => {
+const EscritorioTab = ({ officeSettings, setOfficeSettings, onLogoUpdate }: EscritorioTabProps) => {
   return (
     <Card className="shadow-lg rounded-lg bg-white">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold text-gray-800">Dados do Escritório</CardTitle>
-        <CardDescription className="text-sm text-gray-500">
-          Configure as informações do seu escritório de advocacia.
+      <CardHeader className="border-b pb-4">
+        <CardTitle className="text-xl font-semibold text-gray-800 flex items-center">
+          <Building className="mr-2 h-6 w-6 text-lawyer-primary" />
+          Dados do Escritório
+        </CardTitle>
+        <CardDescription className="text-sm text-gray-500 pt-1">
+          Configure as informações públicas e de identificação do seu escritório de advocacia.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-1.5">
-            <Label htmlFor="companyName_config_esc" className="text-sm font-medium text-gray-700">Nome do Escritório</Label>
-            <Input 
-              id="companyName_config_esc" 
-              value={officeSettings.companyName}
-              onChange={(e) => setOfficeSettings({...officeSettings, companyName: e.target.value})}
-              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="cnpj_config_esc" className="text-sm font-medium text-gray-700">CNPJ</Label>
-            <Input 
-              id="cnpj_config_esc" 
-              value={officeSettings.cnpj}
-              onChange={(e) => setOfficeSettings({...officeSettings, cnpj: e.target.value})}
-              placeholder="00.000.000/0000-00"
-              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
-            />
-          </div>
-          <div className="space-y-1.5 md:col-span-2">
-            <Label htmlFor="address_config_esc" className="text-sm font-medium text-gray-700">Endereço Completo</Label>
-            <Input 
-              id="address_config_esc" 
-              value={officeSettings.address}
-              onChange={(e) => setOfficeSettings({...officeSettings, address: e.target.value})}
-              placeholder="Rua, Número, Bairro, Cidade - UF, CEP"
-              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="website_config_esc" className="text-sm font-medium text-gray-700">Website</Label>
-            <Input 
-              id="website_config_esc"
-              type="url"
-              value={officeSettings.website}
-              onChange={(e) => setOfficeSettings({...officeSettings, website: e.target.value})}
-              placeholder="https://www.seuescritorio.com.br"
-              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
-            />
-          </div>
+      <CardContent className="pt-6 space-y-8">
+        {/* Dados Cadastrais */}
+        <div className="p-4 md:p-5 border border-gray-200 rounded-lg shadow-sm bg-gray-50/50">
+            <h3 className="text-md font-medium text-gray-700 mb-4">Informações Cadastrais</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-1.5">
+                <Label htmlFor="companyName_config_esc" className="text-sm font-medium text-gray-700">Nome do Escritório</Label>
+                <Input 
+                id="companyName_config_esc" 
+                value={officeSettings.companyName}
+                onChange={(e) => setOfficeSettings(prev => ({...prev, companyName: e.target.value}))}
+                className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+                placeholder="Ex: Advocacia Silva & Associados"
+                />
+            </div>
+            <div className="space-y-1.5">
+                <Label htmlFor="cnpj_config_esc" className="text-sm font-medium text-gray-700">CNPJ</Label>
+                <Input 
+                id="cnpj_config_esc" 
+                value={officeSettings.cnpj}
+                onChange={(e) => setOfficeSettings(prev => ({...prev, cnpj: e.target.value}))}
+                placeholder="00.000.000/0000-00"
+                className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+                />
+            </div>
+            <div className="space-y-1.5 md:col-span-2">
+                <Label htmlFor="address_config_esc" className="text-sm font-medium text-gray-700">Endereço Completo</Label>
+                <Input 
+                id="address_config_esc" 
+                value={officeSettings.address}
+                onChange={(e) => setOfficeSettings(prev => ({...prev, address: e.target.value}))}
+                placeholder="Rua, Número, Bairro, Cidade - UF, CEP"
+                className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+                />
+            </div>
+            <div className="space-y-1.5">
+                <Label htmlFor="website_config_esc" className="text-sm font-medium text-gray-700">Website (Opcional)</Label>
+                <Input 
+                id="website_config_esc"
+                type="url"
+                value={officeSettings.website}
+                onChange={(e) => setOfficeSettings(prev => ({...prev, website: e.target.value}))}
+                placeholder="https://www.seuescritorio.com.br"
+                className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+                />
+            </div>
+            </div>
         </div>
-
-        <Separator className="my-6" />
         
-        <div className="space-y-2">
-          <Label className="text-sm font-medium text-gray-700">Logo do Escritório</Label>
-          <p className="text-xs text-gray-500 mb-3">
-            Faça upload da logo do seu escritório (PNG, JPG, GIF - Máx. 1MB). Esta logo aparecerá em relatórios e documentos futuros.
+        {/* Seção da Logo */}
+        <div className="p-4 md:p-5 border border-gray-200 rounded-lg shadow-sm bg-gray-50/50">
+            <div className="flex items-center gap-2 mb-2">
+                <ImageIcon className="h-5 w-5 text-lawyer-primary" />
+                <h3 className="text-md font-medium text-gray-700">Logo do Escritório</h3>
+            </div>
+          <p className="text-xs text-gray-500 mb-4">
+            Faça upload da imagem da sua marca (PNG, JPG - Máx. 1MB). Esta logo poderá ser usada em relatórios futuros.
           </p>
           <LogoUpload 
-            // O componente LogoUpload agora buscará o logo_url do user.user_metadata via useAuth
-            // e usará o refreshSession para atualizar a UI após o upload.
-            // A prop onLogoUpdate pode ser usada para forçar o re-render da ConfiguracoesPage se necessário.
-            onUploadSuccess={onLogoUpdate}
+            onUploadSuccess={onLogoUpdate} // Este callback atualiza o estado na ConfiguracoesPage
           />
         </div>
       </CardContent>
