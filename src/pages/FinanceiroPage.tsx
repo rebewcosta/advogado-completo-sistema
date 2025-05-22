@@ -5,14 +5,15 @@ import PinLock from '@/components/PinLock';
 import {
   Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Filter,
   DollarSign, TrendingUp, TrendingDown, FileText as FileTextIcon, X, Loader2, KeyRound, AlertCircle, ShieldAlert, BadgePercent
-} from 'lucide-react'; // Adicionado BadgePercent
+} from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label'; // <<--- IMPORTAÇÃO ADICIONADA AQUI
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; // Import Card
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableBody,
@@ -25,15 +26,8 @@ import type { Database } from '@/integrations/supabase/types';
 
 type TransacaoSupabase = Database['public']['Tables']['transacoes_financeiras']['Row'];
 
-interface TransacaoFormData {
-  tipo: 'Receita' | 'Despesa';
-  descricao: string;
-  valor: number;
-  categoria: string;
-  data_transacao: string;
-  status_pagamento: 'Pendente' | 'Pago' | 'Recebido' | 'Atrasado';
-  cliente_nome_temp?: string;
-}
+// Interface TransacaoFormData não é mais necessária aqui se o formulário está embutido
+// e usa os nomes dos campos diretamente.
 
 const PAGE_NAME_FOR_PIN_SESSION_STORAGE = "Financeiro_UserPinAccess";
 
@@ -201,8 +195,8 @@ const FinanceiroPage = () => {
       descricao: formValues.descricao,
       valor: parseFloat(formValues.valor),
       categoria: formValues.categoria,
-      data_transacao: formValues.data,
-      status_pagamento: formValues.status as TransacaoSupabase['status_pagamento'],
+      data_transacao: formValues.data, // Nome do input no formulário é 'data'
+      status_pagamento: formValues.status as TransacaoSupabase['status_pagamento'], // Nome do input no formulário é 'status'
     };
 
     try {
@@ -270,10 +264,10 @@ const FinanceiroPage = () => {
   
   return (
     <AdminLayout>
-      <main className="py-8 px-4 md:px-6 lg:px-8 bg-lawyer-background min-h-full">
+      <main className="py-8 px-4 md:px-6 lg:px-8 bg-lawyer-background min-h-full"> {/* Aplicado bg-lawyer-background */}
         <div className="mb-6 md:mb-8">
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-                <BadgePercent className="mr-3 h-7 w-7 text-lawyer-primary" /> {/* Ícone atualizado */}
+                <BadgePercent className="mr-3 h-7 w-7 text-lawyer-primary" />
                 Controle Financeiro
             </h1>
             <p className="text-gray-600 text-left mt-1">
@@ -292,7 +286,7 @@ const FinanceiroPage = () => {
           
           {/* Cards de Resumo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-            <Card className="shadow-md rounded-lg">
+            <Card className="shadow-md rounded-lg bg-white"> {/* Adicionado bg-white */}
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Receitas Totais</CardTitle>
                 <TrendingUp className="h-5 w-5 text-green-500" />
@@ -305,7 +299,7 @@ const FinanceiroPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-md rounded-lg">
+            <Card className="shadow-md rounded-lg bg-white"> {/* Adicionado bg-white */}
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Despesas Totais</CardTitle>
                 <TrendingDown className="h-5 w-5 text-red-500" />
@@ -318,7 +312,7 @@ const FinanceiroPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-md rounded-lg">
+            <Card className="shadow-md rounded-lg bg-white"> {/* Adicionado bg-white */}
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Saldo Atual</CardTitle>
                 <DollarSign className={`h-5 w-5 ${saldo >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
@@ -331,7 +325,7 @@ const FinanceiroPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-md rounded-lg">
+            <Card className="shadow-md rounded-lg bg-white"> {/* Adicionado bg-white */}
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Contas a Receber</CardTitle>
                 <FileTextIcon className="h-5 w-5 text-yellow-500" />
@@ -345,7 +339,7 @@ const FinanceiroPage = () => {
             </Card>
           </div>
 
-          <Card className="shadow-lg rounded-lg">
+          <Card className="shadow-lg rounded-lg bg-white"> {/* Tabela dentro de um Card branco */}
             <CardContent className="p-4 md:p-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
                     <div className="relative flex-grow md:max-w-sm">
@@ -353,13 +347,13 @@ const FinanceiroPage = () => {
                         <Input
                         type="text"
                         placeholder="Buscar transações..."
-                        className="pl-10 pr-4 py-2 border rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
+                        className="pl-10 pr-4 py-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                     <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                        <Button variant="outline" className="w-full md:w-auto px-4 py-2 border rounded-lg flex items-center gap-2 hover:bg-gray-100 text-gray-700">
+                        <Button variant="outline" className="w-full md:w-auto px-4 py-2 border-gray-300 rounded-lg flex items-center gap-2 hover:bg-gray-100 text-gray-700">
                             <Filter className="h-4 w-4" />
                             Filtrar
                         </Button>
@@ -464,10 +458,10 @@ const FinanceiroPage = () => {
                     Mostrando <span className="font-medium">{filteredTransactions.length}</span> de <span className="font-medium">{transactions.length}</span> transações
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="outline" size="icon" className="p-2 border rounded-md hover:bg-gray-100 h-8 w-8 text-gray-600">
+                    <Button variant="outline" size="icon" className="p-2 border-gray-300 rounded-md hover:bg-gray-100 h-8 w-8 text-gray-600">
                     <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <Button variant="outline" size="icon" className="p-2 border rounded-md hover:bg-gray-100 h-8 w-8 text-gray-600">
+                    <Button variant="outline" size="icon" className="p-2 border-gray-300 rounded-md hover:bg-gray-100 h-8 w-8 text-gray-600">
                     <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
@@ -529,7 +523,7 @@ const FinanceiroPage = () => {
                         name="descricao"
                         defaultValue={currentTransaction?.descricao || ''}
                         required
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
+                        className="w-full px-3 py-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
                       />
                     </div>
                     <div>
@@ -542,7 +536,7 @@ const FinanceiroPage = () => {
                         step="0.01"
                         defaultValue={currentTransaction?.valor ? String(currentTransaction.valor) : ''}
                         required
-                        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
+                        className="w-full px-3 py-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -552,7 +546,7 @@ const FinanceiroPage = () => {
                           id="categoria_modal_fin"
                           name="categoria"
                           defaultValue={currentTransaction?.categoria || 'Honorários'}
-                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white text-sm"
+                          className="w-full px-3 py-2.5 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white text-sm"
                         >
                           <option value="Honorários">Honorários</option>
                           <option value="Consultas">Consultas</option>
@@ -574,7 +568,7 @@ const FinanceiroPage = () => {
                           name="data"
                           defaultValue={currentTransaction?.data_transacao || new Date().toISOString().split('T')[0]}
                           required
-                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
+                          className="w-full px-3 py-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
                         />
                       </div>
                     </div>
@@ -585,7 +579,7 @@ const FinanceiroPage = () => {
                           id="status_modal_fin"
                           name="status"
                           defaultValue={currentTransaction?.status_pagamento || 'Pendente'}
-                          className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white text-sm"
+                          className="w-full px-3 py-2.5 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white text-sm"
                         >
                           <option value="Pendente">Pendente</option>
                           <option value="Pago">Pago</option>
@@ -603,7 +597,7 @@ const FinanceiroPage = () => {
                         setIsModalOpen(false);
                         setCurrentTransaction(null);
                       }}
-                      className="text-gray-700 hover:bg-gray-100"
+                      className="text-gray-700 hover:bg-gray-100 border-gray-300"
                     >
                       Cancelar
                     </Button>
