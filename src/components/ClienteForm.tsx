@@ -1,8 +1,9 @@
 // src/components/ClienteForm.tsx
-import React, { useState, useEffect } from 'react'; // Adicionado useEffect
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label"; // <<--- IMPORTAÇÃO ADICIONADA AQUI
 import { 
   Select,
   SelectContent,
@@ -24,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 interface ClienteFormProps {
   onSave: (cliente: any) => void;
   onCancel: () => void;
-  cliente?: any; // Mantendo 'any' por enquanto para flexibilidade com a estrutura vinda da página
+  cliente?: any; 
   isEdit?: boolean;
 }
 
@@ -34,14 +35,14 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
     nome: '',
     email: '',
     telefone: '',
-    tipo: 'Pessoa Física', // Valor padrão
+    tipo: 'Pessoa Física', 
     cpfCnpj: '',
     endereco: '',
     cidade: '',
     estado: '',
     cep: '',
     observacoes: '',
-    status_cliente: 'Ativo' // Valor padrão
+    status_cliente: 'Ativo' 
   });
 
   useEffect(() => {
@@ -50,8 +51,8 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
         nome: cliente.nome || '',
         email: cliente.email || '',
         telefone: cliente.telefone || '',
-        tipo: cliente.tipo_cliente || cliente.tipo || 'Pessoa Física', // Prioriza tipo_cliente se existir
-        cpfCnpj: cliente.cpfCnpj || '', // Usa o campo correto que vem do DB
+        tipo: cliente.tipo_cliente || cliente.tipo || 'Pessoa Física',
+        cpfCnpj: cliente.cpfCnpj || '', 
         endereco: cliente.endereco || '',
         cidade: cliente.cidade || '',
         estado: cliente.estado || '',
@@ -60,7 +61,6 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
         status_cliente: cliente.status_cliente || 'Ativo'
       });
     } else {
-      // Reset para novo cliente ou se não houver dados
       setFormData({
         nome: '',
         email: '',
@@ -112,7 +112,6 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
       return false;
     }
     
-    // Validação de email (simples)
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
         toast({
             title: "Email inválido",
@@ -150,7 +149,6 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
     if (!validateForm()) return;
 
     onSave(formData);
-    // O toast de sucesso será chamado na página principal após o save bem-sucedido
   };
 
   return (
