@@ -1,3 +1,4 @@
+// src/components/configuracoes/LogoUpload.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -5,7 +6,11 @@ import { Upload } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
-const LogoUpload = () => {
+interface LogoUploadProps {
+  onUploadSuccess?: () => Promise<void>; // Adicionado callback
+}
+
+const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string | null>(null);
@@ -15,6 +20,8 @@ const LogoUpload = () => {
   useEffect(() => {
     if (user?.user_metadata?.logo_url) {
       setCurrentLogoUrl(user.user_metadata.logo_url as string);
+    } else {
+      setCurrentLogoUrl(null); // Garante que se não houver logo, fique nulo
     }
   }, [user]);
 
@@ -33,29 +40,26 @@ const LogoUpload = () => {
 
     const file = e.target.files[0];
 
-    // Verificar o tamanho do arquivo (até 1MB)
-    if (file.size > 1024 * 1024) {
+    if (file.size > 1024 * 1024) { // 1MB
       toast({
         title: "Arquivo muito grande",
-        description: "A imagem deve ter no máximo 1MB",
+        description: "A imagem deve ter no máximo 1MB.",
         variant: "destructive"
       });
-      e.target.value = ''; // Limpar o input
+      e.target.value = '';
       return;
     }
 
-    // Verificar se é uma imagem
     if (!file.type.startsWith('image/')) {
       toast({
         title: "Formato inválido",
-        description: "Por favor, envie apenas arquivos de imagem (JPG, PNG, etc.)",
+        description: "Por favor, envie apenas arquivos de imagem (JPG, PNG, GIF, WEBP).",
         variant: "destructive"
       });
-      e.target.value = ''; // Limpar o input
+      e.target.value = '';
       return;
     }
 
-    // Criar uma URL para preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result as string);
@@ -65,55 +69,53 @@ const LogoUpload = () => {
     setUploading(true);
 
     try {
-      // Gerar um nome de arquivo único para o Storage
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'png';
-      const filePath = `public/${user.id}/logo-${Date.now()}.${fileExt}`; // Caminho no bucket 'logos'
+      const filePath = `public/${user.id}/logo-${Date.now()}.${fileExt}`;
 
-      // Fazer upload do arquivo para o Supabase Storage no bucket 'logos'
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('logos') // Nome do seu bucket público
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true // true para sobrescrever se já existir um logo para esse usuário com o mesmo path
-        });
-
-      if (uploadError) {
-        console.error('Erro no upload para o Supabase Storage:', uploadError);
-        throw new Error(`Erro no upload para o Storage: ${uploadError.message}`);
+      // Remover logo antiga se existir, para evitar acúmulo no storage
+      if (user.user_metadata?.logo_path_storage) {
+        await supabase.storage.from('logos').remove([user.user_metadata.logo_path_storage as string]);
       }
 
-      // Obter a URL pública do arquivo que foi salvo no Storage
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('logos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false // upsert false para garantir novo path e evitar cache
+        });
+
+      if (uploadError) throw new Error(`Erro no upload para o Storage: ${uploadError.message}`);
+
       const { data: publicUrlData } = supabase.storage
         .from('logos')
         .getPublicUrl(filePath);
 
       if (!publicUrlData || !publicUrlData.publicUrl) {
-        // Se não conseguir a URL pública, tentar remover o arquivo que acabou de ser upado para não deixar lixo
         await supabase.storage.from('logos').remove([filePath]);
         throw new Error("Não foi possível obter a URL pública do logo após o upload.");
       }
       const logoStorageUrl = publicUrlData.publicUrl;
-      console.log('Logo URL do Storage:', logoStorageUrl);
 
-      // Atualizar os metadados do usuário com a URL do Storage
       const { error: updateUserError } = await supabase.auth.updateUser({
         data: {
-          logo_url: logoStorageUrl // Salvar a URL do storage, não o base64
+          logo_url: logoStorageUrl,
+          logo_path_storage: filePath // Salvar o path para futura remoção
         }
       });
 
       if (updateUserError) {
-        console.error('Erro ao atualizar metadados do usuário:', updateUserError);
-        // Se falhar ao atualizar metadados, considerar remover o arquivo do storage
-        // ou notificar o usuário para tentar novamente.
         await supabase.storage.from('logos').remove([filePath]);
         throw new Error(`Erro ao atualizar perfil com nova logo: ${updateUserError.message}`);
       }
 
-      // Atualizar a sessão para refletir as mudanças nos metadados
-      await refreshSession();
-      setCurrentLogoUrl(logoStorageUrl); // Atualiza a URL do logo exibida localmente
-      setPreview(null); // Limpar o preview local pois agora usaremos a URL do storage
+      await refreshSession(); // Atualiza os dados do usuário no useAuth
+      setCurrentLogoUrl(logoStorageUrl);
+      setPreview(null); 
+
+      if(onUploadSuccess) { // Chama o callback
+        await onUploadSuccess();
+      }
 
       toast({
         title: "Logo atualizada",
@@ -124,13 +126,12 @@ const LogoUpload = () => {
       console.error('Erro completo ao fazer upload:', error);
       toast({
         title: "Erro ao fazer upload",
-        description: error.message || "Ocorreu um erro ao tentar fazer o upload da logo. Verifique o console para mais detalhes.",
+        description: error.message || "Ocorreu um erro ao tentar fazer o upload da logo.",
         variant: "destructive"
       });
-      setPreview(null); // Limpar preview em caso de erro
+      setPreview(null);
     } finally {
       setUploading(false);
-      // Limpar o valor do input de arquivo para permitir novo upload do mesmo arquivo se necessário
       if (e.target) {
         e.target.value = '';
       }
@@ -142,30 +143,32 @@ const LogoUpload = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-4">
-        {displayLogoUrl && (
-          <div className="w-20 h-20 border rounded-md overflow-hidden flex items-center justify-center bg-gray-50">
+        <div className="w-20 h-20 border rounded-md overflow-hidden flex items-center justify-center bg-gray-100">
+          {displayLogoUrl ? (
             <img
               src={displayLogoUrl}
               alt="Logo do escritório"
               className="max-w-full max-h-full object-contain"
             />
-          </div>
-        )}
+          ) : (
+            <span className="text-xs text-gray-400">Sem logo</span>
+          )}
+        </div>
 
         <div>
           <Button
             type="button"
             variant="outline"
             disabled={uploading}
-            className="relative"
+            className="relative border-gray-300 hover:bg-gray-100"
           >
             {uploading ? (
               <div className="flex items-center">
-                <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-primary rounded-full"></div>
+                <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-lawyer-primary rounded-full"></div>
                 Enviando...
               </div>
             ) : (
-              <div className="flex items-center">
+              <div className="flex items-center text-gray-700">
                 <Upload className="mr-2 h-4 w-4" />
                 {currentLogoUrl ? 'Alterar Logo' : 'Enviar Logo'}
               </div>
@@ -173,12 +176,12 @@ const LogoUpload = () => {
             <input
               type="file"
               accept="image/png, image/jpeg, image/gif, image/webp"
-              className="absolute inset-0 opacity-0 cursor-pointer"
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
               onChange={handleFileChange}
               disabled={uploading}
             />
           </Button>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Máximo 1MB. Formatos: JPG, PNG, GIF, WEBP
           </p>
         </div>

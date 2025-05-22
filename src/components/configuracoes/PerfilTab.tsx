@@ -1,4 +1,4 @@
-
+// src/components/configuracoes/PerfilTab.tsx
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,50 +27,58 @@ interface PerfilTabProps {
 
 const PerfilTab = ({ profileSettings, setProfileSettings }: PerfilTabProps) => {
   return (
-    <Card>
+    <Card className="shadow-lg rounded-lg bg-white">
       <CardHeader>
-        <CardTitle>Informações do Perfil</CardTitle>
-        <CardDescription>
-          Gerencie suas informações pessoais e de contato
+        <CardTitle className="text-xl font-semibold text-gray-800">Informações Pessoais</CardTitle>
+        <CardDescription className="text-sm text-gray-500">
+          Gerencie suas informações pessoais e de contato.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome completo</Label>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-1.5">
+            <Label htmlFor="name_config_perfil" className="text-sm font-medium text-gray-700">Nome completo</Label>
             <Input 
-              id="name" 
+              id="name_config_perfil" 
               value={profileSettings.name}
               onChange={(e) => setProfileSettings({...profileSettings, name: e.target.value})}
+              placeholder="Seu nome completo"
+              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="email_config_perfil" className="text-sm font-medium text-gray-700">E-mail</Label>
             <Input 
-              id="email" 
+              id="email_config_perfil" 
               type="email"
               value={profileSettings.email}
-              onChange={(e) => setProfileSettings({...profileSettings, email: e.target.value})}
-              readOnly
+              readOnly // Email geralmente não é editável diretamente no perfil por questões de autenticação
+              className="bg-gray-100 cursor-not-allowed border-gray-300"
             />
+            <p className="text-xs text-gray-500">O e-mail de login não pode ser alterado aqui.</p>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="phone">Telefone</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="phone_config_perfil" className="text-sm font-medium text-gray-700">Telefone</Label>
             <Input 
-              id="phone" 
+              id="phone_config_perfil" 
               value={profileSettings.phone}
               onChange={(e) => setProfileSettings({...profileSettings, phone: e.target.value})}
+              placeholder="(00) 00000-0000"
+              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
             />
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="oab">Número OAB</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="oab_config_perfil" className="text-sm font-medium text-gray-700">Número OAB</Label>
             <Input 
-              id="oab" 
+              id="oab_config_perfil" 
               value={profileSettings.oab}
               onChange={(e) => setProfileSettings({...profileSettings, oab: e.target.value})}
+              placeholder="00000/UF"
+              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
             />
           </div>
         </div>
+        {/* O botão de salvar foi movido para o ConfiguracoesHeader */}
       </CardContent>
     </Card>
   );

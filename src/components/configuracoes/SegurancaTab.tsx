@@ -15,7 +15,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Spinner } from '@/components/ui/spinner';
-import { Loader2 } from 'lucide-react'; // << CORREÇÃO AQUI: Importar Loader2 de lucide-react
+import { Loader2, KeyRound, ShieldAlert } from 'lucide-react';
 import {
   InputOTP,
   InputOTPGroup,
@@ -47,7 +47,7 @@ const SegurancaTab = ({
   isSavingPin
 }: SegurancaTabProps) => {
   const { toast } = useToast();
-  const { session } = useAuth();
+  const { session, user } = useAuth(); // Adicionado user
   const [passwordData, setPasswordData] = useState({
     newPassword: "",
     confirmPassword: ""
@@ -117,7 +117,7 @@ const SegurancaTab = ({
   };
 
   const handleRequestPinReset = async () => {
-    if (!session) {
+    if (!session || !user) { // Adicionado !user
       toast({ title: "Não autenticado", description: "Você precisa estar logado para solicitar a redefinição do PIN.", variant: "destructive" });
       return;
     }
@@ -133,7 +133,7 @@ const SegurancaTab = ({
       
       toast({
         title: "Solicitação Enviada",
-        description: data.message || "Se sua conta for encontrada, um email será enviado com instruções.",
+        description: data.message || `Um email com instruções foi enviado para ${user.email}.`,
         duration: 7000,
       });
 
@@ -149,199 +149,206 @@ const SegurancaTab = ({
   };
 
   return (
-    <Card>
+    <Card className="shadow-lg rounded-lg bg-white">
       <CardHeader>
-        <CardTitle>Configurações de Segurança</CardTitle>
-        <CardDescription>
-          Proteja sua conta e dados do escritório. Lembre-se de salvar todas as alterações no botão no topo da página.
+        <CardTitle className="text-xl font-semibold text-gray-800">Segurança da Conta</CardTitle>
+        <CardDescription className="text-sm text-gray-500">
+          Proteja sua conta, altere sua senha e gerencie o PIN de acesso financeiro.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="twoFactorSwitch">Autenticação em Dois Fatores</Label>
-            <p className="text-sm text-muted-foreground">
-              Adicione uma camada extra de segurança à sua conta (funcionalidade futura).
-            </p>
-          </div>
-          <Switch
-            id="twoFactorSwitch"
-            checked={securitySettings.pref_seguranca_dois_fatores}
-            onCheckedChange={(checked) =>
-              setSecuritySettings(prev => ({...prev, pref_seguranca_dois_fatores: !!checked}))
-            }
-            disabled
-          />
+      <CardContent className="space-y-8">
+        {/* Seção de Alteração de Senha do Sistema */}
+        <div className="p-4 border border-gray-200 rounded-md">
+          <h3 className="text-lg font-medium text-gray-700 mb-1">Alterar Senha do Sistema</h3>
+          <p className="text-xs text-gray-500 mb-4">Use uma senha forte para maior segurança.</p>
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="newPassword_config_sec" className="text-sm font-medium text-gray-700">Nova senha</Label>
+              <Input
+                id="newPassword_config_sec"
+                name="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
+                required
+                minLength={6}
+                className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+                placeholder="Mínimo 6 caracteres"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword_config_sec" className="text-sm font-medium text-gray-700">Confirmar nova senha</Label>
+              <Input
+                id="confirmPassword_config_sec"
+                name="confirmPassword"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
+                required
+                minLength={6}
+                className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={changingPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+              className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
+            >
+              {changingPassword ? (
+                <><Spinner size="sm" className="mr-2" /> Alterando...</>
+              ) : (
+                'Alterar Senha do Sistema'
+              )}
+            </Button>
+          </form>
         </div>
 
-        <Separator />
-
-        <div className="space-y-2">
-          <Label htmlFor="sessionTimeout">Tempo de Sessão (minutos)</Label>
-          <p className="text-sm text-muted-foreground mb-2">
-            Defina por quanto tempo sua sessão permanecerá ativa sem atividade (funcionalidade futura).
+        {/* Seção de PIN Financeiro */}
+        <div className="p-4 border border-gray-200 rounded-md">
+            <div className="flex items-center gap-2 mb-1">
+                <KeyRound className="h-5 w-5 text-lawyer-primary" />
+                <h3 className="text-lg font-medium text-gray-700">PIN de Acesso ao Financeiro</h3>
+            </div>
+          <p className="text-xs text-gray-500 mb-4">
+            {hasFinancePin ? "Altere seu PIN de 4 dígitos." : "Defina um PIN de 4 dígitos para proteger o acesso à área Financeiro."}
           </p>
-          <Input
-            id="sessionTimeout"
-            type="number"
-            min="5"
-            max="120"
-            value={securitySettings.pref_seguranca_tempo_sessao_min}
-            onChange={(e) => setSecuritySettings(prev => ({...prev, pref_seguranca_tempo_sessao_min: e.target.value}))}
-            disabled
-          />
-        </div>
-
-        <Separator />
-
-        <div className="flex items-center justify-between">
-          <div className="space-y-0.5">
-            <Label htmlFor="ipRestrictionSwitch">Restrição de IP</Label>
-            <p className="text-sm text-muted-foreground">
-              Limite o acesso a endereços IP específicos (funcionalidade futura).
-            </p>
-          </div>
-          <Switch
-            id="ipRestrictionSwitch"
-            checked={securitySettings.pref_seguranca_restricao_ip}
-            onCheckedChange={(checked) =>
-              setSecuritySettings(prev => ({...prev, pref_seguranca_restricao_ip: !!checked}))
-            }
-            disabled
-          />
-        </div>
-
-        <Separator />
-
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <h3 className="text-lg font-medium">Alteração de Senha do Sistema</h3>
-          <div className="space-y-2">
-            <Label htmlFor="newPassword_config">Nova senha</Label>
-            <Input
-              id="newPassword_config"
-              name="newPassword"
-              type="password"
-              value={passwordData.newPassword}
-              onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
-              required
-              minLength={6}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword_config">Confirmar nova senha</Label>
-            <Input
-              id="confirmPassword_config"
-              name="confirmPassword"
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
-              required
-              minLength={6}
-            />
-          </div>
-          <Button
-            type="submit"
-            disabled={changingPassword}
-          >
-            {changingPassword ? (
-              <><Spinner size="sm" className="mr-2" /> Alterando...</>
-            ) : (
-              'Alterar senha do sistema'
+          <form onSubmit={handleAlterarPinFinanceiroSubmit} className="space-y-4">
+            {hasFinancePin && (
+              <div className="space-y-1.5">
+                <Label htmlFor="pinAtualFinanceiro_config_sec" className="text-sm font-medium text-gray-700">PIN Atual</Label>
+                <InputOTP
+                  maxLength={4}
+                  value={pinAtualFinanceiro}
+                  onChange={(value) => setPinAtualFinanceiro(value)}
+                  name="pinAtualFinanceiro"
+                  id="pinAtualFinanceiro_config_sec"
+                  containerClassName="justify-start"
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} /> <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} /> <InputOTPSlot index={3} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
             )}
-          </Button>
-        </form>
 
-        <Separator />
-
-        <form onSubmit={handleAlterarPinFinanceiroSubmit} className="space-y-4 pt-4">
-          <h3 className="text-lg font-medium">PIN de Acesso ao Financeiro</h3>
-          <p className="text-sm text-muted-foreground">
-            {hasFinancePin ? "Altere seu PIN de 4 dígitos." : "Defina um PIN de 4 dígitos para a página Financeiro."}
-          </p>
-
-          {hasFinancePin && (
-            <div className="space-y-2">
-              <Label htmlFor="pinAtualFinanceiro_config">PIN Atual</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="novoPinFinanceiro_config_sec" className="text-sm font-medium text-gray-700">Novo PIN (4 dígitos)</Label>
               <InputOTP
                 maxLength={4}
-                value={pinAtualFinanceiro}
-                onChange={(value) => setPinAtualFinanceiro(value)}
-                name="pinAtualFinanceiro"
-                id="pinAtualFinanceiro_config"
+                value={novoPinFinanceiro}
+                onChange={(value) => setNovoPinFinanceiro(value)}
+                name="novoPinFinanceiro"
+                id="novoPinFinanceiro_config_sec"
                 containerClassName="justify-start"
               >
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
+                  <InputOTPSlot index={0} /> <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} /> <InputOTPSlot index={3} />
                 </InputOTPGroup>
               </InputOTP>
             </div>
-          )}
 
-          <div className="space-y-2">
-            <Label htmlFor="novoPinFinanceiro_config">Novo PIN (4 dígitos)</Label>
-            <InputOTP
-              maxLength={4}
-              value={novoPinFinanceiro}
-              onChange={(value) => setNovoPinFinanceiro(value)}
-              name="novoPinFinanceiro"
-              id="novoPinFinanceiro_config"
-              containerClassName="justify-start"
-            >
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmaNovoPinFinanceiro_config_sec" className="text-sm font-medium text-gray-700">Confirmar Novo PIN</Label>
+              <InputOTP
+                maxLength={4}
+                value={confirmaNovoPinFinanceiro}
+                onChange={(value) => setConfirmaNovoPinFinanceiro(value)}
+                name="confirmaNovoPinFinanceiro"
+                id="confirmaNovoPinFinanceiro_config_sec"
+                containerClassName="justify-start"
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot index={0} /> <InputOTPSlot index={1} />
+                  <InputOTPSlot index={2} /> <InputOTPSlot index={3} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+            {pinErrorMessage && <p className="text-sm text-red-500 text-left flex items-center"><ShieldAlert className="h-4 w-4 mr-1 text-red-500"/>{pinErrorMessage}</p>}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
+              <Button
+                  type="submit"
+                  disabled={isSavingPin || (hasFinancePin && pinAtualFinanceiro.length !== 4) || novoPinFinanceiro.length !== 4 || confirmaNovoPinFinanceiro.length !== 4}
+                  className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
+              >
+                  {isSavingPin ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {hasFinancePin ? 'Alterando PIN...' : 'Definindo PIN...'}</>
+                  ) : (
+                  hasFinancePin ? 'Alterar PIN Financeiro' : 'Definir PIN Financeiro'
+                  )}
+              </Button>
+              {hasFinancePin && (
+                   <Button
+                      type="button"
+                      variant="link"
+                      className="text-xs sm:text-sm text-blue-600 p-0 h-auto justify-start sm:ml-4 hover:underline"
+                      onClick={handleRequestPinReset}
+                      disabled={isRequestingPinReset}
+                    >
+                      {isRequestingPinReset ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Enviando...</> : "Esqueci meu PIN Financeiro"}
+                    </Button>
+              )}
+            </div>
+          </form>
+        </div>
+        
+        {/* Funcionalidades futuras desabilitadas */}
+        <Separator className="my-6" />
+        <div className="space-y-6 opacity-50">
+            <h3 className="text-lg font-medium text-gray-500">Configurações Avançadas (Em Breve)</h3>
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md">
+            <div className="space-y-0.5">
+                <Label htmlFor="twoFactorSwitch_config_sec" className="font-medium text-gray-600">Autenticação em Dois Fatores</Label>
+                <p className="text-xs text-gray-500">
+                Adicione uma camada extra de segurança à sua conta.
+                </p>
+            </div>
+            <Switch
+                id="twoFactorSwitch_config_sec"
+                checked={securitySettings.pref_seguranca_dois_fatores}
+                onCheckedChange={(checked) =>
+                setSecuritySettings(prev => ({...prev, pref_seguranca_dois_fatores: !!checked}))
+                }
+                disabled
+            />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="confirmaNovoPinFinanceiro_config">Confirmar Novo PIN</Label>
-            <InputOTP
-              maxLength={4}
-              value={confirmaNovoPinFinanceiro}
-              onChange={(value) => setConfirmaNovoPinFinanceiro(value)}
-              name="confirmaNovoPinFinanceiro"
-              id="confirmaNovoPinFinanceiro_config"
-              containerClassName="justify-start"
-            >
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-                <InputOTPSlot index={3} />
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
-          {pinErrorMessage && <p className="text-sm text-red-500 text-left">{pinErrorMessage}</p>}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-            <Button
-                type="submit"
-                disabled={isSavingPin || (hasFinancePin && pinAtualFinanceiro.length !== 4) || novoPinFinanceiro.length !== 4 || confirmaNovoPinFinanceiro.length !== 4}
-            >
-                {isSavingPin ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {hasFinancePin ? 'Alterando PIN...' : 'Definindo PIN...'}</>
-                ) : (
-                hasFinancePin ? 'Alterar PIN do Financeiro' : 'Definir PIN do Financeiro'
-                )}
-            </Button>
-            {hasFinancePin && (
-                 <Button
-                    type="button"
-                    variant="link"
-                    className="text-sm text-blue-600 p-0 h-auto justify-start sm:ml-4"
-                    onClick={handleRequestPinReset}
-                    disabled={isRequestingPinReset}
-                  >
-                    {isRequestingPinReset ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando email...</> : "Esqueci meu PIN Financeiro"}
-                  </Button>
-            )}
-          </div>
-        </form>
+            <div className="space-y-1.5 p-4 border border-gray-200 rounded-md">
+            <Label htmlFor="sessionTimeout_config_sec" className="text-sm font-medium text-gray-600">Tempo de Sessão (minutos)</Label>
+            <p className="text-xs text-gray-500 mb-2">
+                Defina por quanto tempo sua sessão permanecerá ativa sem atividade.
+            </p>
+            <Input
+                id="sessionTimeout_config_sec"
+                type="number"
+                min="5"
+                max="120"
+                value={securitySettings.pref_seguranca_tempo_sessao_min}
+                onChange={(e) => setSecuritySettings(prev => ({...prev, pref_seguranca_tempo_sessao_min: e.target.value}))}
+                disabled
+                className="border-gray-300"
+            />
+            </div>
+
+            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md">
+            <div className="space-y-0.5">
+                <Label htmlFor="ipRestrictionSwitch_config_sec" className="font-medium text-gray-600">Restrição de IP</Label>
+                <p className="text-xs text-gray-500">
+                Limite o acesso a endereços IP específicos.
+                </p>
+            </div>
+            <Switch
+                id="ipRestrictionSwitch_config_sec"
+                checked={securitySettings.pref_seguranca_restricao_ip}
+                onCheckedChange={(checked) =>
+                setSecuritySettings(prev => ({...prev, pref_seguranca_restricao_ip: !!checked}))
+                }
+                disabled
+            />
+            </div>
+        </div>
+
       </CardContent>
     </Card>
   );
