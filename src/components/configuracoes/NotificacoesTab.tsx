@@ -30,13 +30,13 @@ const NotificacoesTab = ({ notificationSettings, setNotificationSettings }: Noti
       <CardHeader>
         <CardTitle className="text-xl font-semibold text-gray-800">Preferências de Notificações</CardTitle>
         <CardDescription className="text-sm text-gray-500">
-          Configure como e quando deseja receber notificações. <span className="text-blue-600">(Funcionalidades futuras)</span>
+          Configure como e quando deseja receber notificações. As alterações são salvas ao clicar em "Salvar alterações" no topo da página.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
           <div className="space-y-0.5">
-            <Label htmlFor="pushNotifications_config_notif" className="font-medium text-gray-700">Notificações Push</Label>
+            <Label htmlFor="pushNotifications_config_notif" className="font-medium text-gray-700">Notificações Push (Em breve)</Label>
             <p className="text-xs text-gray-500">
               Receba alertas no navegador ou aplicativo.
             </p>
@@ -47,15 +47,15 @@ const NotificacoesTab = ({ notificationSettings, setNotificationSettings }: Noti
             onCheckedChange={(checked) => 
               setNotificationSettings({...notificationSettings, pushNotifications: checked})
             }
-            disabled // Funcionalidade futura
+            disabled // Funcionalidade de Push Notifications ainda será implementada no backend
           />
         </div>
         
         <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
           <div className="space-y-0.5">
-            <Label htmlFor="deadlineAlerts_config_notif" className="font-medium text-gray-700">Alertas de Prazo</Label>
+            <Label htmlFor="deadlineAlerts_config_notif" className="font-medium text-gray-700">Alertas de Eventos da Agenda e Prazos</Label>
             <p className="text-xs text-gray-500">
-              Seja notificado sobre prazos importantes que estão próximos.
+              Seja notificado por email sobre eventos da agenda e prazos importantes.
             </p>
           </div>
           <Switch 
@@ -64,13 +64,13 @@ const NotificacoesTab = ({ notificationSettings, setNotificationSettings }: Noti
             onCheckedChange={(checked) => 
               setNotificationSettings({...notificationSettings, deadlineAlerts: checked})
             }
-            disabled // Funcionalidade futura
+            // Habilitado para permitir que o usuário salve esta preferência
           />
         </div>
         
         <div className="flex items-center justify-between p-4 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors">
           <div className="space-y-0.5">
-            <Label htmlFor="weeklyReport_config_notif" className="font-medium text-gray-700">Relatório Semanal por Email</Label>
+            <Label htmlFor="weeklyReport_config_notif" className="font-medium text-gray-700">Relatório Semanal por Email (Em breve)</Label>
             <p className="text-xs text-gray-500">
               Receba um resumo semanal das atividades do seu escritório.
             </p>
@@ -81,7 +81,7 @@ const NotificacoesTab = ({ notificationSettings, setNotificationSettings }: Noti
             onCheckedChange={(checked) => 
               setNotificationSettings({...notificationSettings, weeklyReport: checked})
             }
-            disabled // Funcionalidade futura
+            disabled // Funcionalidade de Relatório Semanal ainda será implementada no backend
           />
         </div>
       </CardContent>
