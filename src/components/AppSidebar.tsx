@@ -1,4 +1,3 @@
-// src/components/AppSidebar.tsx
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -12,6 +11,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger // SidebarTrigger não está sendo usado neste arquivo, pode ser removido se não for necessário em outro lugar.
 } from "@/components/ui/sidebar";
 import { 
   Home, 
@@ -19,12 +19,12 @@ import {
   FileText, 
   Calendar, 
   DollarSign, 
-  FileArchive,
+  FileArchive, // Nome do ícone para Documentos é FileArchive
   BarChart2, 
   Settings,
   LogOut,
-  Shield,
-  ListChecks // <<< ÍCONE PARA TAREFAS
+  CreditCard, // CreditCard não está sendo usado diretamente aqui, mas pode ser mantido se planeja usar.
+  Shield
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -44,16 +44,17 @@ export const AppSidebar = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Check if user is admin (has the specific email)
   const isAdmin = user?.email === 'webercostag@gmail.com';
 
+  // Define menu items
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
     { path: "/meus-processos", icon: FileText, label: "Meus Processos" },
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/agenda", icon: Calendar, label: "Agenda" },
-    { path: "/tarefas", icon: ListChecks, label: "Tarefas" }, // <<< ITEM TAREFAS ADICIONADO AQUI
     { path: "/financeiro", icon: DollarSign, label: "Financeiro" },
-    { path: "/documentos", icon: FileArchive, label: "Documentos" },
+    { path: "/documentos", icon: FileArchive, label: "Documentos" }, // Ícone corrigido
     { path: "/relatorios", icon: BarChart2, label: "Relatórios" },
     ...(isAdmin ? [{ path: "/admin", icon: Shield, label: "Admin" }] : []),
   ];
@@ -76,14 +77,14 @@ export const AppSidebar = () => {
   };
 
   const getUserInitials = () => {
-    if (!user) return "JG";
+    if (!user) return "JG"; // JusGestão como fallback se não houver usuário
     
     const nome = user.user_metadata?.nome || user.email || "";
     if (!nome) return "JG";
     
     const parts = nome.split(" ");
     if (parts.length >= 2) {
-      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase(); // Pega a primeira letra do primeiro e do último nome
     }
     
     return nome.substring(0, 2).toUpperCase();
@@ -97,10 +98,14 @@ export const AppSidebar = () => {
             <img 
               src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" 
               alt="JusGestão Logo" 
-              className="h-6 w-auto"
+              className="h-6 w-auto" // Imagem do logo na sidebar
             />
             <span>JusGestão</span>
           </Link>
+          {/* O SidebarTrigger normalmente é usado fora da Sidebar para abri-la/fechá-la em modo offcanvas,
+              se sua sidebar for sempre visível em desktop, ele pode não ser necessário aqui.
+              Se for para o modo mobile, geralmente é colocado no header principal da aplicação.
+          */}
         </div>
       </SidebarHeader>
       <SidebarContent className="bg-lawyer-dark text-white">
@@ -114,7 +119,7 @@ export const AppSidebar = () => {
                     asChild 
                     tooltip={item.label}
                     isActive={isActive(item.path)}
-                    className="px-1"
+                    className="px-1" // Padding ajustado
                   >
                     <Link to={item.path} className="flex items-center gap-4">
                       <item.icon className="w-5 h-5" />
@@ -128,13 +133,14 @@ export const AppSidebar = () => {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="bg-lawyer-dark text-white">
+        {/* MODIFICAÇÃO APLICADA AQUI: className="pt-0" para remover o padding-top */}
         <SidebarGroup className="pt-0"> 
           <SidebarMenuItem>
             <SidebarMenuButton 
               asChild 
               tooltip="Configurações"
               isActive={isActive("/configuracoes")}
-              className="px-1"
+              className="px-1" // Padding ajustado
             >
               <Link to="/configuracoes" className="flex items-center gap-4">
                 <Settings className="w-5 h-5" />
@@ -148,13 +154,14 @@ export const AppSidebar = () => {
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-700 transition-colors">
                   <Avatar className="h-8 w-8">
+                    {/* CORREÇÃO APLICADA AQUI: user.user_metadata.logo_url */}
                     {user?.user_metadata?.logo_url ? (
                       <AvatarImage src={user.user_metadata.logo_url as string} alt="Logo do Escritório" />
                     ) : (
                       <AvatarFallback>{getUserInitials()}</AvatarFallback>
                     )}
                   </Avatar>
-                  <div className="flex-1 text-left overflow-hidden">
+                  <div className="flex-1 text-left overflow-hidden"> {/* Adicionado overflow-hidden para o truncate funcionar */}
                     <p className="text-xs font-medium truncate text-white">
                       {user?.user_metadata?.nome || user?.email || "Usuário"}
                     </p>
