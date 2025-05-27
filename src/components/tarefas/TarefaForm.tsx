@@ -16,14 +16,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { X } from 'lucide-react';
 import { format, parseISO, isValid } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
-import { StatusTarefa, PrioridadeTarefa } from '@/pages/TarefasPage'; // Ajuste o caminho se necessário
+import { StatusTarefa, PrioridadeTarefa } from '@/pages/TarefasPage';
 
-// Omitindo 'clientes' e 'processos' pois são para exibição e não parte do formulário direto
 type TarefaRow = Database['public']['Tables']['tarefas']['Row'];
-export interface TarefaFormData extends Omit<TarefaRow, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'clientes' | 'processos'> {
-  // data_vencimento no formulário pode ser Date | string | undefined, mas será string yyyy-MM-dd ou null para o Supabase
-}
-
+export interface TarefaFormData extends Omit<TarefaRow, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'clientes' | 'processos'> {}
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 type ProcessoParaSelect = Pick<Database['public']['Tables']['processos']['Row'], 'id' | 'numero_processo'>;
@@ -47,28 +43,30 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
   processosDoUsuario = [],
   isLoadingDropdownData = false
 }) => {
+  const [dataVencimentoPicker, setDataVencimentoPicker] = useState<Date | undefined>(undefined);
   const [formData, setFormData] = useState<Partial<TarefaFormData>>({
     titulo: '',
     descricao_detalhada: '',
     status: 'Pendente',
     prioridade: 'Média',
-    data_vencimento: undefined, // Armazenar como Date ou undefined para o DatePicker
+    data_vencimento: null,
     cliente_id: null,
     processo_id: null,
     data_conclusao: null,
   });
-  const [dataVencimentoPicker, setDataVencimentoPicker] = useState<Date | undefined>(undefined);
-
 
   useEffect(() => {
     if (isEdit && tarefaParaEditar) {
-      const vencimentoDate = tarefaParaEditar.data_vencimento ? parseISO(tarefaParaEditar.data_vencimento) : undefined;
+      const vencimentoDate = tarefaParaEditar.data_vencimento 
+        ? parseISO(tarefaParaEditar.data_vencimento)
+        : undefined;
+      
       setFormData({
         titulo: tarefaParaEditar.titulo || '',
         descricao_detalhada: tarefaParaEditar.descricao_detalhada || '',
-        status: tarefaParaEditar.status as StatusTarefa || 'Pendente',
-        prioridade: tarefaParaEditar.prioridade as PrioridadeTarefa || 'Média',
-        data_vencimento: tarefaParaEditar.data_vencimento, // Mantém como string ou null
+        status: (tarefaParaEditar.status as StatusTarefa) || 'Pendente',
+        prioridade: (tarefaParaEditar.prioridade as PrioridadeTarefa) || 'Média',
+        data_vencimento: tarefaParaEditar.data_vencimento,
         cliente_id: tarefaParaEditar.cliente_id || null,
         processo_id: tarefaParaEditar.processo_id || null,
         data_conclusao: tarefaParaEditar.data_conclusao,
@@ -80,7 +78,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
         descricao_detalhada: '',
         status: 'Pendente',
         prioridade: 'Média',
-        data_vencimento: undefined,
+        data_vencimento: null,
         cliente_id: null,
         processo_id: null,
         data_conclusao: null,
@@ -95,11 +93,16 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
   };
 
   const handleSelectChange = (name: keyof TarefaFormData, value: string | null) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    // Se o valor for a string "null_placeholder_value", converta para null real.
+    // Isso é para o caso de você *precisar* de um item "Nenhum" selecionável com valor não vazio.
+    // Mas com a remoção do <SelectItem value="">, o Radix deve lidar com o value sendo `undefined` ou `null`
+    // quando o placeholder é mostrado.
+    const finalValue = value === "null_placeholder_value" ? null : value;
+    setFormData(prev => ({ ...prev, [name]: finalValue as any }));
   };
   
   const handleDateChange = (date: Date | undefined) => {
-    setDataVencimentoPicker(date); // Atualiza o estado do DatePicker
+    setDataVencimentoPicker(date); 
     setFormData(prev => ({ ...prev, data_vencimento: date ? format(date, 'yyyy-MM-dd') : null }));
   };
 
@@ -109,8 +112,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
       alert("Por favor, preencha os campos obrigatórios: Título, Status e Prioridade.");
       return;
     }
-    // Os dados já estão formatados em formData
-    onSave(formData as TarefaFormData);
+    onSave(formData as TarefaFormData); 
   };
 
   return (
@@ -128,13 +130,15 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="p-4 md:p-6 max-h-[calc(90vh-220px)] overflow-y-auto space-y-4">
-          <div>
+          {/* Título */}
+          <div className="space-y-1.5">
             <Label htmlFor="titulo_tarefa_form">Título <span className="text-red-500">*</span></Label>
-            <Input id="titulo_tarefa_form" name="titulo" value={formData.titulo || ''} onChange={handleChange} required className="mt-1" />
+            <Input id="titulo_tarefa_form" name="titulo" value={formData.titulo || ''} onChange={handleChange} required className="mt-1" placeholder="Ex: Elaborar petição inicial"/>
           </div>
 
+          {/* Status e Prioridade */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="status_tarefa_form">Status <span className="text-red-500">*</span></Label>
               <Select value={formData.status || 'Pendente'} onValueChange={(value) => handleSelectChange('status', value as StatusTarefa)}>
                 <SelectTrigger id="status_tarefa_form" className="mt-1"><SelectValue /></SelectTrigger>
@@ -147,7 +151,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="prioridade_tarefa_form">Prioridade <span className="text-red-500">*</span></Label>
               <Select value={formData.prioridade || 'Média'} onValueChange={(value) => handleSelectChange('prioridade', value as PrioridadeTarefa)}>
                 <SelectTrigger id="prioridade_tarefa_form" className="mt-1"><SelectValue /></SelectTrigger>
@@ -161,39 +165,63 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
             </div>
           </div>
           
-          <div>
-            <Label htmlFor="data_vencimento_tarefa_form">Data de Vencimento</Label>
+          {/* Data de Vencimento */}
+          <div className="space-y-1.5">
+            <Label htmlFor="data_vencimento_tarefa_form_picker">Data de Vencimento</Label>
             <DatePicker
-                date={dataVencimentoPicker} // Usa o estado do DatePicker
-                setDate={handleDateChange} // Atualiza ambos os estados
+                // @ts-ignore 
+                date={dataVencimentoPicker} 
+                setDate={handleDateChange}
                 className="mt-1 w-full"
             />
           </div>
 
-          <div>
+          {/* Descrição Detalhada */}
+          <div className="space-y-1.5">
             <Label htmlFor="descricao_detalhada_tarefa_form">Descrição Detalhada</Label>
-            <Textarea id="descricao_detalhada_tarefa_form" name="descricao_detalhada" value={formData.descricao_detalhada || ''} onChange={handleChange} rows={3} className="mt-1" />
+            <Textarea 
+              id="descricao_detalhada_tarefa_form" 
+              name="descricao_detalhada" 
+              value={formData.descricao_detalhada || ''} 
+              onChange={handleChange} 
+              rows={3} 
+              className="mt-1"
+              placeholder="Detalhes adicionais sobre a tarefa, links, etc."
+            />
           </div>
 
+          {/* Cliente e Processo Associado */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="cliente_id_tarefa_form">Associar Cliente</Label>
-              <Select value={formData.cliente_id || ""} onValueChange={(value) => handleSelectChange('cliente_id', value === "" ? null : value)} disabled={isLoadingDropdownData}>
-                <SelectTrigger id="cliente_id_tarefa_form" className="mt-1"><SelectValue placeholder={isLoadingDropdownData ? "Carregando..." : "Nenhum"} /></SelectTrigger>
+              <Select 
+                value={formData.cliente_id || undefined} // Use undefined para mostrar o placeholder corretamente
+                onValueChange={(value) => handleSelectChange('cliente_id', value === "undefined_placeholder" ? null : value)} 
+                disabled={isLoadingDropdownData}
+              >
+                <SelectTrigger id="cliente_id_tarefa_form" className="mt-1">
+                  <SelectValue placeholder={isLoadingDropdownData ? "Carregando..." : "Selecione um cliente"} />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  {/* <SelectItem value="undefined_placeholder" disabled>Nenhum</SelectItem>  Removido para usar placeholder */}
                   {isLoadingDropdownData && <SelectItem value="loading_cli" disabled>Carregando clientes...</SelectItem>}
                   {!isLoadingDropdownData && clientesDoUsuario.length === 0 && <SelectItem value="no_cli" disabled>Nenhum cliente cadastrado</SelectItem>}
                   {clientesDoUsuario.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div>
+            <div className="space-y-1.5">
               <Label htmlFor="processo_id_tarefa_form">Associar Processo</Label>
-              <Select value={formData.processo_id || ""} onValueChange={(value) => handleSelectChange('processo_id', value === "" ? null : value)} disabled={isLoadingDropdownData}>
-                <SelectTrigger id="processo_id_tarefa_form" className="mt-1"><SelectValue placeholder={isLoadingDropdownData ? "Carregando..." : "Nenhum"} /></SelectTrigger>
+              <Select 
+                value={formData.processo_id || undefined} // Use undefined para mostrar o placeholder corretamente
+                onValueChange={(value) => handleSelectChange('processo_id', value === "undefined_placeholder" ? null : value)} 
+                disabled={isLoadingDropdownData}
+              >
+                <SelectTrigger id="processo_id_tarefa_form" className="mt-1">
+                  <SelectValue placeholder={isLoadingDropdownData ? "Carregando..." : "Selecione um processo"} />
+                </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Nenhum</SelectItem>
+                  {/* <SelectItem value="undefined_placeholder" disabled>Nenhum</SelectItem> Removido para usar placeholder */}
                   {isLoadingDropdownData && <SelectItem value="loading_proc" disabled>Carregando processos...</SelectItem>}
                   {!isLoadingDropdownData && processosDoUsuario.length === 0 && <SelectItem value="no_proc" disabled>Nenhum processo cadastrado</SelectItem>}
                   {processosDoUsuario.map(p => <SelectItem key={p.id} value={p.id}>{p.numero_processo}</SelectItem>)}

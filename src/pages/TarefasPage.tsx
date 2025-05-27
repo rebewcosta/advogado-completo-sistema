@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import TarefaForm, { TarefaFormData } from '@/components/tarefas/TarefaForm';
+import TarefaForm, { TarefaFormData } from '@/components/tarefas/TarefaForm'; // Certifique-se que o caminho está correto
 import { format, parseISO } from 'date-fns';
 
 // Tipos específicos para Tarefas
@@ -69,9 +69,9 @@ const TarefasPage = () => {
           processos (id, numero_processo)
         `)
         .eq('user_id', user.id)
-        .order('status', { ascending: true }) // Pendentes/Em Andamento primeiro
-        .order('prioridade', { ascending: false }) // Urgentes/Altas primeiro
-        .order('data_vencimento', { ascending: true, nullsLast: true }) // Mais próximos primeiro
+        .order('status', { ascending: true }) 
+        .order('prioridade', { ascending: false }) 
+        .order('data_vencimento', { ascending: true, nullsLast: true })
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -157,6 +157,7 @@ const TarefasPage = () => {
           .single();
         mensagemSucesso = `Tarefa "${formData.titulo}" foi atualizada.`;
       } else {
+        // @ts-ignore
         operacao = supabase
           .from('tarefas')
           .insert(dadosParaSalvar)
@@ -199,8 +200,7 @@ const TarefasPage = () => {
   };
 
   const handleToggleStatus = async (tarefa: Tarefa) => {
-    if (!user) return;
-    if (isSubmitting) return; // Evita múltiplas submissões
+    if (!user || isSubmitting) return;
     setIsSubmitting(true);
     
     const novoStatus: StatusTarefa = tarefa.status === 'Concluída' ? 'Pendente' : 'Concluída';
@@ -255,16 +255,10 @@ const TarefasPage = () => {
   const formatDateString = (dateString: string | null | undefined) => {
     if (!dateString) return '-';
     try {
-        return format(parseISO(dateString), 'dd/MM/yyyy');
+        // Adicionar 'T00:00:00Z' para tratar como UTC se a string for apenas data
+        const dateToParse = dateString.includes('T') ? dateString : dateString + 'T00:00:00Z';
+        return format(parseISO(dateToParse), 'dd/MM/yyyy');
     } catch (e) {
-        // Tentar parsear se o formato já for dd/MM/yyyy (vindo do form)
-        try {
-            const parts = dateString.split('/');
-            if (parts.length === 3) {
-                const parsed = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-                if (!isNaN(parsed.getTime())) return dateString;
-            }
-        } catch (parseError) { /* não faz nada, retorna original */ }
         return dateString; 
     }
   };
