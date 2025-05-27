@@ -1,6 +1,6 @@
 // src/pages/TarefasPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '@/components/AdminLayout'; // Certifique-se que esta importação está correta
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -16,15 +16,16 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { ListChecks, Plus, Search, Edit, Trash2, MoreVertical, RefreshCw } from 'lucide-react';
+import { ListChecks, Plus, Search, Edit, Trash2, MoreVertical, RefreshCw, ExternalLink } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from '@/components/ui/spinner';
-import { Card, CardContent } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import TarefaForm, { TarefaFormData } from '@/components/tarefas/TarefaForm'; // Certifique-se que o caminho está correto
-import { format, parseISO } from 'date-fns';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import TarefaForm, { TarefaFormData } from '@/components/tarefas/TarefaForm';
+import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
-// Tipos específicos para Tarefas
 export type Tarefa = Database['public']['Tables']['tarefas']['Row'] & {
     clientes?: { id: string; nome: string } | null;
     processos?: { id: string; numero_processo: string } | null;
@@ -35,7 +36,6 @@ type ProcessoParaSelect = Pick<Database['public']['Tables']['processos']['Row'],
 
 export type StatusTarefa = 'Pendente' | 'Em Andamento' | 'Concluída' | 'Cancelada' | 'Aguardando Terceiros';
 export type PrioridadeTarefa = 'Baixa' | 'Média' | 'Alta' | 'Urgente';
-
 
 const TarefasPage = () => {
   const { user } = useAuth();
@@ -59,21 +59,15 @@ const TarefasPage = () => {
       return;
     }
     if (showLoadingSpinner) setIsLoading(true);
-
     try {
       const { data, error } = await supabase
         .from('tarefas')
-        .select(`
-          *,
-          clientes (id, nome),
-          processos (id, numero_processo)
-        `)
+        .select(`*, clientes (id, nome), processos (id, numero_processo)`)
         .eq('user_id', user.id)
         .order('status', { ascending: true }) 
         .order('prioridade', { ascending: false }) 
         .order('data_vencimento', { ascending: true, nullsLast: true })
         .order('created_at', { ascending: false });
-
       if (error) throw error;
       setTarefas(data || []);
     } catch (error: any) {
@@ -127,11 +121,10 @@ const TarefasPage = () => {
         return;
     }
     setIsSubmitting(true);
-
     const dataVencimentoFinal = formData.data_vencimento instanceof Date
         ? format(formData.data_vencimento, 'yyyy-MM-dd')
-        : formData.data_vencimento;
-
+        // @ts-ignore
+        : formData.data_vencimento; 
     const dadosParaSalvar = {
       titulo: formData.titulo,
       descricao_detalhada: formData.descricao_detalhada || null,
@@ -143,32 +136,19 @@ const TarefasPage = () => {
       data_conclusao: formData.status === 'Concluída' ? new Date().toISOString() : null,
       user_id: user.id,
     };
-
     try {
       let operacao;
       let mensagemSucesso;
-
       if (isEditing && tarefaSelecionada) {
-        operacao = supabase
-          .from('tarefas')
-          .update(dadosParaSalvar)
-          .eq('id', tarefaSelecionada.id)
-          .select()
-          .single();
+        operacao = supabase.from('tarefas').update(dadosParaSalvar).eq('id', tarefaSelecionada.id).select().single();
         mensagemSucesso = `Tarefa "${formData.titulo}" foi atualizada.`;
       } else {
         // @ts-ignore
-        operacao = supabase
-          .from('tarefas')
-          .insert(dadosParaSalvar)
-          .select()
-          .single();
+        operacao = supabase.from('tarefas').insert(dadosParaSalvar).select().single();
         mensagemSucesso = `Tarefa "${formData.titulo}" foi adicionada.`;
       }
-
       const { data, error } = await operacao;
       if (error) throw error;
-      
       toast({ title: isEditing ? "Tarefa atualizada!" : "Tarefa criada!", description: mensagemSucesso });
       fetchTarefas(false);
       setIsFormOpen(false);
@@ -202,18 +182,13 @@ const TarefasPage = () => {
   const handleToggleStatus = async (tarefa: Tarefa) => {
     if (!user || isSubmitting) return;
     setIsSubmitting(true);
-    
     const novoStatus: StatusTarefa = tarefa.status === 'Concluída' ? 'Pendente' : 'Concluída';
     const dataConclusao = novoStatus === 'Concluída' ? new Date().toISOString() : null;
-
     try {
         const { data, error } = await supabase
             .from('tarefas')
             .update({ status: novoStatus, data_conclusao: dataConclusao })
-            .eq('id', tarefa.id)
-            .eq('user_id', user.id)
-            .select()
-            .single();
+            .eq('id', tarefa.id).eq('user_id', user.id).select().single();
         if (error) throw error;
         toast({ title: "Status da tarefa atualizado!" });
         fetchTarefas(false);
@@ -233,8 +208,8 @@ const TarefasPage = () => {
   
   const getStatusBadgeClassName = (status?: StatusTarefa | string | null): string => {
     switch (status) {
-      case 'Concluída': return 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200';
-      case 'Pendente': return 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200';
+      case 'Concluída': return 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200';
+      case 'Pendente': return 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200';
       case 'Em Andamento': return 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200';
       case 'Cancelada': return 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200';
       case 'Aguardando Terceiros': return 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200';
@@ -252,116 +227,138 @@ const TarefasPage = () => {
     }
   };
 
-  const formatDateString = (dateString: string | null | undefined) => {
+  const formatDateString = (dateString: string | null | undefined, withRelative = false) => {
     if (!dateString) return '-';
     try {
-        // Adicionar 'T00:00:00Z' para tratar como UTC se a string for apenas data
         const dateToParse = dateString.includes('T') ? dateString : dateString + 'T00:00:00Z';
-        return format(parseISO(dateToParse), 'dd/MM/yyyy');
+        const date = parseISO(dateToParse);
+        const formatted = format(date, "dd/MM/yyyy", { locale: ptBR });
+        if (withRelative) {
+            if (isToday(date)) return `${formatted} (Hoje)`;
+            if (isTomorrow(date)) return `${formatted} (Amanhã)`;
+            if (isPast(date) && !isToday(date)) return `${formatted} (Atrasada)`;
+        }
+        return formatted;
     } catch (e) {
         return dateString; 
     }
   };
 
-
+  // A linha do erro era a 254, que é o <AdminLayout>.
+  // O erro "Expected jsx identifier" geralmente significa que o parser JSX
+  // esperava um nome de componente válido (começando com maiúscula, ou uma tag HTML minúscula)
+  // mas encontrou algo diferente.
+  // A única coisa que poderia dar problema aqui seria a importação do AdminLayout.
+  // Vamos garantir que o código JSX retornado seja válido.
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-            <ListChecks className="mr-3 h-7 w-7 text-lawyer-primary" />
-            Minhas Tarefas
-          </h1>
-          <p className="text-gray-600 text-left mt-1">
-            Organize suas pendências, defina prioridades e acompanhe o progresso.
-          </p>
+        {/* Cabeçalho da Página */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+              <ListChecks className="mr-3 h-7 w-7 text-lawyer-primary" />
+              Minhas Tarefas
+            </h1>
+            <p className="text-gray-600 text-left mt-1">
+              Organize suas pendências, defina prioridades e acompanhe o progresso.
+            </p>
+          </div>
+           <Button onClick={() => handleOpenForm()} className="mt-4 md:mt-0 w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Tarefa
+            </Button>
         </div>
 
         <Card className="shadow-lg rounded-lg">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-              <div className="relative flex-grow sm:max-w-xs">
+          <CardHeader className="border-b px-4 md:px-6 py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="relative flex-grow sm:max-w-sm">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   type="text"
-                  placeholder="Buscar tarefas..."
+                  placeholder="Buscar por título, cliente, processo..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full"
+                  className="pl-9 text-sm h-9 w-full" 
                 />
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-                <Button onClick={() => fetchTarefas(true)} variant="outline" disabled={isLoading || isSubmitting} className="w-full sm:w-auto">
-                  <RefreshCw className={`h-4 w-4 mr-2 ${(isLoading || isSubmitting) ? 'animate-spin' : ''}`} />
-                  {(isLoading || isSubmitting) ? 'Atualizando...' : 'Atualizar Lista'}
-                </Button>
-                <Button onClick={() => handleOpenForm()} className="w-full sm:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Nova Tarefa
-                </Button>
-              </div>
+              <Button onClick={() => fetchTarefas(true)} variant="outline" size="sm" disabled={isLoading || isSubmitting} className="w-full sm:w-auto text-xs">
+                <RefreshCw className={`h-3 w-3 mr-1.5 ${(isLoading || isSubmitting) ? 'animate-spin' : ''}`} />
+                {(isLoading || isSubmitting) ? 'Atualizando...' : 'Atualizar'}
+              </Button>
             </div>
-
+          </CardHeader>
+          <CardContent className="p-0">
             {isLoading && !tarefas.length ? (
-              <div className="text-center py-10 flex justify-center items-center">
-                <Spinner size="lg" /> <span className="ml-2 text-gray-500">Carregando tarefas...</span>
+              <div className="text-center py-16 flex flex-col justify-center items-center">
+                <Spinner size="lg" /> 
+                <p className="ml-2 text-gray-500 mt-3">Carregando tarefas...</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-gray-600 w-[35%]">Título</TableHead>
-                      <TableHead className="text-gray-600">Status</TableHead>
-                      <TableHead className="hidden md:table-cell text-gray-600">Prioridade</TableHead>
-                      <TableHead className="hidden lg:table-cell text-gray-600">Vencimento</TableHead>
-                      <TableHead className="hidden lg:table-cell text-gray-600">Associado a</TableHead>
-                      <TableHead className="text-right text-gray-600 w-[100px]">Ações</TableHead>
+                    <TableRow className="bg-gray-50">
+                      <TableHead className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[30%]">Título</TableHead>
+                      <TableHead className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</TableHead>
+                      <TableHead className="hidden md:table-cell px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Prioridade</TableHead>
+                      <TableHead className="hidden lg:table-cell px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vencimento</TableHead>
+                      <TableHead className="hidden lg:table-cell px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Associado a</TableHead>
+                      <TableHead className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[80px]">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredTarefas.length > 0 ? (
                       filteredTarefas.map((tarefa) => (
-                        <TableRow key={tarefa.id} className="hover:bg-gray-50 transition-colors">
-                          <TableCell className="font-medium py-3 px-4 text-gray-700 align-top">
-                            <span className="font-semibold">{tarefa.titulo}</span>
+                        <TableRow key={tarefa.id} className="hover:bg-gray-50/50 transition-colors border-b last:border-b-0">
+                          <TableCell className="px-4 py-3 align-top">
+                            <p className="font-medium text-sm text-gray-800">{tarefa.titulo}</p>
                             {tarefa.descricao_detalhada && (
-                                <p className="text-xs text-gray-500 mt-1 truncate max-w-xs hover:max-w-none hover:whitespace-normal" title={tarefa.descricao_detalhada}>
-                                    {tarefa.descricao_detalhada}
+                                <p className="text-xs text-gray-500 mt-0.5" title={tarefa.descricao_detalhada}>
+                                    {tarefa.descricao_detalhada.substring(0, 70)}{tarefa.descricao_detalhada.length > 70 ? '...' : ''}
                                 </p>
                             )}
                           </TableCell>
-                          <TableCell className="py-3 px-4 align-top">
-                            <Badge variant="outline" className={`text-xs cursor-pointer ${getStatusBadgeClassName(tarefa.status as StatusTarefa)}`} onClick={() => handleToggleStatus(tarefa)} title="Clique para alterar status">
+                          <TableCell className="px-4 py-3 align-top">
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs py-0.5 px-2 cursor-pointer ${getStatusBadgeClassName(tarefa.status as StatusTarefa)}`} 
+                              onClick={() => handleToggleStatus(tarefa)} 
+                              title="Clique para alterar status"
+                            >
                               {tarefa.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="hidden md:table-cell py-3 px-4 align-top">
-                             <Badge variant="outline" className={`text-xs ${getPriorityBadgeClassName(tarefa.prioridade as PrioridadeTarefa)}`}>
+                          <TableCell className="hidden md:table-cell px-4 py-3 align-top">
+                             <Badge variant="outline" className={`text-xs py-0.5 px-2 ${getPriorityBadgeClassName(tarefa.prioridade as PrioridadeTarefa)}`}>
                                 {tarefa.prioridade}
                             </Badge>
                           </TableCell>
-                          <TableCell className="hidden lg:table-cell py-3 px-4 text-gray-600 align-top">
-                            {formatDateString(tarefa.data_vencimento)}
+                          <TableCell className={cn(
+                            "hidden lg:table-cell px-4 py-3 text-sm text-gray-600 align-top",
+                            tarefa.data_vencimento && isPast(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && !isToday(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && tarefa.status !== 'Concluída' && tarefa.status !== 'Cancelada' && "text-red-600 font-semibold",
+                            tarefa.data_vencimento && isToday(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && tarefa.status !== 'Concluída' && tarefa.status !== 'Cancelada' && "text-orange-600 font-semibold"
+                          )}>
+                            {formatDateString(tarefa.data_vencimento, true)}
                           </TableCell>
-                           <TableCell className="hidden lg:table-cell py-3 px-4 text-gray-600 text-xs align-top">
+                           <TableCell className="hidden lg:table-cell px-4 py-3 text-gray-500 text-xs align-top">
                             {tarefa.clientes?.nome || (tarefa.processos?.numero_processo ? `Proc: ${tarefa.processos.numero_processo}` : '-')}
                           </TableCell>
-                          <TableCell className="text-right py-3 px-4 align-top">
+                          <TableCell className="text-right px-4 py-3 align-top">
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-lawyer-primary">
+                                <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 hover:text-lawyer-primary hover:bg-gray-100">
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleOpenForm(tarefa)} className="cursor-pointer">
-                                  <Edit className="mr-2 h-4 w-4" /> Editar
+                              <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => handleOpenForm(tarefa)} className="cursor-pointer text-sm">
+                                  <Edit className="mr-2 h-3.5 w-3.5" /> Editar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleDeleteTarefa(tarefa.id)} className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-700 cursor-pointer">
-                                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={() => handleDeleteTarefa(tarefa.id)} className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-700 cursor-pointer text-sm">
+                                  <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -370,8 +367,10 @@ const TarefasPage = () => {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                          Nenhuma tarefa encontrada. Clique em "Nova Tarefa" para adicionar.
+                        <TableCell colSpan={6} className="text-center py-10 text-gray-500">
+                          <ListChecks className="mx-auto h-10 w-10 text-gray-300 mb-2" />
+                          Nenhuma tarefa encontrada.
+                          {searchTerm ? " Tente limpar a busca." : " Clique em \"Nova Tarefa\" para adicionar."}
                         </TableCell>
                       </TableRow>
                     )}
@@ -389,7 +388,7 @@ const TarefasPage = () => {
             }
             setIsFormOpen(open);
         }}>
-          <DialogContent className="p-0 max-w-lg md:max-w-xl overflow-auto max-h-[90vh]">
+          <DialogContent className="p-0 max-w-lg md:max-w-xl overflow-hidden">
              <TarefaForm
                 onSave={handleSaveTarefa}
                 onCancel={() => {
