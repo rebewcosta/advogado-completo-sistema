@@ -1,4 +1,4 @@
-// src/components/Navbar.tsx
+
 import React from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,8 +13,7 @@ import {
   Settings,
   Menu,
   X,
-  Shield,
-  ListChecks // <<< NOVO ÍCONE IMPORTADO
+  Shield
 } from 'lucide-react';
 import Logo from './navbar/Logo';
 import DesktopNav from './navbar/DesktopNav';
@@ -37,12 +36,12 @@ const Navbar: React.FC = () => {
     return location.pathname === path ? 'bg-lawyer-primary/10 text-lawyer-primary' : '';
   };
 
+  // Updated navItems to change the order and replace "Processos" with "Meus Processos"
   const navItems = [
     { path: '/dashboard', label: 'Dashboard', icon: <Home className="h-5 w-5" /> },
     { path: '/meus-processos', label: 'Meus Processos', icon: <FileText className="h-5 w-5" /> },
     { path: '/clientes', label: 'Clientes', icon: <Users className="h-5 w-5" /> },
     { path: '/agenda', label: 'Agenda', icon: <Calendar className="h-5 w-5" /> },
-    { path: '/tarefas', label: 'Tarefas', icon: <ListChecks className="h-5 w-5" /> }, // <<< NOVO ITEM ADICIONADO
     { path: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" /> },
     { path: '/documentos', label: 'Documentos', icon: <FileBox className="h-5 w-5" /> },
     { path: '/relatorios', label: 'Relatórios', icon: <BarChart2 className="h-5 w-5" /> },
@@ -53,13 +52,18 @@ const Navbar: React.FC = () => {
     <nav className="bg-lawyer-dark shadow-md">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center h-16">
+          {/* Logo */}
           <Logo />
+
+          {/* Desktop Navigation */}
           <DesktopNav 
             user={user}
-            navItems={navItems} // Passando os navItems atualizados
+            navItems={navItems}
             isActive={isActive}
             handleSignOut={handleSignOut}
           />
+
+          {/* Mobile menu button */}
           <div className="md:hidden flex items-center">
             <button
               onClick={toggleMenu}
@@ -74,10 +78,12 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Menu */}
       <MobileMenu 
         user={user}
         isMenuOpen={isMenuOpen}
-        navItems={navItems} // Passando os navItems atualizados
+        navItems={navItems}
         isActive={isActive}
         handleSignOut={handleSignOut}
         setIsMenuOpen={setIsMenuOpen}
