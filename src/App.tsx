@@ -1,5 +1,4 @@
-
-// src/App.tsx
+// src/App.ts
 import { Navigate, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
@@ -8,10 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import ClientesPage from './pages/ClientesPage';
 import MeusProcessosPage from './pages/MeusProcessosPage';
 import AgendaPage from './pages/AgendaPage';
-<<<<<<< HEAD
-import TarefasPage from './pages/TarefasPage'; // <<< DESCOMENTE ESTA LINHA
-=======
->>>>>>> 8fa6b87c32dbc55b1b6d1dc77433985f809ea04b
+import TarefasPage from './pages/TarefasPage'; // <<< IMPORTAÇÃO DA NOVA PÁGINA
 import FinanceiroPage from './pages/FinanceiroPage';
 import DocumentosPage from './pages/DocumentosPage';
 import RelatoriosPage from './pages/RelatoriosPage';
@@ -26,13 +22,14 @@ import AdminPage from './pages/AdminPage';
 import RecuperarSenhaPage from './pages/RecuperarSenhaPage';
 import AtualizarSenhaPage from './pages/AtualizarSenhaPage';
 import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
-import RedefinirPinFinanceiroPage from './pages/RedefinirPinFinanceiroPage'; // Import da nova página
+import RedefinirPinFinanceiroPage from './pages/RedefinirPinFinanceiroPage';
 import './App.css';
 
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
 
 function App() {
+  console.log("Componente App renderizado!"); // Adicione este log
   return (
     <Routes>
       {/* Rotas públicas */}
@@ -41,7 +38,6 @@ function App() {
       <Route path="/suporte" element={<SuportePage />} />
       <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
       <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
-      {/* NOVA ROTA PÚBLICA (mas requer token) PARA REDEFINIR PIN FINANCEIRO */}
       <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
 
 
@@ -60,7 +56,6 @@ function App() {
         {/* Rotas que SÃO protegidas por autenticação mas NÃO necessariamente por assinatura paga */}
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/admin" element={<AdminPage />} />
-        {/* A página de perfil/configurações geralmente é acessível por todos os usuários logados */}
         <Route path="/configuracoes" element={<ConfiguracoesPage />} />
         <Route path="/perfil" element={<PerfilUsuarioPage />} />
 
@@ -69,10 +64,7 @@ function App() {
           <Route path="/meus-processos" element={<MeusProcessosPage />} />
           <Route path="/clientes" element={<ClientesPage />} />
           <Route path="/agenda" element={<AgendaPage />} />
-<<<<<<< HEAD
-          <Route path="/tarefas" element={<TarefasPage />} /> 
-=======
->>>>>>> 8fa6b87c32dbc55b1b6d1dc77433985f809ea04b
+          <Route path="/tarefas" element={<TarefasPage />} /> {/* <<< ROTA PARA TAREFAS ADICIONADA */}
           <Route path="/financeiro" element={<FinanceiroPage />} />
           <Route path="/documentos" element={<DocumentosPage />} />
           <Route path="/relatorios" element={<RelatoriosPage />} />
