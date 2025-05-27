@@ -1,10 +1,9 @@
-
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Send, Phone, Mail, HelpCircle } from 'lucide-react';
+import { Send, Phone, Mail, HelpCircle, Instagram as InstagramIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const SuportePage = () => {
@@ -31,21 +30,24 @@ const SuportePage = () => {
               </div>
               <h3 className="font-semibold text-lg mb-2">Telefone</h3>
               <p className="text-gray-600 mb-4">Atendimento em horário comercial</p>
-              <a href="tel:+5588999981618" className="text-lawyer-primary hover:underline">(88) 9.9998.1618</a>
+              <a href="tel:+5588999981618" className="text-lawyer-primary hover:underline">(88) 9.9998-1618</a>
             </div>
             
             <div className="bg-white p-6 rounded-lg shadow-md flex flex-col items-center text-center">
-              <div className="bg-purple-50 p-3 rounded-full mb-4">
-                <HelpCircle className="h-6 w-6 text-purple-600" />
+              <div className="bg-pink-50 p-3 rounded-full mb-4">
+                <InstagramIcon className="h-6 w-6 text-pink-600" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Documentação</h3>
-              <p className="text-gray-600 mb-4">Acesse nossos tutoriais</p>
-              <Link to="/suporte/documentacao" className="text-lawyer-primary hover:underline">Ver tutoriais</Link>
+              <h3 className="font-semibold text-lg mb-2">Instagram</h3>
+              <p className="text-gray-600 mb-4">Siga-nos e mande um direct</p>
+              <a href="https://www.instagram.com/sisjusgestao/" target="_blank" rel="noopener noreferrer" className="text-lawyer-primary hover:underline">@sisjusgestao</a>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow-md p-6 mb-12">
-            <h2 className="text-2xl font-bold mb-6">Perguntas Frequentes</h2>
+            <h2 className="text-2xl font-bold mb-6 flex items-center">
+              <HelpCircle className="h-6 w-6 mr-2 text-lawyer-primary" />
+              Perguntas Frequentes (FAQ)
+            </h2>
             
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
@@ -109,47 +111,54 @@ const SuportePage = () => {
           </div>
           
           <div className="bg-lawyer-primary/10 rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4 text-center">Não encontrou o que procurava?</h2>
-            <p className="text-center mb-6">Entre em contato diretamente com nossa equipe</p>
+            <h2 className="text-xl font-semibold mb-4 text-center text-lawyer-dark">Não encontrou o que procurava?</h2>
+            <p className="text-center mb-6 text-gray-700">Entre em contato diretamente com nossa equipe através do formulário abaixo.</p>
             
-            <form className="max-w-md mx-auto">
+            <form action="https://formsubmit.co/suporte@sisjusgestao.com.br" method="POST" className="max-w-md mx-auto">
+               {/* Configurações do FormSubmit */}
+              <input type="hidden" name="_captcha" value="false" /> 
+              <input type="hidden" name="_next" value="https://sisjusgestao.com.br/suporte?email_enviado=true" />
+              <input type="hidden" name="_subject" value="Nova Mensagem de Contato - Suporte JusGestão" />
+              <input type="hidden" name="_template" value="table" />
+
+
               <div className="grid gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="name">
+                  <label className="block text-sm font-medium mb-1 text-gray-700" htmlFor="name_suporte_form">
                     Nome
                   </label>
                   <input
-                    id="name"
-                    type="text"
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Seu nome"
+                    id="name_suporte_form"
+                    type="text" name="name"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-lawyer-primary focus:border-lawyer-primary"
+                    placeholder="Seu nome" required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="email">
+                  <label className="block text-sm font-medium mb-1 text-gray-700" htmlFor="email_suporte_form">
                     Email
                   </label>
                   <input
-                    id="email"
-                    type="email"
-                    className="w-full p-2 border rounded-md"
-                    placeholder="seu.email@exemplo.com"
+                    id="email_suporte_form"
+                    type="email" name="email"
+                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-lawyer-primary focus:border-lawyer-primary"
+                    placeholder="seu.email@exemplo.com" required
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-1" htmlFor="message">
+                  <label className="block text-sm font-medium mb-1 text-gray-700" htmlFor="message_suporte_form">
                     Mensagem
                   </label>
                   <textarea
-                    id="message"
-                    className="w-full p-2 border rounded-md h-32"
-                    placeholder="Descreva sua dúvida em detalhes"
+                    id="message_suporte_form" name="message"
+                    className="w-full p-2 border border-gray-300 rounded-md h-32 focus:ring-lawyer-primary focus:border-lawyer-primary"
+                    placeholder="Descreva sua dúvida em detalhes" required
                   ></textarea>
                 </div>
                 
-                <Button className="w-full" type="submit">
+                <Button className="w-full bg-lawyer-primary hover:bg-lawyer-primary/90" type="submit">
                   <Send className="h-4 w-4 mr-2" />
                   Enviar Mensagem
                 </Button>

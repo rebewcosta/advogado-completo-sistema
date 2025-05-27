@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Check, Mail } from 'lucide-react';
+import { Check, Mail, Phone, Instagram as InstagramIcon } from 'lucide-react'; // Importando Phone e InstagramIcon
 import { Button } from '@/components/ui/button';
 
 const AboutSection = () => {
@@ -13,6 +12,28 @@ const AboutSection = () => {
     "Segurança e backup de informações",
     "Otimização do tempo da equipe",
     "Interface intuitiva e fácil de usar"
+  ];
+
+  const contactMethods = [
+    {
+      icon: <Mail className="h-4 w-4 text-white" />,
+      text: "Email: suporte@sisjusgestao.com.br",
+      href: "mailto:suporte@sisjusgestao.com.br",
+      buttonText: "Enviar Email",
+    },
+    {
+      icon: <Phone className="h-4 w-4 text-white" />,
+      text: "Telefone: +55 (88) 9.9998-1618",
+      href: "tel:+5588999981618",
+      buttonText: "Ligar Agora",
+    },
+    {
+      icon: <InstagramIcon className="h-4 w-4 text-white" />,
+      text: "Instagram: @sisjusgestao",
+      href: "https://www.instagram.com/sisjusgestao/",
+      buttonText: "Ver Instagram",
+      target: "_blank",
+    },
   ];
 
   return (
@@ -65,13 +86,18 @@ const AboutSection = () => {
               <h4 className="font-semibold mb-3 text-lg text-gray-800">Suporte técnico especializado</h4>
               <p className="text-gray-600 mb-5">
                 Nossa equipe de suporte está disponível para ajudar em qualquer dificuldade que você possa ter com o sistema.
+                Entre em contato através de um dos canais abaixo:
               </p>
-              <Button className="flex items-center gap-2" asChild>
-                <a href="mailto:suporte@sisjusgestao.com.br">
-                  <Mail className="h-4 w-4" />
-                  Fale com o suporte
-                </a>
-              </Button>
+              <div className="space-y-3">
+                {contactMethods.map((method, index) => (
+                  <Button key={index} className="w-full flex items-center justify-center gap-2 bg-lawyer-primary hover:bg-lawyer-primary/80" asChild>
+                    <a href={method.href} target={method.target || "_self"} rel={method.target === "_blank" ? "noopener noreferrer" : undefined}>
+                      {method.icon}
+                      {method.buttonText}
+                    </a>
+                  </Button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
