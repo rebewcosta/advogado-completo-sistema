@@ -2,29 +2,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIconLucide, Plus, MoreVertical, Eye, Edit, Trash2, CalendarDays } from 'lucide-react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Calendar as CalendarIconLucide, Plus, CalendarDays, RefreshCw } from 'lucide-react'; // Adicionado RefreshCw
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card'; // Removido CardHeader e CardTitle que não serão usados aqui diretamente.
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -35,6 +20,7 @@ import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
 import { AgendaEventForm } from '@/components/AgendaEventForm';
 import { AgendaEventDetail } from '@/components/AgendaEventDetail';
+import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards'; // <<< NOVO COMPONENTE DE LISTA
 
 export type EventoAgenda = Database['public']['Tables']['agenda_eventos']['Row'] & {
     clientes?: { id: string; nome: string } | null;
@@ -62,7 +48,7 @@ const AgendaPage = () => {
 
   const [events, setEvents] = useState<EventoAgenda[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Para operações de save/delete
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -73,15 +59,18 @@ const AgendaPage = () => {
   const [clientesDoUsuario, setClientesDoUsuario] = useState<ClienteParaSelect[]>([]);
   const [processosDoUsuario, setProcessosDoUsuario] = useState<ProcessoParaSelect[]>([]);
   const [isLoadingDropdownData, setIsLoadingDropdownData] = useState(false);
+  const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
-
-  const fetchEvents = useCallback(async (dateToFilter?: Date) => {
+  const fetchEvents = useCallback(async (dateToFilter?: Date, showLoadingSpinner = true) => {
     if (!user) {
       setEvents([]);
-      setIsLoading(false);
+      if (showLoadingSpinner) setIsLoading(false);
+      setIsRefreshingManually(false);
       return;
     }
-    setIsLoading(true);
+    if (showLoadingSpinner) setIsLoading(true);
+    setIsRefreshingManually(true);
+
     try {
       let query = supabase
         .from('agenda_eventos')
@@ -107,7 +96,8 @@ const AgendaPage = () => {
       toast({ title: "Erro ao buscar eventos", description: error.message || "Ocorreu um erro.", variant: "destructive" });
       setEvents([]);
     } finally {
-      setIsLoading(false);
+      if (showLoadingSpinner) setIsLoading(false);
+      setIsRefreshingManually(false);
     }
   }, [user, toast]);
 
@@ -132,12 +122,14 @@ const AgendaPage = () => {
 
   useEffect(() => {
     if (user) {
-      fetchEvents(selectedDate);
-      fetchDropdownData();
+      fetchEvents(selectedDate); // Carrega eventos para a data selecionada inicialmente
+      fetchDropdownData(); // Carrega dados para os dropdowns do formulário
     } else {
       setEvents([]);
+      setIsLoading(false); // Garante que o loading pare se não houver usuário
     }
   }, [user, selectedDate, fetchEvents, fetchDropdownData]);
+
 
   const handleOpenForm = (eventToEdit?: EventoAgenda) => {
     if (eventToEdit) {
@@ -157,7 +149,15 @@ const AgendaPage = () => {
         setEventoParaForm(formData);
         setCurrentEvent(null);
     } else {
-        setEventoParaForm({ data_hora_inicio: selectedDate || new Date(), duracao_minutos: 60, prioridade: 'média' });
+        // Para novo evento, usa a data selecionada no calendário ou a data atual
+        const initialDate = selectedDate || new Date();
+        setEventoParaForm({ 
+            data_hora_inicio: initialDate, 
+            duracao_minutos: 60, 
+            prioridade: 'média', 
+            status_evento: 'Agendado',
+            tipo_evento: 'Reunião' // Valor padrão para tipo
+        });
         setCurrentEvent(null);
     }
     setIsFormOpen(true);
@@ -202,7 +202,7 @@ const AgendaPage = () => {
             if (error) throw error;
             toast({ title: "Evento criado!", description: `O evento "${newEvent?.titulo}" foi adicionado à agenda.` });
         }
-        fetchEvents(selectedDate);
+        fetchEvents(selectedDate, false); // Rebusca sem mostrar spinner principal
         setIsFormOpen(false);
         setEventoParaForm(null);
     } catch (error: any) {
@@ -213,7 +213,7 @@ const AgendaPage = () => {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!user) return;
+    if (!user || isSubmitting) return;
     const eventToDelete = events.find(e => e.id === eventId);
     if (eventToDelete && window.confirm(`Tem certeza que deseja excluir o evento "${eventToDelete.titulo}"?`)) {
         setIsSubmitting(true);
@@ -225,7 +225,7 @@ const AgendaPage = () => {
                 .eq('user_id', user.id);
             if (error) throw error;
             toast({ title: "Evento excluído!", description: `O evento "${eventToDelete.titulo}" foi removido.` });
-            fetchEvents(selectedDate);
+            fetchEvents(selectedDate, false);
             setIsDetailOpen(false);
             setCurrentEvent(null);
         } catch (error: any) {
@@ -241,126 +241,100 @@ const AgendaPage = () => {
     setIsDetailOpen(true);
     setIsFormOpen(false);
   };
+  
+  const handleManualRefresh = () => {
+    fetchEvents(selectedDate, true); // Passa true para mostrar o spinner de carregamento
+  };
 
-  const formatTime = (isoString: string) => {
-    try {
-        return format(parseISO(isoString), 'HH:mm');
-    } catch (e) {
-        console.warn("Erro ao formatar hora:", isoString, e);
-        return "Inválida";
-    }
-  };
-  const getPriorityBadgeClass = (priority?: string | null) => {
-    switch (priority) {
-        case 'alta': return 'bg-red-100 text-red-700 border-red-300';
-        case 'média': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-        case 'baixa': return 'bg-green-100 text-green-700 border-green-300';
-        default: return 'bg-gray-100 text-gray-700 border-gray-300';
-    }
-  };
+
+  const isLoadingCombined = isLoading || isSubmitting || isRefreshingManually;
+
+
+  if (isLoading && events.length === 0 && !isRefreshingManually) {
+    return (
+      <AdminLayout>
+        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+          <Spinner size="lg" />
+          <span className="text-gray-500 mt-3">Carregando agenda...</span>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-            <CalendarDays className="mr-3 h-7 w-7 text-lawyer-primary" />
-            Agenda de Compromissos
-          </h1>
-          <p className="text-gray-600 text-left mt-1">
-            Organize seus prazos, audiências e reuniões.
-          </p>
+        {/* Cabeçalho da Página */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+              <CalendarDays className="mr-3 h-7 w-7 text-lawyer-primary" />
+              Agenda de Compromissos
+            </h1>
+            <p className="text-gray-600 text-left mt-1">
+              Organize seus prazos, audiências e reuniões.
+            </p>
+          </div>
+           <Button onClick={() => handleOpenForm()} className="mt-4 md:mt-0 w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Evento
+            </Button>
         </div>
-
-        <Card className="shadow-lg rounded-lg">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-3">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant={"outline"} className={cn("w-full sm:w-auto justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
-                    <CalendarIconLucide className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <ShadcnCalendar mode="single" selected={selectedDate} onSelect={setSelectedDate} locale={ptBR} initialFocus />
-                </PopoverContent>
-              </Popover>
-              <Button onClick={() => handleOpenForm()} className="w-full sm:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
-                <Plus className="mr-2 h-4 w-4" /> Novo Evento
-              </Button>
-            </div>
-
-            {isLoading ? (
-              <div className="text-center py-10 flex justify-center items-center">
-                <Spinner size="lg" /> <span className="ml-2 text-gray-500">Carregando eventos...</span>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-[100px] text-gray-600">Hora</TableHead>
-                      <TableHead className="text-gray-600">Título</TableHead>
-                      <TableHead className="hidden md:table-cell text-gray-600">Tipo</TableHead>
-                      <TableHead className="hidden lg:table-cell text-gray-600">Cliente</TableHead>
-                      <TableHead className="hidden lg:table-cell text-gray-600">Prioridade</TableHead>
-                      <TableHead className="text-right text-gray-600">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {events.length > 0 ? (
-                      events.map(event => (
-                        <TableRow key={event.id} className="hover:bg-gray-50 transition-colors">
-                          <TableCell className="font-medium py-3 px-4 text-gray-700">{formatTime(event.data_hora_inicio)}</TableCell>
-                          <TableCell className="py-3 px-4 text-gray-700">{event.titulo}</TableCell>
-                          <TableCell className="hidden md:table-cell py-3 px-4 text-gray-600">{event.tipo_evento || '-'}</TableCell>
-                          <TableCell className="hidden lg:table-cell py-3 px-4 text-gray-600">{event.clientes?.nome || '-'}</TableCell>
-                          <TableCell className="hidden lg:table-cell py-3 px-4">
-                            <Badge variant="outline" className={cn("text-xs", getPriorityBadgeClass(event.prioridade))}>{event.prioridade || 'N/D'}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right py-3 px-4">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-lawyer-primary">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleViewDetails(event)} className="cursor-pointer">
-                                  <Eye className="mr-2 h-4 w-4" /> Detalhes
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleOpenForm(event)} className="cursor-pointer">
-                                  <Edit className="mr-2 h-4 w-4" /> Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleDeleteEvent(event.id)} className="text-red-600 hover:!text-red-700 hover:!bg-red-50 cursor-pointer">
-                                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-10 text-gray-500">
-                          {isLoading ? "Carregando..." : "Nenhum evento para esta data."}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
+        
+        {/* Card para Barra de Ações (Calendário Popover e Atualizar) */}
+        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
+            <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button 
+                            variant={"outline"} 
+                            className={cn(
+                                "w-full sm:w-auto justify-start text-left font-normal text-sm h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg",
+                                !selectedDate && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                            {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <ShadcnCalendar mode="single" selected={selectedDate} onSelect={setSelectedDate} initialFocus locale={ptBR} />
+                        </PopoverContent>
+                    </Popover>
+                    
+                    <Button 
+                        onClick={handleManualRefresh} 
+                        variant="outline" 
+                        size="sm" 
+                        disabled={isLoadingCombined} 
+                        className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg"
+                    >
+                        <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoadingCombined ? 'animate-spin' : ''}`} />
+                        {isLoadingCombined ? 'Atualizando...' : 'Atualizar Eventos'}
+                    </Button>
+                </div>
+            </CardContent>
         </Card>
+        
+        <AgendaEventListAsCards
+          events={events}
+          onEdit={handleOpenForm} // handleOpenForm já trata a edição
+          onView={handleViewDetails}
+          onDelete={handleDeleteEvent}
+          isLoading={isLoadingCombined}
+          selectedDate={selectedDate}
+        />
 
         {isFormOpen && (
             <AgendaEventForm
-                key={eventoParaForm ? eventoParaForm.id || 'new-event' : 'new-event'}
+                key={eventoParaForm ? eventoParaForm.id || 'new-event-key' : 'new-event-key'} // Chave para resetar estado
                 isOpen={isFormOpen}
-                onOpenChange={setIsFormOpen}
-                initialEventData={eventoParaForm || { data_hora_inicio: selectedDate || new Date(), duracao_minutos: 60, prioridade: 'média' }}
+                onOpenChange={(open) => {
+                    if (!open) setEventoParaForm(null);
+                    setIsFormOpen(open);
+                }}
+                initialEventData={eventoParaForm || { data_hora_inicio: selectedDate || new Date(), duracao_minutos: 60, prioridade: 'média', tipo_evento: 'Reunião', status_evento: 'Agendado' }}
                 onSave={handleSaveEvent}
                 clientes={clientesDoUsuario}
                 processos={processosDoUsuario}
@@ -373,9 +347,9 @@ const AgendaPage = () => {
                 event={currentEvent}
                 onClose={() => { setIsDetailOpen(false); setCurrentEvent(null); }}
                 onDelete={handleDeleteEvent}
-                onEdit={() => {
-                    setIsDetailOpen(false);
-                    handleOpenForm(currentEvent);
+                onEdit={(eventToEdit) => { // onEdit agora recebe o evento
+                    setIsDetailOpen(false); // Fecha o modal de detalhes
+                    handleOpenForm(eventToEdit); // Abre o formulário com os dados do evento
                 }}
             />
         )}

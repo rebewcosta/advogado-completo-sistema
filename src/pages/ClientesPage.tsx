@@ -2,26 +2,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import ClienteForm from '@/components/ClienteForm';
 import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2, RefreshCw, Users } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
@@ -29,7 +26,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
-import { Card, CardContent } from '@/components/ui/card'; // Import Card e CardContent
+import { Card, CardContent } from '@/components/ui/card';
+import ClienteListAsCards from '@/components/clientes/ClienteListAsCards'; // <<< NOVO COMPONENTE DE LISTA
 
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 
@@ -245,15 +243,17 @@ const ClientesPage = () => {
     setSelectedClient({ ...client, ...formDataForEdit });
     setIsEditing(true);
     setShowForm(true);
+    setShowClientDetails(false); // Fechar detalhes se estiver aberto
   };
 
   const handleViewClient = (client: Cliente) => {
     setSelectedClient(client);
     setShowClientDetails(true);
+    setShowForm(false); // Fechar form se estiver aberto
   };
 
   const handleToggleStatus = async (clientToToggle: Cliente) => {
-    if (!user) return;
+    if (!user || isSubmitting) return;
     setIsSubmitting(true); 
     const newStatus = clientToToggle.status_cliente === "Ativo" ? "Inativo" : "Ativo";
     try {
@@ -279,15 +279,16 @@ const ClientesPage = () => {
     }
   };
 
-  const handleDeleteClient = async (clientToDelete: Cliente) => {
-    if (!user) return;
-    if (window.confirm(`Tem certeza que deseja excluir o cliente ${clientToDelete.nome}? Esta ação não pode ser desfeita.`)) {
+  const handleDeleteClient = async (clientId: string) => {
+    if (!user || isSubmitting) return;
+    const clientToDelete = clients.find(c => c.id === clientId);
+    if (clientToDelete && window.confirm(`Tem certeza que deseja excluir o cliente ${clientToDelete.nome}? Esta ação não pode ser desfeita.`)) {
       setIsSubmitting(true); 
       try {
         const { error } = await supabase
           .from('clientes')
           .delete()
-          .eq('id', clientToDelete.id)
+          .eq('id', clientId)
           .eq('user_id', user.id);
 
         if (error) throw error;
@@ -305,126 +306,77 @@ const ClientesPage = () => {
   };
   
   const handleManualRefresh = () => {
-    fetchClients(true);
+    fetchClients(true); // Passa true para mostrar o spinner de carregamento
   };
+
+  if (isLoading && !clients.length && !isRefreshingManually) {
+    return (
+      <AdminLayout>
+        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+          <Spinner size="lg" />
+          <span className="text-gray-500 mt-3">Carregando clientes...</span>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <div className="mb-6 md:mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-            <Users className="mr-3 h-7 w-7 text-lawyer-primary" />
-            Gestão de Clientes
-          </h1>
-          <p className="text-gray-600 text-left mt-1">
-            Cadastre, visualize e gerencie todos os seus clientes.
-          </p>
+        {/* Cabeçalho da Página */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+              <Users className="mr-3 h-7 w-7 text-lawyer-primary" />
+              Gestão de Clientes
+            </h1>
+            <p className="text-gray-600 text-left mt-1">
+              Cadastre, visualize e gerencie todos os seus clientes.
+            </p>
+          </div>
+           <Button onClick={handleAddClient} className="mt-4 md:mt-0 w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
+              <Plus className="h-4 w-4 mr-2" />
+              Novo Cliente
+            </Button>
         </div>
-
-        <Card className="shadow-lg rounded-lg">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
-              <div className="relative flex-grow sm:max-w-xs">
-                <Input
-                  type="text"
-                  placeholder="Buscar clientes..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full"
-                />
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
+        
+        {/* Card para Barra de Ações */}
+        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
+            <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="relative flex-grow sm:max-w-xs md:max-w-sm">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                        type="text"
+                        placeholder="Buscar por nome, email, CPF/CNPJ..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 text-sm h-10 w-full bg-white border-gray-300 rounded-lg focus:ring-2 focus:ring-lawyer-primary focus:border-lawyer-primary"
+                        />
+                    </div>
+                    <Button 
+                        onClick={handleManualRefresh} 
+                        variant="outline" 
+                        size="sm" 
+                        disabled={isRefreshingManually || isLoading} 
+                        className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg"
+                    >
+                        <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRefreshingManually ? 'animate-spin' : ''}`} />
+                        {isRefreshingManually ? 'Atualizando...' : 'Atualizar Lista'}
+                    </Button>
                 </div>
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
-                <Button onClick={handleManualRefresh} variant="outline" disabled={isRefreshingManually || isLoading} className="w-full sm:w-auto">
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshingManually ? 'animate-spin' : ''}`} />
-                  {isRefreshingManually ? 'Atualizando...' : 'Atualizar Lista'}
-                </Button>
-                <Button onClick={handleAddClient} className="w-full sm:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Cliente
-                </Button>
-              </div>
-            </div>
-
-            {isLoading && !clients.length ? (
-              <div className="text-center py-10 flex justify-center items-center">
-                <Spinner size="lg" /> <span className="ml-2 text-gray-500">Carregando clientes...</span>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-gray-600">Nome</TableHead>
-                      <TableHead className="hidden md:table-cell text-gray-600">Email</TableHead>
-                      <TableHead className="hidden lg:table-cell text-gray-600">Telefone</TableHead>
-                      <TableHead className="text-gray-600">Tipo</TableHead>
-                      <TableHead className="hidden md:table-cell text-gray-600">CPF/CNPJ</TableHead>
-                      <TableHead className="text-gray-600">Status</TableHead>
-                      <TableHead className="text-right text-gray-600">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClients.length > 0 ? (
-                      filteredClients.map((client) => (
-                        <TableRow key={client.id} className="hover:bg-gray-50 transition-colors">
-                          <TableCell className="font-medium py-3 px-4 text-gray-700">{client.nome}</TableCell>
-                          <TableCell className="hidden md:table-cell py-3 px-4 text-gray-600">{client.email}</TableCell>
-                          <TableCell className="hidden lg:table-cell py-3 px-4 text-gray-600">{client.telefone}</TableCell>
-                          <TableCell className="py-3 px-4 text-gray-600">{client.tipo_cliente}</TableCell>
-                          <TableCell className="hidden md:table-cell py-3 px-4 text-gray-600">{client.cpfCnpj}</TableCell>
-                          <TableCell className="py-3 px-4">
-                            <Badge
-                              variant={client.status_cliente === "Ativo" ? "default" : "destructive"}
-                              className={`text-xs ${client.status_cliente === "Ativo" ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}`}
-                            >
-                              {client.status_cliente}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right py-3 px-4">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-500 hover:text-lawyer-primary">
-                                  <MoreVertical className="h-4 w-4" />
-                                  <span className="sr-only">Mais ações</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => handleViewClient(client)} className="cursor-pointer">
-                                  <Eye className="mr-2 h-4 w-4" /> Detalhes
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleEditClient(client)} className="cursor-pointer">
-                                  <Edit className="mr-2 h-4 w-4" /> Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleToggleStatus(client)} className="cursor-pointer">
-                                  {client.status_cliente === "Ativo" ? "Desativar" : "Ativar"}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteClient(client)}
-                                  className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-700 cursor-pointer"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                          {isLoading ? <div className="flex justify-center items-center"><Spinner /> <span className="ml-2">Carregando...</span></div> : "Nenhum cliente encontrado."}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
+            </CardContent>
         </Card>
+
+        <ClienteListAsCards
+          clients={filteredClients}
+          onEdit={handleEditClient}
+          onView={handleViewClient}
+          onToggleStatus={handleToggleStatus}
+          onDelete={handleDeleteClient}
+          isLoading={isLoading || isSubmitting} // Passa um loading combinado
+          searchTerm={searchTerm}
+        />
 
         <Dialog open={showForm} onOpenChange={(open) => {
           if (!open) {
@@ -444,16 +396,21 @@ const ClientesPage = () => {
         </Dialog>
 
         <Dialog open={showClientDetails} onOpenChange={setShowClientDetails}>
-          <DialogContent className="max-w-lg">
+          <DialogContent className="p-0 max-w-lg md:max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
             {selectedClient && (
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <h2 className="text-xl font-bold text-gray-800">{selectedClient.nome}</h2>
-                  <Button variant="ghost" size="icon" onClick={() => setShowClientDetails(false)} className="-mr-2 -mt-2 text-gray-500 hover:text-gray-700">
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="space-y-2 text-sm text-gray-700">
+              <>
+                <DialogHeader className="p-4 border-b">
+                  <div className="flex justify-between items-center">
+                    <DialogTitle className="text-lg font-semibold">{selectedClient.nome}</DialogTitle>
+                    <Button variant="ghost" size="icon" onClick={() => setShowClientDetails(false)} className="h-7 w-7 text-gray-500 hover:text-gray-700">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <DialogDescription className="text-xs text-gray-500 pt-0.5">
+                    Detalhes do cliente.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="p-4 space-y-2 text-sm text-gray-700 overflow-y-auto flex-grow">
                   <p><strong>Email:</strong> {selectedClient.email || 'N/A'}</p>
                   <p><strong>Telefone:</strong> {selectedClient.telefone || 'N/A'}</p>
                   <p><strong>Tipo:</strong> {selectedClient.tipo_cliente}</p>
@@ -473,7 +430,7 @@ const ClientesPage = () => {
                   <p><strong>Observações:</strong> {selectedClient.observacoes || 'Nenhuma'}</p>
                   <p><strong>Cadastrado em:</strong> {new Date(selectedClient.created_at).toLocaleDateString('pt-BR')}</p>
                 </div>
-                <div className="mt-6 flex justify-end gap-2">
+                <DialogFooter className="p-4 border-t flex-shrink-0">
                   <Button variant="outline" onClick={() => {
                     setShowClientDetails(false);
                     handleEditClient(selectedClient);
@@ -481,8 +438,8 @@ const ClientesPage = () => {
                     Editar
                   </Button>
                   <Button onClick={() => setShowClientDetails(false)} className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">Fechar</Button>
-                </div>
-              </div>
+                </DialogFooter>
+              </>
             )}
           </DialogContent>
         </Dialog>

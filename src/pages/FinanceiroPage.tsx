@@ -3,31 +3,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import PinLock from '@/components/PinLock';
 import {
-  Search, Plus, Edit, Trash2, ChevronLeft, ChevronRight, Filter,
-  DollarSign, TrendingUp, TrendingDown, FileText as FileTextIcon, X, Loader2, KeyRound, AlertCircle, ShieldAlert, BadgePercent
+  Search, Plus, Edit, Trash2, Filter,
+  DollarSign, TrendingUp, TrendingDown, FileText as FileTextIcon, X, Loader2, KeyRound, AlertCircle, ShieldAlert, BadgePercent, RefreshCw
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // <<--- IMPORTAÇÃO ADICIONADA AQUI
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import TransacaoListAsCards from '@/components/financeiro/TransacaoListAsCards'; // <<< NOVO COMPONENTE DE LISTA
 import type { Database } from '@/integrations/supabase/types';
 
 type TransacaoSupabase = Database['public']['Tables']['transacoes_financeiras']['Row'];
-
-// Interface TransacaoFormData não é mais necessária aqui se o formulário está embutido
-// e usa os nomes dos campos diretamente.
 
 const PAGE_NAME_FOR_PIN_SESSION_STORAGE = "Financeiro_UserPinAccess";
 
@@ -40,6 +30,7 @@ const FinanceiroPage = () => {
   } | null>(null);
   const [isLoadingAccess, setIsLoadingAccess] = useState(true);
   const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
   const [transactions, setTransactions] = useState<TransacaoSupabase[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,12 +76,15 @@ const FinanceiroPage = () => {
     checkAccessOrPinStatus();
   }, [user, session, toast]);
 
-  const fetchTransactions = useCallback(async () => {
+  const fetchTransactions = useCallback(async (showLoadingSpinner = true) => {
     if (!user || !pinCheckResult?.verified) {
       setTransactions([]);
+      if (showLoadingSpinner) setIsLoadingTransactions(false);
+      setIsRefreshingManually(false);
       return;
     }
-    setIsLoadingTransactions(true);
+    if (showLoadingSpinner) setIsLoadingTransactions(true);
+    setIsRefreshingManually(true);
     try {
       const { data, error } = await supabase
         .from('transacoes_financeiras')
@@ -110,7 +104,8 @@ const FinanceiroPage = () => {
       });
       setTransactions([]);
     } finally {
-      setIsLoadingTransactions(false);
+      if (showLoadingSpinner) setIsLoadingTransactions(false);
+      setIsRefreshingManually(false);
     }
   }, [user, pinCheckResult?.verified, toast]);
 
@@ -155,6 +150,7 @@ const FinanceiroPage = () => {
     if (!user) return;
     const transactionToDelete = transactions.find(t => t.id === id);
     if (transactionToDelete && window.confirm("Tem certeza que deseja excluir esta transação?")) {
+      setIsLoadingTransactions(true); // Reutilizar isLoadingTransactions para feedback
       try {
         const { error } = await supabase
           .from('transacoes_financeiras')
@@ -175,6 +171,8 @@ const FinanceiroPage = () => {
           description: error.message || "Não foi possível excluir a transação.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoadingTransactions(false);
       }
     }
   };
@@ -185,7 +183,7 @@ const FinanceiroPage = () => {
         toast({ title: "Usuário não autenticado", variant: "destructive" });
         return;
     }
-
+    setIsLoadingTransactions(true); // Reutilizar isLoadingTransactions
     const formData = new FormData(e.target as HTMLFormElement);
     const formValues = Object.fromEntries(formData.entries()) as { [key: string]: string };
 
@@ -195,8 +193,8 @@ const FinanceiroPage = () => {
       descricao: formValues.descricao,
       valor: parseFloat(formValues.valor),
       categoria: formValues.categoria,
-      data_transacao: formValues.data, // Nome do input no formulário é 'data'
-      status_pagamento: formValues.status as TransacaoSupabase['status_pagamento'], // Nome do input no formulário é 'status'
+      data_transacao: formValues.data,
+      status_pagamento: formValues.status as TransacaoSupabase['status_pagamento'],
     };
 
     try {
@@ -211,7 +209,7 @@ const FinanceiroPage = () => {
         
         if (error) throw error;
         
-        setTransactions(prev => prev.map(t => t.id === currentTransaction.id ? updatedData : t));
+        fetchTransactions(false); // Rebusca sem spinner principal
         toast({ title: "Transação atualizada", description: "Os dados da transação foram atualizados." });
 
       } else {
@@ -223,7 +221,7 @@ const FinanceiroPage = () => {
         
         if (error) throw error;
 
-        setTransactions(prev => [insertedData, ...prev].sort((a, b) => new Date(b.data_transacao).getTime() - new Date(a.data_transacao).getTime()));
+        fetchTransactions(false); // Rebusca sem spinner principal
         toast({ title: "Transação adicionada", description: "A nova transação foi registrada." });
       }
       setIsModalOpen(false);
@@ -235,8 +233,16 @@ const FinanceiroPage = () => {
         description: error.message || "Ocorreu um erro.",
         variant: "destructive",
       });
+    } finally {
+        setIsLoadingTransactions(false);
     }
   };
+  
+  const handleManualRefresh = () => {
+    fetchTransactions(true); // Passa true para mostrar o spinner de carregamento
+  };
+
+  const isLoadingCombined = isLoadingAccess || isLoadingTransactions || isRefreshingManually;
 
   if (isLoadingAccess) {
     return ( <AdminLayout><div className="flex items-center justify-center min-h-[calc(100vh-150px)]"><Loader2 className="h-12 w-12 animate-spin text-lawyer-primary" /></div></AdminLayout> );
@@ -262,31 +268,53 @@ const FinanceiroPage = () => {
     );
   }
   
+  if (isLoadingCombined && !transactions.length && !isRefreshingManually) {
+    return (
+      <AdminLayout>
+        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-lawyer-primary" />
+          <span className="text-gray-500 mt-3">Carregando dados financeiros...</span>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
-      <main className="py-8 px-4 md:px-6 lg:px-8 bg-lawyer-background min-h-full"> {/* Aplicado bg-lawyer-background */}
-        <div className="mb-6 md:mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-                <BadgePercent className="mr-3 h-7 w-7 text-lawyer-primary" />
-                Controle Financeiro
-            </h1>
-            <p className="text-gray-600 text-left mt-1">
-                Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório.
-            </p>
-            {pinCheckResult?.pinNotSet && (
-                <Alert variant="default" className="mt-3 text-xs bg-blue-50 border-blue-200 text-blue-700 max-w-md">
-                    <ShieldAlert className="h-4 w-4" />
-                    <AlertTitle className="font-medium">PIN de Segurança</AlertTitle>
-                    <AlertDescription>
-                        Para maior segurança, configure um PIN para esta seção em Configurações {'>'} Segurança.
-                    </AlertDescription>
-                </Alert>
-            )}
+      <main className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+        {/* Cabeçalho da Página */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
+            <div>
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
+                    <BadgePercent className="mr-3 h-7 w-7 text-lawyer-primary" />
+                    Controle Financeiro
+                </h1>
+                <p className="text-gray-600 text-left mt-1">
+                    Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório.
+                </p>
+            </div>
+            <Button
+                onClick={() => { setCurrentTransaction(null); setIsModalOpen(true); }}
+                className="mt-4 md:mt-0 w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
+            >
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Transação
+            </Button>
         </div>
+
+        {pinCheckResult?.pinNotSet && (
+            <Alert variant="default" className="mb-6 text-xs bg-blue-50 border-blue-200 text-blue-700 max-w-md">
+                <ShieldAlert className="h-4 w-4" />
+                <AlertTitle className="font-medium">PIN de Segurança</AlertTitle>
+                <AlertDescription>
+                    Para maior segurança, configure um PIN para esta seção em Configurações {'>'} Segurança.
+                </AlertDescription>
+            </Alert>
+        )}
           
           {/* Cards de Resumo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
-            <Card className="shadow-md rounded-lg bg-white"> {/* Adicionado bg-white */}
+            <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Receitas Totais</CardTitle>
                 <TrendingUp className="h-5 w-5 text-green-500" />
@@ -299,7 +327,7 @@ const FinanceiroPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-md rounded-lg bg-white"> {/* Adicionado bg-white */}
+            <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Despesas Totais</CardTitle>
                 <TrendingDown className="h-5 w-5 text-red-500" />
@@ -312,7 +340,7 @@ const FinanceiroPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-md rounded-lg bg-white"> {/* Adicionado bg-white */}
+            <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Saldo Atual</CardTitle>
                 <DollarSign className={`h-5 w-5 ${saldo >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
@@ -325,7 +353,7 @@ const FinanceiroPage = () => {
               </CardContent>
             </Card>
 
-            <Card className="shadow-md rounded-lg bg-white"> {/* Adicionado bg-white */}
+            <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Contas a Receber</CardTitle>
                 <FileTextIcon className="h-5 w-5 text-yellow-500" />
@@ -339,135 +367,47 @@ const FinanceiroPage = () => {
             </Card>
           </div>
 
-          <Card className="shadow-lg rounded-lg bg-white"> {/* Tabela dentro de um Card branco */}
-            <CardContent className="p-4 md:p-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-                    <div className="relative flex-grow md:max-w-sm">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+        {/* Card para Barra de Ações de Listagem */}
+        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
+            <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="relative flex-grow sm:max-w-xs md:max-w-sm">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
                         <Input
                         type="text"
-                        placeholder="Buscar transações..."
-                        className="pl-10 pr-4 py-2 border-gray-300 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
+                        placeholder="Buscar por descrição, categoria..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 text-sm h-10 w-full bg-white border-gray-300 rounded-lg focus:ring-2 focus:ring-lawyer-primary focus:border-lawyer-primary"
                         />
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                        <Button variant="outline" className="w-full md:w-auto px-4 py-2 border-gray-300 rounded-lg flex items-center gap-2 hover:bg-gray-100 text-gray-700">
-                            <Filter className="h-4 w-4" />
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
+                        <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg">
+                            <Filter className="mr-1.5 h-3.5 w-3.5" />
                             Filtrar
                         </Button>
-                        <Button
-                            onClick={() => { setCurrentTransaction(null); setIsModalOpen(true); }}
-                            className="w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
+                         <Button 
+                            onClick={handleManualRefresh} 
+                            variant="outline" 
+                            size="sm" 
+                            disabled={isLoadingCombined} 
+                            className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg"
                         >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Nova Transação
+                            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoadingCombined ? 'animate-spin' : ''}`} />
+                            {isLoadingCombined ? 'Atualizando...' : 'Atualizar Transações'}
                         </Button>
                     </div>
                 </div>
-
-                <div className="overflow-x-auto">
-                {isLoadingTransactions ? (
-                    <div className="flex justify-center items-center py-10">
-                        <Loader2 className="h-8 w-8 animate-spin text-lawyer-primary" />
-                        <span className="ml-2 text-gray-500">Carregando transações...</span>
-                    </div>
-                ) : (
-                <Table>
-                    <TableHeader>
-                    <TableRow>
-                        <TableHead className="text-gray-600">Tipo</TableHead>
-                        <TableHead className="text-gray-600">Descrição</TableHead>
-                        <TableHead className="text-gray-600">Valor</TableHead>
-                        <TableHead className="hidden md:table-cell text-gray-600">Categoria</TableHead>
-                        <TableHead className="text-gray-600">Data</TableHead>
-                        <TableHead className="text-gray-600">Status</TableHead>
-                        <TableHead className="text-center text-gray-600">Ações</TableHead>
-                    </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                    {filteredTransactions.length > 0 ? (
-                        filteredTransactions.map((transaction) => (
-                        <TableRow key={transaction.id} className="hover:bg-gray-50 transition-colors">
-                            <TableCell className="py-3 px-4">
-                            <div className={`flex items-center text-sm ${
-                                transaction.tipo_transacao === "Receita" ? 'text-green-600' : 'text-red-600'
-                            }`}>
-                                {transaction.tipo_transacao === "Receita" ?
-                                <TrendingUp className="h-4 w-4 mr-1 opacity-80" /> :
-                                <TrendingDown className="h-4 w-4 mr-1 opacity-80" />
-                                }
-                                {transaction.tipo_transacao}
-                            </div>
-                            </TableCell>
-                            <TableCell className="py-3 px-4 text-gray-700">{transaction.descricao}</TableCell>
-                            <TableCell className={`py-3 px-4 font-medium ${transaction.tipo_transacao === "Receita" ? 'text-green-600' : 'text-red-600'}`}>
-                            R$ {Number(transaction.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                            </TableCell>
-                            <TableCell className="hidden md:table-cell py-3 px-4 text-gray-600">{transaction.categoria}</TableCell>
-                            <TableCell className="py-3 px-4 text-gray-600">{new Date(transaction.data_transacao).toLocaleDateString('pt-BR', {timeZone: 'UTC'})}</TableCell>
-                            <TableCell className="py-3 px-4">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                                transaction.status_pagamento === 'Pago' || transaction.status_pagamento === 'Recebido' ? 'bg-green-100 text-green-700 border border-green-200' :
-                                transaction.status_pagamento === 'Pendente' ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
-                                transaction.status_pagamento === 'Atrasado' ? 'bg-orange-100 text-orange-700 border border-orange-200' : 
-                                'bg-gray-100 text-gray-700 border border-gray-200'
-                            }`}>
-                                {transaction.status_pagamento}
-                            </span>
-                            </TableCell>
-                            <TableCell className="py-3 px-4 text-center">
-                            <div className="flex justify-center gap-1">
-                                <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleEditTransaction(transaction)}
-                                className="p-1 text-blue-600 hover:bg-blue-100 rounded-full h-7 w-7"
-                                title="Editar Transação"
-                                >
-                                <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDeleteTransaction(transaction.id)}
-                                className="p-1 text-red-600 hover:bg-red-100 rounded-full h-7 w-7"
-                                title="Excluir Transação"
-                                >
-                                <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </div>
-                            </TableCell>
-                        </TableRow>
-                        ))
-                    ) : (
-                        <TableRow>
-                        <TableCell colSpan={7} className="px-6 py-10 text-center text-gray-500">
-                            Nenhuma transação encontrada.
-                        </TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
-                )}
-                </div>
-
-                <div className="px-4 py-3 flex items-center justify-between border-t border-gray-200">
-                <div className="text-sm text-gray-500">
-                    Mostrando <span className="font-medium">{filteredTransactions.length}</span> de <span className="font-medium">{transactions.length}</span> transações
-                </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" size="icon" className="p-2 border-gray-300 rounded-md hover:bg-gray-100 h-8 w-8 text-gray-600">
-                    <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button variant="outline" size="icon" className="p-2 border-gray-300 rounded-md hover:bg-gray-100 h-8 w-8 text-gray-600">
-                    <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
-                </div>
             </CardContent>
-          </Card>
+        </Card>
+          
+        <TransacaoListAsCards
+            transacoes={filteredTransactions}
+            onEdit={handleEditTransaction}
+            onDelete={handleDeleteTransaction}
+            isLoading={isLoadingCombined}
+            searchTerm={searchTerm}
+        />
 
           {isModalOpen && (
              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
@@ -601,7 +541,8 @@ const FinanceiroPage = () => {
                     >
                       Cancelar
                     </Button>
-                    <Button type="submit" className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
+                    <Button type="submit" className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white" disabled={isLoadingTransactions}>
+                      {isLoadingTransactions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       {currentTransaction ? 'Atualizar' : 'Adicionar'}
                     </Button>
                   </div>

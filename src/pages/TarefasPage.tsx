@@ -1,30 +1,21 @@
 // src/pages/TarefasPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import AdminLayout from '@/components/AdminLayout'; // Certifique-se que esta importação está correta
+import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { ListChecks, Plus, Search, Edit, Trash2, MoreVertical, RefreshCw, ExternalLink } from 'lucide-react';
-import { Badge } from "@/components/ui/badge";
+import { ListChecks, Plus, Search, Edit, Trash2, MoreVertical, RefreshCw } from 'lucide-react'; // Removido ExternalLink pois não é usado diretamente aqui
 import { Spinner } from '@/components/ui/spinner';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { Card, CardContent } from '@/components/ui/card'; // Removido CardHeader, CardTitle, CardDescription
 import TarefaForm, { TarefaFormData } from '@/components/tarefas/TarefaForm';
-import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import TarefaListAsCards from '@/components/tarefas/TarefaListAsCards'; // <<< NOVO COMPONENTE DE LISTA
 
 export type Tarefa = Database['public']['Tables']['tarefas']['Row'] & {
     clientes?: { id: string; nome: string } | null;
@@ -51,14 +42,18 @@ const TarefasPage = () => {
   const [clientesDoUsuario, setClientesDoUsuario] = useState<ClienteParaSelect[]>([]);
   const [processosDoUsuario, setProcessosDoUsuario] = useState<ProcessoParaSelect[]>([]);
   const [isLoadingDropdownData, setIsLoadingDropdownData] = useState(false);
+  const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
   const fetchTarefas = useCallback(async (showLoadingSpinner = true) => {
     if (!user) {
       setTarefas([]);
       if (showLoadingSpinner) setIsLoading(false);
+      setIsRefreshingManually(false);
       return;
     }
     if (showLoadingSpinner) setIsLoading(true);
+    setIsRefreshingManually(true);
+
     try {
       const { data, error } = await supabase
         .from('tarefas')
@@ -75,6 +70,7 @@ const TarefasPage = () => {
       setTarefas([]);
     } finally {
       if (showLoadingSpinner) setIsLoading(false);
+      setIsRefreshingManually(false);
     }
   }, [user, toast]);
   
@@ -121,10 +117,8 @@ const TarefasPage = () => {
         return;
     }
     setIsSubmitting(true);
-    const dataVencimentoFinal = formData.data_vencimento instanceof Date
-        ? format(formData.data_vencimento, 'yyyy-MM-dd')
-        // @ts-ignore
-        : formData.data_vencimento; 
+    const dataVencimentoFinal = formData.data_vencimento; // Não precisa mais de parse aqui, já vem como string yyyy-MM-dd ou null
+    
     const dadosParaSalvar = {
       titulo: formData.titulo,
       descricao_detalhada: formData.descricao_detalhada || null,
@@ -136,6 +130,7 @@ const TarefasPage = () => {
       data_conclusao: formData.status === 'Concluída' ? new Date().toISOString() : null,
       user_id: user.id,
     };
+
     try {
       let operacao;
       let mensagemSucesso;
@@ -162,7 +157,7 @@ const TarefasPage = () => {
   };
   
   const handleDeleteTarefa = async (tarefaId: string) => {
-    if (!user) return;
+    if (!user || isSubmitting) return;
     const tarefaParaDeletar = tarefas.find(t => t.id === tarefaId);
     if (tarefaParaDeletar && window.confirm(`Tem certeza que deseja excluir a tarefa "${tarefaParaDeletar.titulo}"?`)) {
       setIsSubmitting(true);
@@ -199,6 +194,10 @@ const TarefasPage = () => {
     }
   };
 
+  const handleManualRefresh = () => {
+    fetchTarefas(true);
+  };
+
   const filteredTarefas = tarefas.filter(tarefa =>
     tarefa.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (tarefa.descricao_detalhada && tarefa.descricao_detalhada.toLowerCase().includes(searchTerm.toLowerCase())) ||
@@ -206,50 +205,19 @@ const TarefasPage = () => {
     (tarefa.processos?.numero_processo && tarefa.processos.numero_processo.toLowerCase().includes(searchTerm.toLowerCase()))
   );
   
-  const getStatusBadgeClassName = (status?: StatusTarefa | string | null): string => {
-    switch (status) {
-      case 'Concluída': return 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200';
-      case 'Pendente': return 'bg-yellow-100 text-yellow-700 border-yellow-200 hover:bg-yellow-200';
-      case 'Em Andamento': return 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200';
-      case 'Cancelada': return 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200';
-      case 'Aguardando Terceiros': return 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200';
-      default: return 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200';
-    }
-  };
+  const isLoadingCombined = isLoading || isSubmitting || isRefreshingManually;
 
-  const getPriorityBadgeClassName = (priority?: PrioridadeTarefa | string | null): string => {
-    switch (priority) {
-        case 'Urgente': return 'bg-red-500 text-white hover:bg-red-600';
-        case 'Alta': return 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200';
-        case 'Média': return 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200';
-        case 'Baixa': return 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200';
-        default: return 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200';
-    }
-  };
+  if (isLoading && !tarefas.length && !isRefreshingManually) { // Condição para mostrar spinner de carregamento inicial
+    return (
+      <AdminLayout>
+        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+          <Spinner size="lg" />
+          <span className="text-gray-500 mt-3">Carregando tarefas...</span>
+        </div>
+      </AdminLayout>
+    );
+  }
 
-  const formatDateString = (dateString: string | null | undefined, withRelative = false) => {
-    if (!dateString) return '-';
-    try {
-        const dateToParse = dateString.includes('T') ? dateString : dateString + 'T00:00:00Z';
-        const date = parseISO(dateToParse);
-        const formatted = format(date, "dd/MM/yyyy", { locale: ptBR });
-        if (withRelative) {
-            if (isToday(date)) return `${formatted} (Hoje)`;
-            if (isTomorrow(date)) return `${formatted} (Amanhã)`;
-            if (isPast(date) && !isToday(date)) return `${formatted} (Atrasada)`;
-        }
-        return formatted;
-    } catch (e) {
-        return dateString; 
-    }
-  };
-
-  // A linha do erro era a 254, que é o <AdminLayout>.
-  // O erro "Expected jsx identifier" geralmente significa que o parser JSX
-  // esperava um nome de componente válido (começando com maiúscula, ou uma tag HTML minúscula)
-  // mas encontrou algo diferente.
-  // A única coisa que poderia dar problema aqui seria a importação do AdminLayout.
-  // Vamos garantir que o código JSX retornado seja válido.
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
@@ -270,116 +238,42 @@ const TarefasPage = () => {
             </Button>
         </div>
 
-        <Card className="shadow-lg rounded-lg">
-          <CardHeader className="border-b px-4 md:px-6 py-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="relative flex-grow sm:max-w-sm">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder="Buscar por título, cliente, processo..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9 text-sm h-9 w-full" 
-                />
-              </div>
-              <Button onClick={() => fetchTarefas(true)} variant="outline" size="sm" disabled={isLoading || isSubmitting} className="w-full sm:w-auto text-xs">
-                <RefreshCw className={`h-3 w-3 mr-1.5 ${(isLoading || isSubmitting) ? 'animate-spin' : ''}`} />
-                {(isLoading || isSubmitting) ? 'Atualizando...' : 'Atualizar'}
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {isLoading && !tarefas.length ? (
-              <div className="text-center py-16 flex flex-col justify-center items-center">
-                <Spinner size="lg" /> 
-                <p className="ml-2 text-gray-500 mt-3">Carregando tarefas...</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50">
-                      <TableHead className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[30%]">Título</TableHead>
-                      <TableHead className="px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</TableHead>
-                      <TableHead className="hidden md:table-cell px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Prioridade</TableHead>
-                      <TableHead className="hidden lg:table-cell px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Vencimento</TableHead>
-                      <TableHead className="hidden lg:table-cell px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">Associado a</TableHead>
-                      <TableHead className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[80px]">Ações</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTarefas.length > 0 ? (
-                      filteredTarefas.map((tarefa) => (
-                        <TableRow key={tarefa.id} className="hover:bg-gray-50/50 transition-colors border-b last:border-b-0">
-                          <TableCell className="px-4 py-3 align-top">
-                            <p className="font-medium text-sm text-gray-800">{tarefa.titulo}</p>
-                            {tarefa.descricao_detalhada && (
-                                <p className="text-xs text-gray-500 mt-0.5" title={tarefa.descricao_detalhada}>
-                                    {tarefa.descricao_detalhada.substring(0, 70)}{tarefa.descricao_detalhada.length > 70 ? '...' : ''}
-                                </p>
-                            )}
-                          </TableCell>
-                          <TableCell className="px-4 py-3 align-top">
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs py-0.5 px-2 cursor-pointer ${getStatusBadgeClassName(tarefa.status as StatusTarefa)}`} 
-                              onClick={() => handleToggleStatus(tarefa)} 
-                              title="Clique para alterar status"
-                            >
-                              {tarefa.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell px-4 py-3 align-top">
-                             <Badge variant="outline" className={`text-xs py-0.5 px-2 ${getPriorityBadgeClassName(tarefa.prioridade as PrioridadeTarefa)}`}>
-                                {tarefa.prioridade}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className={cn(
-                            "hidden lg:table-cell px-4 py-3 text-sm text-gray-600 align-top",
-                            tarefa.data_vencimento && isPast(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && !isToday(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && tarefa.status !== 'Concluída' && tarefa.status !== 'Cancelada' && "text-red-600 font-semibold",
-                            tarefa.data_vencimento && isToday(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && tarefa.status !== 'Concluída' && tarefa.status !== 'Cancelada' && "text-orange-600 font-semibold"
-                          )}>
-                            {formatDateString(tarefa.data_vencimento, true)}
-                          </TableCell>
-                           <TableCell className="hidden lg:table-cell px-4 py-3 text-gray-500 text-xs align-top">
-                            {tarefa.clientes?.nome || (tarefa.processos?.numero_processo ? `Proc: ${tarefa.processos.numero_processo}` : '-')}
-                          </TableCell>
-                          <TableCell className="text-right px-4 py-3 align-top">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-500 hover:text-lawyer-primary hover:bg-gray-100">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-40">
-                                <DropdownMenuItem onClick={() => handleOpenForm(tarefa)} className="cursor-pointer text-sm">
-                                  <Edit className="mr-2 h-3.5 w-3.5" /> Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => handleDeleteTarefa(tarefa.id)} className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-700 cursor-pointer text-sm">
-                                  <Trash2 className="mr-2 h-3.5 w-3.5" /> Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-10 text-gray-500">
-                          <ListChecks className="mx-auto h-10 w-10 text-gray-300 mb-2" />
-                          Nenhuma tarefa encontrada.
-                          {searchTerm ? " Tente limpar a busca." : " Clique em \"Nova Tarefa\" para adicionar."}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
+        {/* Card para Barra de Ações */}
+        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
+            <CardContent className="p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="relative flex-grow sm:max-w-xs md:max-w-sm">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                        type="text"
+                        placeholder="Buscar por título, cliente, processo..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 text-sm h-10 w-full bg-white border-gray-300 rounded-lg focus:ring-2 focus:ring-lawyer-primary focus:border-lawyer-primary"
+                        />
+                    </div>
+                    <Button 
+                        onClick={handleManualRefresh} 
+                        variant="outline" 
+                        size="sm" 
+                        disabled={isLoadingCombined} 
+                        className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg"
+                    >
+                        <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoadingCombined ? 'animate-spin' : ''}`} />
+                        {isLoadingCombined ? 'Atualizando...' : 'Atualizar Tarefas'}
+                    </Button>
+                </div>
+            </CardContent>
         </Card>
+        
+        <TarefaListAsCards
+          tarefas={filteredTarefas}
+          onEdit={handleOpenForm}
+          onDelete={handleDeleteTarefa}
+          onToggleStatus={handleToggleStatus}
+          isLoading={isLoadingCombined}
+          searchTerm={searchTerm}
+        />
         
         <Dialog open={isFormOpen} onOpenChange={(open) => {
             if(!open) {
@@ -388,8 +282,9 @@ const TarefasPage = () => {
             }
             setIsFormOpen(open);
         }}>
-          <DialogContent className="p-0 max-w-lg md:max-w-xl overflow-hidden">
+          <DialogContent className="p-0 max-w-lg md:max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
              <TarefaForm
+                key={tarefaSelecionada ? tarefaSelecionada.id : 'new-tarefa-key'} // Chave para resetar estado
                 onSave={handleSaveTarefa}
                 onCancel={() => {
                     setIsFormOpen(false);
