@@ -7,7 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import ClientesPage from './pages/ClientesPage';
 import MeusProcessosPage from './pages/MeusProcessosPage';
 import AgendaPage from './pages/AgendaPage';
-import TarefasPage from './pages/TarefasPage'; 
+import TarefasPage from './pages/TarefasPage'; // <<< CERTIFIQUE-SE QUE ESTE IMPORT ESTÁ CORRETO E O ARQUIVO EXISTE
 import FinanceiroPage from './pages/FinanceiroPage';
 import DocumentosPage from './pages/DocumentosPage';
 import RelatoriosPage from './pages/RelatoriosPage';
@@ -63,7 +63,7 @@ function App() {
           <Route path="/meus-processos" element={<MeusProcessosPage />} />
           <Route path="/clientes" element={<ClientesPage />} />
           <Route path="/agenda" element={<AgendaPage />} />
-          <Route path="/tarefas" element={<TarefasPage />} />
+          <Route path="/tarefas" element={<TarefasPage />} /> {/* <<< CERTIFIQUE-SE QUE ESTA LINHA ESTÁ DESCOMENTADA E CORRETA */}
           <Route path="/financeiro" element={<FinanceiroPage />} />
           <Route path="/documentos" element={<DocumentosPage />} />
           <Route path="/relatorios" element={<RelatoriosPage />} />
