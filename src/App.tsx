@@ -1,4 +1,4 @@
-// src/App.ts
+// src/App.tsx
 import { Navigate, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
