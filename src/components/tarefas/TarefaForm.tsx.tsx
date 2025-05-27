@@ -14,15 +14,16 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { X } from 'lucide-react';
-import { format, parse, isValid, parseISO } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 import type { Database } from '@/integrations/supabase/types';
-import { StatusTarefa, PrioridadeTarefa } from '@/pages/TarefasPage'; // Importando os tipos
+import { StatusTarefa, PrioridadeTarefa } from '@/pages/TarefasPage'; // Ajuste o caminho se necessário
 
-type TarefaBase = Omit<Database['public']['Tables']['tarefas']['Row'], 'id' | 'user_id' | 'created_at' | 'updated_at' | 'clientes' | 'processos'>;
-
-export interface TarefaFormData extends TarefaBase {
-  // Se houver campos que precisam de formatação diferente no formulário
+// Omitindo 'clientes' e 'processos' pois são para exibição e não parte do formulário direto
+type TarefaRow = Database['public']['Tables']['tarefas']['Row'];
+export interface TarefaFormData extends Omit<TarefaRow, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'clientes' | 'processos'> {
+  // data_vencimento no formulário pode ser Date | string | undefined, mas será string yyyy-MM-dd ou null para o Supabase
 }
+
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 type ProcessoParaSelect = Pick<Database['public']['Tables']['processos']['Row'], 'id' | 'numero_processo'>;
@@ -30,7 +31,7 @@ type ProcessoParaSelect = Pick<Database['public']['Tables']['processos']['Row'],
 interface TarefaFormProps {
   onSave: (data: TarefaFormData) => void;
   onCancel: () => void;
-  tarefaParaEditar?: Database['public']['Tables']['tarefas']['Row'] | null;
+  tarefaParaEditar?: TarefaRow | null;
   isEdit: boolean;
   clientesDoUsuario: ClienteParaSelect[];
   processosDoUsuario: ProcessoParaSelect[];
@@ -51,26 +52,29 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
     descricao_detalhada: '',
     status: 'Pendente',
     prioridade: 'Média',
-    data_vencimento: undefined, // Armazenar como Date ou undefined
+    data_vencimento: undefined, // Armazenar como Date ou undefined para o DatePicker
     cliente_id: null,
     processo_id: null,
     data_conclusao: null,
   });
+  const [dataVencimentoPicker, setDataVencimentoPicker] = useState<Date | undefined>(undefined);
+
 
   useEffect(() => {
     if (isEdit && tarefaParaEditar) {
+      const vencimentoDate = tarefaParaEditar.data_vencimento ? parseISO(tarefaParaEditar.data_vencimento) : undefined;
       setFormData({
         titulo: tarefaParaEditar.titulo || '',
         descricao_detalhada: tarefaParaEditar.descricao_detalhada || '',
         status: tarefaParaEditar.status as StatusTarefa || 'Pendente',
         prioridade: tarefaParaEditar.prioridade as PrioridadeTarefa || 'Média',
-        data_vencimento: tarefaParaEditar.data_vencimento ? parseISO(tarefaParaEditar.data_vencimento + 'T00:00:00Z') : undefined,
+        data_vencimento: tarefaParaEditar.data_vencimento, // Mantém como string ou null
         cliente_id: tarefaParaEditar.cliente_id || null,
         processo_id: tarefaParaEditar.processo_id || null,
-        data_conclusao: tarefaParaEditar.data_conclusao ? new Date(tarefaParaEditar.data_conclusao) : null,
+        data_conclusao: tarefaParaEditar.data_conclusao,
       });
+      setDataVencimentoPicker(vencimentoDate);
     } else {
-      // Reset para novo formulário
       setFormData({
         titulo: '',
         descricao_detalhada: '',
@@ -81,6 +85,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
         processo_id: null,
         data_conclusao: null,
       });
+      setDataVencimentoPicker(undefined);
     }
   }, [tarefaParaEditar, isEdit]);
 
@@ -94,9 +99,9 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
   };
   
   const handleDateChange = (date: Date | undefined) => {
+    setDataVencimentoPicker(date); // Atualiza o estado do DatePicker
     setFormData(prev => ({ ...prev, data_vencimento: date ? format(date, 'yyyy-MM-dd') : null }));
   };
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,15 +109,8 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
       alert("Por favor, preencha os campos obrigatórios: Título, Status e Prioridade.");
       return;
     }
-    // Converte data_vencimento para string ISO YYYY-MM-DD se for um Date, ou mantém null/undefined
-    const dataVencimentoParaSalvar = formData.data_vencimento instanceof Date 
-        ? format(formData.data_vencimento, 'yyyy-MM-dd') 
-        : formData.data_vencimento; // Já deve ser string ou null
-
-    onSave({
-        ...formData,
-        data_vencimento: dataVencimentoParaSalvar,
-    } as TarefaFormData); // Afirmar o tipo aqui
+    // Os dados já estão formatados em formData
+    onSave(formData as TarefaFormData);
   };
 
   return (
@@ -132,7 +130,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
         <CardContent className="p-4 md:p-6 max-h-[calc(90vh-220px)] overflow-y-auto space-y-4">
           <div>
             <Label htmlFor="titulo_tarefa_form">Título <span className="text-red-500">*</span></Label>
-            <Input id="titulo_tarefa_form" name="titulo" value={formData.titulo} onChange={handleChange} required className="mt-1" />
+            <Input id="titulo_tarefa_form" name="titulo" value={formData.titulo || ''} onChange={handleChange} required className="mt-1" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -166,15 +164,15 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
           <div>
             <Label htmlFor="data_vencimento_tarefa_form">Data de Vencimento</Label>
             <DatePicker
-                date={formData.data_vencimento ? (typeof formData.data_vencimento === 'string' ? parseISO(formData.data_vencimento) : formData.data_vencimento) : undefined}
-                setDate={handleDateChange}
+                date={dataVencimentoPicker} // Usa o estado do DatePicker
+                setDate={handleDateChange} // Atualiza ambos os estados
                 className="mt-1 w-full"
             />
           </div>
 
           <div>
             <Label htmlFor="descricao_detalhada_tarefa_form">Descrição Detalhada</Label>
-            <Textarea id="descricao_detalhada_tarefa_form" name="descricao_detalhada" value={formData.descricao_detalhada || ''} onChange={handleChange} rows={4} className="mt-1" />
+            <Textarea id="descricao_detalhada_tarefa_form" name="descricao_detalhada" value={formData.descricao_detalhada || ''} onChange={handleChange} rows={3} className="mt-1" />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -184,8 +182,8 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
                 <SelectTrigger id="cliente_id_tarefa_form" className="mt-1"><SelectValue placeholder={isLoadingDropdownData ? "Carregando..." : "Nenhum"} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Nenhum</SelectItem>
-                  {isLoadingDropdownData && <SelectItem value="loading_cli" disabled>Carregando...</SelectItem>}
-                  {!isLoadingDropdownData && clientesDoUsuario.length === 0 && <SelectItem value="no_cli" disabled>Nenhum cliente</SelectItem>}
+                  {isLoadingDropdownData && <SelectItem value="loading_cli" disabled>Carregando clientes...</SelectItem>}
+                  {!isLoadingDropdownData && clientesDoUsuario.length === 0 && <SelectItem value="no_cli" disabled>Nenhum cliente cadastrado</SelectItem>}
                   {clientesDoUsuario.map(c => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
@@ -196,8 +194,8 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
                 <SelectTrigger id="processo_id_tarefa_form" className="mt-1"><SelectValue placeholder={isLoadingDropdownData ? "Carregando..." : "Nenhum"} /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">Nenhum</SelectItem>
-                  {isLoadingDropdownData && <SelectItem value="loading_proc" disabled>Carregando...</SelectItem>}
-                  {!isLoadingDropdownData && processosDoUsuario.length === 0 && <SelectItem value="no_proc" disabled>Nenhum processo</SelectItem>}
+                  {isLoadingDropdownData && <SelectItem value="loading_proc" disabled>Carregando processos...</SelectItem>}
+                  {!isLoadingDropdownData && processosDoUsuario.length === 0 && <SelectItem value="no_proc" disabled>Nenhum processo cadastrado</SelectItem>}
                   {processosDoUsuario.map(p => <SelectItem key={p.id} value={p.id}>{p.numero_processo}</SelectItem>)}
                 </SelectContent>
               </Select>

@@ -16,13 +16,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { ListChecks, Plus, Search, Edit, Trash2, MoreVertical, RefreshCw } from 'lucide-react'; // Adicionado Eye se for usar detalhes
+import { ListChecks, Plus, Search, Edit, Trash2, MoreVertical, RefreshCw } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import TarefaForm, { TarefaFormData } from '@/components/tarefas/TarefaForm'; // Importando TarefaForm e seu tipo de dados
-import { format, parseISO } from 'date-fns'; // Para formatar datas
+import TarefaForm, { TarefaFormData } from '@/components/tarefas/TarefaForm';
+import { format, parseISO } from 'date-fns';
 
 // Tipos específicos para Tarefas
 export type Tarefa = Database['public']['Tables']['tarefas']['Row'] & {
@@ -69,7 +69,9 @@ const TarefasPage = () => {
           processos (id, numero_processo)
         `)
         .eq('user_id', user.id)
-        .order('data_vencimento', { ascending: true, nullsFirst: false })
+        .order('status', { ascending: true }) // Pendentes/Em Andamento primeiro
+        .order('prioridade', { ascending: false }) // Urgentes/Altas primeiro
+        .order('data_vencimento', { ascending: true, nullsLast: true }) // Mais próximos primeiro
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -126,10 +128,9 @@ const TarefasPage = () => {
     }
     setIsSubmitting(true);
 
-    // Assegurar que data_vencimento seja string YYYY-MM-DD ou null
     const dataVencimentoFinal = formData.data_vencimento instanceof Date
         ? format(formData.data_vencimento, 'yyyy-MM-dd')
-        : formData.data_vencimento; // Se já for string ou null
+        : formData.data_vencimento;
 
     const dadosParaSalvar = {
       titulo: formData.titulo,
@@ -140,7 +141,7 @@ const TarefasPage = () => {
       cliente_id: formData.cliente_id || null,
       processo_id: formData.processo_id || null,
       data_conclusao: formData.status === 'Concluída' ? new Date().toISOString() : null,
-      user_id: user.id, // Garante que o user_id está presente
+      user_id: user.id,
     };
 
     try {
@@ -199,7 +200,9 @@ const TarefasPage = () => {
 
   const handleToggleStatus = async (tarefa: Tarefa) => {
     if (!user) return;
+    if (isSubmitting) return; // Evita múltiplas submissões
     setIsSubmitting(true);
+    
     const novoStatus: StatusTarefa = tarefa.status === 'Concluída' ? 'Pendente' : 'Concluída';
     const dataConclusao = novoStatus === 'Concluída' ? new Date().toISOString() : null;
 
@@ -230,33 +233,39 @@ const TarefasPage = () => {
   
   const getStatusBadgeClassName = (status?: StatusTarefa | string | null): string => {
     switch (status) {
-      case 'Concluída': return 'bg-green-100 text-green-700 border-green-300';
-      case 'Pendente': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-      case 'Em Andamento': return 'bg-blue-100 text-blue-700 border-blue-300';
-      case 'Cancelada': return 'bg-red-100 text-red-700 border-red-300';
-      case 'Aguardando Terceiros': return 'bg-orange-100 text-orange-700 border-orange-300';
-      default: return 'bg-gray-100 text-gray-700 border-gray-300';
+      case 'Concluída': return 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200';
+      case 'Pendente': return 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200';
+      case 'Em Andamento': return 'bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200';
+      case 'Cancelada': return 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200';
+      case 'Aguardando Terceiros': return 'bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200';
+      default: return 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200';
     }
   };
 
   const getPriorityBadgeClassName = (priority?: PrioridadeTarefa | string | null): string => {
     switch (priority) {
-        case 'Urgente': return 'bg-red-500 text-white';
-        case 'Alta': return 'bg-red-100 text-red-700 border-red-300';
-        case 'Média': return 'bg-yellow-100 text-yellow-700 border-yellow-300';
-        case 'Baixa': return 'bg-green-100 text-green-700 border-green-300';
-        default: return 'bg-gray-100 text-gray-700 border-gray-300';
+        case 'Urgente': return 'bg-red-500 text-white hover:bg-red-600';
+        case 'Alta': return 'bg-red-100 text-red-700 border-red-300 hover:bg-red-200';
+        case 'Média': return 'bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200';
+        case 'Baixa': return 'bg-green-100 text-green-700 border-green-300 hover:bg-green-200';
+        default: return 'bg-gray-100 text-gray-700 border-gray-300 hover:bg-gray-200';
     }
   };
 
   const formatDateString = (dateString: string | null | undefined) => {
     if (!dateString) return '-';
     try {
-        // A data do Supabase (tipo 'date') vem como 'YYYY-MM-DD'
-        // Adicionar 'T00:00:00Z' para tratar como UTC e evitar problemas de fuso ao converter para o local
-        return format(parseISO(dateString + 'T00:00:00Z'), 'dd/MM/yyyy');
+        return format(parseISO(dateString), 'dd/MM/yyyy');
     } catch (e) {
-        return dateString; // Retorna a string original se houver erro na formatação
+        // Tentar parsear se o formato já for dd/MM/yyyy (vindo do form)
+        try {
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                const parsed = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+                if (!isNaN(parsed.getTime())) return dateString;
+            }
+        } catch (parseError) { /* não faz nada, retorna original */ }
+        return dateString; 
     }
   };
 
@@ -325,13 +334,13 @@ const TarefasPage = () => {
                           <TableCell className="font-medium py-3 px-4 text-gray-700 align-top">
                             <span className="font-semibold">{tarefa.titulo}</span>
                             {tarefa.descricao_detalhada && (
-                                <p className="text-xs text-gray-500 mt-1 truncate max-w-xs" title={tarefa.descricao_detalhada}>
+                                <p className="text-xs text-gray-500 mt-1 truncate max-w-xs hover:max-w-none hover:whitespace-normal" title={tarefa.descricao_detalhada}>
                                     {tarefa.descricao_detalhada}
                                 </p>
                             )}
                           </TableCell>
                           <TableCell className="py-3 px-4 align-top">
-                            <Badge variant="outline" className={`text-xs ${getStatusBadgeClassName(tarefa.status as StatusTarefa)}`}>
+                            <Badge variant="outline" className={`text-xs cursor-pointer ${getStatusBadgeClassName(tarefa.status as StatusTarefa)}`} onClick={() => handleToggleStatus(tarefa)} title="Clique para alterar status">
                               {tarefa.status}
                             </Badge>
                           </TableCell>
@@ -356,9 +365,6 @@ const TarefasPage = () => {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => handleOpenForm(tarefa)} className="cursor-pointer">
                                   <Edit className="mr-2 h-4 w-4" /> Editar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleToggleStatus(tarefa)} className="cursor-pointer">
-                                  {tarefa.status === "Concluída" ? "Reabrir Tarefa" : "Marcar Concluída"}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => handleDeleteTarefa(tarefa.id)} className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-700 cursor-pointer">
                                   <Trash2 className="mr-2 h-4 w-4" /> Excluir
