@@ -7,7 +7,7 @@ import DashboardPage from './pages/DashboardPage';
 import ClientesPage from './pages/ClientesPage';
 import MeusProcessosPage from './pages/MeusProcessosPage';
 import AgendaPage from './pages/AgendaPage';
-import TarefasPage from './pages/TarefasPage'; // <<< IMPORTAÇÃO DA NOVA PÁGINA
+import TarefasPage from './pages/TarefasPage'; // <<< NOVO IMPORT
 import FinanceiroPage from './pages/FinanceiroPage';
 import DocumentosPage from './pages/DocumentosPage';
 import RelatoriosPage from './pages/RelatoriosPage';
@@ -29,7 +29,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
 
 function App() {
-  console.log("Componente App renderizado!"); // Adicione este log
   return (
     <Routes>
       {/* Rotas públicas */}
@@ -64,7 +63,7 @@ function App() {
           <Route path="/meus-processos" element={<MeusProcessosPage />} />
           <Route path="/clientes" element={<ClientesPage />} />
           <Route path="/agenda" element={<AgendaPage />} />
-          <Route path="/tarefas" element={<TarefasPage />} /> {/* <<< ROTA PARA TAREFAS ADICIONADA */}
+          <Route path="/tarefas" element={<TarefasPage />} /> {/* <<< NOVA ROTA ADICIONADA */}
           <Route path="/financeiro" element={<FinanceiroPage />} />
           <Route path="/documentos" element={<DocumentosPage />} />
           <Route path="/relatorios" element={<RelatoriosPage />} />
