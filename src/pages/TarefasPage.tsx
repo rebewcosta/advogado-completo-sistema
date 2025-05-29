@@ -30,22 +30,26 @@ const TarefasPage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [tarefaParaForm, setTarefaParaForm] = useState<Partial<TarefaFormData> & { id?: string } | null>(null);
 
-  const filteredTarefas = tarefas.filter(tarefa =>
-    (tarefa.titulo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (tarefa.descricao_detalhada || '').toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filtrar tarefas com verificação de segurança
+  const filteredTarefas = (tarefas || []).filter(tarefa => {
+    if (!tarefa) return false;
+    const titulo = tarefa.titulo || '';
+    const descricao = tarefa.descricao_detalhada || '';
+    return titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           descricao.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
-  const handleOpenForm = (tarefaToEdit?: any) => {
+  const handleOpenForm = (tarefaToEdit?: TarefaComRelacoes) => {
     if (tarefaToEdit && typeof tarefaToEdit === 'object' && 'id' in tarefaToEdit) {
       const formData: Partial<TarefaFormData> & { id: string } = {
         id: tarefaToEdit.id,
-        titulo: tarefaToEdit.titulo,
-        descricao: tarefaToEdit.descricao_detalhada,
+        titulo: tarefaToEdit.titulo || '',
+        descricao: tarefaToEdit.descricao_detalhada || '',
         data_conclusao: tarefaToEdit.data_conclusao ? format(parseISO(tarefaToEdit.data_conclusao), 'yyyy-MM-dd') : undefined,
-        prioridade: tarefaToEdit.prioridade as TarefaFormData['prioridade'],
-        status: tarefaToEdit.status as TarefaFormData['status'],
-        processo_id: tarefaToEdit.processo_id,
-        cliente_id: tarefaToEdit.cliente_id,
+        prioridade: (tarefaToEdit.prioridade as TarefaFormData['prioridade']) || 'Média',
+        status: (tarefaToEdit.status as TarefaFormData['status']) || 'Pendente',
+        processo_id: tarefaToEdit.processo_id || undefined,
+        cliente_id: tarefaToEdit.cliente_id || undefined,
       };
       setTarefaParaForm(formData);
     } else {
@@ -72,31 +76,38 @@ const TarefasPage = () => {
   };
 
   const handleToggleStatusTarefa = async (tarefa: TarefaComRelacoes) => {
+    if (!tarefa || !tarefa.status) {
+      console.error('Tarefa inválida para alteração de status:', tarefa);
+      return;
+    }
+    
     const statusOrder: TarefaFormData['status'][] = ['Pendente', 'Em Andamento', 'Concluída', 'Cancelada'];
-    const currentIndex = statusOrder.indexOf(tarefa.status);
+    const currentIndex = statusOrder.indexOf(tarefa.status as any);
     const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
     await toggleStatusTarefa(tarefa as any, nextStatus);
   };
 
-  // Convert tarefas to TarefaComRelacoes format for components
-  const tarefasComRelacoes: TarefaComRelacoes[] = filteredTarefas.map(tarefa => ({
-    id: tarefa.id,
-    titulo: tarefa.titulo,
-    descricao_detalhada: tarefa.descricao_detalhada,
-    status: tarefa.status as any,
-    prioridade: tarefa.prioridade as any,
-    data_vencimento: tarefa.data_vencimento,
-    data_conclusao: tarefa.data_conclusao,
-    cliente_id: tarefa.cliente_id,
-    processo_id: tarefa.processo_id,
-    user_id: tarefa.user_id,
-    created_at: tarefa.created_at,
-    updated_at: tarefa.updated_at,
-    processos: tarefa.processos,
-    clientes: tarefa.clientes,
-  }));
+  // Convert tarefas to TarefaComRelacoes format for components com verificação de segurança
+  const tarefasComRelacoes: TarefaComRelacoes[] = filteredTarefas
+    .filter(tarefa => tarefa && tarefa.id) // Filtrar tarefas inválidas
+    .map(tarefa => ({
+      id: tarefa.id,
+      titulo: tarefa.titulo || '',
+      descricao_detalhada: tarefa.descricao_detalhada || '',
+      status: (tarefa.status as any) || 'Pendente',
+      prioridade: (tarefa.prioridade as any) || 'Média',
+      data_vencimento: tarefa.data_vencimento || null,
+      data_conclusao: tarefa.data_conclusao || null,
+      cliente_id: tarefa.cliente_id || null,
+      processo_id: tarefa.processo_id || null,
+      user_id: tarefa.user_id || '',
+      created_at: tarefa.created_at || '',
+      updated_at: tarefa.updated_at || '',
+      processos: tarefa.processos || null,
+      clientes: tarefa.clientes || null,
+    }));
 
-  if (isLoading && tarefas.length === 0) {
+  if (isLoading && (!tarefas || tarefas.length === 0)) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -151,8 +162,8 @@ const TarefasPage = () => {
           onClose={handleCloseForm}
           onSave={handleSaveTarefa}
           tarefaParaForm={tarefaParaForm}
-          processos={processosDoUsuario}
-          clientes={clientesDoUsuario}
+          processos={processosDoUsuario || []}
+          clientes={clientesDoUsuario || []}
           isLoadingDropdownData={isLoadingDropdownData}
           isSubmitting={isSubmitting}
         />
