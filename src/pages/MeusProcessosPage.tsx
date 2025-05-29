@@ -5,14 +5,14 @@ import AdminLayout from '@/components/AdminLayout';
 import { useProcessesStore, ProcessoComCliente } from '@/stores/useProcessesStore';
 import ProcessSearchActionBar from '@/components/processos/ProcessSearchActionBar';
 import ProcessListAsCards from '@/components/processos/ProcessListAsCards';
+import MeusProcessosTable from '@/components/processos/MeusProcessosTable'; // <<< IMPORTAR A NOVA TABELA
 import ProcessDialogs from '@/components/processos/ProcessDialogs';
 import type { Database } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from '@/components/ui/spinner';
 import { FileText, Plus } from 'lucide-react';
-// AJUSTE AQUI: Adicionando CardContent à importação do Card
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'; 
+import { Card, CardContent } from '@/components/ui/card'; 
 import { Button } from '@/components/ui/button';
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
@@ -156,14 +156,14 @@ const MeusProcessosPage = () => {
 
   const handleManualRefresh = async () => {
     setIsRefreshingManually(true);
-    await fetchProcesses();
+    await fetchProcesses(); // fetchProcesses já está no useProcessesStore
     setIsRefreshingManually(false);
     toast({title: "Lista de processos atualizada!"});
   };
   
-  const isLoading = isLoadingProcessesStore || isRefreshingManually;
+  const isLoadingCombined = isLoadingProcessesStore || isRefreshingManually || isSubmitting;
 
-  if (isLoading && !processes.length && !isRefreshingManually) {
+  if (isLoadingCombined && !processes.length && !isRefreshingManually) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -194,26 +194,39 @@ const MeusProcessosPage = () => {
         </div>
 
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
-            {/* A linha com erro era CardContent, que é usada aqui */}
             <CardContent className="p-4"> 
                 <ProcessSearchActionBar
                 searchTerm={searchTerm}
                 onSearchChange={handleSearchChange}
-                onRefresh={handleManualRefresh}
-                isRefreshing={isLoading}
+                onRefresh={handleManualRefresh} // Alterado para usar a função do useProcessesStore
+                isRefreshing={isLoadingCombined} // Usar o estado combinado
                 />
             </CardContent>
         </Card>
         
-        <ProcessListAsCards
-          processes={filteredProcesses}
-          onEdit={handleEditProcess}
-          onView={handleViewProcess}
-          onToggleStatus={handleToggleStatus}
-          onDelete={handleDeleteProcess}
-          isLoading={isLoading}
-          searchTerm={searchTerm}
-        />
+        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
+        <div className="hidden md:block">
+          <MeusProcessosTable
+            processes={filteredProcesses}
+            onEdit={handleEditProcess}
+            onView={handleViewProcess}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteProcess}
+            isLoading={isLoadingCombined}
+            searchTerm={searchTerm}
+          />
+        </div>
+        <div className="md:hidden">
+          <ProcessListAsCards
+            processes={filteredProcesses}
+            onEdit={handleEditProcess}
+            onView={handleViewProcess}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteProcess}
+            isLoading={isLoadingCombined}
+            searchTerm={searchTerm}
+          />
+        </div>
 
         <ProcessDialogs
           formDialogOpen={formDialogOpen}
@@ -229,8 +242,8 @@ const MeusProcessosPage = () => {
             setDetailsDialogOpen(open);
           }}
           onSaveProcess={handleSaveProcess}
-          onEditProcess={(id) => { // Alterado para receber id diretamente se necessário, ou manter o objeto
-            const processToEdit = getProcessById(id); // Ou use o objeto 'processo' diretamente se preferir
+          onEditProcess={(id) => { 
+            const processToEdit = getProcessById(id); 
             if (processToEdit) handleEditProcess(processToEdit as ProcessoComCliente);
           }}
           clientesDoUsuario={userClients}

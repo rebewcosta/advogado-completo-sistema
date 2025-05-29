@@ -3,16 +3,16 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import DocumentoWarning from '@/components/DocumentoWarning';
 import DocumentoStorageInfo from '@/components/DocumentoStorageInfo';
-// Removido DocumentHeader pois o cabeçalho será refeito aqui
 import DocumentSearchBar from '@/components/documentos/DocumentSearchBar';
-import DocumentListAsCards from '@/components/documentos/DocumentListAsCards'; // <<< NOVO COMPONENTE DE LISTA
+import DocumentListAsCards from '@/components/documentos/DocumentListAsCards';
+import DocumentTable from '@/components/documentos/DocumentTable'; // <<< IMPORTAR A NOVA TABELA
 import DocumentUploadDialog from '@/components/documentos/DocumentUploadDialog';
 import DocumentError from '@/components/documentos/DocumentError';
 import LowStorageWarning from '@/components/documentos/LowStorageWarning';
 import { useDocumentos } from '@/hooks/useDocumentos';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileArchive, Plus, Upload } from 'lucide-react'; // Ícone para o cabeçalho e botão
+import { FileArchive, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -35,13 +35,11 @@ const DocumentosPage = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Não precisa de setIsLoading(true) aqui, useDocumentos já lida com isso
         await listarDocumentos();
         await calcularEspacoDisponivel();
       } catch (err) {
         console.error('Erro inicial ao carregar documentos na DocumentosPage:', err);
       }
-      // setIsLoading(false) também é tratado por useDocumentos
     };
     
     fetchData();
@@ -72,7 +70,7 @@ const DocumentosPage = () => {
   
   const isLoadingCombined = isLoading || isRefreshing;
 
-  if (isLoading && documents.length === 0 && !isRefreshing) {
+  if (isLoadingCombined && documents.length === 0 && !isRefreshing) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -86,7 +84,6 @@ const DocumentosPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        {/* Cabeçalho da Página */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
@@ -110,7 +107,6 @@ const DocumentosPage = () => {
         <DocumentoWarning />
         <DocumentoStorageInfo />
         
-        {/* Card para Barra de Ações */}
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
             <CardContent className="p-4">
                  <DocumentSearchBar 
@@ -119,22 +115,36 @@ const DocumentosPage = () => {
                     filterType={filterType}
                     setFilterType={setFilterType}
                     handleRefresh={handleRefresh}
-                    isRefreshing={isRefreshing} // Passando o isRefreshing correto
+                    isRefreshing={isRefreshing}
                 />
             </CardContent>
         </Card>
 
         <DocumentError error={error} /> 
         
-        <DocumentListAsCards
-            documents={filteredDocuments}
-            isLoading={isLoadingCombined} // Passando o estado de loading principal
-            searchTerm={searchTerm}
-            filterType={filterType}
-            onRefresh={handleRefresh} // Passar a função de refresh
-            onUploadClick={() => setIsUploadDialogOpen(true)} // Para o botão dentro da lista vazia
-            error={error} // Para exibir erro dentro da lista, se necessário
-        />
+        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
+        <div className="hidden md:block">
+            <DocumentTable
+                documents={filteredDocuments}
+                isLoading={isLoadingCombined}
+                searchTerm={searchTerm}
+                filterType={filterType}
+                onRefresh={handleRefresh}
+                onUploadClick={() => setIsUploadDialogOpen(true)}
+                error={error}
+            />
+        </div>
+        <div className="md:hidden">
+            <DocumentListAsCards
+                documents={filteredDocuments}
+                isLoading={isLoadingCombined}
+                searchTerm={searchTerm}
+                filterType={filterType}
+                onRefresh={handleRefresh}
+                onUploadClick={() => setIsUploadDialogOpen(true)}
+                error={error}
+            />
+        </div>
         
         <LowStorageWarning espacoDisponivel={espacoDisponivel} />
       </div>

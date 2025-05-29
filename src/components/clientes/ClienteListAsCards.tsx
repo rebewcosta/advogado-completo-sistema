@@ -2,10 +2,10 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, MoreVertical, ExternalLink, Circle, Trash2, User as UserIcon, Users, Mail, Phone } from 'lucide-react';
+import { Edit, MoreVertical, ExternalLink, Circle, Trash2, User as UserIcon, Users, Mail, Phone, Building } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Spinner } from '@/components/ui/spinner';
-import { cn } from '@/lib/utils';
+import { cn } from "@/lib/utils";
 import { Card } from '@/components/ui/card';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -48,22 +48,25 @@ const ClienteListAsCards: React.FC<ClienteListAsCardsProps> = ({
     );
   }
 
+  // Definição das colunas para cabeçalho e itens do card.
+  // Adicionamos classes de largura e flex para garantir o alinhamento.
+  // O padding horizontal (px-4) é aplicado diretamente no cabeçalho e nos wrappers de conteúdo do card.
   const columnConfig = [
-    { id: 'nome', label: "Nome / CPF ou CNPJ", headerClass: "flex-1 min-w-0 px-4 text-left", itemClass: "flex-1 min-w-0 px-4 text-left" },
-    { id: 'contato', label: "Contato", headerClass: "w-4/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-4/12 min-w-0 px-4 text-left" },
-    { id: 'tipo', label: "Tipo", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0 px-4 text-left hidden md:block" },
-    { id: 'status', label: "Status", headerClass: "w-[130px] flex-shrink-0 px-4 text-left flex items-center", itemClass: "w-full md:w-[130px] flex-shrink-0 px-4 text-left" },
-    { id: 'acoes', label: "Ações", headerClass: "w-[80px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[80px] flex-shrink-0 flex justify-start md:justify-end items-start" }
+    { id: 'nome', label: "Nome / Documento", baseClass: "flex-1 min-w-0", mdWidthClass: "md:flex-1" },
+    { id: 'contato', label: "Contato", baseClass: "w-full md:w-4/12 min-w-0", mdWidthClass: "md:w-4/12" },
+    { id: 'tipo', label: "Tipo", baseClass: "w-full md:w-2/12 min-w-0", mdWidthClass: "md:w-2/12" },
+    { id: 'status', label: "Status", baseClass: "w-full md:w-[130px] flex-shrink-0", mdWidthClass: "md:w-[130px]" },
+    { id: 'acoes', label: "Ações", baseClass: "w-full md:w-[80px] flex-shrink-0 flex justify-end items-center", mdWidthClass: "md:w-[80px] md:justify-end" }
   ];
 
   return (
     <div className="mt-2">
       {clients.length > 0 && (
         <div className={cn(
-            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md sticky top-0 z-10 items-center"
+            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md items-center px-3 md:px-4" // Adicionado padding aqui
         )}>
           {columnConfig.map(col => (
-            <div key={col.id} className={cn(col.headerClass, "text-xs font-bold uppercase tracking-wider")}>
+            <div key={col.id} className={cn("text-xs font-bold uppercase tracking-wider text-left", col.baseClass, col.mdWidthClass)}> {/* Adicionado text-left */}
               {col.label}
             </div>
           ))}
@@ -76,10 +79,10 @@ const ClienteListAsCards: React.FC<ClienteListAsCardsProps> = ({
             const statusStyle = getStatusStyles(client.status_cliente);
             return (
               <Card key={client.id} className="bg-white shadow-md hover:shadow-lg transition-shadow rounded-lg border border-gray-200/80 overflow-hidden">
-                <div className={cn("p-3 md:py-2 md:flex md:flex-row md:items-start")}>
+                <div className={cn("p-3 md:p-0 md:flex md:flex-row md:items-start")}>
                   
-                  {/* Nome / CPF ou CNPJ */}
-                  <div className={cn(columnConfig[0].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  {/* Nome / Documento */}
+                  <div className={cn(columnConfig[0].baseClass, columnConfig[0].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[0].label}</div>
                     <div className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer break-words" onClick={() => onView(client)}>
                         {client.nome}
@@ -88,24 +91,27 @@ const ClienteListAsCards: React.FC<ClienteListAsCardsProps> = ({
                   </div>
 
                   {/* Contato (Email/Telefone) */}
-                  <div className={cn(columnConfig[1].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[1].baseClass, columnConfig[1].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[1].label}</div>
                     <div className="text-xs text-gray-700 break-words flex items-center mb-0.5">
-                        <Mail className="h-3 w-3 mr-1.5 text-gray-400"/> {client.email || '-'}
+                        <Mail className="h-3 w-3 mr-1.5 text-gray-400 flex-shrink-0"/> {client.email || '-'}
                     </div>
                     <div className="text-xs text-gray-700 break-words flex items-center">
-                        <Phone className="h-3 w-3 mr-1.5 text-gray-400"/> {client.telefone || '-'}
+                        <Phone className="h-3 w-3 mr-1.5 text-gray-400 flex-shrink-0"/> {client.telefone || '-'}
                     </div>
                   </div>
 
                   {/* Tipo Cliente */}
-                  <div className={cn(columnConfig[2].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[2].baseClass, columnConfig[2].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[2].label}</div>
-                    <div className="text-sm text-gray-600 break-words">{client.tipo_cliente}</div>
+                    <div className="text-sm text-gray-600 break-words flex items-center">
+                        {client.tipo_cliente === "Pessoa Física" ? <UserIcon size={14} className="mr-1 text-gray-400"/> : <Building size={14} className="mr-1 text-gray-400"/>}
+                        {client.tipo_cliente}
+                    </div>
                   </div>
                   
                   {/* Status */}
-                  <div className={cn(columnConfig[3].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[3].baseClass, columnConfig[3].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left")}>
                      <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[3].label}</div>
                     <Badge
                       variant="outline"
@@ -119,7 +125,7 @@ const ClienteListAsCards: React.FC<ClienteListAsCardsProps> = ({
                   </div>
 
                   {/* Ações */}
-                  <div className={cn(columnConfig[4].itemClass, "mt-3 md:mt-0 md:py-1")}>
+                  <div className={cn(columnConfig[4].baseClass, columnConfig[4].mdWidthClass, "px-3 md:px-4 py-2 md:py-3")}> {/* justify-end já está no baseClass */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
@@ -127,16 +133,16 @@ const ClienteListAsCards: React.FC<ClienteListAsCardsProps> = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-48 shadow-lg">
-                        <DropdownMenuItem onClick={() => onView(client)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
+                        <DropdownMenuItem onClick={() => onView(client)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100 text-left">
                           <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Ver Detalhes
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(client)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
+                        <DropdownMenuItem onClick={() => onEdit(client)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100 text-left">
                           <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Editar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-gray-200"/>
                         <DropdownMenuItem
                           onClick={() => onDelete(client.id)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2"
+                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 text-left"
                         >
                           <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
                         </DropdownMenuItem>

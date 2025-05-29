@@ -14,7 +14,6 @@ import type { Tarefa, StatusTarefa, PrioridadeTarefa } from '@/pages/TarefasPage
 interface TarefaListAsCardsProps {
   tarefas: Tarefa[];
   onEdit: (tarefa: Tarefa) => void;
-  // onView?: (tarefa: Tarefa) => void; // Se houver uma view de detalhes
   onDelete: (tarefaId: string) => void;
   onToggleStatus: (tarefa: Tarefa) => void;
   isLoading: boolean;
@@ -24,7 +23,6 @@ interface TarefaListAsCardsProps {
 const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
   tarefas,
   onEdit,
-  // onView,
   onDelete,
   onToggleStatus,
   isLoading,
@@ -34,7 +32,7 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
   const formatDateString = (dateString: string | null | undefined, withRelative = false) => {
     if (!dateString) return <span className="text-xs text-gray-500">-</span>;
     try {
-        const dateToParse = dateString.includes('T') ? dateString : dateString + 'T00:00:00Z'; // Garante que é ISO com timezone Z se não tiver T
+        const dateToParse = dateString.includes('T') ? dateString : dateString + 'T00:00:00Z';
         const date = parseISO(dateToParse);
         const formatted = format(date, "dd/MM/yy", { locale: ptBR });
 
@@ -69,7 +67,6 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
     }
   };
 
-
   if (isLoading && tarefas.length === 0) {
     return (
       <div className="text-center py-16 flex flex-col justify-center items-center h-64">
@@ -80,22 +77,22 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
   }
   
   const columnConfig = [
-    { id: 'titulo', label: "Título / Descrição", headerClass: "flex-1 min-w-0 px-4 text-left", itemClass: "flex-1 min-w-0 px-4 text-left" },
-    { id: 'status', label: "Status", headerClass: "w-[150px] flex-shrink-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-[150px] flex-shrink-0 px-4 text-left" },
-    { id: 'prioridade', label: "Prioridade", headerClass: "w-[110px] flex-shrink-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-[110px] flex-shrink-0 px-4 text-left hidden md:block" },
-    { id: 'vencimento', label: "Vencimento", headerClass: "w-[130px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[130px] flex-shrink-0 px-4 text-left hidden sm:block" },
-    { id: 'associado', label: "Associado a", headerClass: "w-2/12 min-w-0 px-4 text-left hidden lg:flex items-center", itemClass: "w-full md:w-2/12 min-w-0 px-4 text-left hidden lg:block" },
-    { id: 'acoes', label: "Ações", headerClass: "w-[80px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[80px] flex-shrink-0 flex justify-start md:justify-end items-start" }
+    { id: 'titulo', label: "Título / Descrição", baseClass: "flex-1 min-w-0", mdWidthClass: "md:flex-1" },
+    { id: 'status', label: "Status", baseClass: "w-full md:w-[150px] flex-shrink-0", mdWidthClass: "md:w-[150px]" },
+    { id: 'prioridade', label: "Prioridade", baseClass: "w-full md:w-[110px] flex-shrink-0", mdWidthClass: "md:w-[110px]" },
+    { id: 'vencimento', label: "Vencimento", baseClass: "w-full md:w-[130px] flex-shrink-0", mdWidthClass: "md:w-[130px]" },
+    { id: 'associado', label: "Associado a", baseClass: "w-full md:w-2/12 min-w-0", mdWidthClass: "md:w-2/12" },
+    { id: 'acoes', label: "Ações", baseClass: "w-full md:w-[80px] flex-shrink-0 flex justify-end items-center", mdWidthClass: "md:w-[80px] md:justify-end" }
   ];
 
   return (
     <div className="mt-2">
       {tarefas.length > 0 && (
         <div className={cn(
-            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md sticky top-0 z-10 items-center"
+            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md items-center px-3 md:px-4"
         )}>
           {columnConfig.map(col => (
-            <div key={col.id} className={cn(col.headerClass, "text-xs font-bold uppercase tracking-wider")}>
+            <div key={col.id} className={cn("text-xs font-bold uppercase tracking-wider text-left", col.baseClass, col.mdWidthClass)}>
               {col.label}
             </div>
           ))}
@@ -109,12 +106,11 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
             const priorityInfo = getPriorityBadgeInfo(tarefa.prioridade as PrioridadeTarefa);
             return (
               <Card key={tarefa.id} className="bg-white shadow-md hover:shadow-lg transition-shadow rounded-lg border border-gray-200/80 overflow-hidden">
-                <div className={cn("p-3 md:py-2 md:flex md:flex-row md:items-start")}>
+                <div className={cn("p-3 md:p-0 md:flex md:flex-row md:items-start")}>
                   
-                  {/* Título / Descrição */}
-                  <div className={cn(columnConfig[0].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[0].baseClass, columnConfig[0].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[0].label}</div>
-                    <div className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer break-words" onClick={() => onEdit(tarefa)}> {/* Clicar no título abre edição */}
+                    <div className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer break-words" onClick={() => onEdit(tarefa)}>
                         {tarefa.titulo}
                     </div>
                     {tarefa.descricao_detalhada && (
@@ -124,8 +120,7 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
                     )}
                   </div>
 
-                  {/* Status */}
-                  <div className={cn(columnConfig[1].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[1].baseClass, columnConfig[1].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left")}>
                      <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[1].label}</div>
                     <Badge
                       variant="outline"
@@ -138,16 +133,14 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
                     </Badge>
                   </div>
 
-                  {/* Prioridade */}
-                  <div className={cn(columnConfig[2].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[2].baseClass, columnConfig[2].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[2].label}</div>
-                    <Badge variant="outline" className={cn("text-xs py-0.5 px-2 font-medium rounded-full w-max", priorityInfo.className)}>
+                    <Badge variant="outline" className={cn("text-xs py-0.5 px-2 font-medium rounded-full w-max capitalize", priorityInfo.className)}>
                         {priorityInfo.label}
                     </Badge>
                   </div>
                   
-                  {/* Vencimento */}
-                  <div className={cn(columnConfig[3].itemClass, "text-sm md:py-2 mb-2 md:mb-0", 
+                  <div className={cn(columnConfig[3].baseClass, columnConfig[3].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left", 
                       tarefa.data_vencimento && isPast(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && !isToday(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && tarefa.status !== 'Concluída' && "font-bold",
                       tarefa.data_vencimento && isToday(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && tarefa.status !== 'Concluída' && "font-bold"
                     )}>
@@ -155,17 +148,15 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
                     {formatDateString(tarefa.data_vencimento, true)}
                   </div>
 
-                  {/* Associado a */}
-                  <div className={cn(columnConfig[4].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[4].baseClass, columnConfig[4].mdWidthClass, "px-3 md:px-4 py-2 md:py-3 text-left")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[4].label}</div>
                     <div className="text-xs text-gray-700 break-words">
-                        {tarefa.clientes?.nome ? <span className="flex items-center"><User size={12} className="mr-1 text-gray-400"/> {tarefa.clientes.nome}</span> : 
-                         tarefa.processos?.numero_processo ? <span className="flex items-center"><Briefcase size={12} className="mr-1 text-gray-400"/> {tarefa.processos.numero_processo}</span> : '-'}
+                        {tarefa.clientes?.nome ? <span className="flex items-center"><User size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {tarefa.clientes.nome}</span> : 
+                         tarefa.processos?.numero_processo ? <span className="flex items-center"><Briefcase size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {tarefa.processos.numero_processo}</span> : <span className="italic text-gray-400">Nenhum</span>}
                     </div>
                   </div>
 
-                  {/* Ações */}
-                  <div className={cn(columnConfig[5].itemClass, "mt-3 md:mt-0 md:py-1")}>
+                  <div className={cn(columnConfig[5].baseClass, columnConfig[5].mdWidthClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
@@ -173,13 +164,13 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40 shadow-lg">
-                        <DropdownMenuItem onClick={() => onEdit(tarefa)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
+                        <DropdownMenuItem onClick={() => onEdit(tarefa)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100 text-left">
                           <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Editar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-gray-200"/>
                         <DropdownMenuItem
                           onClick={() => onDelete(tarefa.id)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2"
+                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 text-left"
                         >
                           <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
                         </DropdownMenuItem>

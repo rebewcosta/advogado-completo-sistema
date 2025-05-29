@@ -13,13 +13,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-    DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import AdminLayout from '@/components/AdminLayout';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,7 +20,8 @@ import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
-import ClienteListAsCards from '@/components/clientes/ClienteListAsCards'; // <<< NOVO COMPONENTE DE LISTA
+import ClienteListAsCards from '@/components/clientes/ClienteListAsCards';
+import ClienteTable from '@/components/clientes/ClienteTable'; // <<< IMPORTAR A NOVA TABELA
 
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 
@@ -243,13 +237,13 @@ const ClientesPage = () => {
     setSelectedClient({ ...client, ...formDataForEdit });
     setIsEditing(true);
     setShowForm(true);
-    setShowClientDetails(false); // Fechar detalhes se estiver aberto
+    setShowClientDetails(false); 
   };
 
   const handleViewClient = (client: Cliente) => {
     setSelectedClient(client);
     setShowClientDetails(true);
-    setShowForm(false); // Fechar form se estiver aberto
+    setShowForm(false); 
   };
 
   const handleToggleStatus = async (clientToToggle: Cliente) => {
@@ -306,10 +300,12 @@ const ClientesPage = () => {
   };
   
   const handleManualRefresh = () => {
-    fetchClients(true); // Passa true para mostrar o spinner de carregamento
+    fetchClients(true);
   };
 
-  if (isLoading && !clients.length && !isRefreshingManually) {
+  const isLoadingCombined = isLoading || isSubmitting || isRefreshingManually;
+
+  if (isLoadingCombined && !clients.length && !isRefreshingManually) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -323,7 +319,6 @@ const ClientesPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        {/* Cabeçalho da Página */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
@@ -340,7 +335,6 @@ const ClientesPage = () => {
             </Button>
         </div>
         
-        {/* Card para Barra de Ações */}
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
             <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -358,25 +352,40 @@ const ClientesPage = () => {
                         onClick={handleManualRefresh} 
                         variant="outline" 
                         size="sm" 
-                        disabled={isRefreshingManually || isLoading} 
+                        disabled={isLoadingCombined} 
                         className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg"
                     >
-                        <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRefreshingManually ? 'animate-spin' : ''}`} />
-                        {isRefreshingManually ? 'Atualizando...' : 'Atualizar Lista'}
+                        <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoadingCombined ? 'animate-spin' : ''}`} />
+                        {isLoadingCombined ? 'Atualizando...' : 'Atualizar Lista'}
                     </Button>
                 </div>
             </CardContent>
         </Card>
 
-        <ClienteListAsCards
-          clients={filteredClients}
-          onEdit={handleEditClient}
-          onView={handleViewClient}
-          onToggleStatus={handleToggleStatus}
-          onDelete={handleDeleteClient}
-          isLoading={isLoading || isSubmitting} // Passa um loading combinado
-          searchTerm={searchTerm}
-        />
+        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
+        <div className="hidden md:block"> {/* Visível em md e acima */}
+          <ClienteTable
+            clients={filteredClients}
+            onEdit={handleEditClient}
+            onView={handleViewClient}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteClient}
+            isLoading={isLoadingCombined}
+            searchTerm={searchTerm}
+          />
+        </div>
+        <div className="md:hidden"> {/* Visível abaixo de md */}
+          <ClienteListAsCards
+            clients={filteredClients}
+            onEdit={handleEditClient}
+            onView={handleViewClient}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDeleteClient}
+            isLoading={isLoadingCombined}
+            searchTerm={searchTerm}
+          />
+        </div>
+
 
         <Dialog open={showForm} onOpenChange={(open) => {
           if (!open) {
@@ -385,7 +394,7 @@ const ClientesPage = () => {
           }
           setShowForm(open);
         }}>
-          <DialogContent className="max-w-2xl p-0 overflow-auto max-h-[90vh]">
+          <DialogContent className="p-0 max-w-2xl overflow-auto max-h-[90vh] flex flex-col">
             <ClienteForm
               onSave={handleSaveClient}
               onCancel={() => { setShowForm(false); setSelectedClient(null); setIsEditing(false); }}
@@ -399,10 +408,10 @@ const ClientesPage = () => {
           <DialogContent className="p-0 max-w-lg md:max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
             {selectedClient && (
               <>
-                <DialogHeader className="p-4 border-b">
+                <DialogHeader className="p-4 pb-3 border-b sticky top-0 bg-white z-10">
                   <div className="flex justify-between items-center">
                     <DialogTitle className="text-lg font-semibold">{selectedClient.nome}</DialogTitle>
-                    <Button variant="ghost" size="icon" onClick={() => setShowClientDetails(false)} className="h-7 w-7 text-gray-500 hover:text-gray-700">
+                    <Button variant="ghost" size="icon" onClick={() => setShowClientDetails(false)} className="h-7 w-7 text-gray-500 hover:text-gray-700 -mr-2 -mt-1">
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
@@ -410,7 +419,7 @@ const ClientesPage = () => {
                     Detalhes do cliente.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="p-4 space-y-2 text-sm text-gray-700 overflow-y-auto flex-grow">
+                <div className="p-4 space-y-3 text-sm text-gray-700 overflow-y-auto flex-grow">
                   <p><strong>Email:</strong> {selectedClient.email || 'N/A'}</p>
                   <p><strong>Telefone:</strong> {selectedClient.telefone || 'N/A'}</p>
                   <p><strong>Tipo:</strong> {selectedClient.tipo_cliente}</p>
@@ -430,7 +439,7 @@ const ClientesPage = () => {
                   <p><strong>Observações:</strong> {selectedClient.observacoes || 'Nenhuma'}</p>
                   <p><strong>Cadastrado em:</strong> {new Date(selectedClient.created_at).toLocaleDateString('pt-BR')}</p>
                 </div>
-                <DialogFooter className="p-4 border-t flex-shrink-0">
+                <DialogFooter className="p-4 border-t flex-shrink-0 sticky bottom-0 bg-white z-10">
                   <Button variant="outline" onClick={() => {
                     setShowClientDetails(false);
                     handleEditClient(selectedClient);

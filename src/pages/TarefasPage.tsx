@@ -11,11 +11,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
-import { ListChecks, Plus, Search, Edit, Trash2, MoreVertical, RefreshCw } from 'lucide-react'; // Removido ExternalLink pois não é usado diretamente aqui
+import { ListChecks, Plus, Search, RefreshCw } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import { Card, CardContent } from '@/components/ui/card'; // Removido CardHeader, CardTitle, CardDescription
+import { Card, CardContent } from '@/components/ui/card';
 import TarefaForm, { TarefaFormData } from '@/components/tarefas/TarefaForm';
-import TarefaListAsCards from '@/components/tarefas/TarefaListAsCards'; // <<< NOVO COMPONENTE DE LISTA
+import TarefaListAsCards from '@/components/tarefas/TarefaListAsCards';
+import TarefaTable from '@/components/tarefas/TarefaTable'; // <<< IMPORTAR A NOVA TABELA
 
 export type Tarefa = Database['public']['Tables']['tarefas']['Row'] & {
     clientes?: { id: string; nome: string } | null;
@@ -117,7 +118,7 @@ const TarefasPage = () => {
         return;
     }
     setIsSubmitting(true);
-    const dataVencimentoFinal = formData.data_vencimento; // Não precisa mais de parse aqui, já vem como string yyyy-MM-dd ou null
+    const dataVencimentoFinal = formData.data_vencimento;
     
     const dadosParaSalvar = {
       titulo: formData.titulo,
@@ -207,7 +208,7 @@ const TarefasPage = () => {
   
   const isLoadingCombined = isLoading || isSubmitting || isRefreshingManually;
 
-  if (isLoading && !tarefas.length && !isRefreshingManually) { // Condição para mostrar spinner de carregamento inicial
+  if (isLoadingCombined && !tarefas.length && !isRefreshingManually) { 
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -221,7 +222,6 @@ const TarefasPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        {/* Cabeçalho da Página */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
@@ -238,7 +238,6 @@ const TarefasPage = () => {
             </Button>
         </div>
 
-        {/* Card para Barra de Ações */}
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
             <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -266,14 +265,27 @@ const TarefasPage = () => {
             </CardContent>
         </Card>
         
-        <TarefaListAsCards
-          tarefas={filteredTarefas}
-          onEdit={handleOpenForm}
-          onDelete={handleDeleteTarefa}
-          onToggleStatus={handleToggleStatus}
-          isLoading={isLoadingCombined}
-          searchTerm={searchTerm}
-        />
+        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
+        <div className="hidden md:block">
+            <TarefaTable
+                tarefas={filteredTarefas}
+                onEdit={handleOpenForm}
+                onDelete={handleDeleteTarefa}
+                onToggleStatus={handleToggleStatus}
+                isLoading={isLoadingCombined}
+                searchTerm={searchTerm}
+            />
+        </div>
+        <div className="md:hidden">
+            <TarefaListAsCards
+                tarefas={filteredTarefas}
+                onEdit={handleOpenForm}
+                onDelete={handleDeleteTarefa}
+                onToggleStatus={handleToggleStatus}
+                isLoading={isLoadingCombined}
+                searchTerm={searchTerm}
+            />
+        </div>
         
         <Dialog open={isFormOpen} onOpenChange={(open) => {
             if(!open) {
@@ -284,7 +296,7 @@ const TarefasPage = () => {
         }}>
           <DialogContent className="p-0 max-w-lg md:max-w-xl overflow-hidden max-h-[90vh] flex flex-col">
              <TarefaForm
-                key={tarefaSelecionada ? tarefaSelecionada.id : 'new-tarefa-key'} // Chave para resetar estado
+                key={tarefaSelecionada ? tarefaSelecionada.id : 'new-tarefa-key'}
                 onSave={handleSaveTarefa}
                 onCancel={() => {
                     setIsFormOpen(false);

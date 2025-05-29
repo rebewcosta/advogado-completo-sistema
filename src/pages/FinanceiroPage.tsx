@@ -14,7 +14,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import TransacaoListAsCards from '@/components/financeiro/TransacaoListAsCards'; // <<< NOVO COMPONENTE DE LISTA
+import TransacaoListAsCards from '@/components/financeiro/TransacaoListAsCards';
+import TransacaoTable from '@/components/financeiro/TransacaoTable'; // <<< IMPORTAR A NOVA TABELA
 import type { Database } from '@/integrations/supabase/types';
 
 type TransacaoSupabase = Database['public']['Tables']['transacoes_financeiras']['Row'];
@@ -147,10 +148,10 @@ const FinanceiroPage = () => {
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    if (!user) return;
+    if (!user || isLoadingTransactions) return; // Evitar múltiplas submissões
     const transactionToDelete = transactions.find(t => t.id === id);
     if (transactionToDelete && window.confirm("Tem certeza que deseja excluir esta transação?")) {
-      setIsLoadingTransactions(true); // Reutilizar isLoadingTransactions para feedback
+      setIsLoadingTransactions(true);
       try {
         const { error } = await supabase
           .from('transacoes_financeiras')
@@ -160,7 +161,7 @@ const FinanceiroPage = () => {
 
         if (error) throw error;
         
-        setTransactions(prev => prev.filter(transaction => transaction.id !== id));
+        fetchTransactions(false); // Rebusca sem spinner principal
         toast({
           title: "Transação excluída",
           description: "A transação foi removida com sucesso.",
@@ -179,11 +180,11 @@ const FinanceiroPage = () => {
 
   const handleAddOrUpdateTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!user) {
-        toast({ title: "Usuário não autenticado", variant: "destructive" });
+    if (!user || isLoadingTransactions) {
+        toast({ title: "Aguarde ou usuário não autenticado", variant: "destructive" });
         return;
     }
-    setIsLoadingTransactions(true); // Reutilizar isLoadingTransactions
+    setIsLoadingTransactions(true);
     const formData = new FormData(e.target as HTMLFormElement);
     const formValues = Object.fromEntries(formData.entries()) as { [key: string]: string };
 
@@ -208,10 +209,7 @@ const FinanceiroPage = () => {
           .single();
         
         if (error) throw error;
-        
-        fetchTransactions(false); // Rebusca sem spinner principal
         toast({ title: "Transação atualizada", description: "Os dados da transação foram atualizados." });
-
       } else {
         const { data: insertedData, error } = await supabase
           .from('transacoes_financeiras')
@@ -220,10 +218,9 @@ const FinanceiroPage = () => {
           .single();
         
         if (error) throw error;
-
-        fetchTransactions(false); // Rebusca sem spinner principal
         toast({ title: "Transação adicionada", description: "A nova transação foi registrada." });
       }
+      fetchTransactions(false);
       setIsModalOpen(false);
       setCurrentTransaction(null);
       (e.target as HTMLFormElement).reset();
@@ -239,7 +236,7 @@ const FinanceiroPage = () => {
   };
   
   const handleManualRefresh = () => {
-    fetchTransactions(true); // Passa true para mostrar o spinner de carregamento
+    fetchTransactions(true);
   };
 
   const isLoadingCombined = isLoadingAccess || isLoadingTransactions || isRefreshingManually;
@@ -282,7 +279,6 @@ const FinanceiroPage = () => {
   return (
     <AdminLayout>
       <main className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        {/* Cabeçalho da Página */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
             <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
@@ -312,7 +308,6 @@ const FinanceiroPage = () => {
             </Alert>
         )}
           
-          {/* Cards de Resumo */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
             <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -326,7 +321,6 @@ const FinanceiroPage = () => {
                 </p>
               </CardContent>
             </Card>
-
             <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Despesas Totais</CardTitle>
@@ -339,7 +333,6 @@ const FinanceiroPage = () => {
                 </p>
               </CardContent>
             </Card>
-
             <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Saldo Atual</CardTitle>
@@ -352,7 +345,6 @@ const FinanceiroPage = () => {
                 <p className="text-xs text-gray-500 mt-1">Balanço geral</p>
               </CardContent>
             </Card>
-
             <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Contas a Receber</CardTitle>
@@ -367,7 +359,6 @@ const FinanceiroPage = () => {
             </Card>
           </div>
 
-        {/* Card para Barra de Ações de Listagem */}
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
             <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -401,18 +392,31 @@ const FinanceiroPage = () => {
             </CardContent>
         </Card>
           
-        <TransacaoListAsCards
-            transacoes={filteredTransactions}
-            onEdit={handleEditTransaction}
-            onDelete={handleDeleteTransaction}
-            isLoading={isLoadingCombined}
-            searchTerm={searchTerm}
-        />
+        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
+        <div className="hidden md:block">
+            <TransacaoTable
+                transacoes={filteredTransactions}
+                onEdit={handleEditTransaction}
+                onDelete={handleDeleteTransaction}
+                isLoading={isLoadingCombined}
+                searchTerm={searchTerm}
+            />
+        </div>
+        <div className="md:hidden">
+            <TransacaoListAsCards
+                transacoes={filteredTransactions}
+                onEdit={handleEditTransaction}
+                onDelete={handleDeleteTransaction}
+                isLoading={isLoadingCombined}
+                searchTerm={searchTerm}
+            />
+        </div>
+
 
           {isModalOpen && (
              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
               <Card className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
-                <CardHeader className="p-4 border-b">
+                <CardHeader className="p-4 border-b sticky top-0 bg-white z-10">
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-lg font-semibold text-gray-800">{currentTransaction ? 'Editar Transação' : 'Nova Transação'}</CardTitle>
                     <Button
@@ -422,7 +426,7 @@ const FinanceiroPage = () => {
                         setIsModalOpen(false);
                         setCurrentTransaction(null);
                         }}
-                        className="h-7 w-7 text-gray-500 hover:text-gray-700"
+                        className="h-7 w-7 text-gray-500 hover:text-gray-700 -mr-1 -mt-1"
                     >
                         <X className="h-5 w-5" />
                     </Button>
@@ -529,7 +533,7 @@ const FinanceiroPage = () => {
                       </div>
                     </div>
                   </CardContent>
-                   <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-gray-50">
+                   <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-gray-50 z-10">
                     <Button
                       type="button"
                       variant="outline"

@@ -2,13 +2,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIconLucide, Plus, CalendarDays, RefreshCw } from 'lucide-react'; // Adicionado RefreshCw
+import { Calendar as CalendarIconLucide, Plus, CalendarDays, RefreshCw } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Card, CardContent } from '@/components/ui/card'; // Removido CardHeader e CardTitle que não serão usados aqui diretamente.
+import { Card, CardContent } from '@/components/ui/card';
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from 'date-fns';
@@ -20,7 +20,9 @@ import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
 import { AgendaEventForm } from '@/components/AgendaEventForm';
 import { AgendaEventDetail } from '@/components/AgendaEventDetail';
-import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards'; // <<< NOVO COMPONENTE DE LISTA
+import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards';
+import AgendaEventTable from '@/components/agenda/AgendaEventTable'; // <<< IMPORTAR A NOVA TABELA
+
 
 export type EventoAgenda = Database['public']['Tables']['agenda_eventos']['Row'] & {
     clientes?: { id: string; nome: string } | null;
@@ -48,7 +50,7 @@ const AgendaPage = () => {
 
   const [events, setEvents] = useState<EventoAgenda[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false); // Para operações de save/delete
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -122,14 +124,13 @@ const AgendaPage = () => {
 
   useEffect(() => {
     if (user) {
-      fetchEvents(selectedDate); // Carrega eventos para a data selecionada inicialmente
-      fetchDropdownData(); // Carrega dados para os dropdowns do formulário
+      fetchEvents(selectedDate); 
+      fetchDropdownData(); 
     } else {
       setEvents([]);
-      setIsLoading(false); // Garante que o loading pare se não houver usuário
+      setIsLoading(false); 
     }
   }, [user, selectedDate, fetchEvents, fetchDropdownData]);
-
 
   const handleOpenForm = (eventToEdit?: EventoAgenda) => {
     if (eventToEdit) {
@@ -149,14 +150,13 @@ const AgendaPage = () => {
         setEventoParaForm(formData);
         setCurrentEvent(null);
     } else {
-        // Para novo evento, usa a data selecionada no calendário ou a data atual
         const initialDate = selectedDate || new Date();
         setEventoParaForm({ 
             data_hora_inicio: initialDate, 
             duracao_minutos: 60, 
             prioridade: 'média', 
             status_evento: 'Agendado',
-            tipo_evento: 'Reunião' // Valor padrão para tipo
+            tipo_evento: 'Reunião'
         });
         setCurrentEvent(null);
     }
@@ -202,7 +202,7 @@ const AgendaPage = () => {
             if (error) throw error;
             toast({ title: "Evento criado!", description: `O evento "${newEvent?.titulo}" foi adicionado à agenda.` });
         }
-        fetchEvents(selectedDate, false); // Rebusca sem mostrar spinner principal
+        fetchEvents(selectedDate, false);
         setIsFormOpen(false);
         setEventoParaForm(null);
     } catch (error: any) {
@@ -243,14 +243,12 @@ const AgendaPage = () => {
   };
   
   const handleManualRefresh = () => {
-    fetchEvents(selectedDate, true); // Passa true para mostrar o spinner de carregamento
+    fetchEvents(selectedDate, true); 
   };
-
 
   const isLoadingCombined = isLoading || isSubmitting || isRefreshingManually;
 
-
-  if (isLoading && events.length === 0 && !isRefreshingManually) {
+  if (isLoadingCombined && events.length === 0 && !isRefreshingManually) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -264,7 +262,6 @@ const AgendaPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        {/* Cabeçalho da Página */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
@@ -281,7 +278,6 @@ const AgendaPage = () => {
             </Button>
         </div>
         
-        {/* Card para Barra de Ações (Calendário Popover e Atualizar) */}
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
             <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -317,18 +313,32 @@ const AgendaPage = () => {
             </CardContent>
         </Card>
         
-        <AgendaEventListAsCards
-          events={events}
-          onEdit={handleOpenForm} // handleOpenForm já trata a edição
-          onView={handleViewDetails}
-          onDelete={handleDeleteEvent}
-          isLoading={isLoadingCombined}
-          selectedDate={selectedDate}
-        />
+        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
+        <div className="hidden md:block"> {/* Visível em md e acima */}
+            <AgendaEventTable
+                events={events}
+                onEdit={handleOpenForm}
+                onView={handleViewDetails}
+                onDelete={handleDeleteEvent}
+                isLoading={isLoadingCombined}
+                selectedDate={selectedDate}
+            />
+        </div>
+        <div className="md:hidden"> {/* Visível abaixo de md */}
+            <AgendaEventListAsCards
+                events={events}
+                onEdit={handleOpenForm}
+                onView={handleViewDetails}
+                onDelete={handleDeleteEvent}
+                isLoading={isLoadingCombined}
+                selectedDate={selectedDate}
+            />
+        </div>
+
 
         {isFormOpen && (
             <AgendaEventForm
-                key={eventoParaForm ? eventoParaForm.id || 'new-event-key' : 'new-event-key'} // Chave para resetar estado
+                key={eventoParaForm ? eventoParaForm.id || 'new-event-key' : 'new-event-key'}
                 isOpen={isFormOpen}
                 onOpenChange={(open) => {
                     if (!open) setEventoParaForm(null);
@@ -347,9 +357,9 @@ const AgendaPage = () => {
                 event={currentEvent}
                 onClose={() => { setIsDetailOpen(false); setCurrentEvent(null); }}
                 onDelete={handleDeleteEvent}
-                onEdit={(eventToEdit) => { // onEdit agora recebe o evento
-                    setIsDetailOpen(false); // Fecha o modal de detalhes
-                    handleOpenForm(eventToEdit); // Abre o formulário com os dados do evento
+                onEdit={(eventToEdit) => {
+                    setIsDetailOpen(false); 
+                    handleOpenForm(eventToEdit); 
                 }}
             />
         )}

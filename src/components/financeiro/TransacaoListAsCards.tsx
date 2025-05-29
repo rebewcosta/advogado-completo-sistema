@@ -58,19 +58,19 @@ const TransacaoListAsCards: React.FC<TransacaoListAsCardsProps> = ({
   }
 
   const columnConfig = [
-    { id: 'tipoDescricao', label: "Tipo / Descrição", headerClass: "flex-1 min-w-0 px-4 text-left", itemClass: "flex-1 min-w-0 px-4 text-left" },
-    { id: 'valor', label: "Valor", headerClass: "w-[130px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[130px] flex-shrink-0 px-4 text-left hidden sm:block" },
-    { id: 'categoria', label: "Categoria", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0 px-4 text-left hidden md:block" },
-    { id: 'data', label: "Data", headerClass: "w-[100px] flex-shrink-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-[100px] flex-shrink-0 px-4 text-left hidden md:block" },
-    { id: 'status', label: "Status", headerClass: "w-[120px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[120px] flex-shrink-0 px-4 text-left" },
-    { id: 'acoes', label: "Ações", headerClass: "w-[80px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[80px] flex-shrink-0 flex justify-start md:justify-end items-start" }
+    { id: 'tipoDescricao', label: "Tipo / Descrição", headerClass: "flex-1 min-w-0 px-4 text-left", itemClass: "flex-1 min-w-0" },
+    { id: 'valor', label: "Valor", headerClass: "w-[130px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[130px] flex-shrink-0" },
+    { id: 'categoria', label: "Categoria", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0" },
+    { id: 'data', label: "Data", headerClass: "w-[100px] flex-shrink-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-[100px] flex-shrink-0" },
+    { id: 'status', label: "Status", headerClass: "w-[120px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[120px] flex-shrink-0" },
+    { id: 'acoes', label: "Ações", headerClass: "w-[80px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[80px] flex-shrink-0 flex justify-end md:justify-end items-center" }
   ];
 
   return (
     <div className="mt-2">
       {transacoes.length > 0 && (
         <div className={cn(
-            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md sticky top-0 z-10 items-center"
+            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md items-center"
         )}>
           {columnConfig.map(col => (
             <div key={col.id} className={cn(col.headerClass, "text-xs font-bold uppercase tracking-wider")}>
@@ -87,13 +87,12 @@ const TransacaoListAsCards: React.FC<TransacaoListAsCardsProps> = ({
             const isReceita = transacao.tipo_transacao === 'Receita';
             return (
               <Card key={transacao.id} className="bg-white shadow-md hover:shadow-lg transition-shadow rounded-lg border border-gray-200/80 overflow-hidden">
-                <div className={cn("p-3 md:py-2 md:flex md:flex-row md:items-start")}>
+                <div className={cn("p-3 md:p-0 md:flex md:flex-row md:items-start")}>
                   
-                  {/* Tipo / Descrição */}
-                  <div className={cn(columnConfig[0].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[0].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[0].label}</div>
                     <div className={cn("text-sm font-medium break-words flex items-center", isReceita ? 'text-green-600' : 'text-red-600')}>
-                        {isReceita ? <TrendingUp size={14} className="mr-1.5 opacity-80" /> : <TrendingDown size={14} className="mr-1.5 opacity-80" />}
+                        {isReceita ? <TrendingUp size={14} className="mr-1.5 opacity-80 flex-shrink-0" /> : <TrendingDown size={14} className="mr-1.5 opacity-80 flex-shrink-0" />}
                         {transacao.tipo_transacao}
                     </div>
                     <div className="text-xs text-gray-700 mt-0.5 break-words" title={transacao.descricao}>
@@ -101,28 +100,24 @@ const TransacaoListAsCards: React.FC<TransacaoListAsCardsProps> = ({
                     </div>
                   </div>
 
-                  {/* Valor */}
-                  <div className={cn(columnConfig[1].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[1].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[1].label}</div>
                     <div className={cn("text-sm font-medium", isReceita ? 'text-green-600' : 'text-red-600')}>
                         R$ {Number(transacao.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </div>
                   </div>
                   
-                  {/* Categoria */}
-                  <div className={cn(columnConfig[2].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[2].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[2].label}</div>
                     <div className="text-xs text-gray-600 break-words">{transacao.categoria}</div>
                   </div>
 
-                  {/* Data */}
-                  <div className={cn(columnConfig[3].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[3].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[3].label}</div>
                     <div className="text-xs text-gray-600">{formatDateString(transacao.data_transacao)}</div>
                   </div>
                   
-                  {/* Status */}
-                  <div className={cn(columnConfig[4].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[4].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                      <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[4].label}</div>
                     <Badge
                       variant="outline"
@@ -134,8 +129,7 @@ const TransacaoListAsCards: React.FC<TransacaoListAsCardsProps> = ({
                     </Badge>
                   </div>
 
-                  {/* Ações */}
-                  <div className={cn(columnConfig[5].itemClass, "mt-3 md:mt-0 md:py-1")}>
+                  <div className={cn(columnConfig[5].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">

@@ -5,10 +5,10 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from "@/lib/utils";
 import { Card } from '@/components/ui/card';
-import { format } from 'date-fns'; // Usado para formatar data se necessário, ex: event.data_vencimento
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { MoreVertical, Eye, Download, Trash2, FileText as FileIcon, User, Briefcase, CalendarDays, HardDrive, FilePlus, RefreshCw, AlertTriangle } from 'lucide-react';
-import { useDocumentos } from '@/hooks/useDocumentos'; // Para obter ações e formatarTamanhoArquivo
+import { useDocumentos } from '@/hooks/useDocumentos';
 import type { Document as DocumentType } from '@/hooks/useDocumentTypes';
 
 interface DocumentListAsCardsProps {
@@ -67,7 +67,6 @@ const DocumentListAsCards: React.FC<DocumentListAsCardsProps> = ({
     }
   };
 
-
   if (isLoading && documents.length === 0) {
     return (
       <div className="text-center py-16 flex flex-col justify-center items-center h-64">
@@ -78,15 +77,14 @@ const DocumentListAsCards: React.FC<DocumentListAsCardsProps> = ({
   }
   
   const columnConfig = [
-    { id: 'nome', label: "Nome do Arquivo", headerClass: "flex-1 min-w-0 px-4 text-left", itemClass: "flex-1 min-w-0 px-4 text-left" },
-    { id: 'tipo', label: "Tipo", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0 px-4 text-left hidden md:block" },
-    { id: 'cliente', label: "Cliente", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0 px-4 text-left" },
-    { id: 'processo', label: "Processo", headerClass: "w-2/12 min-w-0 px-4 text-left hidden lg:flex items-center", itemClass: "w-full md:w-2/12 min-w-0 px-4 text-left hidden lg:block" },
-    { id: 'data', label: "Data Envio", headerClass: "w-[120px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[120px] flex-shrink-0 px-4 text-left hidden sm:block" },
-    { id: 'tamanho', label: "Tamanho", headerClass: "w-[100px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[100px] flex-shrink-0 px-4 text-left hidden sm:block" },
-    { id: 'acoes', label: "Ações", headerClass: "w-[80px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[80px] flex-shrink-0 flex justify-start md:justify-end items-start" }
+    { id: 'nome', label: "Nome do Arquivo", headerClass: "flex-1 min-w-0 px-4 text-left", itemClass: "flex-1 min-w-0" },
+    { id: 'tipo', label: "Tipo", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0" },
+    { id: 'cliente', label: "Cliente", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0" },
+    { id: 'processo', label: "Processo", headerClass: "w-2/12 min-w-0 px-4 text-left hidden lg:flex items-center", itemClass: "w-full md:w-2/12 min-w-0" },
+    { id: 'data', label: "Data Envio", headerClass: "w-[120px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[120px] flex-shrink-0" },
+    { id: 'tamanho', label: "Tamanho", headerClass: "w-[100px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[100px] flex-shrink-0" },
+    { id: 'acoes', label: "Ações", headerClass: "w-[80px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[80px] flex-shrink-0 flex justify-end md:justify-end items-center" }
   ];
-
 
   if (error && documents.length === 0) {
     return (
@@ -106,12 +104,11 @@ const DocumentListAsCards: React.FC<DocumentListAsCardsProps> = ({
     );
   }
 
-
   return (
     <div className="mt-2">
       {documents.length > 0 && (
         <div className={cn(
-            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md sticky top-0 z-10 items-center"
+            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md items-center"
         )}>
           {columnConfig.map(col => (
             <div key={col.id} className={cn(col.headerClass, "text-xs font-bold uppercase tracking-wider")}>
@@ -126,52 +123,45 @@ const DocumentListAsCards: React.FC<DocumentListAsCardsProps> = ({
           {documents.map((doc) => {
             return (
               <Card key={doc.id} className="bg-white shadow-md hover:shadow-lg transition-shadow rounded-lg border border-gray-200/80 overflow-hidden">
-                <div className={cn("p-3 md:py-2 md:flex md:flex-row md:items-start")}>
+                <div className={cn("p-3 md:p-0 md:flex md:flex-row md:items-start")}>
                   
-                  {/* Nome do Arquivo */}
-                  <div className={cn(columnConfig[0].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[0].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[0].label}</div>
                     <div className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer break-words flex items-center" onClick={() => handleDocumentAction('view', doc)}>
-                        <FileIcon size={14} className="mr-1.5 text-gray-500" /> {doc.nome}
+                        <FileIcon size={14} className="mr-1.5 text-gray-500 flex-shrink-0" /> {doc.nome}
                     </div>
                   </div>
 
-                  {/* Tipo */}
-                  <div className={cn(columnConfig[1].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[1].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[1].label}</div>
                     <div className="text-sm text-gray-600 break-words capitalize">{doc.tipo}</div>
                   </div>
                   
-                  {/* Cliente */}
-                  <div className={cn(columnConfig[2].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                  <div className={cn(columnConfig[2].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[2].label}</div>
                     <div className="text-xs text-gray-700 break-words flex items-center">
-                        <User size={12} className="mr-1 text-gray-400"/> {doc.cliente}
+                        <User size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {doc.cliente}
                     </div>
                   </div>
 
-                  {/* Processo */}
-                   <div className={cn(columnConfig[3].itemClass, "mb-2 md:mb-0 md:py-2")}>
+                   <div className={cn(columnConfig[3].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[3].label}</div>
                     <div className="text-xs text-gray-700 break-words flex items-center">
-                        {doc.processo ? <><Briefcase size={12} className="mr-1 text-gray-400"/> {doc.processo}</> : '-'}
+                        {doc.processo ? <><Briefcase size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {doc.processo}</> : '-'}
                     </div>
                   </div>
                   
-                  {/* Data Envio */}
-                  <div className={cn(columnConfig[4].itemClass, "text-sm md:py-2 mb-2 md:mb-0")}>
+                  <div className={cn(columnConfig[4].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                      <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[4].label}</div>
                      <span className="text-gray-700 text-xs">{format(new Date(doc.created_at), "dd/MM/yy", { locale: ptBR })}</span>
                   </div>
 
-                  {/* Tamanho */}
-                  <div className={cn(columnConfig[5].itemClass, "text-sm md:py-2 mb-2 md:mb-0")}>
+                  <div className={cn(columnConfig[5].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                      <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[5].label}</div>
                      <span className="text-gray-700 text-xs">{formatarTamanhoArquivo(doc.tamanho_bytes)}</span>
                   </div>
 
-                  {/* Ações */}
-                  <div className={cn(columnConfig[6].itemClass, "mt-3 md:mt-0 md:py-1")}>
+                  <div className={cn(columnConfig[6].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
@@ -211,7 +201,7 @@ const DocumentListAsCards: React.FC<DocumentListAsCardsProps> = ({
                 <Button
                     variant="outline"
                     onClick={onUploadClick}
-                    disabled={espacoDisponivel < 1024 || isLoading}
+                    disabled={espacoDisponivel < 1024 || isLoading} // isLoading geral ou isRefreshing específico do hook de docs
                 >
                     <FilePlus className="mr-2 h-4 w-4" />
                     Enviar Documento
