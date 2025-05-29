@@ -20,6 +20,7 @@ interface ProcessesPageContentProps {
   detailsDialogOpen: boolean;
   selectedProcess: any;
   isEditing: boolean;
+  isLoading?: boolean;
   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onFormDialogOpenChange: (open: boolean) => void;
   onDetailsDialogOpenChange: (open: boolean) => void;
@@ -40,6 +41,7 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
   detailsDialogOpen,
   selectedProcess,
   isEditing,
+  isLoading = false,
   onSearchChange,
   onFormDialogOpenChange,
   onDetailsDialogOpenChange,
@@ -84,6 +86,8 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
         onView={(processo) => onViewProcess(processo.id)}
         onToggleStatus={(processo) => onToggleStatus(processo.id)}
         onDelete={(processo) => onDeleteProcess(processo.id)}
+        isLoading={isLoading}
+        searchTerm={searchTerm}
       />
 
       <ProcessDialogs
