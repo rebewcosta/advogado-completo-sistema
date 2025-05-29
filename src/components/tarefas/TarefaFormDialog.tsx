@@ -30,10 +30,17 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
   isLoadingDropdownData,
   isSubmitting
 }) => {
-  const handleSave = async (formData: TarefaFormData) => {
-    const success = await onSave(formData);
-    if (success) {
-      onClose();
+  const handleSave = async (formData: TarefaFormData): Promise<boolean> => {
+    try {
+      const success = await onSave(formData);
+      if (success) {
+        onClose();
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Erro ao salvar tarefa:', error);
+      return false;
     }
   };
 
