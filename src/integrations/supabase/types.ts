@@ -17,6 +17,7 @@ export type Database = {
           descricao_evento: string | null
           duracao_minutos: number
           id: string
+          lembrete_proxima_hora_enviado_em: string | null
           local_evento: string | null
           prioridade: string
           processo_associado_id: string | null
@@ -33,6 +34,7 @@ export type Database = {
           descricao_evento?: string | null
           duracao_minutos?: number
           id?: string
+          lembrete_proxima_hora_enviado_em?: string | null
           local_evento?: string | null
           prioridade?: string
           processo_associado_id?: string | null
@@ -49,6 +51,7 @@ export type Database = {
           descricao_evento?: string | null
           duracao_minutos?: number
           id?: string
+          lembrete_proxima_hora_enviado_em?: string | null
           local_evento?: string | null
           prioridade?: string
           processo_associado_id?: string | null
@@ -173,6 +176,7 @@ export type Database = {
           cliente_id: string | null
           created_at: string
           id: string
+          lembrete_prazo_amanha_enviado_em: string | null
           nome_cliente_text: string | null
           numero_processo: string
           proximo_prazo: string | null
@@ -186,6 +190,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           id?: string
+          lembrete_prazo_amanha_enviado_em?: string | null
           nome_cliente_text?: string | null
           numero_processo: string
           proximo_prazo?: string | null
@@ -199,6 +204,7 @@ export type Database = {
           cliente_id?: string | null
           created_at?: string
           id?: string
+          lembrete_prazo_amanha_enviado_em?: string | null
           nome_cliente_text?: string | null
           numero_processo?: string
           proximo_prazo?: string | null
@@ -241,6 +247,66 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      tarefas: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          data_conclusao: string | null
+          data_vencimento: string | null
+          descricao_detalhada: string | null
+          id: string
+          prioridade: string
+          processo_id: string | null
+          status: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_vencimento?: string | null
+          descricao_detalhada?: string | null
+          id?: string
+          prioridade?: string
+          processo_id?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_vencimento?: string | null
+          descricao_detalhada?: string | null
+          id?: string
+          prioridade?: string
+          processo_id?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tarefas_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tarefas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transacoes_financeiras: {
         Row: {
@@ -322,7 +388,7 @@ export type Database = {
         Returns: number
       }
       verificar_status_assinatura: {
-        Args: { uid: string }
+        Args: { p_user_id: string }
         Returns: Json
       }
     }

@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'vite'
 import path from "path"
 import react from '@vitejs/plugin-react-swc'
@@ -5,6 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa' // <<< 1. IMPORTAR O PLUGIN
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  server: {
+    port: 8080
+  },
   plugins: [
     react(),
     VitePWA({ // <<< 2. ADICIONAR E CONFIGURAR O PLUGIN
