@@ -1,8 +1,9 @@
+
 // src/components/processos/ProcessDetails.tsx
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { X, Edit, CalendarDays, User, Briefcase, Landmark, Info, CheckCircle, PauseCircle, AlertCircle, ExternalLink } from 'lucide-react';
+import { X, Edit, CalendarDays, User, Briefcase, Landmark, Info, CheckCircle, PauseCircle, AlertCircle, FileText, Circle } from 'lucide-react';
 import { ProcessoComCliente } from '@/stores/useProcessesStore';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

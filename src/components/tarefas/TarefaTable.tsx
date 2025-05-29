@@ -1,5 +1,7 @@
 // src/components/tarefas/TarefaTable.tsx
 import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Table,
   TableBody,
@@ -7,16 +9,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Edit, MoreVertical, Trash2, Circle, User, Briefcase } from 'lucide-react'; // Removido ExternalLink se não for usado
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Spinner } from '@/components/ui/spinner';
-import { cn } from "@/lib/utils";
-import { format, parseISO, isPast, isToday } from 'date-fns';
+} from '@/components/ui/table';
+import { Edit, Trash2, User, FileText, Calendar, ListChecks } from 'lucide-react';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { Tarefa, StatusTarefa, PrioridadeTarefa } from '@/pages/TarefasPage';
+import { cn } from '@/lib/utils';
+import { Tarefa, StatusTarefa, PrioridadeTarefa } from '@/types/tarefas';
 
 interface TarefaTableProps {
   tarefas: Tarefa[];

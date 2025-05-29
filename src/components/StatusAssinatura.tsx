@@ -1,6 +1,7 @@
+
 // src/components/StatusAssinatura.tsx
 import React from 'react';
-import { Check, Clock, AlertTriangle, ExternalLink, Gift, Crown, ShoppingCart } from 'lucide-react';
+import { Check, Clock, AlertTriangle, ExternalLink, Gift, Crown, ShoppingCart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
