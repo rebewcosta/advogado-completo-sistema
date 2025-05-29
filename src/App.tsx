@@ -1,8 +1,7 @@
 // src/App.tsx
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { Navigate, Routes, Route } from 'react-router-dom';
-// ... (outras importações de páginas e componentes) ...
-import Index from './pages/Index'; // Certifique-se que Index está importado
+import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
 import DashboardPage from './pages/DashboardPage';
@@ -31,27 +30,27 @@ import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
 
 import { Button } from '@/components/ui/button';
-import { Download, X as CloseIcon, Share2 } from 'lucide-react'; // Adicionado Share2 para iOS
+import { Download, X as CloseIcon, Share2 } from 'lucide-react';
 
-// Criar um contexto simples para o PWA install prompt (se ainda não existir ou se quiser refatorar)
+// Contexto PWA (se você decidir usá-lo globalmente)
+// Por enquanto, a lógica está contida em App.tsx
 interface PWAInstallContextType {
   deferredInstallPrompt: Event | null;
-  canInstallPWA: boolean; // Indica se o navegador suporta e disparou o prompt
-  isStandalone: boolean; // Indica se o app já está rodando como PWA instalado
+  canInstallPWA: boolean;
+  isStandalone: boolean;
   triggerInstall: () => Promise<void>;
-  showInstallBannerGlobal: boolean; // Novo estado para controlar o banner global
-  setShowInstallBannerGlobal: React.Dispatch<React.SetStateAction<boolean>>; // Para dispensar o banner
+  showInstallBannerGlobal: boolean;
+  setShowInstallBannerGlobal: React.Dispatch<React.SetStateAction<boolean>>;
 }
 const PWAInstallContext = createContext<PWAInstallContextType | null>(null);
-
 export const usePWAInstall = () => useContext(PWAInstallContext);
 
 function App() {
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<Event | null>(null);
-  const [canInstallPWA, setCanInstallPWA] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [canInstallPWA, setCanInstallPWA] = useState(false); // Se o navegador disparou beforeinstallprompt
+  const [isStandalone, setIsStandalone] = useState(false); // Se já está rodando como app instalado
   const [isIOS, setIsIOS] = useState(false);
-  const [showInstallBannerGlobal, setShowInstallBannerGlobal] = useState(false);
+  const [showInstallBannerGlobal, setShowInstallBannerGlobal] = useState(false); // Controla a visibilidade do nosso banner
 
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
@@ -59,20 +58,21 @@ function App() {
 
     const userAgent = window.navigator.userAgent.toLowerCase();
     const iPad = /ipad|iphone|ipod/.test(userAgent) && !(window as any).MSStream;
-    const macIntel = /macintosh/.test(userAgent) && navigator.maxTouchPoints > 1; // iPads mais novos
-    setIsIOS(iPad || macIntel);
+    // Alguns iPads mais novos podem se identificar como MacIntel e ter touch.
+    const macIntelWithTouch = /macintosh/.test(userAgent) && navigator.maxTouchPoints > 1;
+    setIsIOS(iPad || macIntelWithTouch);
     
     if (standalone) {
       console.log('PWA: App rodando em modo standalone. Banner de instalação não será mostrado.');
       setShowInstallBannerGlobal(false);
-      return; // Não faz mais nada se já estiver instalado
+      return; 
     }
 
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       setDeferredInstallPrompt(event);
-      setCanInstallPWA(true); // Navegador suporta a instalação
-      setShowInstallBannerGlobal(true); // Mostrar o banner
+      setCanInstallPWA(true); 
+      setShowInstallBannerGlobal(true); 
       console.log('PWA: beforeinstallprompt event fired e prevenido. Banner customizado deve aparecer.');
     };
 
@@ -82,7 +82,7 @@ function App() {
       console.log('PWA: App instalado com sucesso!');
       setShowInstallBannerGlobal(false); 
       setDeferredInstallPrompt(null);
-      setIsStandalone(true); // Marcar como instalado
+      setIsStandalone(true); 
     };
     window.addEventListener('appinstalled', handleAppInstalled);
 
@@ -90,14 +90,12 @@ function App() {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []); // Executa apenas uma vez na montagem
+  }, []); 
 
   const triggerInstall = async () => {
     if (!deferredInstallPrompt) {
-      // Se não há deferredPrompt, mas é iOS e não está instalado, talvez o usuário precise de instruções.
-      // No entanto, este botão é para navegadores que SUPORTAM o prompt.
       if(isIOS && !isStandalone) {
-        alert("Para instalar no iOS: toque no botão Compartilhar no Safari e depois em 'Adicionar à Tela de Início'.");
+        alert("Para instalar no iOS: toque no botão Compartilhar (caixa com seta para cima) no Safari e depois em 'Adicionar à Tela de Início'.");
       }
       return;
     }
@@ -110,7 +108,6 @@ function App() {
     }
     setDeferredInstallPrompt(null);
     setShowInstallBannerGlobal(false);
-    // Não precisa setar canInstallPWA para false, pois o navegador pode disparar o evento novamente se os critérios mudarem.
   };
 
   const handleDismissBanner = () => {
@@ -119,8 +116,9 @@ function App() {
     console.log('PWA: Banner de instalação dispensado pelo usuário.');
   }
 
-  // Só mostrar o banner se não estiver em modo standalone E (se o prompt estiver disponível OU se for iOS)
-  const shouldShowBanner = !isStandalone && showInstallBannerGlobal;
+  // Lógica de quando mostrar o banner:
+  // Não está instalado E ( (é iOS e não temos prompt, então sempre mostramos a dica) OU (não é iOS e o prompt está disponível) )
+  const shouldDisplayCustomPwaBanner = !isStandalone && showInstallBannerGlobal;
 
   return (
     <PWAInstallContext.Provider value={{ deferredInstallPrompt, canInstallPWA, isStandalone, triggerInstall, showInstallBannerGlobal, setShowInstallBannerGlobal }}>
@@ -166,26 +164,28 @@ function App() {
       </Routes>
 
       {/* Banner/Botão de Instalação Customizado do PWA */}
-      {shouldShowBanner && (
+      {shouldDisplayCustomPwaBanner && (
         <div 
-          className="fixed bottom-0 left-0 right-0 z-50 p-3 md:p-4 bg-gray-800 text-white shadow-xl flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 text-center sm:text-left"
-          role="alertdialog" // Melhor para acessibilidade, pois é um "diálogo"
+          className="fixed bottom-0 left-0 right-0 z-[1000] p-3 md:p-4 bg-slate-800 text-white shadow-xl flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-3 sm:gap-4 text-center sm:text-left"
+          role="alertdialog"
           aria-labelledby="pwa-install-banner-title"
           aria-describedby="pwa-install-banner-description"
         >
-          <img src="/icons/icon-192x192.png" alt="JusGestão" className="h-10 w-10 rounded-md flex-shrink-0 hidden sm:block" />
-          <div className="flex-1 min-w-0">
-            <h3 id="pwa-install-banner-title" className="text-sm sm:text-base font-semibold">
-              {isIOS ? "Acesso Rápido ao JusGestão" : "Instale o JusGestão App"}
-            </h3>
-            <p id="pwa-install-banner-description" className="text-xs sm:text-sm text-gray-300">
-              {isIOS 
-                ? "Toque em Compartilhar <Share2Icon className='inline h-3 w-3 align-text-bottom'/> e 'Adicionar à Tela de Início'."
-                : "Tenha o JusGestão na sua tela inicial para acesso rápido e fácil!"}
-            </p>
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <img src="/icons/icon-192x192.png" alt="JusGestão" className="h-10 w-10 rounded-md flex-shrink-0 hidden sm:block" />
+            <div className="min-w-0">
+              <h3 id="pwa-install-banner-title" className="text-sm sm:text-base font-semibold">
+                {isIOS ? "Acesso Rápido ao JusGestão" : "Instale o App JusGestão"}
+              </h3>
+              <p id="pwa-install-banner-description" className="text-xs sm:text-sm text-slate-300">
+                {isIOS 
+                  ? <>Toque em <Share2 className="inline h-3 w-3 align-baseline mx-0.5"/> e 'Adicionar à Tela de Início'.</>
+                  : "Tenha na sua tela inicial para acesso rápido e fácil!"}
+              </p>
+            </div>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
-            {!isIOS && canInstallPWA && deferredInstallPrompt && ( // Botão de Instalar só se 'canInstallPWA' e 'deferredInstallPrompt' existirem
+            {!isIOS && canInstallPWA && deferredInstallPrompt && (
               <Button 
                 onClick={triggerInstall} 
                 size="sm" 
@@ -196,13 +196,13 @@ function App() {
             )}
             <Button 
               variant="ghost" 
-              size="sm" // Usar sm para consistência ou icon se preferir
+              size="sm" 
               onClick={handleDismissBanner}
-              className="text-gray-400 hover:text-white hover:bg-gray-700 h-auto px-2 py-1.5 sm:px-3" // Ajustar padding e altura
-              aria-label="Dispensar instalação"
+              className="text-slate-400 hover:text-white hover:bg-slate-700 h-auto px-2 py-1.5 text-xs"
+              aria-label="Dispensar"
             >
-              <CloseIcon className="h-4 w-4 sm:h-5 sm:w-5 md:hidden" /> {/* Ícone para mobile */}
-              <span className="hidden md:inline text-xs">Agora Não</span> {/* Texto para desktop */}
+              <CloseIcon className="h-4 w-4 sm:h-5 sm:w-5 md:hidden" />
+              <span className="hidden md:inline">Agora Não</span>
             </Button>
           </div>
         </div>
