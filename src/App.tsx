@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react'; // Adicionado createContext, useContext
 import { Navigate, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
@@ -29,17 +29,17 @@ import './App.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
 
-// Não precisamos mais de Button, Download, CloseIcon aqui se o banner for para HeroSection
+// Os ícones e Button para o banner PWA serão usados no HeroSection agora.
 
 // 1. Criar o Contexto PWA
 interface PWAInstallContextType {
   deferredInstallPrompt: Event | null;
-  canInstallPWA: boolean; // Se o navegador disparou o beforeinstallprompt
-  isStandalone: boolean;  // Se já está rodando como app instalado
+  canInstallPWA: boolean;
+  isStandalone: boolean;
   isIOS: boolean;
-  showInstallPromptBanner: boolean; // Controla a visibilidade do banner específico
-  triggerInstallPrompt: () => void; // Função para mostrar o prompt de instalação
-  dismissInstallBanner: () => void;  // Função para dispensar o banner
+  showPWAInstallBanner: boolean; // Renomeado de showInstallBanner para clareza do contexto
+  triggerPWAInstall: () => void;
+  dismissPWAInstallBanner: () => void;
 }
 
 export const PWAInstallContext = createContext<PWAInstallContextType | null>(null);
@@ -47,20 +47,20 @@ export const PWAInstallContext = createContext<PWAInstallContextType | null>(nul
 export const usePWAInstall = () => {
   const context = useContext(PWAInstallContext);
   if (!context) {
+    // Se precisar usar fora do provider, pode retornar um objeto default ou lançar erro.
+    // Para esta aplicação, esperamos que esteja sempre dentro do provider.
     throw new Error('usePWAInstall must be used within a PWAInstallProvider');
   }
   return context;
 };
 
-
 function App() {
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<Event | null>(null);
-  const [canInstallPWA, setCanInstallPWA] = useState(false);
+  const [showPWAInstallBanner, setShowPWAInstallBanner] = useState(false); // Usando o nome do estado do contexto
+  const [canInstallPWA, setCanInstallPWA] = useState(false); // Se o navegador disparou o prompt
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  // Este estado controlará se o banner na HeroSection (ou onde decidirmos) deve ser mostrado
-  const [showInstallPromptBanner, setShowInstallPromptBanner] = useState(false);
-
+  
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     setIsStandalone(standalone);
@@ -72,7 +72,7 @@ function App() {
     
     if (standalone) {
       console.log('PWA: App rodando em modo standalone. Banner de instalação não será preparado.');
-      setShowInstallPromptBanner(false); // Garantir que não mostre se já instalado
+      setShowPWAInstallBanner(false);
       return; 
     }
 
@@ -80,11 +80,10 @@ function App() {
       event.preventDefault();
       setDeferredInstallPrompt(event);
       setCanInstallPWA(true);
-      // Verifica se o usuário já dispensou antes
       const dismissedTimestamp = localStorage.getItem('pwaInstallDismissedTimestamp');
-      const oneWeek = 7 * 24 * 60 * 60 * 1000;
+      const oneWeek = 7 * 24 * 60 * 60 * 1000; // 1 semana
       if (!dismissedTimestamp || (Date.now() - parseInt(dismissedTimestamp, 10) > oneWeek)) {
-        setShowInstallPromptBanner(true); 
+        setShowPWAInstallBanner(true); 
       }
       console.log('PWA: beforeinstallprompt event fired e prevenido.');
     };
@@ -93,7 +92,7 @@ function App() {
     
     const handleAppInstalled = () => {
       console.log('PWA: App instalado com sucesso!');
-      setShowInstallPromptBanner(false); 
+      setShowPWAInstallBanner(false); 
       setDeferredInstallPrompt(null);
       setIsStandalone(true); 
     };
@@ -105,9 +104,9 @@ function App() {
     };
   }, []); 
 
-  const triggerInstallPrompt = async () => {
+  const triggerPWAInstall = async () => {
     if (!deferredInstallPrompt) {
-      if(isIOS && !isStandalone) { // Mensagem para iOS se não houver prompt (que é o esperado)
+      if(isIOS && !isStandalone) {
           alert("Para instalar no iOS: toque no botão Compartilhar (caixa com seta para cima) no Safari e depois em 'Adicionar à Tela de Início'.");
       }
       return;
@@ -120,11 +119,11 @@ function App() {
       console.log('PWA: Usuário recusou a instalação.');
     }
     setDeferredInstallPrompt(null);
-    setShowInstallPromptBanner(false);
+    setShowPWAInstallBanner(false);
   };
 
-  const dismissInstallBanner = () => {
-    setShowInstallPromptBanner(false);
+  const dismissPWAInstallBanner = () => {
+    setShowPWAInstallBanner(false);
     localStorage.setItem('pwaInstallDismissedTimestamp', Date.now().toString());
     console.log('PWA: Banner de instalação dispensado pelo usuário.');
   }
@@ -134,9 +133,9 @@ function App() {
     canInstallPWA,
     isStandalone,
     isIOS,
-    showInstallPromptBanner,
-    triggerInstallPrompt,
-    dismissInstallBanner
+    showPWAInstallBanner, // Passando o estado correto
+    triggerPWAInstall,    // Passando a função correta
+    dismissPWAInstallBanner // Passando a função correta
   };
 
   return (
@@ -181,7 +180,7 @@ function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {/* O JSX do banner foi removido daqui, pois será colocado no HeroSection ou Index */}
+      {/* O JSX do banner foi removido daqui, pois será colocado na HeroSection via Contexto */}
     </PWAInstallContext.Provider>
   );
 }
