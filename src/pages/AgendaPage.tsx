@@ -21,8 +21,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { AgendaEventForm } from '@/components/AgendaEventForm';
 import { AgendaEventDetail } from '@/components/AgendaEventDetail';
 import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards';
-import AgendaEventTable from '@/components/agenda/AgendaEventTable'; // <<< IMPORTAR A NOVA TABELA
-
+import AgendaEventTable from '@/components/agenda/AgendaEventTable';
+import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR
 
 export type EventoAgenda = Database['public']['Tables']['agenda_eventos']['Row'] & {
     clientes?: { id: string; nome: string } | null;
@@ -76,11 +76,7 @@ const AgendaPage = () => {
     try {
       let query = supabase
         .from('agenda_eventos')
-        .select(`
-          *,
-          clientes (id, nome),
-          processos (id, numero_processo)
-        `)
+        .select(`*, clientes (id, nome), processos (id, numero_processo)`)
         .eq('user_id', user.id);
 
       if (dateToFilter) {
@@ -116,7 +112,7 @@ const AgendaPage = () => {
       if (processosRes.error) throw processosRes.error;
       setProcessosDoUsuario(processosRes.data || []);
     } catch (error: any) {
-      toast({ title: "Erro ao carregar dados para formulário", description: error.message || "Ocorreu um erro.", variant: "destructive" });
+      toast({ title: "Erro ao carregar dados para formulário", description: error.message, variant: "destructive" });
     } finally {
       setIsLoadingDropdownData(false);
     }
@@ -262,21 +258,14 @@ const AgendaPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-              <CalendarDays className="mr-3 h-7 w-7 text-lawyer-primary" />
-              Agenda de Compromissos
-            </h1>
-            <p className="text-gray-600 text-left mt-1">
-              Organize seus prazos, audiências e reuniões.
-            </p>
-          </div>
-           <Button onClick={() => handleOpenForm()} className="mt-4 md:mt-0 w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Evento
-            </Button>
-        </div>
+        <SharedPageHeader
+            title="Agenda de Compromissos"
+            description="Organize seus prazos, audiências e reuniões."
+            pageIcon={<CalendarDays />}
+            actionButtonText="Novo Evento"
+            onActionButtonClick={() => handleOpenForm()}
+            isLoading={isLoadingCombined}
+        />
         
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
             <CardContent className="p-4">
@@ -313,8 +302,7 @@ const AgendaPage = () => {
             </CardContent>
         </Card>
         
-        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
-        <div className="hidden md:block"> {/* Visível em md e acima */}
+        <div className="hidden md:block">
             <AgendaEventTable
                 events={events}
                 onEdit={handleOpenForm}
@@ -324,7 +312,7 @@ const AgendaPage = () => {
                 selectedDate={selectedDate}
             />
         </div>
-        <div className="md:hidden"> {/* Visível abaixo de md */}
+        <div className="md:hidden">
             <AgendaEventListAsCards
                 events={events}
                 onEdit={handleOpenForm}
@@ -334,7 +322,6 @@ const AgendaPage = () => {
                 selectedDate={selectedDate}
             />
         </div>
-
 
         {isFormOpen && (
             <AgendaEventForm

@@ -3,19 +3,21 @@ import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import PinLock from '@/components/PinLock';
 import {
-  Search, Plus, Edit, Trash2, Filter,
-  DollarSign, TrendingUp, TrendingDown, FileText as FileTextIcon, X, Loader2, KeyRound, AlertCircle, ShieldAlert, BadgePercent, RefreshCw
-} from 'lucide-react';
+  Search, Plus, Filter, DollarSign, TrendingUp, TrendingDown,
+  FileText as FileTextIcon, X, Loader2, KeyRound, AlertCircle,
+  ShieldAlert, BadgePercent, RefreshCw
+} from 'lucide-react'; // BadgePercent para o header
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Label } from '@/components/ui/label'; // Label é usado no modal
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import TransacaoListAsCards from '@/components/financeiro/TransacaoListAsCards';
-import TransacaoTable from '@/components/financeiro/TransacaoTable'; // <<< IMPORTAR A NOVA TABELA
+import TransacaoTable from '@/components/financeiro/TransacaoTable';
+import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR
 import type { Database } from '@/integrations/supabase/types';
 
 type TransacaoSupabase = Database['public']['Tables']['transacoes_financeiras']['Row'];
@@ -30,7 +32,7 @@ const FinanceiroPage = () => {
     message?: string;
   } | null>(null);
   const [isLoadingAccess, setIsLoadingAccess] = useState(true);
-  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false); // Mantido para operações de transação
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
   const [transactions, setTransactions] = useState<TransacaoSupabase[]>([]);
@@ -84,7 +86,7 @@ const FinanceiroPage = () => {
       setIsRefreshingManually(false);
       return;
     }
-    if (showLoadingSpinner) setIsLoadingTransactions(true);
+    if (showLoadingSpinner) setIsLoadingTransactions(true); // Usar setIsLoadingTransactions aqui
     setIsRefreshingManually(true);
     try {
       const { data, error } = await supabase
@@ -105,7 +107,7 @@ const FinanceiroPage = () => {
       });
       setTransactions([]);
     } finally {
-      if (showLoadingSpinner) setIsLoadingTransactions(false);
+      if (showLoadingSpinner) setIsLoadingTransactions(false); // Usar setIsLoadingTransactions aqui
       setIsRefreshingManually(false);
     }
   }, [user, pinCheckResult?.verified, toast]);
@@ -124,8 +126,8 @@ const FinanceiroPage = () => {
   };
   
   const filteredTransactions = transactions.filter(transaction =>
-    (transaction.descricao && transaction.descricao.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (transaction.categoria && transaction.categoria.toLowerCase().includes(searchTerm.toLowerCase()))
+    (transaction.descricao || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (transaction.categoria || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const receitas = transactions
@@ -148,7 +150,7 @@ const FinanceiroPage = () => {
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    if (!user || isLoadingTransactions) return; // Evitar múltiplas submissões
+    if (!user || isLoadingTransactions) return;
     const transactionToDelete = transactions.find(t => t.id === id);
     if (transactionToDelete && window.confirm("Tem certeza que deseja excluir esta transação?")) {
       setIsLoadingTransactions(true);
@@ -161,7 +163,7 @@ const FinanceiroPage = () => {
 
         if (error) throw error;
         
-        fetchTransactions(false); // Rebusca sem spinner principal
+        fetchTransactions(false);
         toast({
           title: "Transação excluída",
           description: "A transação foi removida com sucesso.",
@@ -265,7 +267,7 @@ const FinanceiroPage = () => {
     );
   }
   
-  if (isLoadingCombined && !transactions.length && !isRefreshingManually) {
+  if (isLoadingCombined && !transactions.length && !isRefreshingManually && pinCheckResult?.verified) { // Adicionado pinCheckResult.verified
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -279,24 +281,14 @@ const FinanceiroPage = () => {
   return (
     <AdminLayout>
       <main className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
-            <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-                    <BadgePercent className="mr-3 h-7 w-7 text-lawyer-primary" />
-                    Controle Financeiro
-                </h1>
-                <p className="text-gray-600 text-left mt-1">
-                    Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório.
-                </p>
-            </div>
-            <Button
-                onClick={() => { setCurrentTransaction(null); setIsModalOpen(true); }}
-                className="mt-4 md:mt-0 w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
-            >
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Transação
-            </Button>
-        </div>
+        <SharedPageHeader
+            title="Controle Financeiro"
+            description="Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório."
+            pageIcon={<BadgePercent />}
+            actionButtonText="Nova Transação"
+            onActionButtonClick={() => { setCurrentTransaction(null); setIsModalOpen(true); }}
+            isLoading={isLoadingCombined}
+        />
 
         {pinCheckResult?.pinNotSet && (
             <Alert variant="default" className="mb-6 text-xs bg-blue-50 border-blue-200 text-blue-700 max-w-md">
@@ -392,7 +384,6 @@ const FinanceiroPage = () => {
             </CardContent>
         </Card>
           
-        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
         <div className="hidden md:block">
             <TransacaoTable
                 transacoes={filteredTransactions}
@@ -411,7 +402,6 @@ const FinanceiroPage = () => {
                 searchTerm={searchTerm}
             />
         </div>
-
 
           {isModalOpen && (
              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">

@@ -1,66 +1,67 @@
-
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
-import CriarContaEspecial from '@/components/admin/CriarContaEspecial';
+// src/pages/AdminPage.tsx
+import React from 'react';
 import AdminLayout from '@/components/AdminLayout';
-import { Shield } from 'lucide-react';
+import CriarContaEspecial from '@/components/admin/CriarContaEspecial';
+import { useAuth } from '@/hooks/useAuth';
+import { Navigate } from 'react-router-dom';
+import { ShieldCheck, UserCog } from 'lucide-react'; // UserCog para o header
+import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AdminPage: React.FC = () => {
-  const [isAdmin, setIsAdmin] = useState(false);
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const { user, isLoading } = useAuth();
 
-  // O único email de administrador autorizado
-  const adminEmail = 'webercostag@gmail.com';
-
-  useEffect(() => {
-    // Verificar se o usuário atual é o administrador específico
-    if (user && user.email === adminEmail) {
-      setIsAdmin(true);
-    } else {
-      setIsAdmin(false);
-      toast({
-        title: "Acesso restrito",
-        description: "Você não tem permissão para acessar esta página.",
-        variant: "destructive",
-      });
-    }
-  }, [user, toast]);
-
-  if (!isAdmin) {
+  if (isLoading) {
     return (
       <AdminLayout>
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-          <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full text-center">
-            <Shield className="h-16 w-16 text-red-600 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-red-600 mb-4">Acesso Restrito</h1>
-            <p className="text-gray-600 mb-6">
-              Esta página é restrita apenas para o administrador do sistema.
-            </p>
-          </div>
-        </div>
+        <div className="p-6">Carregando...</div>
       </AdminLayout>
     );
   }
 
+  // ATENÇÃO: A lógica original permitia acesso se o email fosse webercostag@gmail.com OU se isAdmin fosse true.
+  // Verifique se a propriedade isAdmin está sendo corretamente populada no seu objeto user.
+  // Se user.user_metadata.isAdmin não existir ou não for confiável, mantenha apenas a verificação de email.
+  const isAdminUser = user?.email === 'webercostag@gmail.com' || user?.user_metadata?.isAdmin === true;
+
+  if (!isAdminUser) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <AdminLayout>
-      <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6">
-            <Shield className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-gray-900">Painel Administrativo</h1>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Gerenciamento de Contas Especiais</h2>
-            <p className="text-gray-600 mb-6">
-              Use esta seção para criar contas com acesso especial ao sistema, sem necessidade de pagamento.
-            </p>
-            
-            <CriarContaEspecial />
-          </div>
+      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+        <SharedPageHeader
+          title="Painel Administrativo"
+          description="Gerenciamento de configurações e funcionalidades especiais do sistema."
+          pageIcon={<UserCog />} // Usando UserCog como ícone
+          showActionButton={false} // Sem botão de ação principal aqui
+        />
+        
+        <div className="mt-6 md:mt-8 grid gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center">
+                <ShieldCheck className="mr-2 h-5 w-5 text-green-600" />
+                Criar Conta Especial (Acesso sem Pagamento)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CriarContaEspecial />
+            </CardContent>
+          </Card>
+
+          {/* Adicione outros cards ou seções de administração aqui, se necessário */}
+          {/* Exemplo:
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Gerenciar Usuários</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>Funcionalidade de gerenciamento de usuários (em desenvolvimento).</p>
+            </CardContent>
+          </Card>
+          */}
         </div>
       </div>
     </AdminLayout>

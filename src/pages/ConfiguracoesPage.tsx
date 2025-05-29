@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-import ConfiguracoesHeader from '@/components/configuracoes/ConfiguracoesHeader';
+// Removido ConfiguracoesHeader daqui, pois será substituído por SharedPageHeader
 import PerfilTab from '@/components/configuracoes/PerfilTab';
 import EscritorioTab from '@/components/configuracoes/EscritorioTab';
 import NotificacoesTab from '@/components/configuracoes/NotificacoesTab';
@@ -13,13 +13,15 @@ import SegurancaTab from '@/components/configuracoes/SegurancaTab';
 import GerenciarAssinatura from '@/components/assinatura/GerenciarAssinatura';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+// Card, CardContent, etc., são usados dentro das abas, então não precisam ser importados aqui diretamente se já estiverem nas abas.
 import { Spinner } from '@/components/ui/spinner';
 import { User, Building, Bell, Shield, CreditCard, Settings as SettingsPageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR SharedPageHeader
+import { Button } from '@/components/ui/button'; // Button é usado no ConfiguracoesHeader original (agora parte do SharedPageHeader)
 
 interface ProfileSettings { name: string; email: string; phone: string; oab: string; }
-interface OfficeSettings { companyName: string; cnpj: string; address: string; website: string; logo_url?: string | null; } // Adicionado logo_url
+interface OfficeSettings { companyName: string; cnpj: string; address: string; website: string; logo_url?: string | null; }
 interface NotificationPreferences { pref_notificacoes_push: boolean; pref_alertas_prazo: boolean; pref_relatorio_semanal: boolean; }
 interface SecurityPreferences { pref_seguranca_dois_fatores: boolean; pref_seguranca_tempo_sessao_min: string; pref_seguranca_restricao_ip: boolean; }
 
@@ -27,8 +29,8 @@ const ConfiguracoesPage = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("perfil");
   const [isSaving, setIsSaving] = useState(false);
-  const { user, signOut, refreshSession, session } = useAuth();
-  const [loggingOut, setLoggingOut] = useState(false);
+  const { user, signOut, refreshSession, session } = useAuth(); // Removido isLoading de useAuth se não for usado aqui diretamente
+  const [loggingOut, setLoggingOut] = useState(false); // Mantido se o SharedPageHeader precisar disso (ele não precisa)
   const [isLoadingPageData, setIsLoadingPageData] = useState(true);
   
   const [hasFinancePin, setHasFinancePin] = useState(false);
@@ -101,7 +103,7 @@ const ConfiguracoesPage = () => {
     setIsSaving(true);
     try {
       const { error } = await supabase.auth.updateUser({
-        data: { // Supabase.auth.updateUser atualiza user_metadata.
+        data: { 
           nome: profileSettings.name || null,
           telefone: profileSettings.phone || null,
           oab: profileSettings.oab || null,
@@ -109,7 +111,6 @@ const ConfiguracoesPage = () => {
           cnpj: officeSettings.cnpj || null,
           endereco: officeSettings.address || null,
           website: officeSettings.website || null,
-          // logo_url é atualizado pelo LogoUpload component diretamente.
           pref_notificacoes_push: notificationSettings.pref_notificacoes_push,
           pref_alertas_prazo: notificationSettings.pref_alertas_prazo,
           pref_relatorio_semanal: notificationSettings.pref_relatorio_semanal,
@@ -119,7 +120,7 @@ const ConfiguracoesPage = () => {
         }
       });
       if (error) throw error;
-      await refreshSession(); 
+      await refreshSession();  
       toast({
         title: "Configurações salvas",
         description: "Suas configurações foram atualizadas com sucesso.",
@@ -135,16 +136,9 @@ const ConfiguracoesPage = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    setLoggingOut(true);
-    try {
-      await signOut();
-    } catch (error) {
-      // Erro já tratado no useAuth
-    } finally {
-      setLoggingOut(false);
-    }
-  };
+  // handleSignOut não é mais necessário aqui se o SharedPageHeader não o usa e o botão de sair está no AppSidebar.
+  // Vou remover a chamada e a prop do antigo ConfiguracoesHeader, pois SharedPageHeader não tem essa prop.
+  // const handleSignOut = async () => { ... };
 
   const handleChangeFinanceiroPin = async (currentPinPlainText: string | null, newPinPlainText: string) => {
     if (!session) {
@@ -160,12 +154,12 @@ const ConfiguracoesPage = () => {
         return false;
     }
 
-    setIsSaving(true);
+    setIsSaving(true); // Pode reutilizar isSaving ou criar um isSavingPin
     try {
         const { data, error } = await supabase.functions.invoke('set-finance-pin', {
-            body: { 
-                currentPin: hasFinancePin ? currentPinPlainText : null, 
-                newPin: newPinPlainText 
+            body: {  
+                currentPin: hasFinancePin ? currentPinPlainText : null,  
+                newPin: newPinPlainText  
             },
         });
 
@@ -197,9 +191,21 @@ const ConfiguracoesPage = () => {
   if (isLoadingPageData || isLoadingPinStatus) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-screen bg-lawyer-background">
-          <Spinner size="lg" />
-          <p className="ml-3 text-gray-600">Carregando configurações...</p>
+        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+            <SharedPageHeader
+                title="Configurações da Conta"
+                description="Personalize suas informações e preferências do sistema."
+                pageIcon={<SettingsPageIcon />}
+                showActionButton={true} // Mostrar botão de salvar
+                actionButtonText={isSaving ? "Salvando..." : "Salvar Alterações"}
+                onActionButtonClick={handleSaveAllSettings}
+                isLoading={isSaving} // Desabilitar enquanto salva
+                actionButtonDisabled={isSaving}
+            />
+            <div className="mt-6 md:mt-8 flex justify-center items-center h-[calc(100vh-300px)]">
+                <Spinner size="lg" />
+                <p className="ml-3 text-gray-600">Carregando...</p>
+            </div>
         </div>
       </AdminLayout>
     );
@@ -208,25 +214,19 @@ const ConfiguracoesPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
-            <div className="mb-4 md:mb-0">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-                    <SettingsPageIcon className="mr-3 h-7 w-7 text-lawyer-primary" />
-                    Configurações da Conta
-                </h1>
-                <p className="text-gray-600 text-left mt-1">
-                    Personalize suas informações e preferências do sistema.
-                </p>
-            </div>
-            <ConfiguracoesHeader
-              saving={isSaving}
-              loggingOut={loggingOut}
-              onSave={handleSaveAllSettings}
-              onSignOut={handleSignOut}
-            />
-        </div>
+        {/* Usando SharedPageHeader */}
+        <SharedPageHeader
+          title="Configurações da Conta"
+          description="Personalize suas informações e preferências do sistema."
+          pageIcon={<SettingsPageIcon />} // Ícone para a página de configurações
+          showActionButton={true} // Mostrar botão de salvar geral
+          actionButtonText={isSaving ? "Salvando..." : "Salvar Alterações"}
+          onActionButtonClick={handleSaveAllSettings}
+          isLoading={isSaving}
+          actionButtonDisabled={isSaving}
+        />
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-0"> {/* Removido mt-6 */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6 md:mt-8"> {/* Ajustado mt aqui */}
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 mb-6 md:mb-8 h-auto">
             {[
               { value: "perfil", label: "Perfil", icon: User },
@@ -261,11 +261,10 @@ const ConfiguracoesPage = () => {
             <EscritorioTab
               officeSettings={officeSettings}
               setOfficeSettings={setOfficeSettings}
-              // Passando a URL do logo para o EscritorioTab
               currentLogoUrl={officeSettings.logo_url}
               onLogoUpdate={async () => {
-                await refreshSession(); // Atualiza a sessão para pegar a nova URL do logo
-                if (user?.user_metadata?.logo_url) { // Recarrega as configurações do escritório
+                await refreshSession(); 
+                if (user?.user_metadata?.logo_url) {
                     setOfficeSettings(prev => ({...prev, logo_url: user.user_metadata.logo_url as string}));
                 }
               }}
@@ -295,9 +294,9 @@ const ConfiguracoesPage = () => {
             <SegurancaTab
               securitySettings={securitySettings}
               setSecuritySettings={setSecuritySettings}
-              hasFinancePin={hasFinancePin} 
-              onChangeFinanceiroPin={handleChangeFinanceiroPin} 
-              isSavingPin={isSaving} // Reutilizando isSaving geral ou pode criar um isSavingPin específico
+              hasFinancePin={hasFinancePin}  
+              onChangeFinanceiroPin={handleChangeFinanceiroPin}  
+              isSavingPin={isSaving} 
             />
           </TabsContent>
         </Tabs>
