@@ -1,39 +1,20 @@
-
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/lovable-uploads/f43e275d-744e-43eb-a2c7-bbf3c17b3fc5.png" />
+    <link rel="icon" type="image/png" href="/lovable.png" /> 
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gestão para Advogados</title>
-    <style>
-      /* Camuflar o banner Lovable de forma mais agressiva */
-      [class*="lovable-banner"], [id*="lovable-banner"], 
-      [class*="lovable-editor"], [id*="lovable-editor"],
-      [class*="lovable-tagger"], [id*="lovable-tagger"],
-      [class*="gpte"], [id*="gpte"],
-      [class*="gpt-engineer"], [id*="gpt-engineer"],
-      a[href*="lovable.dev"],
-      div[style*="z-index: 999999"][style*="position: fixed"],
-      div[style*="bottom: 20px"][style*="right: 20px"],
-      div#gpt-engineer-container div[style*="position: fixed"] {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        width: 0 !important;
-        height: 0 !important;
-        position: absolute !important;
-        left: -9999px !important;
-        clip: rect(0, 0, 0, 0) !important;
-        clip-path: polygon(0px 0px, 0px 0px, 0px 0px) !important;
-      }
-    </style>
+    
+    <meta name="theme-color" content="#0D47A1" /> <meta name="description" content="JusGestão - Sistema de gestão para advogados e escritórios de advocacia." />
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"> <meta name="apple-mobile-web-app-title" content="JusGestão">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png"> <link rel="manifest" href="/manifest.webmanifest">
+
+    <title>JusGestão</title>
   </head>
   <body>
     <div id="root"></div>
-    <!-- Add the Lovable GPT Engineer script -->
-    <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
