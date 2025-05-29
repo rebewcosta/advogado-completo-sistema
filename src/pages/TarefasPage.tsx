@@ -1,9 +1,10 @@
+
 // src/pages/TarefasPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckSquare, Plus, Search, RefreshCw, ListChecks } from 'lucide-react'; // ListChecks para o header
+import { CheckSquare, Plus, Search, RefreshCw, ListChecks } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -11,17 +12,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Card, CardContent } from '@/components/ui/card';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
-import TarefaForm from '@/components/tarefas/TarefaForm'; // Certifique-se que este componente exista
-import TarefaListAsCards from '@/components/tarefas/TarefaListAsCards'; // Para mobile
-import TarefaTable from '@/components/tarefas/TarefaTable'; // Para desktop
-import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR
+import TarefaForm from '@/components/tarefas/TarefaForm';
+import TarefaListAsCards from '@/components/tarefas/TarefaListAsCards';
+import TarefaTable from '@/components/tarefas/TarefaTable';
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
+import { format, parseISO } from 'date-fns';
+import type { TarefaComRelacoes, StatusTarefa, PrioridadeTarefa } from '@/types/tarefas';
 
 type Tarefa = Database['public']['Tables']['tarefas']['Row'] & {
   processos?: { id: string; numero_processo: string } | null;
@@ -31,10 +33,10 @@ type Tarefa = Database['public']['Tables']['tarefas']['Row'] & {
 export type TarefaFormData = {
   titulo: string;
   descricao?: string | null;
-  data_conclusao?: string | null; // formato YYYY-MM-DD
-  prioridade: 'baixa' | 'média' | 'alta';
-  status_tarefa: 'Pendente' | 'Em andamento' | 'Concluída' | 'Cancelada';
-  responsavel_id?: string | null; // Se houver usuários/responsáveis
+  data_conclusao?: string | null;
+  prioridade: 'Baixa' | 'Média' | 'Alta' | 'Crítica';
+  status: 'Pendente' | 'Em Andamento' | 'Concluída' | 'Cancelada';
+  responsavel_id?: string | null;
   processo_id?: string | null;
   cliente_id?: string | null;
 };
@@ -120,7 +122,7 @@ const TarefasPage = () => {
 
   const filteredTarefas = tarefas.filter(tarefa =>
     (tarefa.titulo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (tarefa.descricao || '').toLowerCase().includes(searchTerm.toLowerCase())
+    (tarefa.descricao_detalhada || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleOpenForm = (tarefaToEdit?: Tarefa) => {
@@ -128,17 +130,17 @@ const TarefasPage = () => {
         const formData: Partial<TarefaFormData> & { id: string } = {
             id: tarefaToEdit.id,
             titulo: tarefaToEdit.titulo,
-            descricao: tarefaToEdit.descricao,
+            descricao: tarefaToEdit.descricao_detalhada,
             data_conclusao: tarefaToEdit.data_conclusao ? format(parseISO(tarefaToEdit.data_conclusao), 'yyyy-MM-dd') : undefined,
             prioridade: tarefaToEdit.prioridade as TarefaFormData['prioridade'],
-            status_tarefa: tarefaToEdit.status_tarefa as TarefaFormData['status_tarefa'],
+            status: tarefaToEdit.status as TarefaFormData['status'],
             responsavel_id: tarefaToEdit.responsavel_id,
             processo_id: tarefaToEdit.processo_id,
             cliente_id: tarefaToEdit.cliente_id,
         };
         setTarefaParaForm(formData);
     } else {
-        setTarefaParaForm({ prioridade: 'média', status_tarefa: 'Pendente' });
+        setTarefaParaForm({ prioridade: 'Média', status: 'Pendente' });
     }
     setIsFormOpen(true);
   };
@@ -150,10 +152,10 @@ const TarefasPage = () => {
     const dadosParaSupabase = {
         user_id: user.id,
         titulo: formData.titulo,
-        descricao: formData.descricao,
+        descricao_detalhada: formData.descricao,
         data_conclusao: formData.data_conclusao || null,
         prioridade: formData.prioridade,
-        status_tarefa: formData.status_tarefa,
+        status: formData.status,
         responsavel_id: formData.responsavel_id || null,
         processo_id: formData.processo_id || null,
         cliente_id: formData.cliente_id || null,
@@ -206,13 +208,13 @@ const TarefasPage = () => {
     }
   };
 
-  const handleToggleStatusTarefa = async (tarefa: Tarefa, novoStatus: TarefaFormData['status_tarefa']) => {
+  const handleToggleStatusTarefa = async (tarefa: Tarefa, novoStatus: TarefaFormData['status']) => {
     if(!user || isSubmitting) return;
     setIsSubmitting(true);
     try {
         const { data, error } = await supabase
             .from('tarefas')
-            .update({ status_tarefa: novoStatus })
+            .update({ status: novoStatus })
             .eq('id', tarefa.id)
             .select('*, processos(id, numero_processo), clientes(id, nome)')
             .single();

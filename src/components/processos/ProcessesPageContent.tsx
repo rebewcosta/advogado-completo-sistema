@@ -80,10 +80,10 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
 
       <ProcessTable
         processes={processesWithClientInfo}
-        onEdit={onEditProcess}
-        onView={onViewProcess}
-        onToggleStatus={onToggleStatus}
-        onDelete={onDeleteProcess}
+        onEdit={(processo) => onEditProcess(processo.id)}
+        onView={(processo) => onViewProcess(processo.id)}
+        onToggleStatus={(processo) => onToggleStatus(processo.id)}
+        onDelete={(processo) => onDeleteProcess(processo.id)}
       />
 
       <ProcessDialogs
