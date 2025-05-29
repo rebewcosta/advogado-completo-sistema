@@ -5,7 +5,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { useProcessesStore, ProcessoComCliente } from '@/stores/useProcessesStore';
 import ProcessSearchActionBar from '@/components/processos/ProcessSearchActionBar';
 import ProcessListAsCards from '@/components/processos/ProcessListAsCards';
-import MeusProcessosTable from '@/components/processos/MeusProcessosTable'; // <<< IMPORTAR A NOVA TABELA
+import MeusProcessosTable from '@/components/processos/MeusProcessosTable'; // <<< JÁ DEVE ESTAR IMPORTADO
 import ProcessDialogs from '@/components/processos/ProcessDialogs';
 import type { Database } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { FileText, Plus } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card'; 
 import { Button } from '@/components/ui/button';
+import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR SharedPageHeader
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -156,7 +157,7 @@ const MeusProcessosPage = () => {
 
   const handleManualRefresh = async () => {
     setIsRefreshingManually(true);
-    await fetchProcesses(); // fetchProcesses já está no useProcessesStore
+    await fetchProcesses(); 
     setIsRefreshingManually(false);
     toast({title: "Lista de processos atualizada!"});
   };
@@ -177,29 +178,22 @@ const MeusProcessosPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
-          <div className="mb-4 md:mb-0">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-              <FileText className="mr-3 h-7 w-7 text-lawyer-primary" />
-              Meus Processos
-            </h1>
-            <p className="text-gray-600 text-left mt-1">
-              Gerencie e acompanhe todos os seus processos jurídicos.
-            </p>
-          </div>
-          <Button onClick={handleOpenNewProcessForm} className="w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Processo
-          </Button>
-        </div>
+        <SharedPageHeader
+            title="Meus Processos"
+            description="Gerencie e acompanhe todos os seus processos jurídicos."
+            pageIcon={<FileText />}
+            actionButtonText="Novo Processo"
+            onActionButtonClick={handleOpenNewProcessForm}
+            isLoading={isLoadingCombined}
+        />
 
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
             <CardContent className="p-4"> 
                 <ProcessSearchActionBar
                 searchTerm={searchTerm}
                 onSearchChange={handleSearchChange}
-                onRefresh={handleManualRefresh} // Alterado para usar a função do useProcessesStore
-                isRefreshing={isLoadingCombined} // Usar o estado combinado
+                onRefresh={handleManualRefresh}
+                isRefreshing={isLoadingCombined}
                 />
             </CardContent>
         </Card>

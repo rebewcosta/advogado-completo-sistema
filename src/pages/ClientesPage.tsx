@@ -3,7 +3,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ClienteForm from '@/components/ClienteForm';
-import { X, Edit, Eye, Plus, Search, MoreVertical, Trash2, RefreshCw, Users } from 'lucide-react';
+import { X, Search, RefreshCw, Users, Plus, ExternalLink, Edit, Trash2 } from 'lucide-react'; // Adicionado ExternalLink, Edit, Trash2 para Dialog
 import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
@@ -21,7 +21,8 @@ import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
 import ClienteListAsCards from '@/components/clientes/ClienteListAsCards';
-import ClienteTable from '@/components/clientes/ClienteTable'; // <<< IMPORTAR A NOVA TABELA
+import ClienteTable from '@/components/clientes/ClienteTable';
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
 
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 
@@ -52,7 +53,6 @@ const ClientesPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [showClientDetails, setShowClientDetails] = useState(false);
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
-
 
   const fetchClients = useCallback(async (showLoadingSpinner = true) => {
     if (!user) {
@@ -90,13 +90,12 @@ const ClientesPage = () => {
   useEffect(() => {
     if (user) {
       fetchClients();
-
       const channel = supabase
         .channel('public:clientes')
         .on(
           'postgres_changes',
           { event: '*', schema: 'public', table: 'clientes', filter: `user_id=eq.${user.id}` },
-          (payload) => {
+          () => {
             toast({
                 title: "Atualização Automática",
                 description: "A lista de clientes foi atualizada.",
@@ -106,28 +105,22 @@ const ClientesPage = () => {
           }
         )
         .subscribe((status, err) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('Realtime: Conectado ao canal de clientes!');
-          }
+          if (status === 'SUBSCRIBED') console.log('Realtime: Conectado ao canal de clientes!');
           if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.error('Realtime: Erro no canal de clientes:', err || status);
             toast({ title: "Erro de Conexão Realtime", description: "Não foi possível sincronizar os dados de clientes em tempo real.", variant: "destructive"});
           }
         });
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
+      return () => { supabase.removeChannel(channel); };
     } else {
-      setClients([]);
-      setIsLoading(false);
+      setClients([]); setIsLoading(false);
     }
   }, [user, fetchClients, toast]);
 
   const filteredClients = clients.filter(client =>
-    client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (client.cpfCnpj && client.cpfCnpj.toLowerCase().includes(searchTerm.toLowerCase()))
+    (client.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (client.cpfCnpj || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleAddClient = () => {
@@ -138,90 +131,40 @@ const ClientesPage = () => {
 
   const handleSaveClient = async (formDataFromForm: ClienteFormDataFromForm) => {
     if (!user) {
-      toast({ title: "Erro de Autenticação", description: "Você precisa estar logado para salvar um cliente.", variant: "destructive" });
-      setIsSubmitting(false);
-      return;
+      toast({ title: "Erro de Autenticação", variant: "destructive" });
+      setIsSubmitting(false); return;
     }
     setIsSubmitting(true);
-
     const dadosParaSupabase = {
-      nome: formDataFromForm.nome,
-      email: formDataFromForm.email,
-      telefone: formDataFromForm.telefone,
-      tipo_cliente: formDataFromForm.tipo,
-      cpfCnpj: formDataFromForm.cpfCnpj,
-      endereco: formDataFromForm.endereco,
-      cidade: formDataFromForm.cidade,
-      estado: formDataFromForm.estado,
-      cep: formDataFromForm.cep,
-      observacoes: formDataFromForm.observacoes,
-      status_cliente: formDataFromForm.status_cliente || 'Ativo',
+      nome: formDataFromForm.nome, email: formDataFromForm.email, telefone: formDataFromForm.telefone,
+      tipo_cliente: formDataFromForm.tipo, cpfCnpj: formDataFromForm.cpfCnpj, endereco: formDataFromForm.endereco,
+      cidade: formDataFromForm.cidade, estado: formDataFromForm.estado, cep: formDataFromForm.cep,
+      observacoes: formDataFromForm.observacoes, status_cliente: formDataFromForm.status_cliente || 'Ativo',
     };
-
     try {
       let responseData: Cliente | null = null;
-      
       if (isEditing && selectedClient) {
-        const { data, error } = await supabase
-          .from('clientes')
-          .update(dadosParaSupabase)
-          .eq('id', selectedClient.id)
-          .eq('user_id', user.id)
-          .select()
-          .single();
-        
-        if (error) throw error;
-        responseData = data;
+        const { data, error } = await supabase.from('clientes').update(dadosParaSupabase).eq('id', selectedClient.id).eq('user_id', user.id).select().single();
+        if (error) throw error; responseData = data;
       } else {
-        const { data, error } = await supabase
-          .from('clientes')
-          .insert([{ ...dadosParaSupabase, user_id: user.id }])
-          .select()
-          .single();
-        
-        if (error) throw error;
-        responseData = data;
+        const { data, error } = await supabase.from('clientes').insert([{ ...dadosParaSupabase, user_id: user.id }]).select().single();
+        if (error) throw error; responseData = data;
       }
-
       if (responseData) {
-        toast({ 
-            title: isEditing ? "Cliente atualizado!" : "Cliente cadastrado!", 
-            description: `${responseData.nome} foi ${isEditing ? 'atualizado' : 'salvo'} com sucesso.` 
-        });
-        setShowForm(false);
-        setSelectedClient(null);
-        setIsEditing(false);
+        toast({ title: isEditing ? "Cliente atualizado!" : "Cliente cadastrado!", description: `${responseData.nome} foi ${isEditing ? 'atualizado' : 'salvo'}.` });
+        setShowForm(false); setSelectedClient(null); setIsEditing(false);
       }
     } catch (error: any) { 
-      console.error("Erro ao salvar cliente:", error);
-      let toastTitle = isEditing ? "Erro ao Atualizar Cliente" : "Erro ao Cadastrar Cliente";
-      let toastDescription = error.message || "Ocorreu um erro inesperado.";
-
-      if (error.message && error.message.includes('Já existe um cliente cadastrado com este CPF/CNPJ para sua conta.')) {
-        toastDescription = error.message;
-      } 
-      else if (error.message && 
-          error.message.toLowerCase().includes('duplicate key value violates unique constraint') &&
-          (error.message.toLowerCase().includes('cpfnnpj') ||
-           error.message.toLowerCase().includes("unique constraint") && error.message.toLowerCase().includes("clientes"))) { 
-        toastDescription = "Este CPF/CNPJ já está cadastrado. Por favor, verifique os dados.";
-      }
-      else if (error.message && error.message.toLowerCase().includes('record "new" has no field "cpfcnpj"')) {
-        toastDescription = "Erro interno no banco de dados ao verificar CPF/CNPJ (trigger). Contate o suporte.";
-      }
-
-      toast({
-        title: toastTitle,
-        description: toastDescription,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+      let desc = error.message || "Ocorreu um erro.";
+      if (error.message?.includes('Já existe um cliente cadastrado com este CPF/CNPJ')) desc = error.message;
+      else if (error.message?.toLowerCase().includes('duplicate key value violates unique constraint')) desc = "Este CPF/CNPJ já está cadastrado.";
+      toast({ title: isEditing ? "Erro ao Atualizar" : "Erro ao Cadastrar", description: desc, variant: "destructive" });
+    } finally { setIsSubmitting(false); }
   };
 
   const handleEditClient = (client: Cliente) => {
-    const formDataForEdit = {
+    const clientDataForForm = {
+        id: client.id,
         nome: client.nome,
         email: client.email || '',
         telefone: client.telefone || '',
@@ -232,23 +175,17 @@ const ClientesPage = () => {
         estado: client.estado || '',
         cep: client.cep || '',
         observacoes: client.observacoes || '',
-        status_cliente: client.status_cliente,
+        status_cliente: client.status_cliente || 'Ativo',
     };
-    setSelectedClient({ ...client, ...formDataForEdit });
-    setIsEditing(true);
-    setShowForm(true);
-    setShowClientDetails(false); 
+    setSelectedClient(clientDataForForm as Cliente); // O tipo é Cliente, mas populamos com dados do form
+    setIsEditing(true); setShowForm(true); setShowClientDetails(false); 
   };
 
-  const handleViewClient = (client: Cliente) => {
-    setSelectedClient(client);
-    setShowClientDetails(true);
-    setShowForm(false); 
-  };
-
+  const handleViewClient = (client: Cliente) => { setSelectedClient(client); setShowClientDetails(true); setShowForm(false); };
+  
   const handleToggleStatus = async (clientToToggle: Cliente) => {
     if (!user || isSubmitting) return;
-    setIsSubmitting(true); 
+    setIsSubmitting(true);
     const newStatus = clientToToggle.status_cliente === "Ativo" ? "Inativo" : "Ativo";
     try {
       const { data: updatedClient, error } = await supabase
@@ -261,7 +198,7 @@ const ClientesPage = () => {
 
       if (error) throw error;
       if (updatedClient) {
-         toast({
+        toast({
           title: "Status atualizado",
           description: `Cliente ${updatedClient.nome} agora está ${newStatus}.`
         });
@@ -272,7 +209,7 @@ const ClientesPage = () => {
       setIsSubmitting(false);
     }
   };
-
+  
   const handleDeleteClient = async (clientId: string) => {
     if (!user || isSubmitting) return;
     const clientToDelete = clients.find(c => c.id === clientId);
@@ -299,18 +236,15 @@ const ClientesPage = () => {
     }
   };
   
-  const handleManualRefresh = () => {
-    fetchClients(true);
-  };
-
+  const handleManualRefresh = () => { fetchClients(true); };
+  
   const isLoadingCombined = isLoading || isSubmitting || isRefreshingManually;
 
   if (isLoadingCombined && !clients.length && !isRefreshingManually) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
-          <Spinner size="lg" />
-          <span className="text-gray-500 mt-3">Carregando clientes...</span>
+          <Spinner size="lg" /> <span className="text-gray-500 mt-3">Carregando clientes...</span>
         </div>
       </AdminLayout>
     );
@@ -319,21 +253,14 @@ const ClientesPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left flex items-center">
-              <Users className="mr-3 h-7 w-7 text-lawyer-primary" />
-              Gestão de Clientes
-            </h1>
-            <p className="text-gray-600 text-left mt-1">
-              Cadastre, visualize e gerencie todos os seus clientes.
-            </p>
-          </div>
-           <Button onClick={handleAddClient} className="mt-4 md:mt-0 w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Cliente
-            </Button>
-        </div>
+        <SharedPageHeader
+          title="Gestão de Clientes"
+          description="Cadastre, visualize e gerencie todos os seus clientes."
+          pageIcon={<Users className="mr-3 h-7 w-7" />}
+          actionButtonText="Novo Cliente"
+          onActionButtonClick={handleAddClient}
+          isLoading={isLoadingCombined}
+        />
         
         <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
             <CardContent className="p-4">
@@ -362,44 +289,36 @@ const ClientesPage = () => {
             </CardContent>
         </Card>
 
-        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
-        <div className="hidden md:block"> {/* Visível em md e acima */}
+        <div className="hidden md:block">
           <ClienteTable
-            clients={filteredClients}
-            onEdit={handleEditClient}
+            clients={filteredClients} 
+            onEdit={handleEditClient} 
             onView={handleViewClient}
-            onToggleStatus={handleToggleStatus}
+            onToggleStatus={handleToggleStatus} 
             onDelete={handleDeleteClient}
-            isLoading={isLoadingCombined}
+            isLoading={isLoadingCombined} 
             searchTerm={searchTerm}
           />
         </div>
-        <div className="md:hidden"> {/* Visível abaixo de md */}
+        <div className="md:hidden">
           <ClienteListAsCards
-            clients={filteredClients}
-            onEdit={handleEditClient}
+            clients={filteredClients} 
+            onEdit={handleEditClient} 
             onView={handleViewClient}
-            onToggleStatus={handleToggleStatus}
+            onToggleStatus={handleToggleStatus} 
             onDelete={handleDeleteClient}
-            isLoading={isLoadingCombined}
+            isLoading={isLoadingCombined} 
             searchTerm={searchTerm}
           />
         </div>
 
-
-        <Dialog open={showForm} onOpenChange={(open) => {
-          if (!open) {
-            setSelectedClient(null);
-            setIsEditing(false);
-          }
-          setShowForm(open);
-        }}>
+        <Dialog open={showForm} onOpenChange={(open) => { if (!open) { setSelectedClient(null); setIsEditing(false); } setShowForm(open); }}>
           <DialogContent className="p-0 max-w-2xl overflow-auto max-h-[90vh] flex flex-col">
-            <ClienteForm
-              onSave={handleSaveClient}
-              onCancel={() => { setShowForm(false); setSelectedClient(null); setIsEditing(false); }}
-              cliente={selectedClient}
-              isEdit={isEditing}
+            <ClienteForm 
+              onSave={handleSaveClient} 
+              onCancel={() => { setShowForm(false); setSelectedClient(null); setIsEditing(false); }} 
+              cliente={selectedClient} 
+              isEdit={isEditing} 
             />
           </DialogContent>
         </Dialog>
@@ -437,14 +356,14 @@ const ClientesPage = () => {
                     </Badge>
                   </p>
                   <p><strong>Observações:</strong> {selectedClient.observacoes || 'Nenhuma'}</p>
-                  <p><strong>Cadastrado em:</strong> {new Date(selectedClient.created_at).toLocaleDateString('pt-BR')}</p>
+                  <p><strong>Cadastrado em:</strong> {selectedClient.created_at ? new Date(selectedClient.created_at).toLocaleDateString('pt-BR') : 'N/A'}</p>
                 </div>
                 <DialogFooter className="p-4 border-t flex-shrink-0 sticky bottom-0 bg-white z-10">
                   <Button variant="outline" onClick={() => {
                     setShowClientDetails(false);
-                    handleEditClient(selectedClient);
+                    handleEditClient(selectedClient); // selectedClient aqui já é do tipo Cliente
                   }}>
-                    Editar
+                    <Edit className="mr-2 h-4 w-4" /> Editar
                   </Button>
                   <Button onClick={() => setShowClientDetails(false)} className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white">Fechar</Button>
                 </DialogFooter>

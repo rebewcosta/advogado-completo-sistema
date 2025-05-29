@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, MoreVertical, ExternalLink, Circle, Trash2, MapPin, User, FileText } from 'lucide-react';
+import { Edit, MoreVertical, ExternalLink, Circle, Trash2, MapPin, User, FileText, CalendarDays } from 'lucide-react'; // <<< CalendarDays ADICIONADO AQUI
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from "@/lib/utils";
@@ -148,7 +148,7 @@ const AgendaEventTable: React.FC<AgendaEventTableProps> = ({
           ) : (
             <TableRow>
               <TableCell colSpan={7} className="px-6 py-16 text-center text-gray-500">
-                 <CalendarDays className="mx-auto h-12 w-12 text-gray-300 mb-3" />
+                 <CalendarDays className="mx-auto h-12 w-12 text-gray-300 mb-3" /> {/* Ícone correto */}
                 <p className="font-medium mb-1">
                   {isLoading ? "Carregando..." : selectedDate ? `Nenhum evento para ${format(selectedDate, "PPP", { locale: ptBR })}.` : "Nenhum evento encontrado."}
                 </p>
