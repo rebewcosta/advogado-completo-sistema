@@ -1,4 +1,5 @@
 
+// src/components/tarefas/TarefaListAsCards.tsx
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,19 +10,10 @@ import { ptBR } from 'date-fns/locale';
 import { TarefaComRelacoes, StatusTarefa, PrioridadeTarefa } from '@/types/tarefas';
 import { cn } from '@/lib/utils';
 
-interface TarefaListAsCardsProps {
-  tarefas: TarefaComRelacoes[];
-  onEdit: (tarefa: TarefaComRelacoes) => void;
-  onDelete: (tarefaId: string) => void;
-  onToggleStatus: (tarefa: TarefaComRelacoes) => void;
-  isLoading: boolean;
-}
-
 interface TarefaCardProps {
   tarefa: TarefaComRelacoes;
-  onEdit: (tarefa: TarefaComRelacoes) => void;
-  onDelete: (tarefaId: string) => void;
-  onToggleStatus: (tarefa: TarefaComRelacoes) => void;
+  onEdit: (id: string) => void;
+  onDelete: (id: string) => void;
 }
 
 const statusMap = {
@@ -38,14 +30,9 @@ const prioridadeMap = {
   'Crítica': { label: 'Crítica', color: 'bg-red-100 text-red-700' },
 }
 
-const TarefaCard: React.FC<TarefaCardProps> = ({ tarefa, onEdit, onDelete, onToggleStatus }) => {
-  // Verificar se tarefa e suas propriedades existem antes de usar
-  if (!tarefa) {
-    return null;
-  }
-
-  const statusInfo = statusMap[tarefa.status] || { label: 'N/A', color: 'bg-gray-100 text-gray-700', icon: Circle };
-  const prioridadeInfo = prioridadeMap[tarefa.prioridade] || { label: 'N/A', color: 'bg-gray-100 text-gray-700' };
+const TarefaCard: React.FC<TarefaCardProps> = ({ tarefa, onEdit, onDelete }) => {
+  const statusInfo = statusMap[tarefa.status];
+  const prioridadeInfo = prioridadeMap[tarefa.prioridade];
 
   const formatDate = (dateString: string | null | undefined) => {
     if (!dateString) return 'Sem data';
@@ -60,9 +47,9 @@ const TarefaCard: React.FC<TarefaCardProps> = ({ tarefa, onEdit, onDelete, onTog
     <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">{tarefa.titulo || 'Sem título'}</CardTitle>
+          <CardTitle className="text-lg font-semibold">{tarefa.titulo}</CardTitle>
           <div className="flex space-x-2">
-            <Button size="icon" variant="ghost" onClick={() => onEdit(tarefa)}>
+            <Button size="icon" variant="ghost" onClick={() => onEdit(tarefa.id)}>
               <Edit className="h-4 w-4" />
             </Button>
             <Button size="icon" variant="ghost" onClick={() => onDelete(tarefa.id)}>
@@ -75,10 +62,7 @@ const TarefaCard: React.FC<TarefaCardProps> = ({ tarefa, onEdit, onDelete, onTog
         <div className="space-y-2">
           <div className="flex items-center text-sm">
             {statusInfo.icon && <statusInfo.icon className="mr-2 h-4 w-4" />}
-            <Badge 
-              className={cn("font-medium cursor-pointer", statusInfo.color, `border-transparent`)}
-              onClick={() => onToggleStatus(tarefa)}
-            >
+            <Badge className={cn("font-medium", statusInfo.color, `border-transparent`)}>
               {statusInfo.label}
             </Badge>
           </div>
@@ -94,74 +78,10 @@ const TarefaCard: React.FC<TarefaCardProps> = ({ tarefa, onEdit, onDelete, onTog
               <span>Vencimento: {formatDate(tarefa.data_vencimento)}</span>
             </div>
           )}
-          {tarefa.clientes && (
-            <div className="flex items-center text-sm">
-              <User className="mr-2 h-4 w-4" />
-              <span>Cliente: {tarefa.clientes.nome}</span>
-            </div>
-          )}
-          {tarefa.processos && (
-            <div className="flex items-center text-sm">
-              <FileText className="mr-2 h-4 w-4" />
-              <span>Processo: {tarefa.processos.numero_processo}</span>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
   );
 };
 
-const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
-  tarefas,
-  onEdit,
-  onDelete,
-  onToggleStatus,
-  isLoading
-}) => {
-  if (isLoading) {
-    return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {[...Array(6)].map((_, index) => (
-          <Card key={index} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  if (!tarefas || tarefas.length === 0) {
-    return (
-      <div className="text-center py-16 flex flex-col justify-center items-center">
-        <FileText className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-        <p className="font-medium mb-1">Nenhuma tarefa encontrada.</p>
-        <p className="text-sm text-gray-500">Clique em "Nova Tarefa" para adicionar.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {tarefas.map((tarefa) => (
-        <TarefaCard
-          key={tarefa.id}
-          tarefa={tarefa}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onToggleStatus={onToggleStatus}
-        />
-      ))}
-    </div>
-  );
-};
-
-export default TarefaListAsCards;
+export default TarefaCard;
