@@ -12,7 +12,7 @@ import { Briefcase, AlertCircle, Clock, List, ExternalLink, RefreshCw, PieChart 
 import { Spinner } from '@/components/ui/spinner';
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import type { Database } from '@/integrations/supabase/types';
-import { cn } from '@/lib/utils'; // <<< ADICIONADO IMPORT DO CN AQUI
+import { cn } from '@/lib/utils';
 
 type Processo = Database['public']['Tables']['processos']['Row'];
 type StatusCount = { name: string, value: number, fill: string };
@@ -55,7 +55,7 @@ const ProcessosContent: React.FC = () => {
       // Todos os processos para contagem de status e últimos adicionados
       const { data: todosProcessos, error: todosProcessosError } = await supabase
         .from('processos')
-        .select('id, numero_processo, status_processo, proximo_prazo, created_at, cliente_id, nome_cliente_text, clientes(nome)')
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false }); 
 
@@ -84,7 +84,7 @@ const ProcessosContent: React.FC = () => {
       // Processos com próximos prazos
       const { data: prazosData, error: prazosError } = await supabase
         .from('processos')
-        .select('id, numero_processo, proximo_prazo, status_processo, cliente_id, nome_cliente_text, clientes(nome)')
+        .select('*')
         .eq('user_id', user.id)
         .neq('status_processo', 'Concluído') 
         .gte('proximo_prazo', format(hoje, 'yyyy-MM-dd'))
@@ -117,8 +117,8 @@ const ProcessosContent: React.FC = () => {
     fetchProcessosData();
   }, [fetchProcessosData]);
   
-  const renderProcessoItem = (processo: Processo & { clientes?: { nome: string } | null }, displayField: 'proximo_prazo' | 'created_at' = 'proximo_prazo') => {
-    const clienteNome = processo.clientes?.nome || processo.nome_cliente_text; 
+  const renderProcessoItem = (processo: Processo, displayField: 'proximo_prazo' | 'created_at' = 'proximo_prazo') => {
+    const clienteNome = processo.nome_cliente_text; 
     return (
         <li key={processo.id} className="flex justify-between items-center py-2.5 border-b border-gray-100 last:border-b-0 hover:bg-gray-50/50 px-1 -mx-1 rounded-md transition-colors">
             <div className="truncate w-full">
@@ -127,7 +127,7 @@ const ProcessosContent: React.FC = () => {
                 </Link>
                 {clienteNome && <p className="text-[11px] text-gray-500 truncate" title={clienteNome}>Cliente: {clienteNome}</p>}
             </div>
-            <span className={cn( // <<< cn ESTAVA SENDO USADO AQUI SEM IMPORTAR
+            <span className={cn(
                 "text-xs text-gray-500 whitespace-nowrap pl-2",
                 displayField === 'proximo_prazo' && processo.proximo_prazo && parseISO(processo.proximo_prazo) < new Date() && processo.status_processo !== 'Concluído' && "text-red-500 font-medium"
             )}>
@@ -233,7 +233,7 @@ const ProcessosContent: React.FC = () => {
           <CardContent className="h-60">
             {stats.proximosPrazos.length > 0 ? (
               <ul className="space-y-1 max-h-full overflow-y-auto pr-2 text-left">
-                {stats.proximosPrazos.map(p => renderProcessoItem(p as Processo & { clientes?: { nome: string } | null }, 'proximo_prazo'))}
+                {stats.proximosPrazos.map(p => renderProcessoItem(p, 'proximo_prazo'))}
               </ul>
             ) : (
               <p className="text-sm text-center text-gray-500 py-10">Nenhum prazo nos próximos 30 dias.</p>
@@ -252,7 +252,7 @@ const ProcessosContent: React.FC = () => {
           <CardContent className="h-60">
             {stats.ultimosProcessos.length > 0 ? (
               <ul className="space-y-1 max-h-full overflow-y-auto pr-2 text-left">
-                {stats.ultimosProcessos.map(p => renderProcessoItem(p as Processo & { clientes?: { nome: string } | null }, 'created_at'))}
+                {stats.ultimosProcessos.map(p => renderProcessoItem(p, 'created_at'))}
               </ul>
             ) : (
               <p className="text-sm text-center text-gray-500 py-10">Nenhum processo cadastrado recentemente.</p>

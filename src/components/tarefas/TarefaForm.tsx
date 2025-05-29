@@ -1,3 +1,4 @@
+
 // src/components/tarefas/TarefaForm.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
@@ -91,7 +92,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({ open, onClose, onSubmit, initia
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="status">Status</Label>
-                      <Select value={status} onValueChange={setStatus}>
+                      <Select value={status} onValueChange={(value: StatusTarefa) => setStatus(value)}>
                         <SelectTrigger id="status">
                           <SelectValue placeholder="Selecione o status" />
                         </SelectTrigger>
@@ -105,7 +106,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({ open, onClose, onSubmit, initia
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="prioridade">Prioridade</Label>
-                      <Select value={prioridade} onValueChange={setPrioridade}>
+                      <Select value={prioridade} onValueChange={(value: PrioridadeTarefa) => setPrioridade(value)}>
                         <SelectTrigger id="prioridade">
                           <SelectValue placeholder="Selecione a prioridade" />
                         </SelectTrigger>

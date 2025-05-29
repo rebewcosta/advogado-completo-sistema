@@ -1,6 +1,7 @@
 // src/components/dashboard/FinanceiroContent.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +11,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { DollarSign, TrendingUp, TrendingDown, List, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
+import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
 
 type Transacao = Database['public']['Tables']['transacoes_financeiras']['Row'];

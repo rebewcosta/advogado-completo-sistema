@@ -50,7 +50,7 @@ const GerenciarAssinatura = () => {
       }
 
       if (data) {
-        setAssinaturaInfo(data as AssinaturaInfo);
+        setAssinaturaInfo(data as unknown as AssinaturaInfo);
         console.log("Dados da assinatura recebidos:", data);
       } else {
         throw new Error("Nenhuma informação de assinatura retornada.");

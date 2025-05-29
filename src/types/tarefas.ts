@@ -1,4 +1,5 @@
 
+
 export type StatusTarefa = 'Pendente' | 'Em Andamento' | 'Concluída' | 'Cancelada';
 export type PrioridadeTarefa = 'Baixa' | 'Média' | 'Alta' | 'Crítica';
 
@@ -15,4 +16,9 @@ export interface Tarefa {
   user_id: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface TarefaComRelacoes extends Tarefa {
+  processos?: { id: string; numero_processo: string } | null;
+  clientes?: { id: string; nome: string } | null;
 }

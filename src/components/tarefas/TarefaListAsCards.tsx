@@ -1,3 +1,4 @@
+
 // src/components/tarefas/TarefaListAsCards.tsx
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -6,11 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CalendarDays, Edit, Trash2, User, FileText, Clock, CheckCircle, AlertTriangle, Circle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Tarefa, StatusTarefa, PrioridadeTarefa } from '@/types/tarefas';
+import { TarefaComRelacoes, StatusTarefa, PrioridadeTarefa } from '@/types/tarefas';
 import { cn } from '@/lib/utils';
 
 interface TarefaCardProps {
-  tarefa: Tarefa;
+  tarefa: TarefaComRelacoes;
   onEdit: (id: string) => void;
   onDelete: (id: string) => void;
 }

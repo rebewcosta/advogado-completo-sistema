@@ -1,3 +1,4 @@
+
 // src/components/tarefas/TarefaTable.tsx
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -10,18 +11,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Edit, Trash2, User, FileText, Calendar, ListChecks } from 'lucide-react';
-import { format } from 'date-fns';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Edit, Trash2, User, FileText, Calendar, ListChecks, MoreVertical, Briefcase, Circle } from 'lucide-react';
+import { format, parseISO, isToday, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { Tarefa, StatusTarefa, PrioridadeTarefa } from '@/types/tarefas';
+import { Spinner } from '@/components/ui/spinner';
+import { TarefaComRelacoes, StatusTarefa, PrioridadeTarefa } from '@/types/tarefas';
 
 interface TarefaTableProps {
-  tarefas: Tarefa[];
-  onEdit: (tarefa: Tarefa) => void;
-  // onView?: (tarefa: Tarefa) => void; // Adicionar se houver uma visualização de detalhes separada
+  tarefas: TarefaComRelacoes[];
+  onEdit: (tarefa: TarefaComRelacoes) => void;
   onDelete: (tarefaId: string) => void;
-  onToggleStatus: (tarefa: Tarefa) => void;
+  onToggleStatus: (tarefa: TarefaComRelacoes) => void;
   isLoading: boolean;
   searchTerm: string;
 }
@@ -29,7 +37,6 @@ interface TarefaTableProps {
 const TarefaTable: React.FC<TarefaTableProps> = ({
   tarefas,
   onEdit,
-  // onView,
   onDelete,
   onToggleStatus,
   isLoading,
@@ -106,7 +113,7 @@ const TarefaTable: React.FC<TarefaTableProps> = ({
                   <TableCell className="px-4 py-3 whitespace-nowrap">
                     <div 
                       className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer"
-                      onClick={() => onEdit(tarefa)} // Ou onView(tarefa) se houver
+                      onClick={() => onEdit(tarefa)}
                       title={tarefa.descricao_detalhada || tarefa.titulo}
                     >
                       {tarefa.titulo}
