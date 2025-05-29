@@ -32,7 +32,7 @@ import VerificarAssinatura from './components/VerificarAssinatura';
 import { Button } from '@/components/ui/button';
 import { Download, X as CloseIcon, Share2 } from 'lucide-react';
 
-// Definição do Contexto PWA
+// Contexto PWA (Opcional, mas bom para organizar se a lógica crescer)
 interface PWAInstallContextType {
   deferredInstallPrompt: Event | null;
   canInstallPWA: boolean;
@@ -41,28 +41,8 @@ interface PWAInstallContextType {
   showInstallBannerGlobal: boolean;
   setShowInstallBannerGlobal: React.Dispatch<React.SetStateAction<boolean>>;
 }
-
 const PWAInstallContext = createContext<PWAInstallContextType | null>(null);
-
-export const usePWAInstall = () => {
-  const context = useContext(PWAInstallContext);
-  if (!context) {
-    // Isso pode acontecer se o hook for usado fora do Provider, mas não deve ser o caso aqui.
-    // No entanto, para segurança, podemos retornar um objeto com valores padrão ou lançar um erro.
-    // console.warn('usePWAInstall must be used within a PWAInstallContext.Provider');
-    // Retornando um objeto padrão para evitar quebras se usado incorretamente fora,
-    // mas o ideal é que nunca chegue aqui se a estrutura do App estiver correta.
-    return {
-        deferredInstallPrompt: null,
-        canInstallPWA: false,
-        isStandalone: false,
-        triggerInstall: async () => {},
-        showInstallBannerGlobal: false,
-        setShowInstallBannerGlobal: () => {}
-    };
-  }
-  return context;
-};
+export const usePWAInstall = () => useContext(PWAInstallContext); // Hook para usar o contexto
 
 function App() {
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<Event | null>(null);
@@ -72,80 +52,89 @@ function App() {
   const [showInstallBannerGlobal, setShowInstallBannerGlobal] = useState(false);
 
   useEffect(() => {
+    // Verifica se o app já está rodando em modo standalone (instalado)
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     setIsStandalone(standalone);
 
+    // Detecta se é iOS para mensagens customizadas
     const userAgent = window.navigator.userAgent.toLowerCase();
     const iPad = /ipad|iphone|ipod/.test(userAgent) && !(window as any).MSStream;
-    const macIntelWithTouch = /macintosh/.test(userAgent) && navigator.maxTouchPoints > 1;
+    const macIntelWithTouch = /macintosh/.test(userAgent) && navigator.maxTouchPoints > 1; // iPads mais novos
     setIsIOS(iPad || macIntelWithTouch);
     
+    // Se já estiver instalado, não faz mais nada relacionado ao prompt de instalação
     if (standalone) {
       console.log('PWA: App rodando em modo standalone. Banner de instalação não será mostrado.');
-      setShowInstallBannerGlobal(false);
+      setShowInstallBannerGlobal(false); // Garante que o banner não seja mostrado
       return; 
     }
 
+    // Listener para o evento beforeinstallprompt
     const handleBeforeInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      setDeferredInstallPrompt(event);
-      setCanInstallPWA(true); 
-      setShowInstallBannerGlobal(true); 
+      event.preventDefault(); // Previne o mini-infobar padrão do Chrome
+      setDeferredInstallPrompt(event); // Guarda o evento
+      setCanInstallPWA(true); // Indica que o navegador suporta e disparou o prompt
+      setShowInstallBannerGlobal(true); // Mostra nosso banner customizado
       console.log('PWA: beforeinstallprompt event fired e prevenido. Banner customizado deve aparecer.');
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     
+    // Listener para quando o app é efetivamente instalado
     const handleAppInstalled = () => {
       console.log('PWA: App instalado com sucesso!');
-      setShowInstallBannerGlobal(false); 
-      setDeferredInstallPrompt(null);
-      setIsStandalone(true); 
+      setShowInstallBannerGlobal(false); // Esconde o banner
+      setDeferredInstallPrompt(null); // Limpa o prompt, pois só pode ser usado uma vez
+      setIsStandalone(true); // Marca que o app agora está instalado
     };
     window.addEventListener('appinstalled', handleAppInstalled);
 
+    // Limpeza dos listeners quando o componente App é desmontado
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []); 
+  }, []); // Array de dependências vazio para rodar apenas na montagem e desmontagem
 
+  // Função para acionar o prompt de instalação
   const triggerInstall = async () => {
     if (!deferredInstallPrompt) {
+      // Se não há deferredInstallPrompt, mas é iOS e não está instalado, mostra instruções
       if(isIOS && !isStandalone) {
+        // Idealmente, essa mensagem seria mais integrada à UI, mas alert é simples para começar
         alert("Para instalar no iOS: toque no botão Compartilhar (caixa com seta para cima) no Safari e depois em 'Adicionar à Tela de Início'.");
       }
       return;
     }
-    (deferredInstallPrompt as any).prompt();
+    // Mostra o prompt de instalação do navegador
+    (deferredInstallPrompt as any).prompt(); 
+    // Espera pela escolha do usuário
     const { outcome } = await (deferredInstallPrompt as any).userChoice;
     if (outcome === 'accepted') {
       console.log('PWA: Usuário aceitou a instalação.');
     } else {
       console.log('PWA: Usuário recusou a instalação.');
     }
+    // Limpa o prompt e esconde o banner
     setDeferredInstallPrompt(null);
     setShowInstallBannerGlobal(false);
   };
 
+  // Função para dispensar o banner
   const handleDismissBanner = () => {
     setShowInstallBannerGlobal(false);
+    // Opcional: Guardar no localStorage para não mostrar o banner por um tempo
+    // localStorage.setItem('pwaInstallDismissedTimestamp', Date.now().toString());
     console.log('PWA: Banner de instalação dispensado pelo usuário.');
   }
 
+  // Determina se o banner customizado deve ser exibido
   const shouldDisplayCustomPwaBanner = !isStandalone && showInstallBannerGlobal;
 
-  const pwaInstallContextValue: PWAInstallContextType = {
-    deferredInstallPrompt,
-    canInstallPWA,
-    isStandalone,
-    triggerInstall,
-    showInstallBannerGlobal,
-    setShowInstallBannerGlobal
-  };
-
   return (
-    <PWAInstallContext.Provider value={pwaInstallContextValue}>
+    // O Provider do Contexto PWA é opcional se toda a lógica e o banner ficarem apenas no App.tsx
+    // Se você quiser acessar `triggerInstall` de outros lugares, o Contexto é útil.
+    <PWAInstallContext.Provider value={{ deferredInstallPrompt, canInstallPWA, isStandalone, triggerInstall, showInstallBannerGlobal, setShowInstallBannerGlobal }}>
       <Routes>
         {/* Rotas públicas */}
         <Route path="/" element={<Index />} />
@@ -209,6 +198,7 @@ function App() {
             </div>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+            {/* Botão de Instalar só aparece se não for iOS E o prompt estiver disponível */}
             {!isIOS && canInstallPWA && deferredInstallPrompt && (
               <Button 
                 onClick={triggerInstall} 
@@ -222,16 +212,16 @@ function App() {
               variant="ghost" 
               size="sm" 
               onClick={handleDismissBanner}
-              className="text-slate-400 hover:text-white hover:bg-slate-700 h-auto px-2 py-1.5 text-xs"
+              className="text-slate-400 hover:text-white hover:bg-slate-700 h-auto px-2 py-1.5 text-xs" // Ajustado para ser um pouco menor e mais discreto
               aria-label="Dispensar"
             >
-              <CloseIcon className="h-4 w-4 sm:h-5 sm:w-5 md:hidden" />
-              <span className="hidden md:inline">Agora Não</span>
+              <CloseIcon className="h-4 w-4 sm:h-5 sm:w-5 md:hidden" /> {/* Ícone para mobile */}
+              <span className="hidden md:inline">Agora Não</span> {/* Texto para desktop */}
             </Button>
           </div>
         </div>
       )}
-    </PWAInstallContext.Provider>
+    </>
   );
 }
 
