@@ -154,7 +154,7 @@ function App() {
           aria-describedby="pwa-install-banner-description"
         >
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            <img src="/lovable.png" alt="JusGestão Logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-md flex-shrink-0" />
+            <img src="/icons/icon-192x192.png" alt="JusGestão Logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-md flex-shrink-0" />
             <div className="min-w-0">
               <h3 id="pwa-install-banner-title" className="text-sm sm:text-base font-semibold truncate">Instale o JusGestão</h3>
               <p id="pwa-install-banner-description" className="text-xs sm:text-sm text-gray-300 truncate">Acesso rápido e fácil na sua tela inicial.</p>
