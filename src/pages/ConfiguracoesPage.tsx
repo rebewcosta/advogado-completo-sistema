@@ -10,11 +10,11 @@ import PerfilTab from '@/components/configuracoes/PerfilTab';
 import EscritorioTab from '@/components/configuracoes/EscritorioTab';
 import NotificacoesTab from '@/components/configuracoes/NotificacoesTab';
 import SegurancaTab from '@/components/configuracoes/SegurancaTab';
-import GerenciarAssinatura from '@/components/assinatura/GerenciarAssinatura';
+import ConfiguracoesTabs from '@/components/configuracoes/ConfiguracoesTabs';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Spinner } from '@/components/ui/spinner';
-import { User, Building, Bell, Shield, CreditCard, Settings as SettingsPageIcon } from 'lucide-react';
+import { User, Building, Bell, Shield, CreditCard, Settings as SettingsPageIcon, Smartphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 
@@ -219,11 +219,12 @@ const ConfiguracoesPage = () => {
         />
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6 md:mt-8">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 mb-6 md:mb-8 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 mb-6 md:mb-8 h-auto">
             {[
               { value: "perfil", label: "Perfil", icon: User },
               { value: "escritorio", label: "Escritório", icon: Building },
               { value: "assinatura", label: "Assinatura", icon: CreditCard },
+              { value: "aplicativo", label: "Aplicativo", icon: Smartphone },
               { value: "notificacoes", label: "Notificações", icon: Bell },
               { value: "seguranca", label: "Segurança", icon: Shield },
             ].map(tab => (
@@ -263,7 +264,10 @@ const ConfiguracoesPage = () => {
             />
           </TabsContent>
           <TabsContent value="assinatura">
-            <GerenciarAssinatura />
+            <ConfiguracoesTabs />
+          </TabsContent>
+          <TabsContent value="aplicativo">
+            <ConfiguracoesTabs />
           </TabsContent>
           <TabsContent value="notificacoes">
             <NotificacoesTab

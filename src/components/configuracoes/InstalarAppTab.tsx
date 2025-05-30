@@ -1,22 +1,19 @@
+
 // src/components/configuracoes/InstalarAppTab.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { DownloadCloud, Share2, CheckCircle, Info, Smartphone } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { usePWAInstall } from '@/App'; // Importar o hook do App.tsx (ajuste o caminho se App.tsx não estiver em @/)
-                                    // Se App.tsx está em src/App.tsx, e este arquivo está em src/components/configuracoes,
-                                    // o caminho relativo seria '../../App'
+import { usePWAInstall } from '@/App';
 
 const InstalarAppTab: React.FC = () => {
-  // Usar o contexto definido em App.tsx
   const { 
     deferredInstallPrompt, 
     isStandalone, 
     isIOS, 
     triggerPWAInstall, 
-    canInstallPWA // Esta propriedade já existe no seu PWAInstallContextType
+    canInstallPWA
   } = usePWAInstall();
-
 
   if (isStandalone) {
     return (
@@ -55,8 +52,6 @@ const InstalarAppTab: React.FC = () => {
     );
   }
 
-  // canInstallPWA é true se deferredInstallPrompt não for null e o navegador permitir a instalação.
-  // E não deve ser iOS (pois iOS tem instruções separadas e não usa deferredPrompt da mesma forma).
   if (canInstallPWA && deferredInstallPrompt) { 
     return (
       <div className="space-y-6 max-w-lg mx-auto text-center">
@@ -74,7 +69,6 @@ const InstalarAppTab: React.FC = () => {
     );
   }
 
-  // Fallback
   return (
     <div className="max-w-lg mx-auto">
       <Alert>
