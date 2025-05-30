@@ -180,7 +180,7 @@ function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {/* O JSX do banner foi removido daqui, pois será colocado na HeroSection via Contexto */}
+      {/* O JSX do banner foi removido daqui, pois será colocado na HeroSection 2 via Contexto */}
     </PWAInstallContext.Provider>
   );
 }
