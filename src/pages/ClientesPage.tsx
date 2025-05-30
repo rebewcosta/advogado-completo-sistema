@@ -163,22 +163,10 @@ const ClientesPage = () => {
   };
 
   const handleEditClient = (client: Cliente) => {
-    const clientDataForForm = {
-        id: client.id,
-        nome: client.nome,
-        email: client.email || '',
-        telefone: client.telefone || '',
-        tipo: client.tipo_cliente,
-        cpfCnpj: client.cpfCnpj || '',
-        endereco: client.endereco || '',
-        cidade: client.cidade || '',
-        estado: client.estado || '',
-        cep: client.cep || '',
-        observacoes: client.observacoes || '',
-        status_cliente: client.status_cliente || 'Ativo',
-    };
-    setSelectedClient(clientDataForForm as Cliente); // O tipo é Cliente, mas populamos com dados do form
-    setIsEditing(true); setShowForm(true); setShowClientDetails(false); 
+    setSelectedClient(client);
+    setIsEditing(true); 
+    setShowForm(true); 
+    setShowClientDetails(false); 
   };
 
   const handleViewClient = (client: Cliente) => { setSelectedClient(client); setShowClientDetails(true); setShowForm(false); };

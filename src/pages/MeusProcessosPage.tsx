@@ -35,7 +35,7 @@ const MeusProcessosPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [selectedProcess, setSelectedProcess] = useState<ProcessoComCliente | ProcessoFormData | null>(null);
+  const [selectedProcess, setSelectedProcess] = useState<ProcessoComCliente | null>(null);
   const [processoParaForm, setProcessoParaForm] = useState<Partial<ProcessoFormData> & { id?: string } | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [userClients, setUserClients] = useState<ClienteParaSelect[]>([]);
@@ -192,8 +192,7 @@ const MeusProcessosPage = () => {
                 <ProcessSearchActionBar
                 searchTerm={searchTerm}
                 onSearchChange={handleSearchChange}
-                onRefresh={handleManualRefresh}
-                isRefreshing={isLoadingCombined}
+                onNewProcess={handleOpenNewProcessForm}
                 />
             </CardContent>
         </Card>
