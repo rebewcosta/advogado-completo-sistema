@@ -12,7 +12,7 @@ interface HeroSectionProps {
   showPWAInstallBanner?: boolean;
   canInstallPWA?: boolean;
   isIOS?: boolean;
-  isStandalone?: boolean; // Adicionado para saber se já está instalado
+  isStandalone?: boolean; // 
   onInstallPWA?: () => void;
   onDismissInstallBanner?: () => void;
 }
