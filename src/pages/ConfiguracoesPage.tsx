@@ -1,3 +1,4 @@
+
 // src/pages/ConfiguracoesPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
@@ -276,12 +277,11 @@ const ConfiguracoesPage = () => {
                 weeklyReport: notificationSettings.pref_relatorio_semanal,
               }}
               setNotificationSettings={(newSettings) => {
-                setNotificationSettings(prev => ({
-                  ...prev,
+                setNotificationSettings({
                   pref_notificacoes_push: newSettings.pushNotifications,
                   pref_alertas_prazo: newSettings.deadlineAlerts,
                   pref_relatorio_semanal: newSettings.weeklyReport,
-                }));
+                });
               }}
             />
           </TabsContent>
