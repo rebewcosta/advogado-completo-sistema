@@ -1,3 +1,4 @@
+
 // src/components/configuracoes/NotificacoesTab.tsx
 import React from 'react';
 import { Label } from "@/components/ui/label";
@@ -13,14 +14,14 @@ import {
 
 interface NotificacoesTabProps {
   notificationSettings: {
-    pushNotifications: boolean;
-    deadlineAlerts: boolean;
-    weeklyReport: boolean;
+    pref_notificacoes_push: boolean;
+    pref_alertas_prazo: boolean;
+    pref_relatorio_semanal: boolean;
   };
   setNotificationSettings: React.Dispatch<React.SetStateAction<{
-    pushNotifications: boolean;
-    deadlineAlerts: boolean;
-    weeklyReport: boolean;
+    pref_notificacoes_push: boolean;
+    pref_alertas_prazo: boolean;
+    pref_relatorio_semanal: boolean;
   }>>;
 }
 
@@ -43,9 +44,9 @@ const NotificacoesTab = ({ notificationSettings, setNotificationSettings }: Noti
           </div>
           <Switch 
             id="pushNotifications_config_notif"
-            checked={notificationSettings.pushNotifications}
+            checked={notificationSettings.pref_notificacoes_push}
             onCheckedChange={(checked) => 
-              setNotificationSettings({...notificationSettings, pushNotifications: checked})
+              setNotificationSettings({...notificationSettings, pref_notificacoes_push: checked})
             }
             disabled // Funcionalidade de Push Notifications ainda será implementada no backend
           />
@@ -60,9 +61,9 @@ const NotificacoesTab = ({ notificationSettings, setNotificationSettings }: Noti
           </div>
           <Switch 
             id="deadlineAlerts_config_notif"
-            checked={notificationSettings.deadlineAlerts}
+            checked={notificationSettings.pref_alertas_prazo}
             onCheckedChange={(checked) => 
-              setNotificationSettings({...notificationSettings, deadlineAlerts: checked})
+              setNotificationSettings({...notificationSettings, pref_alertas_prazo: checked})
             }
             // Habilitado para permitir que o usuário salve esta preferência
           />
@@ -77,9 +78,9 @@ const NotificacoesTab = ({ notificationSettings, setNotificationSettings }: Noti
           </div>
           <Switch 
             id="weeklyReport_config_notif"
-            checked={notificationSettings.weeklyReport}
+            checked={notificationSettings.pref_relatorio_semanal}
             onCheckedChange={(checked) => 
-              setNotificationSettings({...notificationSettings, weeklyReport: checked})
+              setNotificationSettings({...notificationSettings, pref_relatorio_semanal: checked})
             }
             disabled // Funcionalidade de Relatório Semanal ainda será implementada no backend
           />

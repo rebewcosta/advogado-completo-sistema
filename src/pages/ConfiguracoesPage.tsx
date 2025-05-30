@@ -1,4 +1,3 @@
-
 // src/pages/ConfiguracoesPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
@@ -271,18 +270,8 @@ const ConfiguracoesPage = () => {
           </TabsContent>
           <TabsContent value="notificacoes">
             <NotificacoesTab
-              notificationSettings={{
-                pushNotifications: notificationSettings.pref_notificacoes_push,
-                deadlineAlerts: notificationSettings.pref_alertas_prazo,
-                weeklyReport: notificationSettings.pref_relatorio_semanal,
-              }}
-              setNotificationSettings={(newSettings) => {
-                setNotificationSettings({
-                  pref_notificacoes_push: newSettings.pushNotifications,
-                  pref_alertas_prazo: newSettings.deadlineAlerts,
-                  pref_relatorio_semanal: newSettings.weeklyReport,
-                });
-              }}
+              notificationSettings={notificationSettings}
+              setNotificationSettings={setNotificationSettings}
             />
           </TabsContent>
           <TabsContent value="seguranca">
