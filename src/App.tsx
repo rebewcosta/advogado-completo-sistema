@@ -1,5 +1,5 @@
 // src/App.tsx
-import React, { useState, useEffect, createContext, useContext } from 'react'; // Adicionado createContext, useContext
+import React, { useState, useEffect } from 'react'; // Adicionado useState e useEffect
 import { Navigate, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
@@ -29,117 +29,81 @@ import './App.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
 
-// Os ícones e Button para o banner PWA serão usados no HeroSection agora.
-
-// 1. Criar o Contexto PWA
-interface PWAInstallContextType {
-  deferredInstallPrompt: Event | null;
-  canInstallPWA: boolean;
-  isStandalone: boolean;
-  isIOS: boolean;
-  showPWAInstallBanner: boolean; // Renomeado de showInstallBanner para clareza do contexto
-  triggerPWAInstall: () => void;
-  dismissPWAInstallBanner: () => void;
-}
-
-export const PWAInstallContext = createContext<PWAInstallContextType | null>(null);
-
-export const usePWAInstall = () => {
-  const context = useContext(PWAInstallContext);
-  if (!context) {
-    // Se precisar usar fora do provider, pode retornar um objeto default ou lançar erro.
-    // Para esta aplicação, esperamos que esteja sempre dentro do provider.
-    throw new Error('usePWAInstall must be used within a PWAInstallProvider');
-  }
-  return context;
-};
+import { Button } from '@/components/ui/button'; // Para o botão de instalação
+import { Download, X as CloseIcon } from 'lucide-react'; // Para ícones do botão
 
 function App() {
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<Event | null>(null);
-  const [showPWAInstallBanner, setShowPWAInstallBanner] = useState(false); // Usando o nome do estado do contexto
-  const [canInstallPWA, setCanInstallPWA] = useState(false); // Se o navegador disparou o prompt
-  const [isStandalone, setIsStandalone] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
   useEffect(() => {
-    const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
-    setIsStandalone(standalone);
-
-    const userAgent = window.navigator.userAgent.toLowerCase();
-    const iPad = /ipad|iphone|ipod/.test(userAgent) && !(window as any).MSStream;
-    const macIntelWithTouch = /macintosh/.test(userAgent) && navigator.maxTouchPoints > 1;
-    setIsIOS(iPad || macIntelWithTouch);
-    
-    if (standalone) {
-      console.log('PWA: App rodando em modo standalone. Banner de instalação não será preparado.');
-      setShowPWAInstallBanner(false);
-      return; 
-    }
-
     const handleBeforeInstallPrompt = (event: Event) => {
+      // Impedir que o mini-infobar do Chrome (ou outros prompts padrão) apareça
       event.preventDefault();
+      // Guardar o evento para que possa ser acionado mais tarde.
       setDeferredInstallPrompt(event);
-      setCanInstallPWA(true);
-      const dismissedTimestamp = localStorage.getItem('pwaInstallDismissedTimestamp');
-      const oneWeek = 7 * 24 * 60 * 60 * 1000; // 1 semana
-      if (!dismissedTimestamp || (Date.now() - parseInt(dismissedTimestamp, 10) > oneWeek)) {
-        setShowPWAInstallBanner(true); 
-      }
-      console.log('PWA: beforeinstallprompt event fired e prevenido.');
+      // Mostrar seu banner/botão de instalação customizado
+      setShowInstallBanner(true);
+      console.log('PWA: beforeinstallprompt event fired e prevenido. Banner customizado deve aparecer.');
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // Verificar se o app já foi instalado (standalone)
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      console.log('PWA: App já está rodando em modo standalone, não mostrar prompt de instalação.');
+      setShowInstallBanner(false); // Não mostrar se já estiver em modo app
+    } else {
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    }
     
+    // Listener para quando o app é instalado
     const handleAppInstalled = () => {
       console.log('PWA: App instalado com sucesso!');
-      setShowPWAInstallBanner(false); 
-      setDeferredInstallPrompt(null);
-      setIsStandalone(true); 
+      setShowInstallBanner(false); // Esconder o banner após a instalação
+      setDeferredInstallPrompt(null); // Limpar o prompt
     };
     window.addEventListener('appinstalled', handleAppInstalled);
 
+
+    // Limpar os listeners quando o componente desmontar
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []); 
+  }, []);
 
-  const triggerPWAInstall = async () => {
+  const handleInstallClick = async () => {
     if (!deferredInstallPrompt) {
-      if(isIOS && !isStandalone) {
-          alert("Para instalar no iOS: toque no botão Compartilhar (caixa com seta para cima) no Safari e depois em 'Adicionar à Tela de Início'.");
-      }
       return;
     }
+    // Mostrar o prompt de instalação
     (deferredInstallPrompt as any).prompt();
+
+    // Esperar o usuário responder ao prompt
     const { outcome } = await (deferredInstallPrompt as any).userChoice;
+    console.log(`PWA: User response to the install prompt: ${outcome}`);
+
     if (outcome === 'accepted') {
       console.log('PWA: Usuário aceitou a instalação.');
     } else {
       console.log('PWA: Usuário recusou a instalação.');
     }
+
+    // O prompt só pode ser usado uma vez.
     setDeferredInstallPrompt(null);
-    setShowPWAInstallBanner(false);
+    // Esconder o banner de instalação customizado
+    setShowInstallBanner(false);
   };
 
-  const dismissPWAInstallBanner = () => {
-    setShowPWAInstallBanner(false);
-    localStorage.setItem('pwaInstallDismissedTimestamp', Date.now().toString());
+  const handleDismissBanner = () => {
+    setShowInstallBanner(false);
+    // Você pode guardar no localStorage que o usuário dispensou para não mostrar por um tempo
+    // localStorage.setItem('pwaInstallDismissed', 'true');
+    // localStorage.setItem('pwaInstallDismissedTimestamp', Date.now().toString());
     console.log('PWA: Banner de instalação dispensado pelo usuário.');
   }
-  
-  const pwaContextValue: PWAInstallContextType = {
-    deferredInstallPrompt,
-    canInstallPWA,
-    isStandalone,
-    isIOS,
-    showPWAInstallBanner, // Passando o estado correto
-    triggerPWAInstall,    // Passando a função correta
-    dismissPWAInstallBanner // Passando a função correta
-  };
 
   return (
-    <PWAInstallContext.Provider value={pwaContextValue}>
+    <>
       <Routes>
         {/* Rotas públicas */}
         <Route path="/" element={<Index />} />
@@ -180,8 +144,43 @@ function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {/* O JSX do banner foi removido daqui, pois será colocado na HeroSection via Contexto */}
-    </PWAInstallContext.Provider>
+
+      {/* Banner/Botão de Instalação Customizado do PWA */}
+      {showInstallBanner && deferredInstallPrompt && (
+        <div 
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 p-3 md:p-4 bg-gray-800 text-white rounded-lg shadow-xl w-[90%] max-w-md sm:max-w-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4"
+          role="dialog"
+          aria-labelledby="pwa-install-banner-title"
+          aria-describedby="pwa-install-banner-description"
+        >
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <img src="/icons/icon-512x512.png" alt="JusGestão Logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-md flex-shrink-0" />
+            <div className="min-w-0">
+              <h3 id="pwa-install-banner-title" className="text-sm sm:text-base font-semibold truncate">Instale o JusGestão</h3>
+              <p id="pwa-install-banner-description" className="text-xs sm:text-sm text-gray-300 truncate">Acesso rápido e fácil na sua tela inicial.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button 
+              onClick={handleInstallClick} 
+              size="sm" 
+              className="bg-lawyer-primary hover:bg-lawyer-primary/80 text-white flex-grow sm:flex-grow-0 text-xs sm:text-sm px-3 py-1.5 h-auto"
+            >
+              <Download className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Instalar
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleDismissBanner}
+              className="text-gray-400 hover:text-white hover:bg-gray-700 h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+              aria-label="Dispensar instalação"
+            >
+              <CloseIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
