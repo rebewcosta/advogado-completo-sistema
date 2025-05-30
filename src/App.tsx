@@ -1,8 +1,10 @@
+
 // src/App.tsx
 import React, { useState, useEffect, createContext, useContext } from 'react';
 // Adicionar BrowserRouter aqui
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth.tsx'; // Import the AuthProvider
+import { useToast } from '@/hooks/use-toast';
 import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
@@ -52,12 +54,13 @@ export const usePWAInstall = () => {
   return context;
 };
 
-function App() {
+function AppContent() {
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<Event | null>(null);
   const [showPWAInstallBanner, setShowPWAInstallBanner] = useState(false);
   const [canInstallPWA, setCanInstallPWA] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const { toast } = useToast();
   
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
@@ -78,6 +81,14 @@ function App() {
       event.preventDefault();
       setDeferredInstallPrompt(event);
       setCanInstallPWA(true);
+      
+      // Verifica se o usuário já dispensou permanentemente o banner
+      const permanentlyDismissed = localStorage.getItem('pwaInstallPermanentlyDismissed');
+      if (permanentlyDismissed === 'true') {
+        setShowPWAInstallBanner(false);
+        return;
+      }
+      
       const dismissedTimestamp = localStorage.getItem('pwaInstallDismissedTimestamp');
       const oneWeek = 7 * 24 * 60 * 60 * 1000; // 1 semana
       if (!dismissedTimestamp || (Date.now() - parseInt(dismissedTimestamp, 10) > oneWeek)) {
@@ -122,8 +133,19 @@ function App() {
 
   const dismissPWAInstallBanner = () => {
     setShowPWAInstallBanner(false);
+    
+    // Marcar como dispensado permanentemente
+    localStorage.setItem('pwaInstallPermanentlyDismissed', 'true');
     localStorage.setItem('pwaInstallDismissedTimestamp', Date.now().toString());
-    console.log('PWA: Banner de instalação dispensado pelo usuário.');
+    
+    // Mostrar toast informativo
+    toast({
+      title: "Banner de instalação ocultado",
+      description: "Você pode instalar o aplicativo JusGestão a qualquer momento acessando Configurações > Aplicativo.",
+      duration: 6000,
+    });
+    
+    console.log('PWA: Banner de instalação dispensado permanentemente pelo usuário.');
   }
   
   const pwaContextValue: PWAInstallContextType = {
@@ -137,51 +159,56 @@ function App() {
   };
 
   return (
-    // Adicionar BrowserRouter para envolver todo o conteúdo do App
+    <PWAInstallContext.Provider value={pwaContextValue}>
+      <Routes>
+        {/* Rotas públicas */}
+        <Route path="/" element={<Index />} />
+        <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
+        <Route path="/suporte" element={<SuportePage />} />
+        <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+        <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
+        <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
+
+        {/* Rotas de autenticação - acessíveis apenas quando não logado */}
+        <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/cadastro" element={<CadastroPage />} />
+        </Route>
+
+        {/* Rotas de pagamento */}
+        <Route path="/pagamento" element={<PagamentoPage />} />
+        <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
+
+        {/* Rotas protegidas - requerem autenticação */}
+        <Route element={<ProtectedRoute requireAuth={true} redirectPath="/login"/>}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="/perfil" element={<PerfilUsuarioPage />} />
+
+          <Route element={<VerificarAssinatura />}>
+            <Route path="/meus-processos" element={<MeusProcessosPage />} />
+            <Route path="/clientes" element={<ClientesPage />} />
+            <Route path="/agenda" element={<AgendaPage />} />
+            <Route path="/tarefas" element={<TarefasPage />} />
+            <Route path="/financeiro" element={<FinanceiroPage />} />
+            <Route path="/documentos" element={<DocumentosPage />} />
+            <Route path="/relatorios" element={<RelatoriosPage />} />
+            <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </PWAInstallContext.Provider>
+  );
+}
+
+function App() {
+  return (
     <BrowserRouter> 
       <AuthProvider>
-        <PWAInstallContext.Provider value={pwaContextValue}>
-          <Routes>
-            {/* Rotas públicas */}
-            <Route path="/" element={<Index />} />
-            <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
-            <Route path="/suporte" element={<SuportePage />} />
-            <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-            <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
-            <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
-
-            {/* Rotas de autenticação - acessíveis apenas quando não logado */}
-            <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/cadastro" element={<CadastroPage />} />
-            </Route>
-
-            {/* Rotas de pagamento */}
-            <Route path="/pagamento" element={<PagamentoPage />} />
-            <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
-
-            {/* Rotas protegidas - requerem autenticação */}
-            <Route element={<ProtectedRoute requireAuth={true} redirectPath="/login"/>}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-              <Route path="/perfil" element={<PerfilUsuarioPage />} />
-
-              <Route element={<VerificarAssinatura />}>
-                <Route path="/meus-processos" element={<MeusProcessosPage />} />
-                <Route path="/clientes" element={<ClientesPage />} />
-                <Route path="/agenda" element={<AgendaPage />} />
-                <Route path="/tarefas" element={<TarefasPage />} />
-                <Route path="/financeiro" element={<FinanceiroPage />} />
-                <Route path="/documentos" element={<DocumentosPage />} />
-                <Route path="/relatorios" element={<RelatoriosPage />} />
-                <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
-              </Route>
-            </Route>
-
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </PWAInstallContext.Provider>
+        <AppContent />
       </AuthProvider>
     </BrowserRouter>
   );
