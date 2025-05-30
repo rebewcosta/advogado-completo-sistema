@@ -1,258 +1,187 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ThemeProvider, useTheme } from './contexts/ThemeContext'
-import { Toaster as SonnerToaster } from '@/components/ui/sonner' // Shadcn Sonner
-import { Toaster as ShadcnToaster } from '@/components/ui/toaster' // Shadcn Toaster (se usado)
+// src/App.tsx
+import React, { useState, useEffect } from 'react'; // Adicionado useState e useEffect
+import { Navigate, Routes, Route } from 'react-router-dom';
+import Index from './pages/Index';
+import LoginPage from './pages/LoginPage';
+import CadastroPage from './pages/CadastroPage';
+import DashboardPage from './pages/DashboardPage';
+import ClientesPage from './pages/ClientesPage';
+import MeusProcessosPage from './pages/MeusProcessosPage';
+import AgendaPage from './pages/AgendaPage';
+import TarefasPage from './pages/TarefasPage';
+import FinanceiroPage from './pages/FinanceiroPage';
+import DocumentosPage from './pages/DocumentosPage';
+import RelatoriosPage from './pages/RelatoriosPage';
+import PagamentoPage from './pages/PagamentoPage';
+import PaymentSuccessPage from './pages/PaymentSuccessPage';
+import ConfiguracoesPage from './pages/ConfiguracoesPage';
+import NotFound from './pages/NotFound';
+import TermosPrivacidadePage from './pages/TermosPrivacidadePage';
+import SuportePage from './pages/SuportePage';
+import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
+import AdminPage from './pages/AdminPage';
+import RecuperarSenhaPage from './pages/RecuperarSenhaPage';
+import AtualizarSenhaPage from './pages/AtualizarSenhaPage';
+import PerfilUsuarioPage from './pages/PerfilUsuarioPage';
+import RedefinirPinFinanceiroPage from './pages/RedefinirPinFinanceiroPage';
+import './App.css';
 
-// Importações de componentes UI
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress" // Exemplo de componente de progresso
+import ProtectedRoute from './components/ProtectedRoute';
+import VerificarAssinatura from './components/VerificarAssinatura';
 
-// Layouts
-import AdminLayout from './components/AdminLayout'
-import ProtectedRoute from './components/ProtectedRoute' // Rota protegida
-import VerificarAssinatura from './components/VerificarAssinatura' // Componente de verificação de assinatura
-
-// Páginas principais
-const Index = lazy(() => import('./pages/Index'))
-const LoginPage = lazy(() => import('./pages/LoginPage'))
-const CadastroPage = lazy(() => import('./pages/CadastroPage'))
-const DashboardPage = lazy(() => import('./pages/DashboardPage'))
-const ClientesPage = lazy(() => import('./pages/ClientesPage'))
-const MeusProcessosPage = lazy(() => import('./pages/MeusProcessosPage'))
-const AgendaPage = lazy(() => import('./pages/AgendaPage'))
-const TarefasPage = lazy(() => import('./pages/TarefasPage'))
-const FinanceiroPage = lazy(() => import('./pages/FinanceiroPage'))
-const DocumentosPage = lazy(() => import('./pages/DocumentosPage'))
-const RelatoriosPage = lazy(() => import('./pages/RelatoriosPage'))
-const ConfiguracoesPage = lazy(() => import('./pages/ConfiguracoesPage'))
-const NotFound = lazy(() => import('./pages/NotFound'))
-const PagamentoPage = lazy(() => import('./pages/PagamentoPage'))
-const PaymentSuccessPage = lazy(() => import('./pages/PaymentSuccessPage'))
-const AdminPage = lazy(() => import('./pages/AdminPage'))
-const RecuperarSenhaPage = lazy(() => import('./pages/RecuperarSenhaPage'))
-const AtualizarSenhaPage = lazy(() => import('./pages/AtualizarSenhaPage'))
-const PerfilUsuarioPage = lazy(() => import('./pages/PerfilUsuarioPage'))
-const SuportePage = lazy(() => import('./pages/SuportePage'))
-const TermosPrivacidadePage = lazy(() => import('./pages/TermosPrivacidadePage'))
-const RedefinirPinFinanceiroPage = lazy(() => import('./pages/RedefinirPinFinanceiroPage'))
-const EmailsTransacionaisPage = lazy(() => import('./pages/EmailsTransacionaisPage'))
-
-
-// Componente de Loading
-const LoadingFallback = () => {
-  const [progress, setProgress] = useState(10)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setProgress(66), 200)
-    const timer2 = setTimeout(() => setProgress(100), 500)
-    return () => {
-      clearTimeout(timer)
-      clearTimeout(timer2)
-    }
-  }, [])
-
-  return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-background z-50">
-      <img src="/logo-jusgestao-horizontal.png" alt="JusGestão Logo" className="mb-4 h-16" />
-      <Progress value={progress} className="w-1/3" />
-      <p className="mt-4 text-sm text-muted-foreground">Carregando...</p>
-    </div>
-  )
-}
-
-// Componente GlobalStyle para aplicar estilos do tema
-const GlobalStyle = () => {
-  const { theme, fontSize, compactMode } = useTheme();
-
-  useEffect(() => {
-    const root = window.document.documentElement;
-    root.classList.remove('light', 'dark');
-    root.classList.add(theme);
-
-    // Aplicar tamanho da fonte
-    const baseFontSize = 16; // Tamanho base em pixels
-    if (fontSize === 'small') {
-      root.style.fontSize = `${baseFontSize * 0.875}px`; // 14px
-    } else if (fontSize === 'large') {
-      root.style.fontSize = `${baseFontSize * 1.125}px`; // 18px
-    } else {
-      root.style.fontSize = `${baseFontSize}px`; // 16px (normal)
-    }
-
-    // Aplicar modo compacto
-    if (compactMode) {
-      root.classList.add('compact');
-    } else {
-      root.classList.remove('compact');
-    }
-
-  }, [theme, fontSize, compactMode]);
-
-  return null;
-};
-
-// Configuração do Service Worker para PWA
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: string[];
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed';
-    platform: string;
-  }>;
-  prompt(): Promise<void>;
-}
+import { Button } from '@/components/ui/button'; // Para o botão de instalação
+import { Download, X as CloseIcon } from 'lucide-react'; // Para ícones do botão
 
 function App() {
-  const queryClient = new QueryClient()
-  const [showInstallPrompt, setShowInstallPrompt] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<Event | null>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      // Verifica se o prompt já foi exibido ou se o app já está instalado
-      const isAppInstalled = window.matchMedia('(display-mode: standalone)').matches;
-      const hasPromptBeenShown = localStorage.getItem('installPromptShown');
-
-      if (!isAppInstalled && !hasPromptBeenShown) {
-        setDeferredPrompt(e as BeforeInstallPromptEvent);
-        setShowInstallPrompt(true);
-      }
+    const handleBeforeInstallPrompt = (event: Event) => {
+      // Impedir que o mini-infobar do Chrome (ou outros prompts padrão) apareça
+      event.preventDefault();
+      // Guardar o evento para que possa ser acionado mais tarde.
+      setDeferredInstallPrompt(event);
+      // Mostrar seu banner/botão de instalação customizado
+      setShowInstallBanner(true);
+      console.log('PWA: beforeinstallprompt event fired e prevenido. Banner customizado deve aparecer.');
     };
 
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // Verificar se o app já foi instalado (standalone)
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      console.log('PWA: App já está rodando em modo standalone, não mostrar prompt de instalação.');
+      setShowInstallBanner(false); // Não mostrar se já estiver em modo app
+    } else {
+      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    }
+    
+    // Listener para quando o app é instalado
+    const handleAppInstalled = () => {
+      console.log('PWA: App instalado com sucesso!');
+      setShowInstallBanner(false); // Esconder o banner após a instalação
+      setDeferredInstallPrompt(null); // Limpar o prompt
+    };
+    window.addEventListener('appinstalled', handleAppInstalled);
 
-    // Evento para quando o app é instalado
-    window.addEventListener('appinstalled', () => {
-      setShowInstallPrompt(false);
-      setDeferredPrompt(null);
-      localStorage.setItem('installPromptShown', 'true'); // Marca que o prompt foi aceito/app instalado
-      // Aqui você pode adicionar lógica para agradecer o usuário ou dar boas-vindas
-    });
 
+    // Limpar os listeners quando o componente desmontar
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('appinstalled', () => {
-        setShowInstallPrompt(false);
-        setDeferredPrompt(null);
-      });
+      window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
+    if (!deferredInstallPrompt) {
       return;
     }
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
+    // Mostrar o prompt de instalação
+    (deferredInstallPrompt as any).prompt();
+
+    // Esperar o usuário responder ao prompt
+    const { outcome } = await (deferredInstallPrompt as any).userChoice;
+    console.log(`PWA: User response to the install prompt: ${outcome}`);
+
     if (outcome === 'accepted') {
-      // Opcional: lógica após a aceitação da instalação
-      localStorage.setItem('installPromptShown', 'true');
+      console.log('PWA: Usuário aceitou a instalação.');
     } else {
-      // Opcional: lógica após a recusa da instalação
-      localStorage.setItem('installPromptShown', 'true'); // Marca como mostrado mesmo se recusado para não mostrar novamente.
-                                                         // Ou defina uma lógica para mostrar novamente depois de um tempo.
+      console.log('PWA: Usuário recusou a instalação.');
     }
-    setShowInstallPrompt(false);
-    setDeferredPrompt(null);
+
+    // O prompt só pode ser usado uma vez.
+    setDeferredInstallPrompt(null);
+    // Esconder o banner de instalação customizado
+    setShowInstallBanner(false);
   };
 
-  const handleDismissInstall = () => {
-    setShowInstallPrompt(false);
-    setDeferredPrompt(null);
-    localStorage.setItem('installPromptShown', 'true'); // Marca que o prompt foi dispensado
-  };
-
+  const handleDismissBanner = () => {
+    setShowInstallBanner(false);
+    // Você pode guardar no localStorage que o usuário dispensou para não mostrar por um tempo
+    // localStorage.setItem('pwaInstallDismissed', 'true');
+    // localStorage.setItem('pwaInstallDismissedTimestamp', Date.now().toString());
+    console.log('PWA: Banner de instalação dispensado pelo usuário.');
+  }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <GlobalStyle /> {/* Aplica estilos globais do tema */}
-        <Router>
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              {/* Rotas Públicas */}
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/cadastro" element={<CadastroPage />} />
-              <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-              <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
-              <Route path="/suporte" element={<SuportePage />} />
-              <Route path="/termos-e-privacidade" element={<TermosPrivacidadePage />} />
-              <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
+    <>
+      <Routes>
+        {/* Rotas públicas */}
+        <Route path="/" element={<Index />} />
+        <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
+        <Route path="/suporte" element={<SuportePage />} />
+        <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+        <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
+        <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
 
-              {/* Rota de Pagamento e Sucesso */}
-              <Route path="/pagamento" element={
-                <ProtectedRoute>
-                  <PagamentoPage />
-                </ProtectedRoute>
-              } />
-              <Route path="/payment-success" element={
-                <ProtectedRoute>
-                  <PaymentSuccessPage />
-                </ProtectedRoute>
-              } />
+        {/* Rotas de autenticação - acessíveis apenas quando não logado */}
+        <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/cadastro" element={<CadastroPage />} />
+        </Route>
 
-              {/* Rotas Protegidas com AdminLayout e Verificação de Assinatura */}
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <VerificarAssinatura>
-                      <AdminLayout />
-                    </VerificarAssinatura>
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/clientes" element={<ClientesPage />} />
-                <Route path="/processos" element={<MeusProcessosPage />} />
-                <Route path="/agenda" element={<AgendaPage />} />
-                <Route path="/tarefas" element={<TarefasPage />} />
-                <Route path="/financeiro" element={<FinanceiroPage />} />
-                <Route path="/documentos" element={<DocumentosPage />} />
-                <Route path="/relatorios" element={<RelatoriosPage />} />
-                <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-                <Route path="/perfil" element={<PerfilUsuarioPage />} /> {/* Se for uma página separada */}
-                <Route path="/admin" element={<AdminPage />} /> {/* Rota de Admin */}
-                <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
-              </Route>
+        {/* Rotas de pagamento */}
+        <Route path="/pagamento" element={<PagamentoPage />} />
+        <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
 
-              {/* Rota para página não encontrada */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </Router>
-        <SonnerToaster richColors position="top-right" />
-        <ShadcnToaster /> {/* Para o Shadcn useToast hook */}
+        {/* Rotas protegidas - requerem autenticação */}
+        <Route element={<ProtectedRoute requireAuth={true} redirectPath="/login"/>}>
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+          <Route path="/perfil" element={<PerfilUsuarioPage />} />
 
-        {/* Alerta para instalar PWA */}
-        {showInstallPrompt && deferredPrompt && (
-          <AlertDialog open onOpenChange={handleDismissInstall}>
-            <AlertDialogContent className="bg-white dark:bg-gray-800 rounded-lg shadow-xl">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-xl font-semibold text-gray-900 dark:text-gray-100 text-left">
-                  Instale o App JusGestão
-                </AlertDialogTitle>
-                <AlertDialogDescription className="mt-2 text-sm text-gray-600 dark:text-gray-300 text-left">
-                  Tenha na sua tela inicial para acesso rápido e fácil!
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter className="mt-4">
-                <Button variant="outline" onClick={handleDismissInstall} className="mr-2">
-                  Agora não
-                </Button>
-                <Button onClick={handleInstallClick}>
-                  Instalar
-                </Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
-      </ThemeProvider>
-    </QueryClientProvider>
-  )
+          <Route element={<VerificarAssinatura />}>
+            <Route path="/meus-processos" element={<MeusProcessosPage />} />
+            <Route path="/clientes" element={<ClientesPage />} />
+            <Route path="/agenda" element={<AgendaPage />} />
+            <Route path="/tarefas" element={<TarefasPage />} />
+            <Route path="/financeiro" element={<FinanceiroPage />} />
+            <Route path="/documentos" element={<DocumentosPage />} />
+            <Route path="/relatorios" element={<RelatoriosPage />} />
+            <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
+          </Route>
+        </Route>
+
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+
+      {/* Banner/Botão de Instalação Customizado do PWA */}
+      {showInstallBanner && deferredInstallPrompt && (
+        <div 
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 p-3 md:p-4 bg-gray-800 text-white rounded-lg shadow-xl w-[90%] max-w-md sm:max-w-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4"
+          role="dialog"
+          aria-labelledby="pwa-install-banner-title"
+          aria-describedby="pwa-install-banner-description"
+        >
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <img src="/icons/icon-192x192.png" alt="JusGestão Logo" className="h-8 w-8 sm:h-10 sm:w-10 rounded-md flex-shrink-0" />
+            <div className="min-w-0">
+              <h3 id="pwa-install-banner-title" className="text-sm sm:text-base font-semibold truncate">Instale o JusGestão</h3>
+              <p id="pwa-install-banner-description" className="text-xs sm:text-sm text-gray-300 truncate">Acesso rápido e fácil na sua tela inicial.</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button 
+              onClick={handleInstallClick} 
+              size="sm" 
+              className="bg-lawyer-primary hover:bg-lawyer-primary/80 text-white flex-grow sm:flex-grow-0 text-xs sm:text-sm px-3 py-1.5 h-auto"
+            >
+              <Download className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Instalar
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleDismissBanner}
+              className="text-gray-400 hover:text-white hover:bg-gray-700 h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0"
+              aria-label="Dispensar instalação"
+            >
+              <CloseIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
-export default App
+export default App;
