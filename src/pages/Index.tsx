@@ -1,4 +1,4 @@
-
+// src/pages/Index.tsx
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -11,9 +11,11 @@ import CtaSection from '../components/CtaSection';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { LogOut } from 'lucide-react';
+import { usePWAInstall } from '../App';
 
 const Index = () => {
   const { user, signOut } = useAuth();
+  const pwaInstall = usePWAInstall(); // A variável correta é 'pwaInstall'
 
   const handleSignOut = async () => {
     await signOut();
@@ -28,7 +30,7 @@ const Index = () => {
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
               <p className="text-white text-sm md:text-base font-medium">
-                Bem-vindo, <span className="font-semibold">{user.email}</span>
+                Bem-vindo, <span className="font-semibold">{user.user_metadata?.nome || user.email?.split('@')[0]}</span>
               </p>
             </div>
             <Button 
@@ -44,7 +46,14 @@ const Index = () => {
         </div>
       )}
       <main className="flex-grow">
-        <HeroSection />
+        <HeroSection 
+          showPWAInstallBanner={pwaInstall?.showPWAInstallBanner || false}
+          canInstallPWA={pwaInstall?.canInstallPWA || false}
+          isIOS={pwaInstall?.isIOS || false}
+          isStandalone={pwaInstall?.isStandalone || false} // <<< CORREÇÃO AQUI
+          onInstallPWA={pwaInstall?.triggerPWAInstall}
+          onDismissInstallBanner={pwaInstall?.dismissPWAInstallBanner}
+        />
         <FeaturesSection />
         <AboutSection />
         <TestimonialsSection />
