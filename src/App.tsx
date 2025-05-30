@@ -1,6 +1,7 @@
 // src/App.tsx
-import React, { useState, useEffect, createContext, useContext } from 'react'; // Adicionado createContext, useContext
-import { Navigate, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect, createContext, useContext } from 'react';
+// Adicionar BrowserRouter aqui
+import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
@@ -29,15 +30,13 @@ import './App.css';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
 
-// Os ícones e Button para o banner PWA serão usados no HeroSection agora.
-
 // 1. Criar o Contexto PWA
 interface PWAInstallContextType {
   deferredInstallPrompt: Event | null;
   canInstallPWA: boolean;
   isStandalone: boolean;
   isIOS: boolean;
-  showPWAInstallBanner: boolean; // Renomeado de showInstallBanner para clareza do contexto
+  showPWAInstallBanner: boolean;
   triggerPWAInstall: () => void;
   dismissPWAInstallBanner: () => void;
 }
@@ -47,8 +46,6 @@ export const PWAInstallContext = createContext<PWAInstallContextType | null>(nul
 export const usePWAInstall = () => {
   const context = useContext(PWAInstallContext);
   if (!context) {
-    // Se precisar usar fora do provider, pode retornar um objeto default ou lançar erro.
-    // Para esta aplicação, esperamos que esteja sempre dentro do provider.
     throw new Error('usePWAInstall must be used within a PWAInstallProvider');
   }
   return context;
@@ -56,8 +53,8 @@ export const usePWAInstall = () => {
 
 function App() {
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<Event | null>(null);
-  const [showPWAInstallBanner, setShowPWAInstallBanner] = useState(false); // Usando o nome do estado do contexto
-  const [canInstallPWA, setCanInstallPWA] = useState(false); // Se o navegador disparou o prompt
+  const [showPWAInstallBanner, setShowPWAInstallBanner] = useState(false);
+  const [canInstallPWA, setCanInstallPWA] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   
@@ -133,55 +130,57 @@ function App() {
     canInstallPWA,
     isStandalone,
     isIOS,
-    showPWAInstallBanner, // Passando o estado correto
-    triggerPWAInstall,    // Passando a função correta
-    dismissPWAInstallBanner // Passando a função correta
+    showPWAInstallBanner,
+    triggerPWAInstall, 
+    dismissPWAInstallBanner
   };
 
   return (
-    <PWAInstallContext.Provider value={pwaContextValue}>
-      <Routes>
-        {/* Rotas públicas */}
-        <Route path="/" element={<Index />} />
-        <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
-        <Route path="/suporte" element={<SuportePage />} />
-        <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-        <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
-        <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
+    // Adicionar BrowserRouter para envolver todo o conteúdo do App
+    <BrowserRouter> 
+      <PWAInstallContext.Provider value={pwaContextValue}>
+        <Routes>
+          {/* Rotas públicas */}
+          <Route path="/" element={<Index />} />
+          <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
+          <Route path="/suporte" element={<SuportePage />} />
+          <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+          <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
+          <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
 
-        {/* Rotas de autenticação - acessíveis apenas quando não logado */}
-        <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/cadastro" element={<CadastroPage />} />
-        </Route>
-
-        {/* Rotas de pagamento */}
-        <Route path="/pagamento" element={<PagamentoPage />} />
-        <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
-
-        {/* Rotas protegidas - requerem autenticação */}
-        <Route element={<ProtectedRoute requireAuth={true} redirectPath="/login"/>}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/admin" element={<AdminPage />} />
-          <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-          <Route path="/perfil" element={<PerfilUsuarioPage />} />
-
-          <Route element={<VerificarAssinatura />}>
-            <Route path="/meus-processos" element={<MeusProcessosPage />} />
-            <Route path="/clientes" element={<ClientesPage />} />
-            <Route path="/agenda" element={<AgendaPage />} />
-            <Route path="/tarefas" element={<TarefasPage />} />
-            <Route path="/financeiro" element={<FinanceiroPage />} />
-            <Route path="/documentos" element={<DocumentosPage />} />
-            <Route path="/relatorios" element={<RelatoriosPage />} />
-            <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
+          {/* Rotas de autenticação - acessíveis apenas quando não logado */}
+          <Route element={<ProtectedRoute requireAuth={false} redirectPath="/dashboard" />}>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/cadastro" element={<CadastroPage />} />
           </Route>
-        </Route>
 
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-      {/* O JSX do banner foi removido daqui, pois será colocado na HeroSection via Contexto */}
-    </PWAInstallContext.Provider>
+          {/* Rotas de pagamento */}
+          <Route path="/pagamento" element={<PagamentoPage />} />
+          <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
+
+          {/* Rotas protegidas - requerem autenticação */}
+          <Route element={<ProtectedRoute requireAuth={true} redirectPath="/login"/>}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/admin" element={<AdminPage />} />
+            <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+            <Route path="/perfil" element={<PerfilUsuarioPage />} />
+
+            <Route element={<VerificarAssinatura />}>
+              <Route path="/meus-processos" element={<MeusProcessosPage />} />
+              <Route path="/clientes" element={<ClientesPage />} />
+              <Route path="/agenda" element={<AgendaPage />} />
+              <Route path="/tarefas" element={<TarefasPage />} />
+              <Route path="/financeiro" element={<FinanceiroPage />} />
+              <Route path="/documentos" element={<DocumentosPage />} />
+              <Route path="/relatorios" element={<RelatoriosPage />} />
+              <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
+            </Route>
+          </Route>
+
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </PWAInstallContext.Provider>
+    </BrowserRouter>
   );
 }
 
