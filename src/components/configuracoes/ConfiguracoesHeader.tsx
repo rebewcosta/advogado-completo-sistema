@@ -20,7 +20,10 @@ const ConfiguracoesHeader = ({
     <div className="flex items-start justify-between mb-6">
       <div>
         <h1 className="text-2xl font-bold text-left">Configurações</h1>
-        <p className="text-sm text-gray-600 text-left">Personalize o sistema de acordo com suas necessidades</p>
+        <div className="text-sm text-gray-600 text-left">
+          <span className="block sm:inline">Personalize o sistema de acordo</span>
+          <span className="block sm:inline sm:ml-1">com suas necessidades</span>
+        </div>
       </div>
       <div className="flex gap-2">
         <Button onClick={onSave} disabled={saving}>

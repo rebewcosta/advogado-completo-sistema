@@ -1,3 +1,4 @@
+
 // src/components/shared/SharedPageHeader.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
@@ -37,7 +38,9 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
         </div>
         <div className="min-w-0"> {/* Para truncar texto se necessário */}
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left truncate">{title}</h1>
-          <p className="text-gray-600 text-left mt-1 text-sm md:text-base truncate">{description}</p>
+          <div className="text-gray-600 text-left mt-1 text-sm md:text-base">
+            <span className="block sm:inline">{description}</span>
+          </div>
         </div>
       </div>
 

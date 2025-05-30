@@ -14,7 +14,10 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({ onUploadClick, isLoadin
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
       <div>
         <h1 className="text-2xl font-bold">Documentos</h1>
-        <p className="text-gray-600">Gerencie todos os documentos do seu escritório</p>
+        <div className="text-gray-600">
+          <span className="block sm:inline">Gerencie todos os documentos</span>
+          <span className="block sm:inline sm:ml-1">do seu escritório</span>
+        </div>
       </div>
       <Button 
         onClick={onUploadClick} 
