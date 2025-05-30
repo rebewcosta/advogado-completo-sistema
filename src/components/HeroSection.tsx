@@ -1,44 +1,17 @@
-// src/components/HeroSection.tsx
+
 import React, { useState } from 'react';
-import { ArrowRight, DownloadCloud, X as CloseIcon, Share2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom'; // Removido Navigate se não usado diretamente aqui
-import { useAuth } from '@/hooks/useAuth'; // Verifique se o caminho está correto
-import { useToast } from '@/hooks/use-toast'; // Verifique se o caminho está correto
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { usePWAInstall } from '../App'; // Importando o hook do App.tsx
+import { ArrowRight } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useToast } from '@/hooks/use-toast';
 
-// Removidas as props relacionadas ao PWA que agora vêm do contexto
-// interface HeroSectionProps {
-// showPWAInstallBanner?: boolean; // Vem do contexto
-// canInstallPWA?: boolean; // Vem do contexto
-// isIOS?: boolean; // Vem do contexto
-// isStandalone?: boolean; // Vem do contexto
-// onInstallPWA?: () => void; // Vem do contexto
-// onDismissInstallBanner?: () => void; // Vem do contexto
-// }
-
-const HeroSection: React.FC = () => { // Removidas as props, pois usaremos o contexto
+const HeroSection = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate(); // Mantido se for usado para navegação
-  const { login: signIn, user } = useAuth(); // Renomeado login para signIn para consistência se necessário
-
-  // Usando o contexto PWA
-  const {
-    showPWAInstallBanner, // Nome como está no contexto
-    canInstallPWA,
-    isIOS,
-    isStandalone,
-    triggerPWAInstall, // Nome como está no contexto
-    dismissPWAInstallBanner // Nome como está no contexto
-  } = usePWAInstall();
-  
-  // Só mostra o banner se showPWAInstallBanner for true E se não estiver rodando como app instalado
-  const displayBanner = showPWAInstallBanner && !isStandalone;
+  const navigate = useNavigate();
+  const { signIn, user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,76 +23,25 @@ const HeroSection: React.FC = () => { // Removidas as props, pois usaremos o con
       });
       return;
     }
+
     setIsLoading(true);
+
     try {
-      // Se o hook useAuth retorna uma função signIn que já trata o toast de erro:
-      await signIn(email, password); 
-      // Se o login for bem-sucedido e o usuário for redirecionado pelo ProtectedRoute ou similar,
-      // não é necessário navigate('/dashboard') aqui, a menos que seja um comportamento específico desejado.
-      // O estado `user` do useAuth() deve ser atualizado, e a UI reagirá a isso.
+      console.log("Tentando fazer login com:", email);
+      await signIn(email, password);
+      console.log("Login bem-sucedido! Redirecionando...");
+      // Navigation is now handled in the signIn function to ensure proper routing
     } catch (error: any) {
-      // Se signIn não tratar o toast, você pode tratar aqui.
-      // Mas geralmente o hook de autenticação centraliza isso.
-      // console.error("Login failed in HeroSection:", error);
-      // toast({ title: "Erro de Login", description: error.message || "Falha ao entrar.", variant: "destructive" });
+      console.error("Login error:", error);
+      // Erro específico já é tratado no hook useAuth
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="bg-lawyer-dark text-white pt-8 pb-16 md:pt-12 md:pb-24 relative">
+    <div className="bg-lawyer-dark text-white py-16 md:py-24">
       <div className="container mx-auto px-4">
-        
-        {displayBanner && (
-          <div 
-            className="mb-8 p-3 bg-slate-700/80 backdrop-blur-sm rounded-lg border border-slate-600 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4"
-            // A classe text-center sm:text-left foi removida daqui se quisermos que o container interno dite o alinhamento do texto
-            // Se mantida, o container interno com text-left sobrescreverá para os textos.
-            role="alertdialog"
-            aria-labelledby="pwa-install-banner-title-hero"
-            aria-describedby="pwa-install-banner-description-hero"
-          >
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-              <img src="/icons/icon-192x192.png" alt="JusGestão" className="h-8 w-8 sm:h-10 sm:w-10 rounded-md flex-shrink-0" />
-              {/* MODIFICAÇÃO APLICADA ABAIXO: Adicionada classe text-left */}
-              <div className="min-w-0 text-left"> 
-                <h3 id="pwa-install-banner-title-hero" className="text-sm sm:text-base font-semibold text-white truncate">
-                  {isIOS ? "Acesso Rápido ao JusGestão" : "Instale o App JusGestão"}
-                </h3>
-                <p id="pwa-install-banner-description-hero" className="text-xs sm:text-sm text-slate-300 truncate">
-                  {isIOS 
-                    ? <>Toque em <Share2 className="inline h-3 w-3 align-baseline mx-0.5"/> e 'Adicionar à Tela de Início'.</>
-                    : "Tenha na sua tela inicial para acesso rápido e fácil!"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
-              {!isIOS && canInstallPWA && ( // triggerPWAInstall já é a função onInstallPWA
-                <Button 
-                  onClick={triggerPWAInstall} 
-                  size="sm" 
-                  className="bg-lawyer-primary hover:bg-lawyer-primary/80 text-white text-xs sm:text-sm px-3 py-1.5 h-auto"
-                >
-                  <DownloadCloud className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Instalar
-                </Button>
-              )}
-              {dismissPWAInstallBanner && ( // dismissPWAInstallBanner já é onDismissInstallBanner
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={dismissPWAInstallBanner}
-                  className="text-slate-400 hover:text-white hover:bg-slate-600/50 h-auto px-2 py-1.5 text-xs"
-                  aria-label="Dispensar"
-                >
-                  <CloseIcon className="h-4 w-4 md:hidden" />
-                  <span className="hidden md:inline">Agora Não</span>
-                </Button>
-              )}
-            </div>
-          </div>
-        )}
-
         <div className="flex flex-col md:flex-row items-center justify-between">
           <div className={`md:w-1/2 mb-8 md:mb-0 ${user ? 'md:w-full text-center' : ''}`}>
             <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
@@ -148,11 +70,11 @@ const HeroSection: React.FC = () => { // Removidas as props, pois usaremos o con
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <h2 className="text-2xl font-bold mb-4">Acesso ao Sistema</h2>
                   <div>
-                    <Label htmlFor="email-hero" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                       Email
-                    </Label>
-                    <Input
-                      id="email-hero"
+                    </label>
+                    <input
+                      id="email"
                       name="email"
                       type="email"
                       autoComplete="email"
@@ -163,11 +85,11 @@ const HeroSection: React.FC = () => { // Removidas as props, pois usaremos o con
                     />
                   </div>
                   <div>
-                    <Label htmlFor="password-hero" className="block text-sm font-medium text-gray-300 mb-1">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
                       Senha
-                    </Label>
-                    <Input
-                      id="password-hero"
+                    </label>
+                    <input
+                      id="password"
                       name="password"
                       type="password"
                       autoComplete="current-password"
@@ -180,14 +102,14 @@ const HeroSection: React.FC = () => { // Removidas as props, pois usaremos o con
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center">
                       <input
-                        id="remember-me-hero"
+                        id="remember-me"
                         name="remember-me"
                         type="checkbox"
                         className="h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary border-gray-700 rounded"
                       />
-                      <Label htmlFor="remember-me-hero" className="ml-2 block text-gray-300">
+                      <label htmlFor="remember-me" className="ml-2 block text-gray-300">
                         Lembrar de mim
-                      </Label>
+                      </label>
                     </div>
                     <div>
                       <Link to="/recuperar-senha" className="font-medium text-lawyer-accent hover:text-lawyer-accent/90">
@@ -195,7 +117,7 @@ const HeroSection: React.FC = () => { // Removidas as props, pois usaremos o con
                       </Link>
                     </div>
                   </div>
-                  <Button
+                  <button
                     type="submit"
                     disabled={isLoading}
                     className={`w-full bg-lawyer-primary text-white px-4 py-3 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center ${isLoading ? 'opacity-75' : ''}`}
@@ -209,7 +131,7 @@ const HeroSection: React.FC = () => { // Removidas as props, pois usaremos o con
                         Entrando...
                       </>
                     ) : 'Entrar'}
-                  </Button>
+                  </button>
                   <div className="text-center text-sm mt-4">
                     <span className="text-gray-300">Não tem uma conta? </span>
                     <Link to="/cadastro" className="text-lawyer-accent hover:underline">Cadastre-se</Link>
