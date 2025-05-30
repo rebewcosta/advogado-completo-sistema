@@ -1,3 +1,4 @@
+
 // src/components/dashboard/DashboardHeader.tsx
 import React from 'react';
 import { LogOut, LayoutDashboard, Menu as MenuIcon } from 'lucide-react';
@@ -23,9 +24,10 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <LayoutDashboard className="h-7 w-7 sm:h-8 sm:w-8 text-lawyer-primary mr-2 sm:mr-3 flex-shrink-0" />
         <div className="min-w-0"> {/* Para truncar texto se necessário */}
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left truncate">Dashboard</h1>
-          <p className="text-sm text-gray-600 text-left truncate">
-            Bem-vindo(a), {getUserFirstName()}. Aqui está o resumo do seu escritório.
-          </p>
+          <div className="text-sm text-gray-600 text-left">
+            <span className="block sm:inline">Bem-vindo(a), {getUserFirstName()}.</span>
+            <span className="block sm:inline sm:ml-1">Aqui está o resumo do seu escritório.</span>
+          </div>
         </div>
       </div>
 
