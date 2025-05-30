@@ -52,7 +52,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
   };
   
-  // Só mostra o banner se showPWAInstallBanner for true E se n estiver rodando como app instalado
+  // Só mostra o banner se showPWAInstallBanner for true E se nao estiver rodando como app instalado
   const displayBanner = showPWAInstallBanner && !isStandalone;
 
   return (
