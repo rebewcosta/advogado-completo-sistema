@@ -56,9 +56,7 @@ const ProcessesPageContent: React.FC<ProcessesPageContentProps> = ({
 }) => {
   console.log("ProcessesPageContent: Props recebidas - clientesParaForm:", clientesParaForm, "isLoadingClientesParaForm:", isLoadingClientesParaForm);
 
-  // Ensure the processes match the expected type for ProcessTable
   const processesWithClientInfo = processes.map(p => {
-    // Make sure cliente info is properly structured
     const clienteInfo = p.cliente_id ? {
       id: p.cliente_id, 
       nome: p.nome_cliente_text || 'Cliente não identificado'

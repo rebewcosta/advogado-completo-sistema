@@ -1,3 +1,4 @@
+
 // src/pages/ConfiguracoesPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
@@ -5,7 +6,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
-// Removido ConfiguracoesHeader daqui, pois será substituído por SharedPageHeader
 import PerfilTab from '@/components/configuracoes/PerfilTab';
 import EscritorioTab from '@/components/configuracoes/EscritorioTab';
 import NotificacoesTab from '@/components/configuracoes/NotificacoesTab';
@@ -13,12 +13,10 @@ import SegurancaTab from '@/components/configuracoes/SegurancaTab';
 import GerenciarAssinatura from '@/components/assinatura/GerenciarAssinatura';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-// Card, CardContent, etc., são usados dentro das abas, então não precisam ser importados aqui diretamente se já estiverem nas abas.
 import { Spinner } from '@/components/ui/spinner';
 import { User, Building, Bell, Shield, CreditCard, Settings as SettingsPageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR SharedPageHeader
-import { Button } from '@/components/ui/button'; // Button é usado no ConfiguracoesHeader original (agora parte do SharedPageHeader)
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
 
 interface ProfileSettings { name: string; email: string; phone: string; oab: string; }
 interface OfficeSettings { companyName: string; cnpj: string; address: string; website: string; logo_url?: string | null; }
@@ -29,8 +27,7 @@ const ConfiguracoesPage = () => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("perfil");
   const [isSaving, setIsSaving] = useState(false);
-  const { user, signOut, refreshSession, session } = useAuth(); // Removido isLoading de useAuth se não for usado aqui diretamente
-  const [loggingOut, setLoggingOut] = useState(false); // Mantido se o SharedPageHeader precisar disso (ele não precisa)
+  const { user, signOut, refreshSession, session } = useAuth();
   const [isLoadingPageData, setIsLoadingPageData] = useState(true);
   
   const [hasFinancePin, setHasFinancePin] = useState(false);
@@ -136,10 +133,6 @@ const ConfiguracoesPage = () => {
     }
   };
 
-  // handleSignOut não é mais necessário aqui se o SharedPageHeader não o usa e o botão de sair está no AppSidebar.
-  // Vou remover a chamada e a prop do antigo ConfiguracoesHeader, pois SharedPageHeader não tem essa prop.
-  // const handleSignOut = async () => { ... };
-
   const handleChangeFinanceiroPin = async (currentPinPlainText: string | null, newPinPlainText: string) => {
     if (!session) {
         toast({ title: "Erro de Autenticação", description: "Sessão não encontrada.", variant: "destructive" });
@@ -154,7 +147,7 @@ const ConfiguracoesPage = () => {
         return false;
     }
 
-    setIsSaving(true); // Pode reutilizar isSaving ou criar um isSavingPin
+    setIsSaving(true);
     try {
         const { data, error } = await supabase.functions.invoke('set-finance-pin', {
             body: {  
@@ -196,10 +189,10 @@ const ConfiguracoesPage = () => {
                 title="Configurações da Conta"
                 description="Personalize suas informações e preferências do sistema."
                 pageIcon={<SettingsPageIcon />}
-                showActionButton={true} // Mostrar botão de salvar
+                showActionButton={true}
                 actionButtonText={isSaving ? "Salvando..." : "Salvar Alterações"}
                 onActionButtonClick={handleSaveAllSettings}
-                isLoading={isSaving} // Desabilitar enquanto salva
+                isLoading={isSaving}
                 actionButtonDisabled={isSaving}
             />
             <div className="mt-6 md:mt-8 flex justify-center items-center h-[calc(100vh-300px)]">
@@ -214,19 +207,18 @@ const ConfiguracoesPage = () => {
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        {/* Usando SharedPageHeader */}
         <SharedPageHeader
           title="Configurações da Conta"
           description="Personalize suas informações e preferências do sistema."
-          pageIcon={<SettingsPageIcon />} // Ícone para a página de configurações
-          showActionButton={true} // Mostrar botão de salvar geral
+          pageIcon={<SettingsPageIcon />}
+          showActionButton={true}
           actionButtonText={isSaving ? "Salvando..." : "Salvar Alterações"}
           onActionButtonClick={handleSaveAllSettings}
           isLoading={isSaving}
           actionButtonDisabled={isSaving}
         />
         
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6 md:mt-8"> {/* Ajustado mt aqui */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6 md:mt-8">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 mb-6 md:mb-8 h-auto">
             {[
               { value: "perfil", label: "Perfil", icon: User },
@@ -283,9 +275,9 @@ const ConfiguracoesPage = () => {
               setNotificationSettings={(newSettings) => {
                 setNotificationSettings(prev => ({
                   ...prev,
-                  pref_notificacoes_push: typeof newSettings.pushNotifications === 'boolean' ? newSettings.pushNotifications : prev.pref_notificacoes_push,
-                  pref_alertas_prazo: typeof newSettings.deadlineAlerts === 'boolean' ? newSettings.deadlineAlerts : prev.pref_alertas_prazo,
-                  pref_relatorio_semanal: typeof newSettings.weeklyReport === 'boolean' ? newSettings.weeklyReport : prev.pref_relatorio_semanal,
+                  pref_notificacoes_push: newSettings.pushNotifications,
+                  pref_alertas_prazo: newSettings.deadlineAlerts,
+                  pref_relatorio_semanal: newSettings.weeklyReport,
                 }));
               }}
             />

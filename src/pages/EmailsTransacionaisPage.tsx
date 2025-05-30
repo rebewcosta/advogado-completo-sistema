@@ -20,7 +20,7 @@ interface EmailLog {
 }
 
 const EmailsTransacionaisPage: React.FC = () => {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
   const [emails, setEmails] = useState<EmailLog[]>([]);
   const [isLoadingEmails, setIsLoadingEmails] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,6 @@ const EmailsTransacionaisPage: React.FC = () => {
         setIsLoadingEmails(false);
         return;
       }
-      // Somente admin pode ver
       const isAdminUser = user.email === 'webercostag@gmail.com' || user.user_metadata?.isAdmin === true;
       if (!isAdminUser) {
         setIsLoadingEmails(false);
@@ -41,8 +40,6 @@ const EmailsTransacionaisPage: React.FC = () => {
       setIsLoadingEmails(true);
       setError(null);
       try {
-        // Como a tabela transactional_email_logs não existe, vamos criar dados de exemplo
-        // Em produção, você precisaria criar esta tabela no Supabase
         const mockEmails: EmailLog[] = [
           {
             id: '1',
@@ -73,12 +70,10 @@ const EmailsTransacionaisPage: React.FC = () => {
       }
     };
 
-    if (!authLoading) {
-      fetchEmails();
-    }
-  }, [user, authLoading]);
+    fetchEmails();
+  }, [user]);
 
-  if (authLoading || isLoadingEmails) {
+  if (isLoadingEmails) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8">
@@ -98,7 +93,7 @@ const EmailsTransacionaisPage: React.FC = () => {
   }
   
   const isAdminUser = user?.email === 'webercostag@gmail.com' || user?.user_metadata?.isAdmin === true;
-  if (!isAdminUser && !authLoading) {
+  if (!isAdminUser) {
     return <Navigate to="/dashboard" replace />;
   }
 
