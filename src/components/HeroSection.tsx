@@ -113,7 +113,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
             </h1>
             <p className="text-lg text-gray-300 mb-8">
               O JusGestão é um sistema completo para advogados que simplifica a gestão de clientes, 
-              processos, documentos e finanças em uma única plataform.
+              processos, documentos e finanças em uma única plataforma.
             </p>
             {user ? (
               <div className="flex flex-wrap gap-4 justify-center">
