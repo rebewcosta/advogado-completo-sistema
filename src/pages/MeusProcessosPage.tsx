@@ -1,3 +1,4 @@
+
 // src/pages/MeusProcessosPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,17 @@ type ProcessoFormData = {
   prazo: string;
 };
 
+type ProcessoFormDataParaForm = {
+  numero: string;
+  cliente_id: string | null;
+  nome_cliente_text?: string;
+  tipo: string;
+  vara: string;
+  status: 'Em andamento' | 'Concluído' | 'Suspenso';
+  prazo: string;
+  id?: string;
+};
+
 const MeusProcessosPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -36,7 +48,7 @@ const MeusProcessosPage = () => {
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<ProcessoComCliente | null>(null);
-  const [processoParaForm, setProcessoParaForm] = useState<Partial<ProcessoFormData> & { id?: string } | null>(null);
+  const [processoParaForm, setProcessoParaForm] = useState<ProcessoFormDataParaForm | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [userClients, setUserClients] = useState<ClienteParaSelect[]>([]);
   const [isLoadingClients, setIsLoadingClients] = useState(false);
@@ -114,7 +126,7 @@ const MeusProcessosPage = () => {
   };
 
   const handleEditProcess = (processo: ProcessoComCliente) => {
-    const formData: Partial<ProcessoFormData> & { id: string } = {
+    const formData: ProcessoFormDataParaForm = {
       id: processo.id,
       numero: processo.numero_processo || "",
       cliente_id: processo.cliente_id || null,
