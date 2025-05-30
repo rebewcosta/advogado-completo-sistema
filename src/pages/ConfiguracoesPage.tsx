@@ -263,10 +263,10 @@ const ConfiguracoesPage = () => {
             />
           </TabsContent>
           <TabsContent value="assinatura">
-            <ConfiguracoesTabs />
+            <ConfiguracoesTabs activeTabValue="assinatura" />
           </TabsContent>
           <TabsContent value="aplicativo">
-            <ConfiguracoesTabs />
+            <ConfiguracoesTabs activeTabValue="aplicativo" />
           </TabsContent>
           <TabsContent value="notificacoes">
             <NotificacoesTab

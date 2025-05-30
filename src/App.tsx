@@ -4,7 +4,8 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 // Adicionar BrowserRouter aqui
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth.tsx'; // Import the AuthProvider
-import { useToast } from '@/hooks/use-toast';
+import PWAInstallBanner from './components/pwa/PWAInstallBanner';
+import PWAInstallToast from './components/pwa/PWAInstallToast';
 import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
@@ -57,10 +58,10 @@ export const usePWAInstall = () => {
 function AppContent() {
   const [deferredInstallPrompt, setDeferredInstallPrompt] = useState<Event | null>(null);
   const [showPWAInstallBanner, setShowPWAInstallBanner] = useState(false);
+  const [showInstallToast, setShowInstallToast] = useState(false);
   const [canInstallPWA, setCanInstallPWA] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
-  const { toast } = useToast();
   
   useEffect(() => {
     const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
@@ -139,11 +140,7 @@ function AppContent() {
     localStorage.setItem('pwaInstallDismissedTimestamp', Date.now().toString());
     
     // Mostrar toast informativo
-    toast({
-      title: "Banner de instalação ocultado",
-      description: "Você pode instalar o aplicativo JusGestão a qualquer momento acessando Configurações > Aplicativo.",
-      duration: 6000,
-    });
+    setShowInstallToast(true);
     
     console.log('PWA: Banner de instalação dispensado permanentemente pelo usuário.');
   }
@@ -200,6 +197,19 @@ function AppContent() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+
+      {/* PWA Install Banner */}
+      {showPWAInstallBanner && (
+        <PWAInstallBanner
+          onInstall={triggerPWAInstall}
+          onDismiss={dismissPWAInstallBanner}
+        />
+      )}
+
+      {/* PWA Install Toast */}
+      {showInstallToast && (
+        <PWAInstallToast onClose={() => setShowInstallToast(false)} />
+      )}
     </PWAInstallContext.Provider>
   );
 }
