@@ -1,36 +1,44 @@
 // src/components/HeroSection.tsx
 import React, { useState } from 'react';
 import { ArrowRight, DownloadCloud, X as CloseIcon, Share2 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/use-toast';
+import { Link, useNavigate } from 'react-router-dom'; // Removido Navigate se não usado diretamente aqui
+import { useAuth } from '@/hooks/useAuth'; // Verifique se o caminho está correto
+import { useToast } from '@/hooks/use-toast'; // Verifique se o caminho está correto
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label'; // Import Label
-import { Input } from '@/components/ui/input'; // Import Input
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { usePWAInstall } from '../App'; // Importando o hook do App.tsx
 
-interface HeroSectionProps {
-  showPWAInstallBanner?: boolean;
-  canInstallPWA?: boolean;
-  isIOS?: boolean;
-  isStandalone?: boolean; // Adicionado para saber se já está instalado
-  onInstallPWA?: () => void;
-  onDismissInstallBanner?: () => void;
-}
+// Removidas as props relacionadas ao PWA que agora vêm do contexto
+// interface HeroSectionProps {
+// showPWAInstallBanner?: boolean; // Vem do contexto
+// canInstallPWA?: boolean; // Vem do contexto
+// isIOS?: boolean; // Vem do contexto
+// isStandalone?: boolean; // Vem do contexto
+// onInstallPWA?: () => void; // Vem do contexto
+// onDismissInstallBanner?: () => void; // Vem do contexto
+// }
 
-const HeroSection: React.FC<HeroSectionProps> = ({
-  showPWAInstallBanner,
-  canInstallPWA,
-  isIOS,
-  isStandalone,
-  onInstallPWA,
-  onDismissInstallBanner
-}) => {
+const HeroSection: React.FC = () => { // Removidas as props, pois usaremos o contexto
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const { signIn, user } = useAuth();
+  const navigate = useNavigate(); // Mantido se for usado para navegação
+  const { login: signIn, user } = useAuth(); // Renomeado login para signIn para consistência se necessário
+
+  // Usando o contexto PWA
+  const {
+    showPWAInstallBanner, // Nome como está no contexto
+    canInstallPWA,
+    isIOS,
+    isStandalone,
+    triggerPWAInstall, // Nome como está no contexto
+    dismissPWAInstallBanner // Nome como está no contexto
+  } = usePWAInstall();
+  
+  // Só mostra o banner se showPWAInstallBanner for true E se não estiver rodando como app instalado
+  const displayBanner = showPWAInstallBanner && !isStandalone;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,31 +52,38 @@ const HeroSection: React.FC<HeroSectionProps> = ({
     }
     setIsLoading(true);
     try {
-      await signIn(email, password);
+      // Se o hook useAuth retorna uma função signIn que já trata o toast de erro:
+      await signIn(email, password); 
+      // Se o login for bem-sucedido e o usuário for redirecionado pelo ProtectedRoute ou similar,
+      // não é necessário navigate('/dashboard') aqui, a menos que seja um comportamento específico desejado.
+      // O estado `user` do useAuth() deve ser atualizado, e a UI reagirá a isso.
     } catch (error: any) {
-      // Erro já tratado no hook
+      // Se signIn não tratar o toast, você pode tratar aqui.
+      // Mas geralmente o hook de autenticação centraliza isso.
+      // console.error("Login failed in HeroSection:", error);
+      // toast({ title: "Erro de Login", description: error.message || "Falha ao entrar.", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
   };
-  
-  // Só mostra o banner se showPWAInstallBanner for true E se não estiver rodando como app instalado
-  const displayBanner = showPWAInstallBanner && !isStandalone;
 
   return (
     <div className="bg-lawyer-dark text-white pt-8 pb-16 md:pt-12 md:pb-24 relative">
       <div className="container mx-auto px-4">
         
-        {displayBanner && ( // Usando a variável displayBanner
+        {displayBanner && (
           <div 
-            className="mb-8 p-3 bg-slate-700/80 backdrop-blur-sm rounded-lg border border-slate-600 text-center sm:text-left shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4"
+            className="mb-8 p-3 bg-slate-700/80 backdrop-blur-sm rounded-lg border border-slate-600 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4"
+            // A classe text-center sm:text-left foi removida daqui se quisermos que o container interno dite o alinhamento do texto
+            // Se mantida, o container interno com text-left sobrescreverá para os textos.
             role="alertdialog"
             aria-labelledby="pwa-install-banner-title-hero"
             aria-describedby="pwa-install-banner-description-hero"
           >
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <img src="/icons/icon-192x192.png" alt="JusGestão" className="h-8 w-8 sm:h-10 sm:w-10 rounded-md flex-shrink-0" />
-              <div className="min-w-0">
+              {/* MODIFICAÇÃO APLICADA ABAIXO: Adicionada classe text-left */}
+              <div className="min-w-0 text-left"> 
                 <h3 id="pwa-install-banner-title-hero" className="text-sm sm:text-base font-semibold text-white truncate">
                   {isIOS ? "Acesso Rápido ao JusGestão" : "Instale o App JusGestão"}
                 </h3>
@@ -80,20 +95,20 @@ const HeroSection: React.FC<HeroSectionProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
-              {!isIOS && canInstallPWA && onInstallPWA && (
+              {!isIOS && canInstallPWA && ( // triggerPWAInstall já é a função onInstallPWA
                 <Button 
-                  onClick={onInstallPWA} 
+                  onClick={triggerPWAInstall} 
                   size="sm" 
                   className="bg-lawyer-primary hover:bg-lawyer-primary/80 text-white text-xs sm:text-sm px-3 py-1.5 h-auto"
                 >
                   <DownloadCloud className="mr-1.5 h-3.5 w-3.5 sm:h-4 sm:w-4" /> Instalar
                 </Button>
               )}
-              {onDismissInstallBanner && (
+              {dismissPWAInstallBanner && ( // dismissPWAInstallBanner já é onDismissInstallBanner
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={onDismissInstallBanner}
+                  onClick={dismissPWAInstallBanner}
                   className="text-slate-400 hover:text-white hover:bg-slate-600/50 h-auto px-2 py-1.5 text-xs"
                   aria-label="Dispensar"
                 >
