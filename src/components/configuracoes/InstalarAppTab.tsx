@@ -4,16 +4,17 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { DownloadCloud, Share2, CheckCircle, Info, Smartphone } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { usePWAInstall } from '@/App';
+import { usePWA } from '@/contexts/PWAContext';
 
 const InstalarAppTab: React.FC = () => {
   const { 
-    deferredInstallPrompt, 
+    deferredPrompt, 
     isStandalone, 
     isIOS, 
-    triggerPWAInstall, 
-    canInstallPWA
-  } = usePWAInstall();
+    triggerInstallPrompt 
+  } = usePWA();
+
+  const canInstallPWA = !!deferredPrompt && !isStandalone;
 
   if (isStandalone) {
     return (
@@ -52,7 +53,7 @@ const InstalarAppTab: React.FC = () => {
     );
   }
 
-  if (canInstallPWA && deferredInstallPrompt) { 
+  if (canInstallPWA) { 
     return (
       <div className="space-y-6 max-w-lg mx-auto text-center">
         <Alert>
@@ -62,7 +63,7 @@ const InstalarAppTab: React.FC = () => {
             Tenha o JusGestão na tela inicial do seu dispositivo para acesso rápido e fácil, com uma experiência otimizada.
           </AlertDescription>
         </Alert>
-        <Button onClick={triggerPWAInstall} size="lg" className="w-full sm:w-auto">
+        <Button onClick={triggerInstallPrompt} size="lg" className="w-full sm:w-auto">
           <DownloadCloud className="mr-2 h-5 w-5" /> Instalar Aplicativo
         </Button>
       </div>

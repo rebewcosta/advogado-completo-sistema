@@ -1,3 +1,4 @@
+
 // src/pages/Index.tsx
 import React from 'react';
 import Navbar from '../components/Navbar';
@@ -11,15 +12,24 @@ import CtaSection from '../components/CtaSection';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { LogOut } from 'lucide-react';
-import { usePWAInstall } from '../App';
+import { usePWA } from '@/contexts/PWAContext';
 
 const Index = () => {
   const { user, signOut } = useAuth();
-  const pwaInstall = usePWAInstall(); // A variável correta é 'pwaInstall'
+  const { 
+    deferredPrompt, 
+    isStandalone, 
+    isIOS, 
+    triggerInstallPrompt 
+  } = usePWA();
 
   const handleSignOut = async () => {
     await signOut();
   };
+
+  // PWA install logic
+  const canInstallPWA = !!deferredPrompt && !isStandalone;
+  const showPWAInstallBanner = canInstallPWA;
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -47,12 +57,12 @@ const Index = () => {
       )}
       <main className="flex-grow">
         <HeroSection 
-          showPWAInstallBanner={pwaInstall?.showPWAInstallBanner || false}
-          canInstallPWA={pwaInstall?.canInstallPWA || false}
-          isIOS={pwaInstall?.isIOS || false}
-          isStandalone={pwaInstall?.isStandalone || false} // <<< CORREÇÃO AQUI
-          onInstallPWA={pwaInstall?.triggerPWAInstall}
-          onDismissInstallBanner={pwaInstall?.dismissPWAInstallBanner}
+          showPWAInstallBanner={showPWAInstallBanner}
+          canInstallPWA={canInstallPWA}
+          isIOS={isIOS}
+          isStandalone={isStandalone}
+          onInstallPWA={triggerInstallPrompt}
+          onDismissInstallBanner={() => {}}
         />
         <FeaturesSection />
         <AboutSection />

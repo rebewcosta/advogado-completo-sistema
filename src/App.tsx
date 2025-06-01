@@ -14,7 +14,7 @@ import LoginPage from '@/pages/LoginPage';
 import CadastroPage from '@/pages/CadastroPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ClientesPage from '@/pages/ClientesPage';
-import EquipePage from '@/pages/EquipePage'; // <<< NOVA IMPORTAÇÃO
+import EquipePage from '@/pages/EquipePage';
 import AgendaPage from '@/pages/AgendaPage';
 import TarefasPage from '@/pages/TarefasPage';
 import MeusProcessosPage from '@/pages/MeusProcessosPage';
@@ -47,7 +47,7 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <ThemeProvider defaultTheme="light">
         <PWAProvider>
           <AuthProvider>
             <SidebarProvider>
@@ -67,7 +67,7 @@ function App() {
                     {/* Rotas protegidas */}
                     <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                     <Route path="/clientes" element={<ProtectedRoute><ClientesPage /></ProtectedRoute>} />
-                    <Route path="/equipe" element={<ProtectedRoute><EquipePage /></ProtectedRoute>} /> {/* <<< NOVA ROTA */}
+                    <Route path="/equipe" element={<ProtectedRoute><EquipePage /></ProtectedRoute>} />
                     <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
                     <Route path="/tarefas" element={<ProtectedRoute><TarefasPage /></ProtectedRoute>} />
                     <Route path="/meus-processos" element={<ProtectedRoute><MeusProcessosPage /></ProtectedRoute>} />

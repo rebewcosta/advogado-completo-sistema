@@ -1,9 +1,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
-import { Button } from "@/components/ui/button";
-import { Users, Plus, Search, UserPlus, ClipboardList, BarChart3 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Users } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -14,6 +13,7 @@ import { Spinner } from '@/components/ui/spinner';
 import EquipeMembrosTab from '@/components/equipe/EquipeMembrosTab';
 import EquipeTarefasTab from '@/components/equipe/EquipeTarefasTab';
 import EquipeProdutividadeTab from '@/components/equipe/EquipeProdutividadeTab';
+import { Search, UserPlus, ClipboardList, BarChart3 } from 'lucide-react';
 import type { Database } from '@/integrations/supabase/types';
 
 type EquipeMembro = Database['public']['Tables']['equipe_membros']['Row'];
@@ -66,14 +66,22 @@ const EquipePage = () => {
         .from('equipe_tarefas')
         .select(`
           *,
-          responsavel:responsavel_id(id, nome),
-          delegado_por:delegado_por_id(id, nome)
+          responsavel:equipe_membros!responsavel_id(id, nome),
+          delegado_por:equipe_membros!delegado_por_id(id, nome)
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
-      setTarefas(data || []);
+      
+      // Transformar os dados para o formato esperado
+      const tarefasFormatadas = (data || []).map(tarefa => ({
+        ...tarefa,
+        responsavel: Array.isArray(tarefa.responsavel) ? tarefa.responsavel[0] : tarefa.responsavel,
+        delegado_por: Array.isArray(tarefa.delegado_por) ? tarefa.delegado_por[0] : tarefa.delegado_por
+      }));
+      
+      setTarefas(tarefasFormatadas);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar tarefas da equipe",
