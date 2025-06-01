@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
-import { Calendar as CalendarIconLucide, Plus, CalendarDays, RefreshCw } from 'lucide-react';
+import { CalendarDays, RefreshCw, Calendar as CalendarView, Table } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -22,7 +22,9 @@ import { AgendaEventForm } from '@/components/AgendaEventForm';
 import { AgendaEventDetail } from '@/components/AgendaEventDetail';
 import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards';
 import AgendaEventTable from '@/components/agenda/AgendaEventTable';
-import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR
+import AgendaCalendarView from '@/components/agenda/AgendaCalendarView';
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export type EventoAgenda = Database['public']['Tables']['agenda_eventos']['Row'] & {
     clientes?: { id: string; nome: string } | null;
@@ -62,6 +64,8 @@ const AgendaPage = () => {
   const [processosDoUsuario, setProcessosDoUsuario] = useState<ProcessoParaSelect[]>([]);
   const [isLoadingDropdownData, setIsLoadingDropdownData] = useState(false);
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
+
+  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
 
   const fetchEvents = useCallback(async (dateToFilter?: Date, showLoadingSpinner = true) => {
     if (!user) {
@@ -279,12 +283,12 @@ const AgendaPage = () => {
                                 !selectedDate && "text-muted-foreground"
                             )}
                         >
-                            <CalendarIconLucide className="mr-2 h-4 w-4" />
+                            <CalendarDays className="mr-2 h-4 w-4" />
                             {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
                         </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
-                        <ShadcnCalendar mode="single" selected={selectedDate} onSelect={setSelectedDate} initialFocus locale={ptBR} />
+                        <ShadcnCalendar mode="single" selected={selectedDate} onSelect={setSelectedDate} initialFocus locale={ptBR} className="p-3 pointer-events-auto" />
                         </PopoverContent>
                     </Popover>
                     
@@ -301,27 +305,52 @@ const AgendaPage = () => {
                 </div>
             </CardContent>
         </Card>
-        
-        <div className="hidden md:block">
-            <AgendaEventTable
-                events={events}
-                onEdit={handleOpenForm}
-                onView={handleViewDetails}
-                onDelete={handleDeleteEvent}
-                isLoading={isLoadingCombined}
-                selectedDate={selectedDate}
+
+        {/* Tabs para alternar entre visualizações */}
+        <Tabs value={viewMode} onValueChange={(value: string) => setViewMode(value as 'table' | 'calendar')} className="mb-6">
+          <TabsList className="grid w-full grid-cols-2 max-w-md">
+            <TabsTrigger value="table" className="flex items-center gap-2">
+              <Table className="h-4 w-4" />
+              <span className="hidden sm:inline">Lista</span>
+            </TabsTrigger>
+            <TabsTrigger value="calendar" className="flex items-center gap-2">
+              <CalendarView className="h-4 w-4" />
+              <span className="hidden sm:inline">Calendário</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="table" className="mt-6">
+            <div className="hidden md:block">
+                <AgendaEventTable
+                    events={events}
+                    onEdit={handleOpenForm}
+                    onView={handleViewDetails}
+                    onDelete={handleDeleteEvent}
+                    isLoading={isLoadingCombined}
+                    selectedDate={selectedDate}
+                />
+            </div>
+            <div className="md:hidden">
+                <AgendaEventListAsCards
+                    events={events}
+                    onEdit={handleOpenForm}
+                    onView={handleViewDetails}
+                    onDelete={handleDeleteEvent}
+                    isLoading={isLoadingCombined}
+                    selectedDate={selectedDate}
+                />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="calendar" className="mt-6">
+            <AgendaCalendarView
+              events={events}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
+              onEventClick={handleViewDetails}
             />
-        </div>
-        <div className="md:hidden">
-            <AgendaEventListAsCards
-                events={events}
-                onEdit={handleOpenForm}
-                onView={handleViewDetails}
-                onDelete={handleDeleteEvent}
-                isLoading={isLoadingCombined}
-                selectedDate={selectedDate}
-            />
-        </div>
+          </TabsContent>
+        </Tabs>
 
         {isFormOpen && (
             <AgendaEventForm

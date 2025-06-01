@@ -171,6 +171,176 @@ export type Database = {
         }
         Relationships: []
       }
+      equipe_membros: {
+        Row: {
+          ativo: boolean
+          cargo: string | null
+          created_at: string
+          data_ingresso: string | null
+          email: string
+          id: string
+          nivel_permissao: string
+          nome: string
+          observacoes: string | null
+          telefone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          data_ingresso?: string | null
+          email: string
+          id?: string
+          nivel_permissao?: string
+          nome: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          cargo?: string | null
+          created_at?: string
+          data_ingresso?: string | null
+          email?: string
+          id?: string
+          nivel_permissao?: string
+          nome?: string
+          observacoes?: string | null
+          telefone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      equipe_produtividade: {
+        Row: {
+          clientes_atendidos: number | null
+          created_at: string
+          data_registro: string
+          horas_trabalhadas: number | null
+          id: string
+          membro_id: string | null
+          observacoes: string | null
+          processos_atualizados: number | null
+          tarefas_concluidas: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          clientes_atendidos?: number | null
+          created_at?: string
+          data_registro?: string
+          horas_trabalhadas?: number | null
+          id?: string
+          membro_id?: string | null
+          observacoes?: string | null
+          processos_atualizados?: number | null
+          tarefas_concluidas?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          clientes_atendidos?: number | null
+          created_at?: string
+          data_registro?: string
+          horas_trabalhadas?: number | null
+          id?: string
+          membro_id?: string | null
+          observacoes?: string | null
+          processos_atualizados?: number | null
+          tarefas_concluidas?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipe_produtividade_membro_id_fkey"
+            columns: ["membro_id"]
+            isOneToOne: false
+            referencedRelation: "equipe_membros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      equipe_tarefas: {
+        Row: {
+          cliente_associado_id: string | null
+          created_at: string
+          data_conclusao: string | null
+          data_vencimento: string | null
+          delegado_por_id: string | null
+          descricao_detalhada: string | null
+          id: string
+          observacoes_conclusao: string | null
+          prioridade: string
+          processo_associado_id: string | null
+          responsavel_id: string | null
+          status: string
+          tempo_estimado_horas: number | null
+          tempo_gasto_horas: number | null
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cliente_associado_id?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_vencimento?: string | null
+          delegado_por_id?: string | null
+          descricao_detalhada?: string | null
+          id?: string
+          observacoes_conclusao?: string | null
+          prioridade?: string
+          processo_associado_id?: string | null
+          responsavel_id?: string | null
+          status?: string
+          tempo_estimado_horas?: number | null
+          tempo_gasto_horas?: number | null
+          titulo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cliente_associado_id?: string | null
+          created_at?: string
+          data_conclusao?: string | null
+          data_vencimento?: string | null
+          delegado_por_id?: string | null
+          descricao_detalhada?: string | null
+          id?: string
+          observacoes_conclusao?: string | null
+          prioridade?: string
+          processo_associado_id?: string | null
+          responsavel_id?: string | null
+          status?: string
+          tempo_estimado_horas?: number | null
+          tempo_gasto_horas?: number | null
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "equipe_tarefas_delegado_por_id_fkey"
+            columns: ["delegado_por_id"]
+            isOneToOne: false
+            referencedRelation: "equipe_membros"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "equipe_tarefas_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "equipe_membros"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       processos: {
         Row: {
           cliente_id: string | null
