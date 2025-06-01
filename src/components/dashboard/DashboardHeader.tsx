@@ -1,7 +1,7 @@
 
 // src/components/dashboard/DashboardHeader.tsx
 import React from 'react';
-import { LogOut, LayoutDashboard, LayoutGrid } from 'lucide-react'; // MenuIcon removido, LayoutGrid adicionado
+import { LogOut, LayoutDashboard, Menu as MenuIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
 import { SidebarTrigger } from '@/components/ui/sidebar';
