@@ -1,8 +1,7 @@
 
 // src/components/dashboard/DashboardHeader.tsx
 import React from 'react';
-// Menu as MenuIcon foi removido, AlignJustify foi adicionado
-import { LogOut, LayoutDashboard, AlignJustify } from 'lucide-react'; 
+import { LogOut, LayoutDashboard, Menu as MenuIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -43,15 +42,15 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
           <LogOut className="h-4 w-4" /> Sair
         </Button>
         {/* Botão do Menu Gaveta para Mobile */}
-       <div className="md:hidden order-2 md:order-1"> {/* Visível apenas abaixo de md */}
-  <SidebarTrigger
-    variant="ghost"
-    size="icon"
-    className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-  >
-    <AlignJustify className="h-5 w-5" /> {/* <<< ÍCONE ALTERADO PARA AlignJustify */}
-  </SidebarTrigger>
-</div>
+        <div className="md:hidden order-2"> {/* Visível apenas abaixo de md */}
+          <SidebarTrigger
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <MenuIcon className="h-5 w-5" />
+          </SidebarTrigger>
+        </div>
       </div>
     </div>
   );
