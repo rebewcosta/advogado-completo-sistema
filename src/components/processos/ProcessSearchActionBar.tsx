@@ -1,9 +1,7 @@
 
-// src/components/processos/ProcessSearchActionBar.tsx
 import React from 'react';
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { RefreshCw, Search, Plus } from 'lucide-react';
+import { Search } from 'lucide-react';
 
 interface ProcessSearchActionBarProps {
   searchTerm: string;
@@ -28,13 +26,6 @@ const ProcessSearchActionBar: React.FC<ProcessSearchActionBarProps> = ({
           className="pl-10 text-sm h-10 w-full bg-white border-gray-300 rounded-lg focus:ring-2 focus:ring-lawyer-primary focus:border-lawyer-primary"
         />
       </div>
-      <Button 
-        onClick={onNewProcess} 
-        className="w-full sm:w-auto text-sm h-10 bg-lawyer-primary hover:bg-lawyer-primary/90 text-white rounded-lg"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Novo Processo
-      </Button>
     </div>
   );
 };
