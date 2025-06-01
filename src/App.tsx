@@ -1,12 +1,12 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from '@/hooks/useAuth';
 import { Toaster } from '@/components/ui/toaster';
 import { PWAProvider } from '@/contexts/PWAContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider } from '@/hooks/useAuth';
 
 // Import de páginas
 import Index from '@/pages/Index';
@@ -47,11 +47,11 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light">
+      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
         <PWAProvider>
-          <AuthProvider>
-            <SidebarProvider>
-              <Router>
+          <SidebarProvider>
+            <Router>
+              <AuthProvider>
                 <div className="min-h-screen bg-background font-sans antialiased">
                   <Routes>
                     <Route path="/" element={<Index />} />
@@ -85,9 +85,9 @@ function App() {
                   </Routes>
                 </div>
                 <Toaster />
-              </Router>
-            </SidebarProvider>
-          </AuthProvider>
+              </AuthProvider>
+            </Router>
+          </SidebarProvider>
         </PWAProvider>
       </ThemeProvider>
     </QueryClientProvider>
