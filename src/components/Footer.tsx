@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Phone, Mail, Instagram as InstagramIcon } from 'lucide-react'; // Importando o ícone do Instagram
@@ -43,8 +44,8 @@ const Footer: React.FC<FooterProps> = ({ companyName, address, cnpj, website }) 
           </div>
         ) : null}
         <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0 md:w-1/3">
-            <Link to="/" className="flex items-center">
+          <div className="mb-4 md:mb-0 md:w-1/3 text-center md:text-left">
+            <Link to="/" className="flex items-center justify-center md:justify-start">
               <img 
                 src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" 
                 alt="JusGestão Logo" 
@@ -54,12 +55,12 @@ const Footer: React.FC<FooterProps> = ({ companyName, address, cnpj, website }) 
                 <span className="text-lawyer-primary">Jus</span>Gestão
               </span>
             </Link>
-            <p className="mt-2 text-sm text-gray-300">
+            <p className="mt-2 text-sm text-gray-300 text-center md:text-left">
               Sistema completo para gerenciamento de escritórios de advocacia
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 md:w-2/3">
-            <div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 md:w-2/3 w-full">
+            <div className="text-left">
               <h3 className="text-lg font-medium mb-2">Recursos</h3>
               <ul className="text-gray-300 text-sm space-y-1">
                 <li><Link to="/dashboard" className="hover:text-lawyer-primary">Dashboard</Link></li>
@@ -68,14 +69,14 @@ const Footer: React.FC<FooterProps> = ({ companyName, address, cnpj, website }) 
                 <li><Link to="/agenda" className="hover:text-lawyer-primary">Agenda</Link></li>
               </ul>
             </div>
-            <div>
+            <div className="text-left">
               <h3 className="text-lg font-medium mb-2">Legal</h3>
               <ul className="text-gray-300 text-sm space-y-1">
                 <li><Link to="/termos-privacidade" className="hover:text-lawyer-primary">Termos de Uso</Link></li>
                 <li><Link to="/termos-privacidade" className="hover:text-lawyer-primary">Política de Privacidade</Link></li>
               </ul>
             </div>
-            <div>
+            <div className="text-left">
               <h3 className="text-lg font-medium mb-2">Contato</h3>
               <ul className="text-gray-300 text-sm space-y-2">
                 {contactInfo.map((item, index) => (

@@ -9,6 +9,7 @@ import AboutSection from '../components/AboutSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import PricingSection from '../components/PricingSection';
 import CtaSection from '../components/CtaSection';
+import MobileHeader from '../components/MobileHeader';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { LogOut } from 'lucide-react';
@@ -35,25 +36,31 @@ const Index = () => {
     <div className="min-h-screen flex flex-col">
       <Navbar />
       {user && (
-        <div className="bg-gradient-to-r from-lawyer-dark to-blue-800 shadow-md">
-          <div className="container mx-auto py-2 px-4 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
-              <p className="text-white text-sm md:text-base font-medium">
-                Bem-vindo, <span className="font-semibold">{user.user_metadata?.nome || user.email?.split('@')[0]}</span>
-              </p>
+        <>
+          {/* Cabeçalho Mobile - Apenas para smartphone */}
+          <MobileHeader />
+          
+          {/* Cabeçalho Desktop - Apenas para desktop */}
+          <div className="hidden md:block bg-gradient-to-r from-lawyer-dark to-blue-800 shadow-md">
+            <div className="container mx-auto py-2 px-4 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
+                <p className="text-white text-sm md:text-base font-medium">
+                  Bem-vindo, <span className="font-semibold">{user.user_metadata?.nome || user.email?.split('@')[0]}</span>
+                </p>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleSignOut}
+                className="flex items-center gap-1 text-white hover:bg-white/10"
+              >
+                <LogOut className="h-3 w-3 md:h-4 md:w-4" /> 
+                <span className="text-xs md:text-sm">Sair</span>
+              </Button>
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleSignOut}
-              className="flex items-center gap-1 text-white hover:bg-white/10"
-            >
-              <LogOut className="h-3 w-3 md:h-4 md:w-4" /> 
-              <span className="text-xs md:text-sm">Sair</span>
-            </Button>
           </div>
-        </div>
+        </>
       )}
       <main className="flex-grow">
         <HeroSection 
