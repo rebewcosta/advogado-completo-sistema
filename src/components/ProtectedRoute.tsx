@@ -1,15 +1,17 @@
 
-import { useEffect, useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useState, ReactNode } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Spinner } from '@/components/ui/spinner';
 
 interface ProtectedRouteProps {
+  children: ReactNode;
   requireAuth?: boolean;
   redirectPath?: string;
 }
 
 const ProtectedRoute = ({
+  children,
   requireAuth = true,
   redirectPath = '/login',
 }: ProtectedRouteProps) => {
@@ -53,7 +55,7 @@ const ProtectedRoute = ({
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Outlet />;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;
