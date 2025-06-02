@@ -41,10 +41,16 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         >
           <LogOut className="h-4 w-4" /> Sair
         </Button>
-        {/* Botão do Menu Gaveta para Mobile */}
+        {/* Botão do Menu Gaveta para Mobile - Funcional */}
         <div className="md:hidden order-2"> {/* Visível apenas abaixo de md */}
-          <SidebarTrigger className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900 p-1 rounded-md">
-            <Menu className="h-5 w-5" />
+          <SidebarTrigger>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 border-gray-300"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           </SidebarTrigger>
         </div>
       </div>
