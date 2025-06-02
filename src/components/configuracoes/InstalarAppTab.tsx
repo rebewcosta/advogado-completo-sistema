@@ -24,7 +24,7 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { cn } from '@/lib/utils'; // Importar cn para mesclar classes
+import { cn } from '@/lib/utils';
 
 // Componente para o ícone de três pontinhos do menu do Chrome (Android)
 const ChromeMenuIcon = () => (
@@ -89,21 +89,21 @@ const InstalarAppTab: React.FC = () => {
       <Tabs defaultValue="windows" className="w-full">
         <TabsList className={cn(
           "grid w-full grid-cols-2 rounded-lg sm:grid-cols-4 mb-6 bg-gray-100 p-1",
-          "gap-1 sm:gap-1" // Adiciona um pequeno espaçamento entre os botões da aba
+          "gap-2" // Aumentado o gap para todas as telas, o grid-cols-2 já faz o empilhamento.
         )}>
-          <TabsTrigger value="windows" className="text-xs sm:text-sm py-2 sm:py-1.5 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="windows" className="text-xs sm:text-sm py-2 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Laptop className="w-4 h-4 mr-1.5" />
             Windows
           </TabsTrigger>
-          <TabsTrigger value="mac" className="text-xs sm:text-sm py-2 sm:py-1.5 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="mac" className="text-xs sm:text-sm py-2 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Apple className="w-4 h-4 mr-1.5" />
             macOS
           </TabsTrigger>
-          <TabsTrigger value="android" className="text-xs sm:text-sm py-2 sm:py-1.5 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="android" className="text-xs sm:text-sm py-2 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Smartphone className="w-4 h-4 mr-1.5" />
             Android
           </TabsTrigger>
-          <TabsTrigger value="ios" className="text-xs sm:text-sm py-2 sm:py-1.5 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
+          <TabsTrigger value="ios" className="text-xs sm:text-sm py-2 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Smartphone className="w-4 h-4 mr-1.5" />
             iPhone
           </TabsTrigger>
@@ -124,7 +124,7 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador Google Chrome
+                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador <strong>Google Chrome</strong>.
                 </p>
               </div>
               <div>
@@ -177,7 +177,7 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador Google Chrome.
+                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador <strong>Google Chrome</strong>.
                 </p>
               </div>
               <div>
@@ -229,7 +229,7 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  Utilize o navegador Google Chrome para a melhor experiência de instalação.
+                  Utilize o navegador <strong>Google Chrome</strong> para a melhor experiência de instalação.
                 </p>
               </div>
               <div>
