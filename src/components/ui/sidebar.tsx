@@ -257,11 +257,37 @@ const Sidebar = React.forwardRef<
 )
 Sidebar.displayName = "Sidebar"
 
+// No topo do arquivo src/components/ui/sidebar.tsx, certifique-se de que PanelLeft e X (ou CloseIcon) estão importados:
+// import { PanelLeft, X as CloseIcon } from "lucide-react"; 
+// Se X não estiver importado, adicione ou use PanelLeft para ambos os casos se preferir.
+// A importação de PanelLeft já existe no seu arquivo original.
+
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
-  React.ComponentProps<typeof Button>
->(({ className, onClick, ...props }, ref) => {
-  const { toggleSidebar } = useSidebar()
+  React.ComponentProps<typeof Button> // Esta tipagem já inclui 'children'
+>(({ className, onClick, children, ...props }, ref) => { // Adicionado 'children' à desestruturação das props
+  const { toggleSidebar, isMobile, openMobile } = useSidebar(); // Obtenha isMobile e openMobile do seu hook se quiser o ícone X dinâmico
+
+  let iconToDisplay;
+
+  if (children) {
+    iconToDisplay = children; // Prioriza o ícone passado como filho
+    // console.log("SidebarTrigger: Usando children fornecidos:", children); // Log de depuração opcional
+  } else if (isMobile && openMobile) { 
+    // Se for mobile e a sidebar estiver aberta, mostra X (CloseIcon)
+    // Certifique-se de que 'CloseIcon' está importado: import { X as CloseIcon } from "lucide-react";
+    // Se 'CloseIcon' não estiver disponível ou se 'isMobile'/'openMobile' não estiverem no seu hook,
+    // você pode remover esta condição 'else if' e ele sempre usará PanelLeft como fallback.
+    // iconToDisplay = <CloseIcon />;
+    // console.log("SidebarTrigger: Usando CloseIcon (X) para sidebar aberta no mobile");
+    // Como alternativa mais simples, se não tiver CloseIcon ou a lógica de estado:
+    iconToDisplay = <PanelLeft />; // Ou mantenha PanelLeft se a lógica do X for complexa agora
+    // console.log("SidebarTrigger: Usando PanelLeft (fallback padrão, ou para X se não implementado)");
+
+  } else {
+    iconToDisplay = <PanelLeft />; // Ícone padrão se nenhum filho for fornecido
+    // console.log("SidebarTrigger: Usando PanelLeft (padrão - nenhum filho fornecido)");
+  }
 
   return (
     <Button
@@ -269,19 +295,19 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-7 w-7", className)}
+      className={cn("h-7 w-7", className)} // Mantendo as classes que você tinha no seu SidebarTrigger original
       onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
+        onClick?.(event);
+        toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeft />
+      {iconToDisplay}
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
-  )
-})
-SidebarTrigger.displayName = "SidebarTrigger"
+  );
+});
+SidebarTrigger.displayName = "SidebarTrigger";
 
 const SidebarRail = React.forwardRef<
   HTMLButtonElement,
