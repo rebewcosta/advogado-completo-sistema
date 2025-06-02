@@ -3,7 +3,8 @@ import React from 'react';
 import { LogOut, LayoutDashboard, Menu as MenuIcon } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
-import { SidebarTrigger } from '@/components/ui/sidebar'; // Importa o SidebarTrigger CORRIGIDO
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils'; // Importar cn para mesclar classes
 
 interface DashboardHeaderProps {
   user: User | null;
@@ -16,8 +17,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   getUserFirstName,
   handleSignOut
 }) => {
-  // Removidos os console.logs e texto de teste visual para limpeza, 
-  // mas você pode adicioná-los novamente se quiser verificar o deploy.
+  // Removidos os console.logs e texto de teste visual para limpeza final
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 md:mb-8">
       <div className="flex items-center flex-1 min-w-0">
@@ -40,13 +40,18 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         >
           <LogOut className="h-4 w-4" /> Sair
         </Button>
+        {/* Botão do Menu Gaveta para Mobile com Estilo Atualizado */}
         <div className="md:hidden order-2">
           <SidebarTrigger
-            variant="ghost"
+            variant="default" // Mudando para 'default' para usar cores primárias
             size="icon"
-            className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            className={cn(
+              "h-8 w-8 text-white shadow-md", // Tamanho base e sombra (h-8 w-8 é o que estava antes)
+              "bg-lawyer-primary hover:bg-lawyer-primary/90", // Cor de fundo primária e hover
+              "focus-visible:ring-2 focus-visible:ring-lawyer-primary focus-visible:ring-offset-2" // Estilos de foco
+            )}
           >
-            <MenuIcon className="h-5 w-5" /> {/* Este deve agora funcionar */}
+            <MenuIcon className="h-5 w-5" /> 
           </SidebarTrigger>
         </div>
       </div>
