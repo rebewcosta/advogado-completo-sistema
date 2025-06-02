@@ -179,7 +179,7 @@ const InstalarAppTab: React.FC = () => {
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
                   <p> Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador{" "}
-  <strong>Google Chrome</strong>.</p>p>
+  <strong>Google Chrome</strong>.</p>
                 </p>
               </div>
               <div>
