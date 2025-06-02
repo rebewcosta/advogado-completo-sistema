@@ -1,8 +1,7 @@
 // src/components/dashboard/DashboardHeader.tsx
 import React from 'react';
-// Importa o ícone Menu da lucide-react e o renomeia para MenuIcon.
-// Isso está correto para usar o ícone de menu hambúrguer.
-import { LogOut, LayoutDashboard, Menu as MenuIcon } from 'lucide-react';
+// Importando AlignJustify diretamente, e removendo 'Menu as MenuIcon'
+import { LogOut, LayoutDashboard, AlignJustify } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
 import { SidebarTrigger } from '@/components/ui/sidebar';
@@ -49,9 +48,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             size="icon"
             className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
           >
-            {/* Aqui você está usando o MenuIcon importado, que é o ícone de menu hambúrguer. */}
-            {/* Isso está correto. */}
-            <MenuIcon className="h-5 w-5" />
+            {/* Usando o ícone AlignJustify importado diretamente */}
+            <AlignJustify className="h-5 w-5" />
           </SidebarTrigger>
         </div>
       </div>
