@@ -1,6 +1,6 @@
 // src/components/configuracoes/InstalarAppTab.tsx
 import React from 'react';
-import { usePWAInstall } from '../../App'; // Hook para gerenciar a instalação do PWA
+import { usePWAInstall } from '@/App'; // Corrigido para importar de @/App
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -16,12 +16,12 @@ import {
   TabsTrigger,
 } from '@/components/ui/tabs';
 import {
-  Smartphone, // Ícone para Android e iOS (iPhone)
-  Laptop,     // Ícone para Windows
-  Apple,      // Ícone para macOS
-  Download,   // Ícone para botão de download/instalação
-  Share2,     // Ícone de compartilhamento para instruções do iOS
-  AlertTriangle, // Ícone para avisos
+  Smartphone,
+  Laptop,
+  Apple,
+  Download,
+  Share2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
@@ -42,10 +42,9 @@ const ChromeMenuIcon = () => (
   </svg>
 );
 
-const InstalarAppTab = () => {
+const InstalarAppTab: React.FC = () => { // Adicionado React.FC para tipagem
   const pwaInstall = usePWAInstall();
 
-  // Valores padrão para o caso de pwaInstall ser null inicialmente
   const canInstallPWA = pwaInstall?.canInstallPWA || false;
   const triggerPWAInstall =
     pwaInstall?.triggerPWAInstall ||
@@ -113,7 +112,7 @@ const InstalarAppTab = () => {
                 <Laptop className="w-5 h-5 mr-2 text-lawyer-primary" /> Instalar no Windows
               </CardTitle>
               <CardDescription>
-                Instale o JusGestão no seu computador Windows para acesso
+                Instale o JusGestão como um aplicativo no seu computador Windows para acesso
                 rápido e uma experiência otimizada.
               </CardDescription>
             </CardHeader>
@@ -121,7 +120,8 @@ const InstalarAppTab = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador   <strong>Google Chrome</strong>.
+                  {/* CORREÇÃO DE ESPAÇAMENTO ABAIXO */}
+                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador <strong>Google Chrome</strong>.
                 </p>
               </div>
               <div>
@@ -166,7 +166,7 @@ const InstalarAppTab = () => {
                 <Apple className="w-5 h-5 mr-2 text-lawyer-primary" /> Instalar no macOS
               </CardTitle>
               <CardDescription>
-                Instale o JusGestão no seu Mac para acesso rápido e uma
+                Instale o JusGestão como um aplicativo no seu Mac para acesso rápido e uma
                 experiência otimizada.
               </CardDescription>
             </CardHeader>
@@ -174,7 +174,8 @@ const InstalarAppTab = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador   <strong>Google Chrome</strong>.
+                  {/* CORREÇÃO DE ESPAÇAMENTO ABAIXO */}
+                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador <strong>Google Chrome</strong>.
                 </p>
               </div>
               <div>
@@ -219,25 +220,27 @@ const InstalarAppTab = () => {
               </CardTitle>
               <CardDescription>
                 Adicione o JusGestão à tela inicial do seu Android para acesso
-                como um aplicativo.
+                como um aplicativo. (Ex: Samsung, Xiaomi, Motorola, LG, etc.)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                   Utilize o navegador <strong>Google Chrome</strong> para a melhor experiência de instalação.
+                  {/* CORREÇÃO DE ESPAÇAMENTO ABAIXO */}
+                  Utilize o navegador <strong>Google Chrome</strong> para a melhor experiência de instalação.
                 </p>
               </div>
               <div>
                 <h4 className="font-semibold mb-1 text-gray-700">Passos para instalar via Google Chrome:</h4>
                 <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600 pl-2">
                   <li>
-                    Abra o site{" "}
+                    {/* ALTERAÇÃO DE TEXTO ABAIXO */}
+                    Com seu smartphone Android em mãos, abra o site{" "}
                     <a href="https://sisjusgestao.com.br" target="_blank" rel="noopener noreferrer" className="text-lawyer-accent hover:underline">
                       sisjusgestao.com.br
                     </a>{" "}
-                    no Google Chrome.
+                    no navegador Google Chrome.
                   </li>
                   <li>
                     O navegador pode exibir um aviso para adicionar à tela inicial
@@ -289,7 +292,8 @@ const InstalarAppTab = () => {
                 <h4 className="font-semibold mb-1 text-gray-700">Passos para instalar via Safari:</h4>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600 pl-2">
                   <li>
-                    Abra o site{" "}
+                    {/* ALTERAÇÃO DE TEXTO ABAIXO */}
+                    Com seu iPhone (ou iPad) em mãos, abra o site{" "}
                     <a href="https://sisjusgestao.com.br" target="_blank" rel="noopener noreferrer" className="text-lawyer-accent hover:underline">
                       sisjusgestao.com.br
                     </a>{" "}
@@ -312,7 +316,7 @@ const InstalarAppTab = () => {
                   </li>
                   <li>
                     Pronto! O ícone do JusGestão aparecerá na sua Tela de
-                    Início, como um aplicativo normal.
+                    Início.
                   </li>
                 </ol>
               </div>
