@@ -1,8 +1,8 @@
 // src/components/shared/SharedPageHeader.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar'; // Importa o SidebarTrigger
-import { Menu as MenuIcon, Plus } from 'lucide-react'; // Mantém MenuIcon para clareza
+import { SidebarTrigger } from '@/components/ui/sidebar';
+import { Menu as MenuIcon, Plus } from 'lucide-react'; // Renomeando Menu para MenuIcon para clareza
 import { cn } from '@/lib/utils';
 
 interface SharedPageHeaderProps {
@@ -29,8 +29,8 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
   actionButtonDisabled = false,
 }) => {
   return (
-    // Removido o "Menu Hambúrguer de Teste - Apenas Mobile" que era um botão separado e não funcional para a sidebar.
-    // O SidebarTrigger abaixo já cuida do menu mobile para abrir a sidebar.
+    // O div que continha o "Menu Hambúrguer de Teste" foi removido.
+    // Mantemos apenas o layout principal e o SidebarTrigger funcional.
     <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
       {/* Seção do Título e Ícone (ocupa espaço disponível) */}
       <div className="flex items-center flex-1 min-w-0"> {/* flex-1 para ocupar espaço */}
@@ -60,13 +60,11 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
         {/* Botão do Menu Gaveta para Mobile - Este usa SidebarTrigger para abrir a sidebar principal */}
         <div className="md:hidden order-2 md:order-1"> {/* Visível apenas abaixo de md e define ordem */}
           <SidebarTrigger
-            variant="ghost" // Adicionando variant e size para consistência, se necessário
+            variant="ghost"
             size="icon"
-            className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900" // Classes para estilização do botão
+            className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
           >
-            {/* O SidebarTrigger já tem seu próprio ícone padrão (PanelLeft) ou renderizará este filho.
-                Se o problema de ícone persistir globalmente, ele afetará aqui também.
-                Por enquanto, mantemos o MenuIcon como filho desejado. */}
+            {/* Este é o ícone que deveria aparecer e abrir a sidebar */}
             <MenuIcon className="h-5 w-5" />
           </SidebarTrigger>
         </div>
