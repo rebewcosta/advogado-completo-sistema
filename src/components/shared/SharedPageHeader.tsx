@@ -1,8 +1,8 @@
-
+// src/components/shared/SharedPageHeader.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Menu, Plus } from 'lucide-react';
+import { SidebarTrigger } from '@/components/ui/sidebar'; // SidebarTrigger já está importado
+import { Menu as MenuIcon, Plus } from 'lucide-react'; // Renomeando Menu para MenuIcon para clareza e consistência
 import { cn } from '@/lib/utils';
 
 interface SharedPageHeaderProps {
@@ -30,15 +30,15 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
 }) => {
   return (
     <>
-      {/* Menu Hambúrguer de Teste - Apenas Mobile */}
+      {/* Menu Hambúrguer que era de Teste - AGORA FUNCIONAL com SidebarTrigger - Apenas Mobile */}
       <div className="md:hidden mb-4 flex justify-end">
-        <Button
-          variant="outline"
-          size="icon"
-          className="h-10 w-10 border-gray-300"
+        <SidebarTrigger
+          variant="outline" // Mantendo o estilo visual que você tinha
+          size="icon"       // Mantendo o estilo visual que você tinha
+          className="h-10 w-10 border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900" // Classes ajustadas
         >
-          <Menu className="h-5 w-5" />
-        </Button>
+          <MenuIcon className="h-5 w-5" />
+        </SidebarTrigger>
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
@@ -55,7 +55,7 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
           </div>
         </div>
 
-        {/* Seção de Botões (Ação Principal e Menu Mobile) */}
+        {/* Seção de Botões (Ação Principal e Outro Menu Mobile para Sidebar) */}
         <div className="flex items-center gap-2 mt-4 md:mt-0 md:ml-4 flex-shrink-0"> {/* md:ml-4 para espaço no desktop */}
           {showActionButton && actionButtonText && onActionButtonClick && (
             <Button
@@ -67,10 +67,14 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
               {actionButtonText}
             </Button>
           )}
-          {/* Botão do Menu Gaveta para Mobile - Agora à direita */}
+          {/* Botão do Menu Gaveta para Mobile - Este já era funcional */}
           <div className="md:hidden order-2 md:order-1"> {/* Visível apenas abaixo de md e define ordem */}
-            <SidebarTrigger className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900 p-1 rounded-md">
-              <Menu className="h-5 w-5" />
+            <SidebarTrigger
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            >
+              <MenuIcon className="h-5 w-5" />
             </SidebarTrigger>
           </div>
         </div>
