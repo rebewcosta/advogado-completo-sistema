@@ -87,9 +87,10 @@ const InstalarAppTab: React.FC = () => {
       <Separator />
 
       <Tabs defaultValue="windows" className="w-full">
+        {/* Ajuste na TabsList: aumentado mb-8 e garantindo gap-2 */}
         <TabsList className={cn(
-          "grid w-full grid-cols-2 rounded-lg sm:grid-cols-4 mb-6 bg-gray-100 p-1",
-          "gap-2" // Aumentado o gap para todas as telas, o grid-cols-2 já faz o empilhamento.
+          "grid w-full grid-cols-2 rounded-lg sm:grid-cols-4 bg-gray-100 p-1",
+          "gap-2 mb-8" // Aumenta o espaçamento inferior e mantém o gap entre os botões
         )}>
           <TabsTrigger value="windows" className="text-xs sm:text-sm py-2 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Laptop className="w-4 h-4 mr-1.5" />
@@ -109,6 +110,7 @@ const InstalarAppTab: React.FC = () => {
           </TabsTrigger>
         </TabsList>
 
+        {/* Conteúdo das abas permanece o mesmo, com as correções de texto que você já aplicou */}
         <TabsContent value="windows">
           <Card className="shadow-md border-gray-200">
             <CardHeader>
@@ -124,8 +126,7 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  <p>Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador{" "}
-  <strong>Google Chrome</strong>.</p>
+                  <span>Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador{" "}<strong>Google Chrome</strong>.</span>
                 </p>
               </div>
               <div>
@@ -178,8 +179,7 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  <p> Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador{" "}
-  <strong>Google Chrome</strong>.</p>
+                  <span>Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador{" "}<strong>Google Chrome</strong>.</span>
                 </p>
               </div>
               <div>
@@ -231,10 +231,7 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  <p>
-  Utilize o navegador{" "}
-  <strong>Google Chrome</strong> para a melhor experiência de instalação.
-</p>
+                  <span>Utilize o navegador{" "}<strong>Google Chrome</strong> para a melhor experiência de instalação.</span>
                 </p>
               </div>
               <div>
@@ -290,7 +287,7 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-sky-50 border border-sky-200 rounded-md">
                 <p className="text-sm text-sky-700 flex items-start">
                   <AlertTriangle className="w-5 h-5 mr-2 text-sky-600 flex-shrink-0" />
-                  <span>A instalação em dispositivos iOS (iPhone/iPad) é feita manualmente e exclusivamente através do navegador <strong>Safari</strong>.</span>
+                  <span>A instalação em dispositivos iOS (iPhone/iPad) é feita manually e exclusivamente através do navegador <strong>Safari</strong>.</span>
                 </p>
               </div>
               <div>
