@@ -1,10 +1,13 @@
 // src/components/dashboard/DashboardHeader.tsx
 import React from 'react';
-// Importando AlignJustify diretamente, e removendo 'Menu as MenuIcon'
+// Importando AlignJustify diretamente
 import { LogOut, LayoutDashboard, AlignJustify } from 'lucide-react'; 
 import { Button } from '@/components/ui/button';
 import { User } from '@supabase/supabase-js';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+
+// Console.log para verificar se o módulo AlignJustify foi carregado
+console.log("Ícone AlignJustify importado:", AlignJustify); 
 
 interface DashboardHeaderProps {
   user: User | null;
@@ -17,6 +20,13 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   getUserFirstName,
   handleSignOut
 }) => {
+  // Console.log para verificar se o componente AlignJustify está acessível aqui
+  if (typeof AlignJustify !== 'function' && typeof AlignJustify !== 'object') {
+    console.error("AlignJustify NÃO está definido corretamente no escopo do componente DashboardHeader!");
+  } else {
+    console.log("AlignJustify está acessível dentro do DashboardHeader:", AlignJustify);
+  }
+
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 md:mb-8">
       {/* Seção do Título e Ícone (ocupa espaço disponível) */}
@@ -25,7 +35,8 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <div className="min-w-0"> {/* Para truncar texto se necessário */}
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left truncate">Dashboard</h1>
           <div className="text-sm text-gray-600 text-left">
-            <span className="block sm:inline">Bem-vinde(a), {getUserFirstName()}.</span>
+            {/* Revertido para "Bem-vindo(a)" conforme sua última ação */}
+            <span className="block sm:inline">Bem-vindo(a), {getUserFirstName()}.</span>
             <span className="block sm:inline sm:ml-1">Aqui está o resumo do seu escritório.</span>
           </div>
         </div>
