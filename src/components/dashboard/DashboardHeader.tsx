@@ -25,7 +25,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <div className="min-w-0"> {/* Para truncar texto se necessário */}
           <h1 className="text-2xl md:text-3xl font-bold text-gray-800 text-left truncate">Dashboard</h1>
           <div className="text-sm text-gray-600 text-left">
-            <span className="block sm:inline">Bem-vindo(a), {getUserFirstName()}.</span>
+            <span className="block sm:inline">Bem-vinde(a), {getUserFirstName()}.</span>
             <span className="block sm:inline sm:ml-1">Aqui está o resumo do seu escritório.</span>
           </div>
         </div>
