@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Menu as MenuIcon, Plus } from 'lucide-react';
+import { Menu, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface SharedPageHeaderProps {
@@ -58,12 +58,8 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
         )}
         {/* Botão do Menu Gaveta para Mobile - Agora à direita */}
         <div className="md:hidden order-2 md:order-1"> {/* Visível apenas abaixo de md e define ordem */}
-          <SidebarTrigger
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-          >
-            <MenuIcon className="h-5 w-5" />
+          <SidebarTrigger className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900 p-1 rounded-md">
+            <Menu className="h-5 w-5" />
           </SidebarTrigger>
         </div>
       </div>
