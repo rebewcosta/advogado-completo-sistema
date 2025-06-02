@@ -1,6 +1,6 @@
 // src/components/configuracoes/InstalarAppTab.tsx
 import React from 'react';
-import { usePWAInstall } from '@/App'; // Corrigido para importar de @/App
+import { usePWAInstall } from '@/App';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -42,7 +42,7 @@ const ChromeMenuIcon = () => (
   </svg>
 );
 
-const InstalarAppTab: React.FC = () => { // Adicionado React.FC para tipagem
+const InstalarAppTab: React.FC = () => {
   const pwaInstall = usePWAInstall();
 
   const canInstallPWA = pwaInstall?.canInstallPWA || false;
@@ -120,7 +120,6 @@ const InstalarAppTab: React.FC = () => { // Adicionado React.FC para tipagem
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  {/* CORREÇÃO DE ESPAÇAMENTO ABAIXO */}
                   Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador <strong>Google Chrome</strong>.
                 </p>
               </div>
@@ -174,7 +173,6 @@ const InstalarAppTab: React.FC = () => { // Adicionado React.FC para tipagem
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  {/* CORREÇÃO DE ESPAÇAMENTO ABAIXO */}
                   Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador <strong>Google Chrome</strong>.
                 </p>
               </div>
@@ -227,7 +225,6 @@ const InstalarAppTab: React.FC = () => { // Adicionado React.FC para tipagem
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  {/* CORREÇÃO DE ESPAÇAMENTO ABAIXO */}
                   Utilize o navegador <strong>Google Chrome</strong> para a melhor experiência de instalação.
                 </p>
               </div>
@@ -235,7 +232,6 @@ const InstalarAppTab: React.FC = () => { // Adicionado React.FC para tipagem
                 <h4 className="font-semibold mb-1 text-gray-700">Passos para instalar via Google Chrome:</h4>
                 <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600 pl-2">
                   <li>
-                    {/* ALTERAÇÃO DE TEXTO ABAIXO */}
                     Com seu smartphone Android em mãos, abra o site{" "}
                     <a href="https://sisjusgestao.com.br" target="_blank" rel="noopener noreferrer" className="text-lawyer-accent hover:underline">
                       sisjusgestao.com.br
@@ -292,7 +288,6 @@ const InstalarAppTab: React.FC = () => { // Adicionado React.FC para tipagem
                 <h4 className="font-semibold mb-1 text-gray-700">Passos para instalar via Safari:</h4>
                 <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600 pl-2">
                   <li>
-                    {/* ALTERAÇÃO DE TEXTO ABAIXO */}
                     Com seu iPhone (ou iPad) em mãos, abra o site{" "}
                     <a href="https://sisjusgestao.com.br" target="_blank" rel="noopener noreferrer" className="text-lawyer-accent hover:underline">
                       sisjusgestao.com.br
