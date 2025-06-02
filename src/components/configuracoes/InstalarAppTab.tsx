@@ -121,7 +121,7 @@ const InstalarAppTab = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador <strong>Google Chrome</strong>.
+                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador   <strong>Google Chrome</strong>.
                 </p>
               </div>
               <div>
@@ -174,7 +174,7 @@ const InstalarAppTab = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador <strong>Google Chrome</strong>.
+                  Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador   <strong>Google Chrome</strong>.
                 </p>
               </div>
               <div>
