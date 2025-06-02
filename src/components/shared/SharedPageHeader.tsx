@@ -1,8 +1,8 @@
 // src/components/shared/SharedPageHeader.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { SidebarTrigger } from '@/components/ui/sidebar'; // Importa o SidebarTrigger CORRIGIDO
-import { Menu, Plus } from 'lucide-react'; // Usando Menu diretamente
+import { SidebarTrigger } from '@/components/ui/sidebar'; // Importa o SidebarTrigger corrigido
+import { Menu as MenuIcon, Plus } from 'lucide-react'; // Renomeando Menu para MenuIcon para clareza
 import { cn } from '@/lib/utils';
 
 interface SharedPageHeaderProps {
@@ -30,18 +30,23 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
 }) => {
   return (
     <>
-      {/* Menu Hambúrguer que era de Teste - AGORA FUNCIONAL com SidebarTrigger */}
+      {/* Botão de Menu Hambúrguer Funcional e com Ênfase - Apenas Mobile */}
       <div className="md:hidden mb-4 flex justify-end">
         <SidebarTrigger
-          variant="outline" // Estilo do seu botão original
+          variant="default" // Mudando para 'default' para usar cores primárias
           size="icon"
-          className="h-10 w-10 border-gray-300 text-gray-600 hover:bg-gray-100 hover:text-gray-900" // Classes combinadas
+          className={cn(
+            "h-10 w-10 text-white shadow-md", // Tamanho e sombra
+            "bg-lawyer-primary hover:bg-lawyer-primary/90", // Cor de fundo primária e hover
+            "focus-visible:ring-2 focus-visible:ring-lawyer-primary focus-visible:ring-offset-2" // Estilos de foco
+          )}
         >
-          <Menu className="h-5 w-5" />
+          <MenuIcon className="h-5 w-5" />
         </SidebarTrigger>
       </div>
 
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 md:mb-8">
+        {/* Seção do Título e Ícone (ocupa espaço disponível) */}
         <div className="flex items-center flex-1 min-w-0">
           <div className="text-lawyer-primary mr-3 flex-shrink-0">
             {React.cloneElement(pageIcon as React.ReactElement, { className: "h-7 w-7 md:h-8 md:w-8" })}
@@ -54,26 +59,19 @@ const SharedPageHeader: React.FC<SharedPageHeaderProps> = ({
           </div>
         </div>
 
+        {/* Seção de Botões (Apenas Ação Principal agora no mobile, o segundo menu foi removido) */}
         <div className="flex items-center gap-2 mt-4 md:mt-0 md:ml-4 flex-shrink-0">
           {showActionButton && actionButtonText && onActionButtonClick && (
             <Button
               onClick={onActionButtonClick}
-              className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white order-1 md:order-2 w-full sm:w-auto"
+              className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white order-1 md:order-2 w-full sm:w-auto" // Botão de ação principal
               disabled={isLoading || actionButtonDisabled}
             >
               {actionButtonIcon ? actionButtonIcon : <Plus className="h-4 w-4 mr-2" />}
               {actionButtonText}
             </Button>
           )}
-          <div className="md:hidden order-2 md:order-1">
-            <SidebarTrigger
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-            >
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
-          </div>
+          {/* O segundo botão de menu mobile (SidebarTrigger) foi REMOVIDO daqui */}
         </div>
       </div>
     </>
