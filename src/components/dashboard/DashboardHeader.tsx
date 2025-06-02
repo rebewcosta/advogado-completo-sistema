@@ -43,12 +43,14 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         </Button>
         {/* Botão do Menu Gaveta para Mobile */}
         <div className="md:hidden order-2"> {/* Visível apenas abaixo de md */}
-          <SidebarTrigger
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
-          >
-            <Menu className="h-5 w-5" />
+          <SidebarTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           </SidebarTrigger>
         </div>
       </div>
