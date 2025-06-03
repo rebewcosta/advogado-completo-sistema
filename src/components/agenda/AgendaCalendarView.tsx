@@ -65,25 +65,22 @@ const AgendaCalendarView: React.FC<AgendaCalendarViewProps> = ({
             onSelect={onDateSelect}
             locale={ptBR}
             className="rounded-md border p-3 pointer-events-auto"
-            modifiers={{
-              hasEvents: events.map(event => parseISO(event.data_hora_inicio))
-            }}
-            modifiersClassNames={{
-              hasEvents: "relative"
-            }}
             components={{
-              DayContent: ({ date, ...props }) => {
+              DayContent: ({ date }) => {
                 const eventCount = getEventCountForDate(date);
                 const hasEvents = eventCount > 0;
                 
                 return (
                   <div className="relative w-full h-full flex items-center justify-center">
-                    <span className={cn("text-sm", hasEvents && "font-medium text-blue-700")}>
+                    <span className={cn(
+                      "text-sm relative z-0",
+                      hasEvents ? "font-semibold text-blue-800" : "text-gray-700"
+                    )}>
                       {format(date, 'd')}
                     </span>
                     {hasEvents && (
-                      <div className="absolute -top-0.5 -right-0.5 z-10">
-                        <div className="min-w-[16px] h-[16px] bg-gradient-to-br from-blue-500 to-blue-600 text-white text-[9px] leading-none rounded-full flex items-center justify-center font-bold shadow-lg border border-white">
+                      <div className="absolute -top-1 -right-1 z-20">
+                        <div className="min-w-[18px] h-[18px] bg-gradient-to-br from-blue-500 to-blue-700 text-white text-[10px] leading-none rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white">
                           {eventCount > 9 ? '9+' : eventCount}
                         </div>
                       </div>
@@ -95,7 +92,7 @@ const AgendaCalendarView: React.FC<AgendaCalendarViewProps> = ({
           />
           <div className="mt-4 space-y-2 text-sm text-gray-600">
             <div className="flex items-center gap-2">
-              <div className="min-w-[16px] h-[16px] bg-gradient-to-br from-blue-500 to-blue-600 text-white text-[9px] leading-none rounded-full flex items-center justify-center font-bold shadow-lg border border-white">
+              <div className="min-w-[18px] h-[18px] bg-gradient-to-br from-blue-500 to-blue-700 text-white text-[10px] leading-none rounded-full flex items-center justify-center font-bold shadow-lg border-2 border-white">
                 3
               </div>
               <span>Número de eventos no dia</span>
