@@ -1,3 +1,4 @@
+
 // src/pages/AgendaPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
@@ -22,7 +23,7 @@ import { AgendaEventForm } from '@/components/AgendaEventForm';
 import { AgendaEventDetail } from '@/components/AgendaEventDetail';
 import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards';
 import AgendaEventTable from '@/components/agenda/AgendaEventTable';
-import AgendaCalendarView from '@/components/agenda/AgendaCalendarView';
+import ModernCalendarView from '@/components/agenda/ModernCalendarView';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -343,7 +344,7 @@ const AgendaPage = () => {
           </TabsContent>
 
           <TabsContent value="calendar" className="mt-6">
-            <AgendaCalendarView
+            <ModernCalendarView
               events={events}
               selectedDate={selectedDate}
               onDateSelect={setSelectedDate}
