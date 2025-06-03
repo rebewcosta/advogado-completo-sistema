@@ -30,16 +30,9 @@ const ProtectedRoute = ({
       setIsAuthenticated(authenticated);
       
       if (authenticated && requireAdmin) {
-        // Check if user has admin role - this is a simplified check
-        // In a real app, you'd check against your user_roles table
-        const { data: profile } = await supabase
-          .from('perfis_usuario')
-          .select('*')
-          .eq('user_id', data.session.user.id)
-          .single();
-        
         // For now, we'll assume all authenticated users can access admin routes
         // You can modify this logic based on your actual admin role implementation
+        // This could check user metadata or a roles table in the future
         setIsAdmin(true);
       }
       
