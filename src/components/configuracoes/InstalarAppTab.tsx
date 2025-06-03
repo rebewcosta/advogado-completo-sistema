@@ -1,3 +1,4 @@
+
 // src/components/configuracoes/InstalarAppTab.tsx
 import React from 'react';
 import { usePWAInstall } from '@/App';
@@ -87,10 +88,10 @@ const InstalarAppTab: React.FC = () => {
       <Separator />
 
       <Tabs defaultValue="windows" className="w-full">
-        {/* MARGEM INFERIOR AUMENTADA AQUI (mb-8) */}
+        {/* MARGEM INFERIOR AINDA MAIOR PARA SEPARAR MAIS DOS CONTEÚDOS (mb-12) */}
         <TabsList className={cn(
           "grid w-full grid-cols-2 rounded-lg sm:grid-cols-4 bg-gray-100 p-1",
-          "gap-2 mb-8" 
+          "gap-2 mb-12" 
         )}>
           <TabsTrigger value="windows" className="text-xs sm:text-sm py-2 data-[state=active]:bg-lawyer-primary data-[state=active]:text-white data-[state=active]:shadow-sm">
             <Laptop className="w-4 h-4 mr-1.5" />
@@ -125,7 +126,6 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  {/* Utilizando sua correção de espaçamento */}
                   <span>Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador{" "}<strong>Google Chrome</strong>.</span>
                 </p>
               </div>
@@ -179,7 +179,6 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  {/* Utilizando sua correção de espaçamento */}
                   <span>Para a melhor experiência e funcionalidades completas, recomendamos instalar utilizando o navegador{" "}<strong>Google Chrome</strong>.</span>
                 </p>
               </div>
@@ -232,7 +231,6 @@ const InstalarAppTab: React.FC = () => {
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
                 <p className="text-sm text-blue-700 flex items-center">
                   <AlertTriangle className="w-4 h-4 mr-2 text-blue-600 flex-shrink-0" />
-                  {/* Utilizando sua correção de espaçamento */}
                   <span>Utilize o navegador{" "}<strong>Google Chrome</strong> para a melhor experiência de instalação.</span>
                 </p>
               </div>

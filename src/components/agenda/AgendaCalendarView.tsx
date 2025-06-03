@@ -46,6 +46,10 @@ const AgendaCalendarView: React.FC<AgendaCalendarViewProps> = ({
     return getEventsForDate(date).length > 0;
   };
 
+  const getEventCountForDate = (date: Date) => {
+    return getEventsForDate(date).length;
+  };
+
   const selectedDateEvents = selectedDate ? getEventsForDate(selectedDate) : [];
 
   return (
@@ -72,14 +76,41 @@ const AgendaCalendarView: React.FC<AgendaCalendarViewProps> = ({
               hasEvent: {
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 border: '2px solid #3b82f6',
-                borderRadius: '50%'
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                color: '#1e40af'
+              }
+            }}
+            components={{
+              DayContent: ({ date }) => {
+                const eventCount = getEventCountForDate(date);
+                const hasEvents = eventCount > 0;
+                
+                return (
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <span className={cn("text-sm", hasEvents && "font-bold")}>
+                      {format(date, 'd')}
+                    </span>
+                    {hasEvents && (
+                      <div className="absolute -top-1 -right-1">
+                        <div className="w-5 h-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-bold shadow-sm">
+                          {eventCount > 9 ? '9+' : eventCount}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
               }
             }}
           />
-          <div className="mt-4 text-sm text-gray-600">
+          <div className="mt-4 space-y-2 text-sm text-gray-600">
             <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full border-2 border-blue-500 bg-blue-50"></div>
+              <div className="w-4 h-4 rounded border-2 border-blue-500 bg-blue-50 font-bold text-blue-700 text-xs flex items-center justify-center">•</div>
               <span>Dias com eventos agendados</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-blue-500 text-white text-xs rounded-full flex items-center justify-center font-bold">3</div>
+              <span>Número de eventos no dia</span>
             </div>
           </div>
         </CardContent>
