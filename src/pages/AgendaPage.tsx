@@ -73,7 +73,7 @@ const AgendaPage = () => {
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
-  const fetchEvents = useCallback(async (dateToFilter?: Date, showLoadingSpinner = true) => {
+  const fetchEvents = useCallback(async (showLoadingSpinner = true) => {
     if (!user) {
       setEvents([]);
       if (showLoadingSpinner) setIsLoading(false);
@@ -87,20 +87,8 @@ const AgendaPage = () => {
       let query = supabase
         .from('agenda_eventos')
         .select(`*, clientes (id, nome), processos (id, numero_processo)`)
-        .eq('user_id', user.id);
-
-      // Para o calendário, buscar todos os eventos do mês atual ao invés de filtrar por dia
-      if (viewMode === 'calendar') {
-        query = query.order('data_hora_inicio', { ascending: true });
-      } else if (dateToFilter) {
-        const dayStart = format(dateToFilter, 'yyyy-MM-dd') + 'T00:00:00.000Z';
-        const dayEnd = format(dateToFilter, 'yyyy-MM-dd') + 'T23:59:59.999Z';
-        query = query.gte('data_hora_inicio', dayStart).lte('data_hora_inicio', dayEnd);
-      }
-      
-      if (viewMode !== 'calendar') {
-        query = query.order('data_hora_inicio', { ascending: true });
-      }
+        .eq('user_id', user.id)
+        .order('data_hora_inicio', { ascending: true });
       
       const { data, error } = await query;
 
@@ -113,7 +101,7 @@ const AgendaPage = () => {
       if (showLoadingSpinner) setIsLoading(false);
       setIsRefreshingManually(false);
     }
-  }, [user, toast, viewMode]);
+  }, [user, toast]);
 
   const fetchDropdownData = useCallback(async () => {
     if (!user) return;
@@ -136,13 +124,13 @@ const AgendaPage = () => {
 
   useEffect(() => {
     if (user) {
-      fetchEvents(viewMode === 'list' ? selectedDate : undefined); 
+      fetchEvents(); 
       fetchDropdownData(); 
     } else {
       setEvents([]);
       setIsLoading(false); 
     }
-  }, [user, selectedDate, fetchEvents, fetchDropdownData, viewMode]);
+  }, [user, fetchEvents, fetchDropdownData]);
 
   const filteredEvents = events.filter(event => {
     const matchesSearch = searchTerm === '' || 
@@ -227,7 +215,7 @@ const AgendaPage = () => {
             if (error) throw error;
             toast({ title: "Evento criado!", description: `O evento "${newEvent?.titulo}" foi adicionado à agenda.` });
         }
-        fetchEvents(selectedDate, false);
+        fetchEvents(); // Updated to fetchEvents() without dateToFilter
         setIsFormOpen(false);
         setEventoParaForm(null);
     } catch (error: any) {
@@ -250,7 +238,7 @@ const AgendaPage = () => {
                 .eq('user_id', user.id);
             if (error) throw error;
             toast({ title: "Evento excluído!", description: `O evento "${eventToDelete.titulo}" foi removido.` });
-            fetchEvents(selectedDate, false);
+            fetchEvents(); // Updated to fetchEvents() without dateToFilter
             setIsDetailOpen(false);
             setCurrentEvent(null);
         } catch (error: any) {
@@ -268,7 +256,7 @@ const AgendaPage = () => {
   };
   
   const handleManualRefresh = () => {
-    fetchEvents(selectedDate, true); 
+    fetchEvents(true); 
   };
 
   const isLoadingCombined = isLoading || isSubmitting || isRefreshingManually;
@@ -318,7 +306,7 @@ const AgendaPage = () => {
                     </Popover>
                     
                     <Button 
-                        onClick={handleManualRefresh} 
+                        onClick={() => fetchEvents(true)} 
                         variant="outline" 
                         size="sm" 
                         disabled={isLoadingCombined} 
@@ -437,7 +425,7 @@ const AgendaPage = () => {
                     onView={handleViewDetails}
                     onDelete={handleDeleteEvent}
                     isLoading={isLoadingCombined}
-                    selectedDate={selectedDate}
+                    selectedDate={undefined}
                 />
             </div>
             <div className="md:hidden">
@@ -447,7 +435,7 @@ const AgendaPage = () => {
                     onView={handleViewDetails}
                     onDelete={handleDeleteEvent}
                     isLoading={isLoadingCombined}
-                    selectedDate={selectedDate}
+                    selectedDate={undefined}
                 />
             </div>
           </TabsContent>
