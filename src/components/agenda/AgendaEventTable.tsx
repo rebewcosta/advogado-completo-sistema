@@ -1,3 +1,4 @@
+
 // src/components/agenda/AgendaEventTable.tsx
 import React from 'react';
 import {
@@ -10,11 +11,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, MoreVertical, ExternalLink, Circle, Trash2, MapPin, User, FileText, CalendarDays } from 'lucide-react'; // <<< CalendarDays ADICIONADO AQUI
+import { Edit, MoreVertical, ExternalLink, Circle, Trash2, MapPin, User, FileText, CalendarDays } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from "@/lib/utils";
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { EventoAgenda } from '@/pages/AgendaPage';
 
@@ -42,6 +43,24 @@ const AgendaEventTable: React.FC<AgendaEventTableProps> = ({
         return format(parseISO(isoString), 'HH:mm');
     } catch (e) {
         return "Inválida"; 
+    }
+  };
+
+  const formatDate = (isoString: string | null | undefined) => {
+    if (!isoString) return '-';
+    try {
+        return format(parseISO(isoString), 'dd/MM/yy', { locale: ptBR });
+    } catch (e) {
+        return "Inválida"; 
+    }
+  };
+
+  const isEventToday = (isoString: string | null | undefined) => {
+    if (!isoString) return false;
+    try {
+        return isToday(parseISO(isoString));
+    } catch (e) {
+        return false;
     }
   };
 
@@ -77,6 +96,7 @@ const AgendaEventTable: React.FC<AgendaEventTableProps> = ({
       <Table className="min-w-full">
         <TableHeader className="bg-lawyer-dark">
           <TableRow className="hover:bg-lawyer-dark/90">
+            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-[90px]">Data</TableHead>
             <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-[80px]">Hora</TableHead>
             <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Título</TableHead>
             <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell">Tipo</TableHead>
@@ -90,12 +110,36 @@ const AgendaEventTable: React.FC<AgendaEventTableProps> = ({
           {events.length > 0 ? (
             events.map((event) => {
               const statusStyle = getStatusBadgeClass(event.status_evento);
+              const isTodayEvent = isEventToday(event.data_hora_inicio);
               return (
-                <TableRow key={event.id} className="hover:bg-gray-50/60 transition-colors text-left">
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-800">{formatTime(event.data_hora_inicio)}</TableCell>
+                <TableRow 
+                  key={event.id} 
+                  className={cn(
+                    "transition-colors text-left",
+                    isTodayEvent 
+                      ? "bg-blue-50/80 hover:bg-blue-100/60 border-l-4 border-l-blue-500" 
+                      : "hover:bg-gray-50/60"
+                  )}
+                >
+                  <TableCell className={cn(
+                    "px-4 py-3 whitespace-nowrap text-sm font-medium",
+                    isTodayEvent ? "text-blue-800 font-bold" : "text-gray-800"
+                  )}>
+                    {formatDate(event.data_hora_inicio)}
+                    {isTodayEvent && <div className="text-xs text-blue-600 font-normal mt-0.5">Hoje</div>}
+                  </TableCell>
+                  <TableCell className={cn(
+                    "px-4 py-3 whitespace-nowrap text-sm font-medium",
+                    isTodayEvent ? "text-blue-800" : "text-gray-800"
+                  )}>
+                    {formatTime(event.data_hora_inicio)}
+                  </TableCell>
                   <TableCell className="px-4 py-3 whitespace-nowrap">
                     <div 
-                      className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer"
+                      className={cn(
+                        "text-sm font-medium hover:underline cursor-pointer",
+                        isTodayEvent ? "text-blue-700" : "text-lawyer-primary"
+                      )}
                       onClick={() => onView(event)}
                     >
                       {event.titulo}
@@ -147,12 +191,12 @@ const AgendaEventTable: React.FC<AgendaEventTableProps> = ({
             })
           ) : (
             <TableRow>
-              <TableCell colSpan={7} className="px-6 py-16 text-center text-gray-500">
-                 <CalendarDays className="mx-auto h-12 w-12 text-gray-300 mb-3" /> {/* Ícone correto */}
+              <TableCell colSpan={8} className="px-6 py-16 text-center text-gray-500">
+                 <CalendarDays className="mx-auto h-12 w-12 text-gray-300 mb-3" />
                 <p className="font-medium mb-1">
-                  {isLoading ? "Carregando..." : selectedDate ? `Nenhum evento para ${format(selectedDate, "PPP", { locale: ptBR })}.` : "Nenhum evento encontrado."}
+                  {isLoading ? "Carregando..." : "Nenhum evento encontrado."}
                 </p>
-                {!isLoading && <p className="text-sm">Selecione outra data ou adicione um novo evento.</p>}
+                {!isLoading && <p className="text-sm">Clique em "Novo Evento" para adicionar.</p>}
               </TableCell>
             </TableRow>
           )}
