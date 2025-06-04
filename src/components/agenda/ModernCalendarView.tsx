@@ -136,8 +136,7 @@ const ModernCalendarView: React.FC<ModernCalendarViewProps> = ({
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <div className="flex items-center gap-2">
-                <div className="min-w-[18px] h-[18px] bg-blue-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md border border-white">
-                  3
+                <div className="min-w-[18px] h-[18px] bg-blue-800 text-white rounded-full flex items-center justify-center shadow-md border border-white">
                 </div>
                 <span>Eventos no dia</span>
               </div>

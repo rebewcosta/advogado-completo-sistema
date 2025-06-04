@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
-import { CalendarDays, RefreshCw, Calendar as CalendarView, Table } from 'lucide-react';
+import { CalendarDays, RefreshCw, Calendar as CalendarView, Table, Search } from 'lucide-react';
 import {
   Popover,
   PopoverContent,
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/popover";
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -66,6 +67,11 @@ const AgendaPage = () => {
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
+
+  // Estados para filtros na aba Lista
+  const [searchTerm, setSearchTerm] = useState('');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
 
   const fetchEvents = useCallback(async (dateToFilter?: Date, showLoadingSpinner = true) => {
     if (!user) {
@@ -137,6 +143,19 @@ const AgendaPage = () => {
       setIsLoading(false); 
     }
   }, [user, selectedDate, fetchEvents, fetchDropdownData, viewMode]);
+
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = searchTerm === '' || 
+      event.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.descricao_evento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      event.local_evento?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const eventDate = parseISO(event.data_hora_inicio);
+    const matchesDateRange = (!dateFrom || eventDate >= dateFrom) && 
+                            (!dateTo || eventDate <= dateTo);
+    
+    return matchesSearch && matchesDateRange;
+  });
 
   const handleOpenForm = (eventToEdit?: EventoAgenda) => {
     if (eventToEdit) {
@@ -326,9 +345,94 @@ const AgendaPage = () => {
           </TabsList>
 
           <TabsContent value="list" className="mt-6">
+            {/* Filtros para a aba Lista */}
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Busca */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      placeholder="Buscar eventos..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  
+                  {/* Data De */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !dateFrom && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {dateFrom ? format(dateFrom, "PPP", { locale: ptBR }) : "Data de"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <ShadcnCalendar
+                        mode="single"
+                        selected={dateFrom}
+                        onSelect={setDateFrom}
+                        initialFocus
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+
+                  {/* Data Até */}
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !dateTo && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {dateTo ? format(dateTo, "PPP", { locale: ptBR }) : "Data até"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <ShadcnCalendar
+                        mode="single"
+                        selected={dateTo}
+                        onSelect={setDateTo}
+                        initialFocus
+                        locale={ptBR}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Botão para limpar filtros */}
+                {(searchTerm || dateFrom || dateTo) && (
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearchTerm('');
+                        setDateFrom(undefined);
+                        setDateTo(undefined);
+                      }}
+                    >
+                      Limpar filtros
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
             <div className="hidden md:block">
                 <AgendaEventTable
-                    events={events}
+                    events={filteredEvents}
                     onEdit={handleOpenForm}
                     onView={handleViewDetails}
                     onDelete={handleDeleteEvent}
@@ -338,7 +442,7 @@ const AgendaPage = () => {
             </div>
             <div className="md:hidden">
                 <AgendaEventListAsCards
-                    events={events}
+                    events={filteredEvents}
                     onEdit={handleOpenForm}
                     onView={handleViewDetails}
                     onDelete={handleDeleteEvent}
