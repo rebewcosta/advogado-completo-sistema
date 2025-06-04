@@ -139,10 +139,20 @@ const AgendaPage = () => {
       event.local_evento?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const eventDate = parseISO(event.data_hora_inicio);
-    const matchesDateRange = (!dateFrom || eventDate >= dateFrom) && 
-                            (!dateTo || eventDate <= dateTo);
     
-    return matchesSearch && matchesDateRange;
+    // Se há filtros de data aplicados, use os filtros
+    if (dateFrom || dateTo) {
+      const matchesDateRange = (!dateFrom || eventDate >= dateFrom) && 
+                              (!dateTo || eventDate <= dateTo);
+      return matchesSearch && matchesDateRange;
+    }
+    
+    // Se não há filtros de data, mostre apenas eventos de hoje em diante
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset para início do dia
+    const matchesFromToday = eventDate >= today;
+    
+    return matchesSearch && matchesFromToday;
   });
 
   const handleOpenForm = (eventToEdit?: EventoAgenda) => {
