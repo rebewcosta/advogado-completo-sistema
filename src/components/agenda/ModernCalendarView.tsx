@@ -119,10 +119,10 @@ const ModernCalendarView: React.FC<ModernCalendarViewProps> = ({
                     {format(day, 'd')}
                   </span>
                   
-                  {/* Bolinha com contador de eventos - SEMPRE VISÍVEL */}
+                  {/* Círculo azul escuro com contador de eventos - SEMPRE VISÍVEL quando há eventos */}
                   {eventCount > 0 && (
                     <div className="absolute -top-1 -right-1 z-10">
-                      <div className="min-w-[20px] h-[20px] bg-gradient-to-br from-red-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                      <div className="min-w-[18px] h-[18px] bg-blue-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md border border-white">
                         {eventCount > 9 ? '9+' : eventCount}
                       </div>
                     </div>
@@ -136,7 +136,7 @@ const ModernCalendarView: React.FC<ModernCalendarViewProps> = ({
           <div className="mt-6 pt-4 border-t border-gray-200">
             <div className="flex items-center gap-3 text-sm text-gray-600">
               <div className="flex items-center gap-2">
-                <div className="min-w-[20px] h-[20px] bg-gradient-to-br from-red-500 to-red-600 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                <div className="min-w-[18px] h-[18px] bg-blue-800 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow-md border border-white">
                   3
                 </div>
                 <span>Eventos no dia</span>

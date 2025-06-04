@@ -1,4 +1,3 @@
-
 // src/pages/AgendaPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
@@ -66,7 +65,7 @@ const AgendaPage = () => {
   const [isLoadingDropdownData, setIsLoadingDropdownData] = useState(false);
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
-  const [viewMode, setViewMode] = useState<'table' | 'calendar'>('table');
+  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
   const fetchEvents = useCallback(async (dateToFilter?: Date, showLoadingSpinner = true) => {
     if (!user) {
@@ -84,13 +83,19 @@ const AgendaPage = () => {
         .select(`*, clientes (id, nome), processos (id, numero_processo)`)
         .eq('user_id', user.id);
 
-      if (dateToFilter) {
+      // Para o calendário, buscar todos os eventos do mês atual ao invés de filtrar por dia
+      if (viewMode === 'calendar') {
+        query = query.order('data_hora_inicio', { ascending: true });
+      } else if (dateToFilter) {
         const dayStart = format(dateToFilter, 'yyyy-MM-dd') + 'T00:00:00.000Z';
         const dayEnd = format(dateToFilter, 'yyyy-MM-dd') + 'T23:59:59.999Z';
         query = query.gte('data_hora_inicio', dayStart).lte('data_hora_inicio', dayEnd);
       }
       
-      query = query.order('data_hora_inicio', { ascending: true });
+      if (viewMode !== 'calendar') {
+        query = query.order('data_hora_inicio', { ascending: true });
+      }
+      
       const { data, error } = await query;
 
       if (error) throw error;
@@ -102,7 +107,7 @@ const AgendaPage = () => {
       if (showLoadingSpinner) setIsLoading(false);
       setIsRefreshingManually(false);
     }
-  }, [user, toast]);
+  }, [user, toast, viewMode]);
 
   const fetchDropdownData = useCallback(async () => {
     if (!user) return;
@@ -125,13 +130,13 @@ const AgendaPage = () => {
 
   useEffect(() => {
     if (user) {
-      fetchEvents(selectedDate); 
+      fetchEvents(viewMode === 'list' ? selectedDate : undefined); 
       fetchDropdownData(); 
     } else {
       setEvents([]);
       setIsLoading(false); 
     }
-  }, [user, selectedDate, fetchEvents, fetchDropdownData]);
+  }, [user, selectedDate, fetchEvents, fetchDropdownData, viewMode]);
 
   const handleOpenForm = (eventToEdit?: EventoAgenda) => {
     if (eventToEdit) {
@@ -307,10 +312,10 @@ const AgendaPage = () => {
             </CardContent>
         </Card>
 
-        {/* Tabs para alternar entre visualizações */}
-        <Tabs value={viewMode} onValueChange={(value: string) => setViewMode(value as 'table' | 'calendar')} className="mb-6">
+        {/* Tabs para alternar entre Lista e Calendário */}
+        <Tabs value={viewMode} onValueChange={(value: string) => setViewMode(value as 'list' | 'calendar')} className="mb-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="table" className="flex items-center gap-2">
+            <TabsTrigger value="list" className="flex items-center gap-2">
               <Table className="h-4 w-4" />
               <span className="hidden sm:inline">Lista</span>
             </TabsTrigger>
@@ -320,7 +325,7 @@ const AgendaPage = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="table" className="mt-6">
+          <TabsContent value="list" className="mt-6">
             <div className="hidden md:block">
                 <AgendaEventTable
                     events={events}
