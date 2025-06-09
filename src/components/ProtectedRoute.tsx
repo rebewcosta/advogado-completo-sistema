@@ -25,24 +25,38 @@ const ProtectedRoute = ({
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
-      const { data } = await supabase.auth.getSession();
-      const authenticated = !!data.session;
-      setIsAuthenticated(authenticated);
       
-      if (authenticated && requireAdmin) {
-        // For now, we'll assume all authenticated users can access admin routes
-        // You can modify this logic based on your actual admin role implementation
-        // This could check user metadata or a roles table in the future
-        setIsAdmin(true);
+      try {
+        const { data } = await supabase.auth.getSession();
+        const authenticated = !!data.session;
+        setIsAuthenticated(authenticated);
+        
+        if (authenticated && requireAdmin) {
+          // Check if user is admin - only webercostag@gmail.com OR has special_access
+          const user = data.session.user;
+          const isAdminUser = user.email === "webercostag@gmail.com" || 
+                             user.user_metadata?.special_access === true;
+          setIsAdmin(isAdminUser);
+        }
+      } catch (error) {
+        // On error, assume not authenticated/admin
+        setIsAuthenticated(false);
+        setIsAdmin(false);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
     };
 
     const authListener = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
       if (!session) {
         setIsAdmin(false);
+      } else if (requireAdmin) {
+        // Re-check admin status when session changes
+        const user = session.user;
+        const isAdminUser = user.email === "webercostag@gmail.com" || 
+                           user.user_metadata?.special_access === true;
+        setIsAdmin(isAdminUser);
       }
       setIsLoading(false);
     });

@@ -1,106 +1,27 @@
 
-import { loadStripe } from '@stripe/stripe-js';
-import { supabase } from '@/integrations/supabase/client';
-import { toast } from "@/hooks/use-toast";
-
-// Carrega o Stripe com a chave pública
-// Agora utilizando a chave de produção (pk_live_)
-const stripePromise = loadStripe('pk_live_51OvQIeDzU3oOQJJz5qetFrlyRqSTaheaOLz6AHsVboUe1S3Wqw1e25P8JZkCtTjXxyEguLavjGVb9gOLwcCYNOeE00rVzO86sd');
-
-interface DadosPagamento {
-  nomePlano: string;
-  valor: number;
-  emailCliente: string;
-  modo?: 'production' | 'test';
-  dominio?: string; // Novo campo para domínio personalizado
-}
-
-export const iniciarCheckout = async ({
-  nomePlano = 'Plano Mensal JusGestão',
-  valor = 12700, // R$ 127,00 em centavos
-  emailCliente,
-  modo = 'production', // Define modo padrão como produção
-  dominio // Domínio personalizado para redirecionamentos
-}: DadosPagamento) => {
-  try {
-    console.log('Iniciando checkout com:', { nomePlano, valor, emailCliente, modo, dominio });
-    
-    // Usar o modo especificado sem forçar teste
-    const modoFinal = modo;
-    
-    // Indicador de ambiente para o usuário
-    console.log(`Executando em ambiente ${modoFinal}`);
-    
-    // Chama a edge function do Supabase para criar uma sessão de checkout
-    const { data, error } = await supabase.functions.invoke('criar-sessao-checkout', {
-      body: {
-        nomePlano,
-        valor,
-        emailCliente,
-        modo: modoFinal,
-        dominio // Passa o domínio para a edge function
-      }
-    });
-
-    if (error) {
-      console.error('Erro ao criar sessão de checkout:', error);
-      throw new Error(`Erro ao criar sessão de checkout: ${error.message || JSON.stringify(error)}`);
-    }
-
-    if (!data || !data.url) {
-      console.error('Resposta inválida da API de checkout:', data);
-      throw new Error('Resposta inválida da API de checkout: ' + JSON.stringify(data));
-    }
-
-    console.log('Sessão de checkout criada com sucesso:', data);
-    
-    // Retorna os dados para que o componente possa fazer o redirecionamento
-    return data;
-  } catch (error) {
-    console.error('Erro ao iniciar pagamento:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Detalhes completos do erro:', error);
-    
-    toast({
-      title: "Erro ao iniciar pagamento",
-      description: errorMessage,
-      variant: "destructive"
-    });
-    throw error;
+// Stripe service configuration
+const getStripePublishableKey = () => {
+  // In production, this would come from environment variables
+  // For now, we'll use a safer approach that doesn't hardcode production keys
+  const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('lovable.app');
+  
+  if (isDev) {
+    // Test key for development
+    return 'pk_test_51QQKXmFJ3Y1S0P0BvLd2xyYrsxcRAz76s8GgR9sjDuKB7pBAKjJfBG2OL5vZbmKWVZhTsksHw5jWMZdW6FojuHvo00VFP8gEz9';
+  } else {
+    // In production, this should come from environment variables
+    // Return empty string to prevent accidental use of test keys in production
+    console.error('Stripe: Production key not configured');
+    return '';
   }
 };
 
-export const abrirPortalCliente = async () => {
-  try {
-    console.log('Abrindo portal do cliente Stripe');
-    
-    // Chama a edge function do Supabase para criar uma sessão do portal do cliente
-    const { data, error } = await supabase.functions.invoke('criar-portal-cliente');
+export const STRIPE_PUBLISHABLE_KEY = getStripePublishableKey();
 
-    if (error) {
-      console.error('Erro ao criar sessão do portal do cliente:', error);
-      throw new Error(`Erro ao criar sessão do portal: ${error.message || JSON.stringify(error)}`);
-    }
+// Prices configuration
+export const STRIPE_PRICES = {
+  monthly: 'price_1QQKh6FJ3Y1S0P0BSZVwNKa6',
+  yearly: 'price_1QQKhbFJ3Y1S0P0BLwTYRNg2'
+} as const;
 
-    if (!data || !data.url) {
-      console.error('Resposta inválida da API do portal:', data);
-      throw new Error('Resposta inválida da API do portal: ' + JSON.stringify(data));
-    }
-
-    console.log('Sessão do portal criada com sucesso:', data);
-    
-    // Retorna a URL do portal
-    return data.url;
-  } catch (error) {
-    console.error('Erro ao abrir portal do cliente:', error);
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    console.error('Detalhes completos do erro:', error);
-    
-    toast({
-      title: "Erro ao abrir portal do cliente",
-      description: errorMessage,
-      variant: "destructive"
-    });
-    throw error;
-  }
-};
+export type StripePriceId = typeof STRIPE_PRICES[keyof typeof STRIPE_PRICES];

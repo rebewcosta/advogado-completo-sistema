@@ -1,4 +1,4 @@
-// src/pages/AgendaPage.tsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Button } from "@/components/ui/button";
@@ -68,7 +68,6 @@ const AgendaPage = () => {
 
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
 
-  // Estados para filtros na aba Lista
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
   const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
@@ -140,16 +139,14 @@ const AgendaPage = () => {
     
     const eventDate = parseISO(event.data_hora_inicio);
     
-    // Se há filtros de data aplicados, use os filtros
     if (dateFrom || dateTo) {
       const matchesDateRange = (!dateFrom || eventDate >= dateFrom) && 
                               (!dateTo || eventDate <= dateTo);
       return matchesSearch && matchesDateRange;
     }
     
-    // Se não há filtros de data, mostre apenas eventos de hoje em diante
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Reset para início do dia
+    today.setHours(0, 0, 0, 0);
     const matchesFromToday = eventDate >= today;
     
     return matchesSearch && matchesFromToday;
@@ -225,7 +222,7 @@ const AgendaPage = () => {
             if (error) throw error;
             toast({ title: "Evento criado!", description: `O evento "${newEvent?.titulo}" foi adicionado à agenda.` });
         }
-        fetchEvents(); // Updated to fetchEvents() without dateToFilter
+        fetchEvents();
         setIsFormOpen(false);
         setEventoParaForm(null);
     } catch (error: any) {
@@ -248,7 +245,7 @@ const AgendaPage = () => {
                 .eq('user_id', user.id);
             if (error) throw error;
             toast({ title: "Evento excluído!", description: `O evento "${eventToDelete.titulo}" foi removido.` });
-            fetchEvents(); // Updated to fetchEvents() without dateToFilter
+            fetchEvents();
             setIsDetailOpen(false);
             setCurrentEvent(null);
         } catch (error: any) {
@@ -329,7 +326,6 @@ const AgendaPage = () => {
             </CardContent>
         </Card>
 
-        {/* Tabs para alternar entre Lista e Calendário */}
         <Tabs value={viewMode} onValueChange={(value: string) => setViewMode(value as 'list' | 'calendar')} className="mb-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="list" className="flex items-center gap-2">
@@ -343,11 +339,9 @@ const AgendaPage = () => {
           </TabsList>
 
           <TabsContent value="list" className="mt-6">
-            {/* Filtros para a aba Lista */}
             <Card className="mb-6">
               <CardContent className="p-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Busca */}
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
@@ -358,7 +352,6 @@ const AgendaPage = () => {
                     />
                   </div>
                   
-                  {/* Data De */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -383,7 +376,6 @@ const AgendaPage = () => {
                     </PopoverContent>
                   </Popover>
 
-                  {/* Data Até */}
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -409,7 +401,6 @@ const AgendaPage = () => {
                   </Popover>
                 </div>
 
-                {/* Botão para limpar filtros */}
                 {(searchTerm || dateFrom || dateTo) && (
                   <div className="mt-4">
                     <Button
