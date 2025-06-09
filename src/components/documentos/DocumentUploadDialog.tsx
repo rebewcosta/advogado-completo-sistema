@@ -51,7 +51,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
       if (file.size > LIMITE_ARMAZENAMENTO_BYTES) {
         toast({
           title: "Arquivo muito grande",
-          description: `O arquivo excede o limite máximo de 25MB.`,
+          description: `O arquivo excede o limite máximo de 3MB.`,
           variant: "destructive"
         });
         e.target.value = '';
@@ -147,7 +147,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
                 </p>
               )}
               <p className="text-xs text-gray-500">
-                Limite máximo: 25MB. Espaço disponível: {formatarTamanhoArquivo(espacoDisponivel)}
+                Limite máximo: 3MB. Espaço disponível: {formatarTamanhoArquivo(espacoDisponivel)}
               </p>
             </div>
             <div className="grid gap-2">

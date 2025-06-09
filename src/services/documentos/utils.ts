@@ -2,8 +2,8 @@
 // Utilitários para o serviço de documentos
 
 // Constantes de armazenamento
-export const LIMITE_ARMAZENAMENTO_MB = 25;
-export const LIMITE_ARMAZENAMENTO_BYTES = LIMITE_ARMAZENAMENTO_MB * 1024 * 1024; // 25MB em bytes
+export const LIMITE_ARMAZENAMENTO_MB = 3;
+export const LIMITE_ARMAZENAMENTO_BYTES = LIMITE_ARMAZENAMENTO_MB * 1024 * 1024; // 3MB em bytes
 
 // Função para formatar tamanho em bytes para formato legível
 export const formatarTamanhoArquivo = (bytes: number): string => {
