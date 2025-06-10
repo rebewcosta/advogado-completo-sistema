@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/hooks/useAuth';
@@ -8,36 +9,25 @@ import CadastroPage from '@/pages/CadastroPage';
 import PagamentoPage from '@/pages/PagamentoPage';
 import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
 import DashboardPage from '@/pages/DashboardPage';
-import RecoverPasswordPage from '@/pages/RecoverPasswordPage';
-import ResetPasswordPage from '@/pages/ResetPasswordPage';
-import ProfilePage from '@/pages/ProfilePage';
+import RecuperarSenhaPage from '@/pages/RecuperarSenhaPage';
 import AdminPage from '@/pages/AdminPage';
-import { SiteLayout } from '@/components/SiteLayout';
-import { DashboardLayout } from '@/components/DashboardLayout';
-import { useAuth } from '@/hooks/useAuth';
 
 const App = () => {
-  // You can add any global state or context here if needed
-
   return (
     <AuthProvider>
       <Router>
-        <SiteLayout>
+        <div className="min-h-screen bg-background">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro" element={<CadastroPage />} />
             <Route path="/pagamento" element={<PagamentoPage />} />
             <Route path="/payment-success" element={<PaymentSuccessPage />} />
-            <Route path="/recuperar-senha" element={<RecoverPasswordPage />} />
-            <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-            
-            {/* Protected routes inside DashboardLayout */}
-            <Route path="/dashboard" element={<DashboardLayout><DashboardPage /></DashboardLayout>} />
-            <Route path="/profile" element={<DashboardLayout><ProfilePage /></DashboardLayout>} />
-             <Route path="/admin" element={<DashboardLayout><AdminPage /></DashboardLayout>} />
+            <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/admin" element={<AdminPage />} />
           </Routes>
-        </SiteLayout>
+        </div>
         <Toaster />
       </Router>
     </AuthProvider>

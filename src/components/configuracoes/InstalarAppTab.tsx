@@ -1,7 +1,6 @@
 
 // src/components/configuracoes/InstalarAppTab.tsx
 import React from 'react';
-import { usePWAInstall } from '@/App';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -45,14 +44,42 @@ const ChromeMenuIcon = () => (
 );
 
 const InstalarAppTab: React.FC = () => {
-  const pwaInstall = usePWAInstall();
+  // Simple PWA detection and installation logic
+  const [canInstallPWA, setCanInstallPWA] = React.useState(false);
+  const [isIOS, setIsIOS] = React.useState(false);
+  const [isStandalone, setIsStandalone] = React.useState(false);
+  const [deferredPrompt, setDeferredPrompt] = React.useState<any>(null);
 
-  const canInstallPWA = pwaInstall?.canInstallPWA || false;
-  const triggerPWAInstall =
-    pwaInstall?.triggerPWAInstall ||
-    (() => console.warn('PWA install logic not available.'));
-  const isIOS = pwaInstall?.isIOS || false;
-  const isStandalone = pwaInstall?.isStandalone || false;
+  React.useEffect(() => {
+    // Check if already installed as PWA
+    setIsStandalone(window.matchMedia('(display-mode: standalone)').matches);
+    
+    // Check if iOS
+    setIsIOS(/iPad|iPhone|iPod/.test(navigator.userAgent));
+    
+    // Listen for the beforeinstallprompt event
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setCanInstallPWA(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const triggerPWAInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      setDeferredPrompt(null);
+      setCanInstallPWA(false);
+    }
+  };
 
   if (isStandalone) {
     return (
