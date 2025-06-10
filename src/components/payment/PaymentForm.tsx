@@ -1,14 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-// A importação do 'iniciarCheckout' que chama a função internamente já usa o supabase client.
-// No entanto, se você vai chamar supabase.functions.invoke diretamente aqui, precisa do client.
-// Vamos manter a chamada via 'iniciarCheckout' por enquanto para consistência,
-// mas se você mudou para supabase.functions.invoke diretamente aqui, o import abaixo é crucial.
-import { supabase } from '@/integrations/supabase/client'; // <<<< ADICIONE ESTA LINHA
+import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentFormProps {
   onProcessingChange: (isProcessing: boolean) => void;
@@ -62,21 +59,19 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       const checkoutData = {
         nomePlano: 'Plano Mensal JusGestão',
-        valor: 12700,
+        valor: 3700, // R$ 37,00 em centavos
         emailCliente: email,
-        modo: process.env.NODE_ENV === 'production' ? 'production' : 'test', // Manteve 'test' para ambiente de desenvolvimento
+        modo: process.env.NODE_ENV === 'production' ? 'production' : 'test',
         dominio,
         clientReferenceId: clientReferenceId || email
       };
 
-      // Chamando a Edge Function diretamente com o cliente Supabase importado
       const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
         body: checkoutData
       });
 
       if (invokeError) {
         console.error('Erro ao criar sessão de checkout (invokeError):', invokeError);
-        // Tenta pegar uma mensagem de erro mais detalhada do objeto de erro da função
         let detailedErrorMessage = invokeError.message;
         if (invokeError.context && typeof invokeError.context === 'object' && 'message' in invokeError.context) {
             detailedErrorMessage = (invokeError.context as any).message || detailedErrorMessage;
@@ -114,12 +109,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         variant: "destructive",
         duration: 7000,
       });
-      // Garante que o estado de loading seja resetado em caso de erro ANTES do redirect
       setIsProcessing(false);
       onProcessingChange(false);
     }
-    // Não colocar finally aqui para resetar loading se o redirect ocorrer,
-    // pois a página será descarregada. O reset já acontece no catch.
   };
 
   return (
@@ -159,7 +151,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             ) : (
               <span className="flex items-center">
                 <CreditCard className="mr-2 h-5 w-5" />
-                Ir para Pagamento Seguro - R$ 127,00
+                Ir para Pagamento Seguro - R$ 37,00
               </span>
             )}
           </Button>

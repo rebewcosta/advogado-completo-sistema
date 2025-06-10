@@ -10,7 +10,7 @@ const PlanInfoBox: React.FC = () => {
           <Check className="h-5 w-5 text-blue-600" />
         </div>
         <div className="ml-3">
-          <h3 className="font-medium text-blue-800">Plano Mensal - R$ 127,00/mês</h3>
+          <h3 className="font-medium text-blue-800">Plano Mensal - R$ 37,00/mês</h3>
           <p className="text-sm text-blue-700 mt-1">
             Acesso completo a todas as funcionalidades do sistema JusGestão.
           </p>

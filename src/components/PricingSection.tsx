@@ -7,13 +7,15 @@ const PricingSection = () => {
   const plans = [
     {
       name: "Acesso Mensal",
-      price: "R$ 127",
+      price: "R$ 37",
       period: "/mês",
       description: "Acesso completo ao sistema JusGestão",
       features: [
         "Clientes ilimitados",
         "Processos ilimitados",
         "Agenda e compromissos",
+        "Tarefas",
+        "Notificações",
         "Controle financeiro completo",
         "Armazenamento de documentos",
         "Relatórios avançados",

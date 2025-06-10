@@ -81,7 +81,7 @@ serve(async (req) => {
             product_data: {
               name: nomePlano,
             },
-            unit_amount: valor, // Valor em centavos
+            unit_amount: valor, // Valor em centavos (3700 = R$ 37,00)
             recurring: {
               interval: "month", // Assinatura mensal
             },
