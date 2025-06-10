@@ -17,6 +17,13 @@ import ClientesPage from '@/pages/ClientesPage';
 import PerfilUsuarioPage from '@/pages/PerfilUsuarioPage';
 import RecuperarSenhaPage from '@/pages/RecuperarSenhaPage';
 import AdminPage from '@/pages/AdminPage';
+import ConfiguracoesPage from '@/pages/ConfiguracoesPage';
+import RelatoriosPage from '@/pages/RelatoriosPage';
+import DocumentosPage from '@/pages/DocumentosPage';
+import FinanceiroPage from '@/pages/FinanceiroPage';
+import TarefasPage from '@/pages/TarefasPage';
+import AgendaPage from '@/pages/AgendaPage';
+import EquipePage from '@/pages/EquipePage';
 
 const App = () => {
   return (
@@ -76,6 +83,30 @@ const App = () => {
                 } 
               />
               <Route 
+                path="/configuracoes" 
+                element={
+                  <ProtectedRoute>
+                    <ConfiguracoesPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/relatorios" 
+                element={
+                  <ProtectedRoute>
+                    <RelatoriosPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/agenda" 
+                element={
+                  <ProtectedRoute>
+                    <AgendaPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
                 path="/admin" 
                 element={
                   <ProtectedRoute requireAdmin={true}>
@@ -87,6 +118,10 @@ const App = () => {
               <Route element={<ProtectedRoute><VerificarAssinatura /></ProtectedRoute>}>
                 <Route path="/meus-processos" element={<MeusProcessosPage />} />
                 <Route path="/clientes" element={<ClientesPage />} />
+                <Route path="/documentos" element={<DocumentosPage />} />
+                <Route path="/financeiro" element={<FinanceiroPage />} />
+                <Route path="/tarefas" element={<TarefasPage />} />
+                <Route path="/equipe" element={<EquipePage />} />
               </Route>
             </Routes>
           </div>
