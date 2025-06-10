@@ -5,6 +5,7 @@ import { AuthProvider } from '@/hooks/useAuth';
 import { PWAProvider } from '@/contexts/PWAContext';
 import { Toaster } from '@/components/ui/toaster';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import VerificarAssinatura from '@/components/VerificarAssinatura';
 import Index from '@/pages/Index';
 import LoginPage from '@/pages/LoginPage';
 import CadastroPage from '@/pages/CadastroPage';
@@ -12,6 +13,8 @@ import PagamentoPage from '@/pages/PagamentoPage';
 import PaymentSuccessPage from '@/pages/PaymentSuccessPage';
 import DashboardPage from '@/pages/DashboardPage';
 import MeusProcessosPage from '@/pages/MeusProcessosPage';
+import ClientesPage from '@/pages/ClientesPage';
+import PerfilUsuarioPage from '@/pages/PerfilUsuarioPage';
 import RecuperarSenhaPage from '@/pages/RecuperarSenhaPage';
 import AdminPage from '@/pages/AdminPage';
 
@@ -68,7 +71,27 @@ const App = () => {
                 path="/meus-processos" 
                 element={
                   <ProtectedRoute>
-                    <MeusProcessosPage />
+                    <VerificarAssinatura>
+                      <MeusProcessosPage />
+                    </VerificarAssinatura>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/clientes" 
+                element={
+                  <ProtectedRoute>
+                    <VerificarAssinatura>
+                      <ClientesPage />
+                    </VerificarAssinatura>
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/perfil" 
+                element={
+                  <ProtectedRoute>
+                    <PerfilUsuarioPage />
                   </ProtectedRoute>
                 } 
               />
