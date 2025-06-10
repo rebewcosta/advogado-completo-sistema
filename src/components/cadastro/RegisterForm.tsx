@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Adicionar useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-// A função signUp do useAuth não será mais chamada diretamente aqui.
-// import { useAuth } from '@/hooks/useAuth'; 
 import PlanInfoBox from './PlanInfoBox';
 import InputField from './InputField';
 import SubmitButton from './SubmitButton';
@@ -18,8 +16,7 @@ const RegisterForm = ({ onSubmitStart, onSubmitEnd }: RegisterFormProps) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const { toast } = useToast();
-  const navigate = useNavigate(); // Hook para navegação
-  // const { signUp } = useAuth(); // Não é mais necessário aqui
+  const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,20 +45,19 @@ const RegisterForm = ({ onSubmitStart, onSubmitEnd }: RegisterFormProps) => {
 
     try {
       // Redirecionar para a página de pagamento com os dados do cadastro
-      // Estes dados serão usados para criar a conta APÓS o pagamento.
       console.log("Redirecionando para pagamento com os dados:", { nome, email, passwordNotSent: '***' });
+      
+      // Use navigate instead of history.push
       navigate('/pagamento', { 
         state: { 
           registrationData: { nome, email, password } 
         } 
       });
-      // Não chamamos onSubmitEnd() ou setIsSubmitting(false) aqui,
-      // pois a página de pagamento agora lida com o próximo passo.
-      // Se o redirecionamento falhar por algum motivo inesperado, o botão pode ficar em loading.
-      // Uma melhoria futura seria um timeout ou uma forma de resetar o estado se o redirect não ocorrer.
-
+      
+      // Não chamamos onSubmitEnd() aqui, pois a página de pagamento agora lida com o próximo passo
+      
     } catch (error) {
-      // Este catch é mais para erros inesperados ANTES do redirecionamento.
+      console.error("Erro ao redirecionar para pagamento:", error);
       toast({
         title: "Erro no Processo de Cadastro",
         description: "Ocorreu um erro inesperado ao tentar iniciar o processo de pagamento. Por favor, tente novamente.",

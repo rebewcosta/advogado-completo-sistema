@@ -6,24 +6,28 @@ import PaymentForm from '@/components/payment/PaymentForm';
 import TestEnvironmentWarning from '@/components/payment/TestEnvironmentWarning';
 import PlanInfoBox from '@/components/payment/PlanInfoBox';
 import PaymentSuccess from '@/components/payment/PaymentSuccess';
-import { useAuth } from '@/hooks/useAuth'; // Importar useAuth
-import { supabase } from '@/integrations/supabase/client'; // Importar supabase se precisar do client_reference_id
+import { useAuth } from '@/hooks/useAuth';
 
 const PagamentoPage = () => {
-  const [isSubmittingUser, setIsSubmittingUser] = useState(false); // Para o processo de signUp pós-pagamento
-  const [paymentFormProcessing, setPaymentFormProcessing] = useState(false); // Para o botão de pagamento do Stripe
-  const [step, setStep] = useState(1); // 1: Formulário de pagamento, 2: Sucesso
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false);
+  const [paymentFormProcessing, setPaymentFormProcessing] = useState(false);
+  const [step, setStep] = useState(1);
   const { toast } = useToast();
   const location = useLocation();
   const navigate = useNavigate();
-  const { signUp, user } = useAuth(); // Pegar a função signUp e user
+  const { signUp, user } = useAuth();
   const isTestEnvironment = process.env.NODE_ENV !== 'production';
 
   // Dados de registro vindos da página de cadastro
-  const registrationData = (location.state as any)?.registrationData;
-  const clientReferenceId = (location.state as any)?.clientReferenceId; // Se você decidir passar o ID do usuário
+  const registrationData = location.state?.registrationData;
+  const clientReferenceId = location.state?.clientReferenceId;
 
   useEffect(() => {
+    // Debug logs to help identify issues
+    console.log("PagamentoPage mounted");
+    console.log("Registration data:", registrationData);
+    console.log("Location state:", location.state);
+    
     const params = new URLSearchParams(location.search);
     if (params.get('success') === 'true') {
       // Pagamento foi bem-sucedido no Stripe
@@ -31,8 +35,7 @@ const PagamentoPage = () => {
         // Cenário: Novo usuário que acabou de pagar
         handlePostPaymentSignUp();
       } else if (clientReferenceId) {
-        // Cenário: Usuário existente que estava reativando/assinando (o webhook deve tratar)
-        // Aqui, apenas mostramos a tela de sucesso. O webhook do Stripe deve atualizar os metadados do usuário.
+        // Cenário: Usuário existente que estava reativando/assinando
         console.log("Pagamento bem-sucedido para usuário existente (ID):", clientReferenceId);
         setStep(2); // Mostrar tela de sucesso
         toast({
@@ -41,13 +44,11 @@ const PagamentoPage = () => {
         });
       } else {
         // Se não houver registrationData nem clientReferenceId, é um fluxo inesperado
-        // ou usuário acessou a URL diretamente.
         console.warn("Sucesso no pagamento, mas sem dados de registro ou ID de cliente de referência.");
         toast({
           title: "Pagamento Concluído",
           description: "Seu pagamento foi processado. Se você estava criando uma nova conta, pode haver um atraso na ativação. Contate o suporte se necessário.",
         });
-        // Poderia redirecionar para login ou dashboard, mas mostrar sucesso é mais seguro.
         setStep(2);
       }
     }
@@ -66,7 +67,6 @@ const PagamentoPage = () => {
     }
   }, [location.search, registrationData, clientReferenceId, navigate, toast]);
 
-
   const handlePostPaymentSignUp = async () => {
     if (!registrationData) {
       console.error("handlePostPaymentSignUp chamado sem registrationData.");
@@ -80,12 +80,6 @@ const PagamentoPage = () => {
         nome: registrationData.nome,
         emailRedirectTo: `${window.location.origin}/login` 
       });
-      // O signUp em useAuth já lida com toasts de sucesso/erro e navegação inicial.
-      // Após o signUp bem-sucedido (e se a confirmação de email não for necessária imediatamente
-      // para login, ou estiver desabilitada), o onAuthStateChange no useAuth deve atualizar o 'user'.
-      // O importante aqui é que o webhook do Stripe (`checkout.session.completed`)
-      // associe o pagamento ao usuário que acabou de ser criado.
-      // Por isso, o `client_reference_id` no checkout do Stripe é vital.
       setStep(2); // Mostrar tela de sucesso do pagamento
     } catch (error) {
       console.error("Erro ao criar conta após pagamento:", error);
@@ -95,11 +89,6 @@ const PagamentoPage = () => {
         variant: "destructive",
         duration: 10000,
       });
-      // Não redirecionar para /cadastro, pois o usuário já pagou.
-      // O melhor é mostrar uma mensagem de erro e instrução para contatar suporte.
-      // Mantemos o usuário na PagamentoPage ou redirecionamos para uma página de erro específica.
-      // Por enquanto, vamos mantê-lo com uma mensagem de erro.
-      // setStep(1) // Volta para o formulário de pagamento, mas isso pode ser confuso
     } finally {
       setIsSubmittingUser(false);
     }
@@ -156,14 +145,7 @@ const PagamentoPage = () => {
             <PaymentForm 
               onProcessingChange={setPaymentFormProcessing}
               isTestEnvironment={isTestEnvironment}
-              // Passar o email do cadastro para o PaymentForm
-              // ou o email do usuário logado se não for um novo cadastro.
               initialEmail={registrationData?.email || user?.email}
-              // Passar o ID do usuário se ele já existir (não é um novo cadastro)
-              // para o client_reference_id no Stripe.
-              // Se for um novo cadastro (registrationData existe), não temos user.id ainda.
-              // O client_reference_id será o email nesse caso, e o webhook associará ao user_id após o signUp.
-              // Se for um usuário existente reativando, passamos o user.id.
               clientReferenceId={user ? user.id : registrationData?.email}
             />
             
