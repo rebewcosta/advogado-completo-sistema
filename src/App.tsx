@@ -68,26 +68,6 @@ const App = () => {
                 } 
               />
               <Route 
-                path="/meus-processos" 
-                element={
-                  <ProtectedRoute>
-                    <VerificarAssinatura>
-                      <MeusProcessosPage />
-                    </VerificarAssinatura>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/clientes" 
-                element={
-                  <ProtectedRoute>
-                    <VerificarAssinatura>
-                      <ClientesPage />
-                    </VerificarAssinatura>
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
                 path="/perfil" 
                 element={
                   <ProtectedRoute>
@@ -103,6 +83,11 @@ const App = () => {
                   </ProtectedRoute>
                 } 
               />
+              {/* Routes that require subscription verification */}
+              <Route element={<ProtectedRoute><VerificarAssinatura /></ProtectedRoute>}>
+                <Route path="/meus-processos" element={<MeusProcessosPage />} />
+                <Route path="/clientes" element={<ClientesPage />} />
+              </Route>
             </Routes>
           </div>
           <Toaster />
