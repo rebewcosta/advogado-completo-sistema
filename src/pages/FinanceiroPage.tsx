@@ -317,64 +317,63 @@ const FinanceiroPage = () => {
         )}
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
-            <Card className="shadow-md rounded-lg bg-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Receitas Confirmadas</CardTitle>
-                <TrendingUp className="h-5 w-5 text-green-500" />
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Receitas Confirmadas</CardTitle>
+                <TrendingUp className="h-4 w-4 text-green-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-800">R$ {receitasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {transactions.filter(t => t.tipo_transacao === "Receita" && (t.status_pagamento === "Recebido" || t.status_pagamento === "Pago")).length} transações
-                </p>
+              <CardContent className="pb-4">
+                <div className="text-xl font-bold text-green-600">
+                  R$ {receitasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
               </CardContent>
             </Card>
-            <Card className="shadow-md rounded-lg bg-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Despesas Confirmadas</CardTitle>
-                <TrendingDown className="h-5 w-5 text-red-500" />
+            
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Despesas Confirmadas</CardTitle>
+                <TrendingDown className="h-4 w-4 text-red-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-800">R$ {despesasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {transactions.filter(t => t.tipo_transacao === "Despesa" && t.status_pagamento === "Pago").length} transações
-                </p>
+              <CardContent className="pb-4">
+                <div className="text-xl font-bold text-red-600">
+                  R$ {despesasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
               </CardContent>
             </Card>
-            <Card className="shadow-md rounded-lg bg-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Saldo Atual</CardTitle>
-                <DollarSign className={`h-5 w-5 ${saldoAtual >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
+            
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Saldo Atual</CardTitle>
+                <DollarSign className={`h-4 w-4 ${saldoAtual >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
               </CardHeader>
-              <CardContent>
-                <div className={`text-2xl font-bold ${saldoAtual >= 0 ? 'text-gray-800' : 'text-red-600'}`}>
+              <CardContent className="pb-4">
+                <div className={`text-xl font-bold ${saldoAtual >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   R$ {saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Apenas confirmadas</p>
               </CardContent>
             </Card>
-            <Card className="shadow-md rounded-lg bg-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Receitas Pendentes</CardTitle>
-                <Clock className="h-5 w-5 text-yellow-500" />
+            
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Receitas Pendentes</CardTitle>
+                <Clock className="h-4 w-4 text-yellow-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-yellow-600">R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {transactions.filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente").length} pendentes
-                </p>
+              <CardContent className="pb-4">
+                <div className="text-xl font-bold text-yellow-600">
+                  R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
               </CardContent>
             </Card>
-            <Card className="shadow-md rounded-lg bg-white">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Despesas Pendentes</CardTitle>
-                <Clock className="h-5 w-5 text-orange-500" />
+            
+            <Card className="shadow-sm border border-gray-200">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Despesas Pendentes</CardTitle>
+                <Clock className="h-4 w-4 text-orange-500" />
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">R$ {despesasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-                <p className="text-xs text-gray-500 mt-1">
-                  {transactions.filter(t => t.tipo_transacao === "Despesa" && t.status_pagamento === "Pendente").length} pendentes
-                </p>
+              <CardContent className="pb-4">
+                <div className="text-xl font-bold text-orange-600">
+                  R$ {despesasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
               </CardContent>
             </Card>
           </div>
