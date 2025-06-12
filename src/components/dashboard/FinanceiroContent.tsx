@@ -9,7 +9,7 @@ import { format, startOfMonth, endOfMonth, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { DollarSign, TrendingUp, TrendingDown, List, AlertCircle, ExternalLink, RefreshCw } from 'lucide-react';
+import { DollarSign, TrendingUp, TrendingDown, List, AlertCircle, ExternalLink, RefreshCw, Clock } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import type { Database } from '@/integrations/supabase/types';
@@ -17,9 +17,11 @@ import type { Database } from '@/integrations/supabase/types';
 type Transacao = Database['public']['Tables']['transacoes_financeiras']['Row'];
 
 interface FinanceiroStats {
-  receitaMes: number;
-  despesaMes: number;
+  receitaMesConfirmada: number;
+  despesaMesConfirmada: number;
   saldoMes: number;
+  receitaMesPendente: number;
+  despesaMesPendente: number;
   proximasReceitas: Transacao[];
   proximasDespesas: Transacao[];
 }
@@ -28,9 +30,11 @@ const FinanceiroContent: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [stats, setStats] = useState<FinanceiroStats>({
-    receitaMes: 0,
-    despesaMes: 0,
+    receitaMesConfirmada: 0,
+    despesaMesConfirmada: 0,
     saldoMes: 0,
+    receitaMesPendente: 0,
+    despesaMesPendente: 0,
     proximasReceitas: [],
     proximasDespesas: [],
   });
@@ -61,13 +65,24 @@ const FinanceiroContent: React.FC = () => {
 
       if (transError) throw transError;
 
-      let receitaMes = 0;
-      let despesaMes = 0;
+      let receitaMesConfirmada = 0;
+      let despesaMesConfirmada = 0;
+      let receitaMesPendente = 0;
+      let despesaMesPendente = 0;
+
       (transacoesMes || []).forEach(t => {
-        if (t.tipo_transacao === 'Receita' && (t.status_pagamento === 'Recebido' || t.status_pagamento === 'Pago')) {
-          receitaMes += Number(t.valor || 0);
-        } else if (t.tipo_transacao === 'Despesa' && t.status_pagamento === 'Pago') {
-          despesaMes += Number(t.valor || 0);
+        if (t.tipo_transacao === 'Receita') {
+          if (t.status_pagamento === 'Recebido' || t.status_pagamento === 'Pago') {
+            receitaMesConfirmada += Number(t.valor || 0);
+          } else if (t.status_pagamento === 'Pendente') {
+            receitaMesPendente += Number(t.valor || 0);
+          }
+        } else if (t.tipo_transacao === 'Despesa') {
+          if (t.status_pagamento === 'Pago') {
+            despesaMesConfirmada += Number(t.valor || 0);
+          } else if (t.status_pagamento === 'Pendente') {
+            despesaMesPendente += Number(t.valor || 0);
+          }
         }
       });
 
@@ -96,9 +111,11 @@ const FinanceiroContent: React.FC = () => {
       if (despesasPendentesError) throw despesasPendentesError;
       
       setStats({
-        receitaMes,
-        despesaMes,
-        saldoMes: receitaMes - despesaMes,
+        receitaMesConfirmada,
+        despesaMesConfirmada,
+        saldoMes: receitaMesConfirmada - despesaMesConfirmada,
+        receitaMesPendente,
+        despesaMesPendente,
         proximasReceitas: proximasReceitasData || [],
         proximasDespesas: proximasDespesasData || [],
       });
@@ -168,26 +185,26 @@ const FinanceiroContent: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Receita do Mês</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Receita Confirmada</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">R$ {stats.receitaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-            <p className="text-xs text-gray-500">Confirmadas no mês atual</p>
+            <div className="text-2xl font-bold text-green-600">R$ {stats.receitaMesConfirmada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-gray-500">No mês atual</p>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">Despesa do Mês</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">Despesa Confirmada</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-red-600">R$ {stats.despesaMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-             <p className="text-xs text-gray-500">Confirmadas no mês atual</p>
+            <div className="text-2xl font-bold text-red-600">R$ {stats.despesaMesConfirmada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+             <p className="text-xs text-gray-500">No mês atual</p>
           </CardContent>
         </Card>
 
@@ -200,7 +217,29 @@ const FinanceiroContent: React.FC = () => {
             <div className={`text-2xl font-bold ${stats.saldoMes >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
               R$ {stats.saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
-            <p className="text-xs text-gray-500">Receitas - Despesas (confirmadas)</p>
+            <p className="text-xs text-gray-500">Apenas confirmadas</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Receitas Pendentes</CardTitle>
+            <Clock className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-yellow-600">R$ {stats.receitaMesPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-gray-500">No mês atual</p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">Despesas Pendentes</CardTitle>
+            <Clock className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">R$ {stats.despesaMesPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            <p className="text-xs text-gray-500">No mês atual</p>
           </CardContent>
         </Card>
       </div>

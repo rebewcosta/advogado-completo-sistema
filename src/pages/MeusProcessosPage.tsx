@@ -1,4 +1,3 @@
-
 // src/pages/MeusProcessosPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -6,16 +5,15 @@ import AdminLayout from '@/components/AdminLayout';
 import { useProcessesStore, ProcessoComCliente } from '@/stores/useProcessesStore';
 import ProcessSearchActionBar from '@/components/processos/ProcessSearchActionBar';
 import ProcessListAsCards from '@/components/processos/ProcessListAsCards';
-import MeusProcessosTable from '@/components/processos/MeusProcessosTable'; // <<< JÁ DEVE ESTAR IMPORTADO
+import MeusProcessosTable from '@/components/processos/MeusProcessosTable';
 import ProcessDialogs from '@/components/processos/ProcessDialogs';
 import type { Database } from '@/integrations/supabase/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from '@/components/ui/spinner';
-import { FileText, Plus } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card'; 
-import { Button } from '@/components/ui/button';
-import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR SharedPageHeader
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -252,7 +250,8 @@ const MeusProcessosPage = () => {
             if (processToEdit) handleEditProcess(processToEdit as ProcessoComCliente);
           }}
           clientesDoUsuario={userClients}
-          isLoadingClientes={isLoadingClients}
+          isLoadingClientes={isLoadingClientes}
+          onClienteAdded={fetchUserClients}
         />
       </div>
     </AdminLayout>

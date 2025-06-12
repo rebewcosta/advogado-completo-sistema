@@ -5,19 +5,19 @@ import PinLock from '@/components/PinLock';
 import {
   Search, Plus, Filter, DollarSign, TrendingUp, TrendingDown,
   FileText as FileTextIcon, X, Loader2, KeyRound, AlertCircle,
-  ShieldAlert, BadgePercent, RefreshCw
-} from 'lucide-react'; // BadgePercent para o header
+  ShieldAlert, BadgePercent, RefreshCw, Clock
+} from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Label é usado no modal
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import TransacaoListAsCards from '@/components/financeiro/TransacaoListAsCards';
 import TransacaoTable from '@/components/financeiro/TransacaoTable';
-import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import type { Database } from '@/integrations/supabase/types';
 
 type TransacaoSupabase = Database['public']['Tables']['transacoes_financeiras']['Row'];
@@ -32,7 +32,7 @@ const FinanceiroPage = () => {
     message?: string;
   } | null>(null);
   const [isLoadingAccess, setIsLoadingAccess] = useState(true);
-  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false); // Mantido para operações de transação
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
 
   const [transactions, setTransactions] = useState<TransacaoSupabase[]>([]);
@@ -130,6 +130,26 @@ const FinanceiroPage = () => {
     (transaction.categoria || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Ajustar cálculo do saldo para não incluir transações pendentes
+  const receitasConfirmadas = transactions
+    .filter(t => t.tipo_transacao === "Receita" && (t.status_pagamento === "Recebido" || t.status_pagamento === "Pago"))
+    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
+
+  const despesasConfirmadas = transactions
+    .filter(t => t.tipo_transacao === "Despesa" && t.status_pagamento === "Pago")
+    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
+
+  const saldoAtual = receitasConfirmadas - despesasConfirmadas;
+
+  // Calcular totais de transações pendentes
+  const receitasPendentes = transactions
+    .filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente")
+    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
+
+  const despesasPendentes = transactions
+    .filter(t => t.tipo_transacao === "Despesa" && t.status_pagamento === "Pendente")
+    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
+
   const receitas = transactions
     .filter(t => t.tipo_transacao === "Receita")
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
@@ -139,10 +159,6 @@ const FinanceiroPage = () => {
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
   const saldo = receitas - despesas;
-
-  const receitasPendentes = transactions
-    .filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente")
-    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
   const handleEditTransaction = (transaction: TransacaoSupabase) => {
     setCurrentTransaction(transaction);
@@ -300,52 +316,64 @@ const FinanceiroPage = () => {
             </Alert>
         )}
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-6 md:mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
             <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Receitas Totais</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Receitas Confirmadas</CardTitle>
                 <TrendingUp className="h-5 w-5 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-800">R$ {receitas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <div className="text-2xl font-bold text-gray-800">R$ {receitasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {transactions.filter(t => t.tipo_transacao === "Receita").length} transações
+                  {transactions.filter(t => t.tipo_transacao === "Receita" && (t.status_pagamento === "Recebido" || t.status_pagamento === "Pago")).length} transações
                 </p>
               </CardContent>
             </Card>
             <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Despesas Totais</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-500">Despesas Confirmadas</CardTitle>
                 <TrendingDown className="h-5 w-5 text-red-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-800">R$ {despesas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <div className="text-2xl font-bold text-gray-800">R$ {despesasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 <p className="text-xs text-gray-500 mt-1">
-                  {transactions.filter(t => t.tipo_transacao === "Despesa").length} transações
+                  {transactions.filter(t => t.tipo_transacao === "Despesa" && t.status_pagamento === "Pago").length} transações
                 </p>
               </CardContent>
             </Card>
             <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-500">Saldo Atual</CardTitle>
-                <DollarSign className={`h-5 w-5 ${saldo >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
+                <DollarSign className={`h-5 w-5 ${saldoAtual >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
               </CardHeader>
               <CardContent>
-                <div className={`text-2xl font-bold ${saldo >= 0 ? 'text-gray-800' : 'text-red-600'}`}>
-                  R$ {saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                <div className={`text-2xl font-bold ${saldoAtual >= 0 ? 'text-gray-800' : 'text-red-600'}`}>
+                  R$ {saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Balanço geral</p>
+                <p className="text-xs text-gray-500 mt-1">Apenas confirmadas</p>
               </CardContent>
             </Card>
             <Card className="shadow-md rounded-lg bg-white">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-500">Contas a Receber</CardTitle>
-                <FileTextIcon className="h-5 w-5 text-yellow-500" />
+                <CardTitle className="text-sm font-medium text-gray-500">Receitas Pendentes</CardTitle>
+                <Clock className="h-5 w-5 text-yellow-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-gray-800">R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <div className="text-2xl font-bold text-yellow-600">R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                 <p className="text-xs text-gray-500 mt-1">
                   {transactions.filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente").length} pendentes
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="shadow-md rounded-lg bg-white">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium text-gray-500">Despesas Pendentes</CardTitle>
+                <Clock className="h-5 w-5 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">R$ {despesasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {transactions.filter(t => t.tipo_transacao === "Despesa" && t.status_pagamento === "Pendente").length} pendentes
                 </p>
               </CardContent>
             </Card>
