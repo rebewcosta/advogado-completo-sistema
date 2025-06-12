@@ -1,25 +1,14 @@
 
-// src/components/ProcessForm.tsx
 import React, { useState, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
-import { X, Plus } from 'lucide-react';
 import { format, parse, isValid } from 'date-fns';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import ClienteForm from "@/components/ClienteForm";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
+import ProcessFormHeader from '@/components/processos/ProcessFormHeader';
+import ProcessFormFields from '@/components/processos/ProcessFormFields';
+import ProcessFormActions from '@/components/processos/ProcessFormActions';
+import ClienteModal from '@/components/processos/ClienteModal';
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -40,7 +29,7 @@ interface ProcessFormProps {
   isEdit: boolean;
   clientesDoUsuario: ClienteParaSelect[] | undefined;
   isLoadingClientes?: boolean;
-  onClienteAdded?: () => void; // Callback para atualizar a lista de clientes
+  onClienteAdded?: () => void;
 }
 
 const ProcessForm: React.FC<ProcessFormProps> = ({
@@ -63,8 +52,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   const [showClienteModal, setShowClienteModal] = useState(false);
   const [isSavingCliente, setIsSavingCliente] = useState(false);
 
-  console.log("ProcessForm: Props no início - clientesDoUsuario:", clientesDoUsuario, "isLoadingClientes:", isLoadingClientes, "processoParaEditar:", processoParaEditar, "isEdit:", isEdit);
-
   const stringToDate = (dateString?: string): Date | undefined => {
     if (!dateString || dateString.trim() === "") return undefined;
     let parsedDate = parse(dateString, 'dd/MM/yyyy', new Date());
@@ -79,7 +66,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   };
 
   useEffect(() => {
-    console.log("ProcessForm useEffect [processoParaEditar, isEdit] - processoParaEditar:", processoParaEditar, "isEdit:", isEdit);
     if (isEdit && processoParaEditar) {
       setNumero(processoParaEditar.numero || "");
       setClienteIdSelecionado(processoParaEditar.cliente_id || null);
@@ -87,9 +73,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
       setVara(processoParaEditar.vara || "");
       setStatus(processoParaEditar.status || "Em andamento");
       setPrazoDate(stringToDate(processoParaEditar.prazo));
-      console.log("ProcessForm useEffect - Formulário populado para edição. clienteIdSelecionado:", processoParaEditar.cliente_id || null);
     } else {
-      console.log("ProcessForm useEffect - Resetando formulário para novo processo.");
       setNumero("");
       setClienteIdSelecionado(null);
       setTipo("Cível");
@@ -117,7 +101,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
       status,
       prazo: prazoDate ? dateToString(prazoDate) : "",
     };
-    console.log("ProcessForm handleSubmit, enviando processData:", processData);
     onSave(processData);
   };
 
@@ -142,7 +125,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
         description: `O cliente ${data.nome} foi cadastrado com sucesso.`,
       });
 
-      // Atualizar a lista de clientes e selecionar o novo cliente
       if (onClienteAdded) {
         onClienteAdded();
       }
@@ -162,154 +144,37 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   return (
     <>
       <div className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl md:text-2xl font-bold">{isEdit ? "Editar Processo" : "Novo Processo"}</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onCancel}
-            className="-mr-2 -mt-2 md:mr-0 md:mt-0"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
+        <ProcessFormHeader isEdit={isEdit} onCancel={onCancel} />
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            <div>
-              <Label htmlFor="numero">Número do Processo <span className="text-red-500">*</span></Label>
-              <Input
-                id="numero"
-                value={numero}
-                onChange={(e) => setNumero(e.target.value)}
-                placeholder="0000000-00.0000.0.00.0000"
-                className="mt-1"
-                required
-              />
-            </div>
+          <ProcessFormFields
+            numero={numero}
+            setNumero={setNumero}
+            clienteIdSelecionado={clienteIdSelecionado}
+            setClienteIdSelecionado={setClienteIdSelecionado}
+            tipo={tipo}
+            setTipo={setTipo}
+            vara={vara}
+            setVara={setVara}
+            status={status}
+            setStatus={setStatus}
+            prazoDate={prazoDate}
+            setPrazoDate={setPrazoDate}
+            clientesDoUsuario={clientesDoUsuario}
+            isLoadingClientes={isLoadingClientes}
+            onShowClienteModal={() => setShowClienteModal(true)}
+          />
 
-            <div>
-              <Label htmlFor="cliente_id">Cliente</Label>
-              <div className="flex gap-2 mt-1">
-                <Select
-                  value={clienteIdSelecionado || ""}
-                  onValueChange={(value) => setClienteIdSelecionado(value === "" ? null : value)}
-                >
-                  <SelectTrigger className="flex-1" disabled={isLoadingClientes}>
-                    <SelectValue placeholder={isLoadingClientes ? "Carregando clientes..." : "Selecione o cliente"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {isLoadingClientes ? (
-                      <SelectItem value="loading" disabled>Carregando...</SelectItem>
-                    ) : (
-                      Array.isArray(clientesDoUsuario) && clientesDoUsuario.length > 0 ? (
-                        clientesDoUsuario.map((cliente) => (
-                          <SelectItem key={cliente.id} value={cliente.id}>{cliente.nome}</SelectItem>
-                        ))
-                      ) : (
-                        <SelectItem value="no_clients_available" disabled>Nenhum cliente cadastrado</SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowClienteModal(true)}
-                  className="px-3"
-                  title="Cadastrar novo cliente"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              {clienteIdSelecionado === null && !isLoadingClientes && (!clientesDoUsuario || clientesDoUsuario.length === 0) && <p className="text-xs text-gray-500 mt-1">Cadastre clientes na aba "Clientes" ou clique no botão "+" para adicionar um novo.</p>}
-              {clienteIdSelecionado === null && !isLoadingClientes && clientesDoUsuario && clientesDoUsuario.length > 0 && <p className="text-xs text-gray-500 mt-1">Ou prossiga sem selecionar um cliente formal.</p>}
-            </div>
-
-            <div>
-              <Label htmlFor="tipo">Tipo de Processo <span className="text-red-500">*</span></Label>
-              <Select value={tipo} onValueChange={setTipo} required>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Cível">Cível</SelectItem>
-                  <SelectItem value="Trabalhista">Trabalhista</SelectItem>
-                  <SelectItem value="Criminal">Criminal</SelectItem>
-                  <SelectItem value="Tributário">Tributário</SelectItem>
-                  <SelectItem value="Família">Família</SelectItem>
-                  <SelectItem value="Empresarial">Empresarial</SelectItem>
-                  <SelectItem value="Administrativo">Administrativo</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="vara">Vara ou Tribunal</Label>
-              <Input
-                id="vara"
-                value={vara}
-                onChange={(e) => setVara(e.target.value)}
-                placeholder="Ex: 2ª Vara Cível"
-                className="mt-1"
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="status">Status <span className="text-red-500">*</span></Label>
-              <Select value={status} onValueChange={(value: 'Em andamento' | 'Concluído' | 'Suspenso') => setStatus(value)} required>
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Em andamento">Em andamento</SelectItem>
-                  <SelectItem value="Concluído">Concluído</SelectItem>
-                  <SelectItem value="Suspenso">Suspenso</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="prazo">Próximo Prazo</Label>
-              <DatePicker
-                date={prazoDate}
-                setDate={setPrazoDate}
-                className="mt-1 w-full"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end space-x-3 mt-8">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={onCancel}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit">
-              {isEdit ? "Salvar Alterações" : "Cadastrar Processo"}
-            </Button>
-          </div>
+          <ProcessFormActions isEdit={isEdit} onCancel={onCancel} />
         </form>
       </div>
 
-      {/* Modal para cadastrar cliente */}
-      <Dialog open={showClienteModal} onOpenChange={setShowClienteModal}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle>Cadastrar Novo Cliente</DialogTitle>
-          </DialogHeader>
-          <ClienteForm
-            onSave={handleSaveCliente}
-            onCancel={() => setShowClienteModal(false)}
-            isEdit={false}
-            isSubmitting={isSavingCliente}
-          />
-        </DialogContent>
-      </Dialog>
+      <ClienteModal
+        open={showClienteModal}
+        onOpenChange={setShowClienteModal}
+        onSaveCliente={handleSaveCliente}
+        isSaving={isSavingCliente}
+      />
     </>
   );
 };

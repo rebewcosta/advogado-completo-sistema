@@ -250,7 +250,7 @@ const MeusProcessosPage = () => {
             if (processToEdit) handleEditProcess(processToEdit as ProcessoComCliente);
           }}
           clientesDoUsuario={userClients}
-          isLoadingClientes={isLoadingClientes}
+          isLoadingClientes={isLoadingClients}
           onClienteAdded={fetchUserClients}
         />
       </div>
