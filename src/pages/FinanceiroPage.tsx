@@ -86,7 +86,7 @@ const FinanceiroPage = () => {
       setIsRefreshingManually(false);
       return;
     }
-    if (showLoadingSpinner) setIsLoadingTransactions(true); // Usar setIsLoadingTransactions aqui
+    if (showLoadingSpinner) setIsLoadingTransactions(true);
     setIsRefreshingManually(true);
     try {
       const { data, error } = await supabase
@@ -107,7 +107,7 @@ const FinanceiroPage = () => {
       });
       setTransactions([]);
     } finally {
-      if (showLoadingSpinner) setIsLoadingTransactions(false); // Usar setIsLoadingTransactions aqui
+      if (showLoadingSpinner) setIsLoadingTransactions(false);
       setIsRefreshingManually(false);
     }
   }, [user, pinCheckResult?.verified, toast]);
@@ -283,7 +283,7 @@ const FinanceiroPage = () => {
     );
   }
   
-  if (isLoadingCombined && !transactions.length && !isRefreshingManually && pinCheckResult?.verified) { // Adicionado pinCheckResult.verified
+  if (isLoadingCombined && !transactions.length && !isRefreshingManually && pinCheckResult?.verified) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -318,60 +318,60 @@ const FinanceiroPage = () => {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
             <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Receitas Confirmadas</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-xl font-bold text-green-600">
+                <div className="text-2xl font-bold text-green-600 leading-none">
                   R$ {receitasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Despesas Confirmadas</CardTitle>
                 <TrendingDown className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-xl font-bold text-red-600">
+                <div className="text-2xl font-bold text-red-600 leading-none">
                   R$ {despesasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Saldo Atual</CardTitle>
                 <DollarSign className={`h-4 w-4 ${saldoAtual >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className={`text-xl font-bold ${saldoAtual >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <div className={`text-2xl font-bold leading-none ${saldoAtual >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   R$ {saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Receitas Pendentes</CardTitle>
                 <Clock className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-xl font-bold text-yellow-600">
+                <div className="text-2xl font-bold text-yellow-600 leading-none">
                   R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
             </Card>
             
             <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-gray-600">Despesas Pendentes</CardTitle>
                 <Clock className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-xl font-bold text-orange-600">
+                <div className="text-2xl font-bold text-orange-600 leading-none">
                   R$ {despesasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
