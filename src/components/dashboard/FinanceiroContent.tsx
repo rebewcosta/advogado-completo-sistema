@@ -187,60 +187,60 @@ const FinanceiroContent: React.FC = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="shadow-sm border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium text-gray-600">Receita Confirmada</CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-2xl font-bold text-green-600 leading-none">
+            <div className="text-xl font-bold text-green-600">
               R$ {stats.receitaMesConfirmada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium text-gray-600">Despesa Confirmada</CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-2xl font-bold text-red-600 leading-none">
+            <div className="text-xl font-bold text-red-600">
               R$ {stats.despesaMesConfirmada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium text-gray-600">Saldo do Mês</CardTitle>
             <DollarSign className={`h-4 w-4 ${stats.saldoMes >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className={`text-2xl font-bold leading-none ${stats.saldoMes >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+            <div className={`text-xl font-bold ${stats.saldoMes >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
               R$ {stats.saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium text-gray-600">Receitas Pendentes</CardTitle>
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-2xl font-bold text-yellow-600 leading-none">
+            <div className="text-xl font-bold text-yellow-600">
               R$ {stats.receitaMesPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-sm border border-gray-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle className="text-sm font-medium text-gray-600">Despesas Pendentes</CardTitle>
             <Clock className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-2xl font-bold text-orange-600 leading-none">
+            <div className="text-xl font-bold text-orange-600">
               R$ {stats.despesaMesPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>

@@ -1,94 +1,92 @@
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
+
+// src/components/processos/ProcessDialogs.tsx
+import React from 'react';
+import ProcessForm from '@/components/ProcessForm';
+import ProcessDetails from '@/components/processos/ProcessDetails';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import ProcessForm from '@/components/ProcessForm'
-import { z } from 'zod'
-import { Processo } from '@/integrations/supabase/types'
+} from "@/components/ui/dialog";
+import type { Database } from '@/integrations/supabase/types';
+import { ProcessoComCliente } from '@/stores/useProcessesStore';
 
-export const processoSchema = z.object({
-  numero_processo: z.string().min(1, 'O número do processo é obrigatório.'),
-  classe_judicial: z.string().optional(),
-  assunto: z.string().optional(),
-  jurisdicao: z.string().optional(),
-  orgao_julgador: z.string().optional(),
-  juiz_relator: z.string().optional(),
-  data_distribuicao: z.string().optional(),
-  valor_causa: z.string().optional(),
-  status: z.string().min(1, 'O status é obrigatório.'),
-  cliente_id: z.string().uuid({ message: 'Por favor, selecione um cliente.' }),
-  movimentacoes: z.string().optional(),
-  documentos: z.string().optional(),
-  informacoes_adicionais: z.string().optional(),
-})
+type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
-interface DeleteConfirmationDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: () => void
+// Este tipo deve corresponder ao que ProcessForm espera como processoParaEditar
+interface ProcessoFormDataParaForm {
+  id?: string;
+  numero: string;
+  cliente_id: string | null;
+  nome_cliente_text?: string;
+  tipo: string;
+  vara: string;
+  status: 'Em andamento' | 'Concluído' | 'Suspenso';
+  prazo: string; // Formato dd/MM/yyyy
 }
 
-export const DeleteConfirmationDialog = ({
-  isOpen,
-  onClose,
-  onConfirm,
-}: DeleteConfirmationDialogProps) => (
-  <AlertDialog open={isOpen} onOpenChange={onClose}>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-        <AlertDialogDescription>
-          Esta ação não pode ser desfeita. Isso excluirá permanentemente o
-          processo.
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel onClick={onClose}>Cancelar</AlertDialogCancel>
-        <AlertDialogAction onClick={onConfirm}>Excluir</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-)
-
-interface ProcessFormDialogProps {
-  isOpen: boolean
-  onClose: () => void
-  processo: Processo | null
-  onSave: (data: any) => void
+interface ProcessDialogsProps {
+  formDialogOpen: boolean;
+  detailsDialogOpen: boolean;
+  selectedProcess: ProcessoComCliente | ProcessoFormDataParaForm | null;
+  isEditing: boolean;
+  onFormDialogOpenChange: (open: boolean) => void;
+  onDetailsDialogOpenChange: (open: boolean) => void;
+  onSaveProcess: (processData: ProcessoFormDataParaForm) => void;
+  onEditProcess: (id: string) => void;
+  clientesDoUsuario: ClienteParaSelect[];
+  isLoadingClientes: boolean;
+  onClienteAdded?: () => void; // Adicionar prop para callback
 }
 
-export const ProcessFormDialog = ({
-  isOpen,
-  onClose,
-  processo,
-  onSave,
-}: ProcessFormDialogProps) => (
-  <Dialog open={isOpen} onOpenChange={onClose}>
-    <DialogContent className="sm:max-w-2xl">
-      <DialogHeader>
-        <DialogTitle>
-          {processo ? 'Editar Processo' : 'Novo Processo'}
-        </DialogTitle>
-        <DialogDescription>
-          {processo
-            ? 'Edite as informações do processo abaixo.'
-            : 'Preencha as informações do novo processo.'}
-        </DialogDescription>
-      </DialogHeader>
-      <ProcessForm processo={processo} onSave={onSave} onCancel={onClose} />
-    </DialogContent>
-  </Dialog>
-)
+const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
+  formDialogOpen,
+  detailsDialogOpen,
+  selectedProcess,
+  isEditing,
+  onFormDialogOpenChange,
+  onDetailsDialogOpenChange,
+  onSaveProcess,
+  onEditProcess,
+  clientesDoUsuario,
+  isLoadingClientes,
+  onClienteAdded // Adicionar prop
+}) => {
+  return (
+    <>
+      {/* Process Form Dialog */}
+      <Dialog open={formDialogOpen} onOpenChange={onFormDialogOpenChange}>
+        <DialogContent className="p-0 max-w-2xl md:max-w-3xl lg:max-w-4xl overflow-auto max-h-[90vh]">
+          <ProcessForm
+            onSave={onSaveProcess as any}
+            onCancel={() => onFormDialogOpenChange(false)}
+            // @ts-ignore
+            processoParaEditar={isEditing && formDialogOpen ? selectedProcess : undefined}
+            isEdit={isEditing}
+            clientesDoUsuario={clientesDoUsuario}
+            isLoadingClientes={isLoadingClientes}
+            onClienteAdded={onClienteAdded} // Passar callback
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Process Details Dialog */}
+      <Dialog open={detailsDialogOpen} onOpenChange={onDetailsDialogOpenChange}>
+        <DialogContent className="p-6 max-w-lg md:max-w-2xl">
+          {selectedProcess && detailsDialogOpen && (
+            <ProcessDetails
+              process={selectedProcess as ProcessoComCliente}
+              onClose={() => onDetailsDialogOpenChange(false)}
+              onEdit={() => {
+                if (selectedProcess?.id) {
+                  onEditProcess(selectedProcess.id);
+                }
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+};
+
+export default ProcessDialogs;
