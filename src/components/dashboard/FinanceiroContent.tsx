@@ -192,7 +192,7 @@ const FinanceiroContent: React.FC = () => {
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-xl font-bold text-green-600 leading-none h-7 flex items-center">
+            <div className="text-lg font-bold text-green-600 leading-none h-8 flex items-center">
               R$ {stats.receitaMesConfirmada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
@@ -204,7 +204,7 @@ const FinanceiroContent: React.FC = () => {
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-xl font-bold text-red-600 leading-none h-7 flex items-center">
+            <div className="text-lg font-bold text-red-600 leading-none h-8 flex items-center">
               R$ {stats.despesaMesConfirmada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
@@ -216,7 +216,7 @@ const FinanceiroContent: React.FC = () => {
             <DollarSign className={`h-4 w-4 ${stats.saldoMes >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className={`text-xl font-bold leading-none h-7 flex items-center ${stats.saldoMes >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+            <div className={`text-lg font-bold leading-none h-8 flex items-center ${stats.saldoMes >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
               R$ {stats.saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
@@ -228,7 +228,7 @@ const FinanceiroContent: React.FC = () => {
             <Clock className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-xl font-bold text-yellow-600 leading-none h-7 flex items-center">
+            <div className="text-lg font-bold text-yellow-600 leading-none h-8 flex items-center">
               R$ {stats.receitaMesPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>
@@ -240,7 +240,7 @@ const FinanceiroContent: React.FC = () => {
             <Clock className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent className="pb-4">
-            <div className="text-xl font-bold text-orange-600 leading-none h-7 flex items-center">
+            <div className="text-lg font-bold text-orange-600 leading-none h-8 flex items-center">
               R$ {stats.despesaMesPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </CardContent>

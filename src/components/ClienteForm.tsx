@@ -22,6 +22,7 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
     nome: '',
     email: '',
     telefone: '',
+    tipo: 'Pessoa Física',
     tipo_cliente: 'Pessoa Física', 
     cpfCnpj: '',
     endereco: '',
@@ -38,6 +39,7 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
         nome: cliente.nome || '',
         email: cliente.email || '',
         telefone: cliente.telefone || '',
+        tipo: cliente.tipo_cliente || 'Pessoa Física',
         tipo_cliente: cliente.tipo_cliente || 'Pessoa Física',
         cpfCnpj: cliente.cpfCnpj || '', 
         endereco: cliente.endereco || '',
@@ -52,6 +54,7 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
         nome: '',
         email: '',
         telefone: '',
+        tipo: 'Pessoa Física',
         tipo_cliente: 'Pessoa Física',
         cpfCnpj: '',
         endereco: '',
@@ -70,7 +73,11 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
+    if (name === 'tipo_cliente') {
+      setFormData(prev => ({ ...prev, [name]: value, tipo: value }));
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
