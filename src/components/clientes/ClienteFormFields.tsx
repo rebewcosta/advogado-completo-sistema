@@ -15,7 +15,7 @@ interface ClienteFormData {
   nome: string;
   email: string;
   telefone: string;
-  tipo: string;
+  tipo_cliente: string;
   cpfCnpj: string;
   endereco: string;
   cidade: string;
@@ -62,8 +62,8 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
             Tipo de Cliente <span className="text-red-500">*</span>
           </Label>
           <Select 
-            value={formData.tipo}
-            onValueChange={(value) => handleSelectChange('tipo', value)}
+            value={formData.tipo_cliente}
+            onValueChange={(value) => handleSelectChange('tipo_cliente', value)}
           >
             <SelectTrigger id="tipo_cliente_form">
               <SelectValue placeholder="Selecione o tipo" />
@@ -76,14 +76,14 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
         </div>
         <div className="space-y-1">
           <Label htmlFor="cpfCnpj_cliente_form">
-            {formData.tipo === "Pessoa Física" ? "CPF" : "CNPJ"} <span className="text-red-500">*</span>
+            {formData.tipo_cliente === "Pessoa Física" ? "CPF" : "CNPJ"} <span className="text-red-500">*</span>
           </Label>
           <Input 
             id="cpfCnpj_cliente_form" 
             name="cpfCnpj" 
             value={formData.cpfCnpj}
             onChange={handleChange}
-            placeholder={formData.tipo === "Pessoa Física" ? "000.000.000-00" : "00.000.000/0000-00"}
+            placeholder={formData.tipo_cliente === "Pessoa Física" ? "000.000.000-00" : "00.000.000/0000-00"}
           />
         </div>
         <div className="space-y-1">
