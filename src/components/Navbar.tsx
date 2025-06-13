@@ -1,3 +1,4 @@
+
 // src/components/Navbar.tsx
 import React from 'react';
 import { useLocation } from 'react-router-dom';
@@ -14,7 +15,8 @@ import {
   Menu,
   X,
   Shield,
-  ListChecks // <<< ÍCONE PARA TAREFAS
+  ListChecks,
+  BookOpen // ÍCONE PARA PUBLICAÇÕES
 } from 'lucide-react';
 import Logo from './navbar/Logo';
 import DesktopNav from './navbar/DesktopNav';
@@ -43,7 +45,8 @@ const Navbar: React.FC = () => {
     { path: '/meus-processos', label: 'Meus Processos', icon: <FileText className="h-5 w-5" /> },
     { path: '/clientes', label: 'Clientes', icon: <Users className="h-5 w-5" /> },
     { path: '/agenda', label: 'Agenda', icon: <Calendar className="h-5 w-5" /> },
-    { path: '/tarefas', label: 'Tarefas', icon: <ListChecks className="h-5 w-5" /> }, // <<< ITEM TAREFAS ADICIONADO
+    { path: '/tarefas', label: 'Tarefas', icon: <ListChecks className="h-5 w-5" /> },
+    { path: '/publicacoes', label: 'Publicações', icon: <BookOpen className="h-5 w-5" /> }, // ITEM PUBLICAÇÕES ADICIONADO
     { path: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" /> },
     { path: '/documentos', label: 'Documentos', icon: <FileBox className="h-5 w-5" /> },
     { path: '/relatorios', label: 'Relatórios', icon: <BarChart2 className="h-5 w-5" /> },

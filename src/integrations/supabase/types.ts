@@ -132,6 +132,42 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes_monitoramento: {
+        Row: {
+          created_at: string
+          estados_monitoramento: string[] | null
+          id: string
+          monitoramento_ativo: boolean | null
+          nomes_monitoramento: string[]
+          palavras_chave: string[] | null
+          ultima_busca: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          estados_monitoramento?: string[] | null
+          id?: string
+          monitoramento_ativo?: boolean | null
+          nomes_monitoramento?: string[]
+          palavras_chave?: string[] | null
+          ultima_busca?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          estados_monitoramento?: string[] | null
+          id?: string
+          monitoramento_ativo?: boolean | null
+          nomes_monitoramento?: string[]
+          palavras_chave?: string[] | null
+          ultima_busca?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documentos: {
         Row: {
           cliente: string
@@ -415,6 +451,69 @@ export type Database = {
           subscription_data?: Json | null
           subscription_status?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      publicacoes_diario_oficial: {
+        Row: {
+          comarca: string | null
+          conteudo_publicacao: string
+          created_at: string
+          data_publicacao: string
+          diario_oficial: string
+          estado: string
+          id: string
+          importante: boolean | null
+          lida: boolean | null
+          nome_advogado: string
+          numero_processo: string | null
+          observacoes: string | null
+          segredo_justica: boolean | null
+          tipo_publicacao: string | null
+          titulo_publicacao: string
+          updated_at: string
+          url_publicacao: string | null
+          user_id: string
+        }
+        Insert: {
+          comarca?: string | null
+          conteudo_publicacao: string
+          created_at?: string
+          data_publicacao: string
+          diario_oficial: string
+          estado: string
+          id?: string
+          importante?: boolean | null
+          lida?: boolean | null
+          nome_advogado: string
+          numero_processo?: string | null
+          observacoes?: string | null
+          segredo_justica?: boolean | null
+          tipo_publicacao?: string | null
+          titulo_publicacao: string
+          updated_at?: string
+          url_publicacao?: string | null
+          user_id: string
+        }
+        Update: {
+          comarca?: string | null
+          conteudo_publicacao?: string
+          created_at?: string
+          data_publicacao?: string
+          diario_oficial?: string
+          estado?: string
+          id?: string
+          importante?: boolean | null
+          lida?: boolean | null
+          nome_advogado?: string
+          numero_processo?: string | null
+          observacoes?: string | null
+          segredo_justica?: boolean | null
+          tipo_publicacao?: string | null
+          titulo_publicacao?: string
+          updated_at?: string
+          url_publicacao?: string | null
+          user_id?: string
         }
         Relationships: []
       }
