@@ -323,7 +323,7 @@ const FinanceiroPage = () => {
                 <TrendingUp className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-lg font-bold text-green-600 leading-none h-8 flex items-center">
+                <div className="text-base font-bold text-green-600 leading-none h-8 flex items-center">
                   R$ {receitasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
@@ -335,7 +335,7 @@ const FinanceiroPage = () => {
                 <TrendingDown className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-lg font-bold text-red-600 leading-none h-8 flex items-center">
+                <div className="text-base font-bold text-red-600 leading-none h-8 flex items-center">
                   R$ {despesasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
@@ -347,7 +347,7 @@ const FinanceiroPage = () => {
                 <DollarSign className={`h-4 w-4 ${saldoAtual >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className={`text-lg font-bold leading-none h-8 flex items-center ${saldoAtual >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
+                <div className={`text-base font-bold leading-none h-8 flex items-center ${saldoAtual >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
                   R$ {saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
@@ -359,7 +359,7 @@ const FinanceiroPage = () => {
                 <Clock className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-lg font-bold text-yellow-600 leading-none h-8 flex items-center">
+                <div className="text-base font-bold text-yellow-600 leading-none h-8 flex items-center">
                   R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
@@ -371,7 +371,7 @@ const FinanceiroPage = () => {
                 <Clock className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent className="pb-4">
-                <div className="text-lg font-bold text-orange-600 leading-none h-8 flex items-center">
+                <div className="text-base font-bold text-orange-600 leading-none h-8 flex items-center">
                   R$ {despesasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
