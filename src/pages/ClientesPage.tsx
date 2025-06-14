@@ -115,14 +115,14 @@ const ClientesPage = () => {
     setIsFormDialogOpen(true);
   };
 
-  const handleToggleStatus = async (clientId: string, currentStatus: string) => {
-    const newStatus = currentStatus === 'Ativo' ? 'Inativo' : 'Ativo';
+  const handleToggleStatus = async (client: Cliente) => {
+    const newStatus = client.status_cliente === 'Ativo' ? 'Inativo' : 'Ativo';
     
     try {
       const { error } = await supabase
         .from('clientes')
         .update({ status_cliente: newStatus })
-        .eq('id', clientId);
+        .eq('id', client.id);
       
       if (error) throw error;
       
@@ -249,8 +249,11 @@ const ClientesPage = () => {
           <ClienteListAsCards
             clients={filteredClients}
             onEdit={handleEditClient}
+            onView={handleViewClient}
+            onToggleStatus={handleToggleStatus}
             onDelete={handleDeleteClient}
             isLoading={isLoading || isRefreshing}
+            searchTerm={searchTerm}
           />
         </div>
 

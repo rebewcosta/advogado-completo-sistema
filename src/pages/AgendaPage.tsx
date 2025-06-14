@@ -200,6 +200,16 @@ const AgendaPage = () => {
     );
   }
 
+  // Convert selectedEvent to the correct format for the form
+  const convertEventForForm = (event: AgendaEvent | null) => {
+    if (!event) return null;
+    
+    return {
+      ...event,
+      data_hora_inicio: new Date(event.data_hora_inicio),
+    };
+  };
+
   return (
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
@@ -286,7 +296,7 @@ const AgendaPage = () => {
           isOpen={isFormOpen}
           onOpenChange={setIsFormOpen}
           onSave={handleSaveEvent}
-          initialEventData={selectedEvent}
+          initialEventData={convertEventForForm(selectedEvent)}
           clientes={[]}
           processos={[]}
         />
