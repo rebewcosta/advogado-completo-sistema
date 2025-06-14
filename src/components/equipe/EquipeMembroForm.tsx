@@ -4,18 +4,11 @@ import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from "@/components/ui/button";
+import EquipeMembroFormFields from './EquipeMembroFormFields';
+import EquipeMembroFormActions from './EquipeMembroFormActions';
 
 interface EquipeMembroFormProps {
   isOpen: boolean;
@@ -113,90 +106,18 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
             {/* Campos do formulário com fundo branco */}
             <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="nome" className="text-gray-700 font-medium">Nome *</Label>
-                    <Input
-                      id="nome"
-                      value={formData.nome}
-                      onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                      placeholder="Nome completo"
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                      placeholder="email@exemplo.com"
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="cargo" className="text-gray-700 font-medium">Cargo</Label>
-                    <Input
-                      id="cargo"
-                      value={formData.cargo}
-                      onChange={(e) => setFormData({...formData, cargo: e.target.value})}
-                      placeholder="Cargo do funcionário"
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      value={formData.telefone}
-                      onChange={(e) => setFormData({...formData, telefone: e.target.value})}
-                      placeholder="(00) 00000-0000"
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="status" className="text-gray-700 font-medium">Status</Label>
-                    <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                      <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
-                        <SelectItem value="ativo">Ativo</SelectItem>
-                        <SelectItem value="inativo">Inativo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
+              <EquipeMembroFormFields
+                formData={formData}
+                setFormData={setFormData}
+              />
             </div>
 
             {/* Footer com gradiente azul e botões */}
             <div className="p-6">
-              <div className="flex justify-end gap-3">
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={onClose}
-                  className="px-6 py-3 h-12 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit"
-                  className="px-6 py-3 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
-                >
-                  {membro ? 'Salvar Alterações' : 'Cadastrar Membro'}
-                </Button>
-              </div>
+              <EquipeMembroFormActions
+                onClose={onClose}
+                isEdit={!!membro}
+              />
             </div>
           </form>
         </div>
