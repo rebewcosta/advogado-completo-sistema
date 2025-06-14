@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,6 +110,37 @@ const ClientesPage = () => {
     setIsFormDialogOpen(true);
   };
 
+  const handleViewClient = (client: Cliente) => {
+    setClienteParaEdicao(client);
+    setIsFormDialogOpen(true);
+  };
+
+  const handleToggleStatus = async (clientId: string, currentStatus: string) => {
+    const newStatus = currentStatus === 'Ativo' ? 'Inativo' : 'Ativo';
+    
+    try {
+      const { error } = await supabase
+        .from('clientes')
+        .update({ status_cliente: newStatus })
+        .eq('id', clientId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Status alterado",
+        description: `Cliente marcado como ${newStatus}.`
+      });
+      
+      await fetchClients();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao alterar status",
+        description: error.message,
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleDeleteClient = async (clientId: string) => {
     try {
       const { error } = await supabase
@@ -146,7 +178,7 @@ const ClientesPage = () => {
   const filteredClients = clients.filter(client =>
     client.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.cpf_cnpj?.includes(searchTerm)
+    client.cpfCnpj?.includes(searchTerm)
   );
 
   if (isLoading && clients.length === 0) {
@@ -206,6 +238,8 @@ const ClientesPage = () => {
           <ClienteTable
             clients={filteredClients}
             onEdit={handleEditClient}
+            onView={handleViewClient}
+            onToggleStatus={handleToggleStatus}
             onDelete={handleDeleteClient}
             isLoading={isLoading || isRefreshing}
             searchTerm={searchTerm}

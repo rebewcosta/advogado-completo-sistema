@@ -1,14 +1,12 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Calendar } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, RefreshCw, Filter } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePickerWithRange } from "@/components/ui/date-picker";
+import { Search, RefreshCw } from 'lucide-react';
 import { addDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
@@ -21,9 +19,14 @@ import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import AgendaCalendarView from '@/components/agenda/AgendaCalendarView';
 import AgendaEventTable from '@/components/agenda/AgendaEventTable';
 import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards';
-import AgendaEventForm from '@/components/AgendaEventForm';
+import { AgendaEventForm } from '@/components/AgendaEventForm';
 
-type AgendaEvent = Database['public']['Tables']['agenda']['Row'];
+type AgendaEvent = Database['public']['Tables']['agenda_eventos']['Row'] & {
+  clientes?: { id: string; nome: string } | null;
+  processos?: { id: string; numero_processo: string } | null;
+};
+
+export type EventoAgenda = AgendaEvent;
 
 const AgendaPage = () => {
   const { toast } = useToast();
@@ -36,31 +39,34 @@ const AgendaPage = () => {
   const [activeTab, setActiveTab] = useState("lista");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   
   // Filtros
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(),
     to: addDays(new Date(), 30)
   });
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
 
   const fetchEvents = useCallback(async () => {
     if (!user) return;
     
     try {
       let query = supabase
-        .from('agenda')
-        .select('*')
+        .from('agenda_eventos')
+        .select(`
+          *,
+          clientes!cliente_associado_id(id, nome),
+          processos!processo_associado_id(id, numero_processo)
+        `)
         .eq('user_id', user.id)
-        .order('data_evento', { ascending: true });
+        .order('data_hora_inicio', { ascending: true });
 
       // Aplicar filtro de data se definido
       if (dateRange?.from) {
-        query = query.gte('data_evento', format(dateRange.from, 'yyyy-MM-dd'));
+        query = query.gte('data_hora_inicio', dateRange.from.toISOString());
       }
       if (dateRange?.to) {
-        query = query.lte('data_evento', format(dateRange.to, 'yyyy-MM-dd'));
+        query = query.lte('data_hora_inicio', dateRange.to.toISOString());
       }
 
       const { data, error } = await query;
@@ -82,13 +88,13 @@ const AgendaPage = () => {
     fetchEvents();
   }, [fetchEvents]);
 
-  const handleSaveEvent = async (eventData: Omit<AgendaEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+  const handleSaveEvent = async (eventData: any) => {
     if (!user) return false;
 
     try {
       if (selectedEvent) {
         const { error } = await supabase
-          .from('agenda')
+          .from('agenda_eventos')
           .update({
             ...eventData,
             updated_at: new Date().toISOString()
@@ -103,7 +109,7 @@ const AgendaPage = () => {
         });
       } else {
         const { error } = await supabase
-          .from('agenda')
+          .from('agenda_eventos')
           .insert({
             ...eventData,
             user_id: user.id
@@ -136,10 +142,15 @@ const AgendaPage = () => {
     setIsFormOpen(true);
   };
 
+  const handleViewEvent = (event: AgendaEvent) => {
+    setSelectedEvent(event);
+    setIsFormOpen(true);
+  };
+
   const handleDeleteEvent = async (eventId: string) => {
     try {
       const { error } = await supabase
-        .from('agenda')
+        .from('agenda_eventos')
         .delete()
         .eq('id', eventId);
       
@@ -173,12 +184,9 @@ const AgendaPage = () => {
   // Filtrar eventos
   const filteredEvents = events.filter(event => {
     const matchesSearch = event.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
+                         event.descricao_evento?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === "all" || event.status === statusFilter;
-    const matchesType = typeFilter === "all" || event.tipo === typeFilter;
-    
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch;
   });
 
   if (isLoading && events.length === 0) {
@@ -221,20 +229,6 @@ const AgendaPage = () => {
                     className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-slate-500"
                   />
                 </div>
-                <div className="flex gap-2">
-                  <DatePickerWithRange
-                    date={dateRange}
-                    onDateChange={setDateRange}
-                    placeholder="Data de"
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  />
-                  <DatePickerWithRange
-                    date={dateRange}
-                    onDateChange={setDateRange}
-                    placeholder="Data até"
-                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
-                  />
-                </div>
               </div>
               <Button 
                 onClick={handleRefresh} 
@@ -262,6 +256,7 @@ const AgendaPage = () => {
               <AgendaEventTable
                 events={filteredEvents}
                 onEdit={handleEditEvent}
+                onView={handleViewEvent}
                 onDelete={handleDeleteEvent}
                 isLoading={isLoading || isRefreshing}
               />
@@ -270,6 +265,7 @@ const AgendaPage = () => {
               <AgendaEventListAsCards
                 events={filteredEvents}
                 onEdit={handleEditEvent}
+                onView={handleViewEvent}
                 onDelete={handleDeleteEvent}
                 isLoading={isLoading || isRefreshing}
               />
@@ -279,23 +275,20 @@ const AgendaPage = () => {
           <TabsContent value="calendario">
             <AgendaCalendarView
               events={filteredEvents}
+              selectedDate={selectedDate}
+              onDateSelect={setSelectedDate}
               onEventClick={handleEditEvent}
-              onDateClick={(date) => {
-                setSelectedEvent(null);
-                setIsFormOpen(true);
-              }}
             />
           </TabsContent>
         </Tabs>
 
         <AgendaEventForm
           isOpen={isFormOpen}
-          onClose={() => {
-            setIsFormOpen(false);
-            setSelectedEvent(null);
-          }}
+          onOpenChange={setIsFormOpen}
           onSave={handleSaveEvent}
-          event={selectedEvent}
+          initialEventData={selectedEvent}
+          clientes={[]}
+          processos={[]}
         />
       </div>
     </AdminLayout>
