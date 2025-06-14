@@ -19,6 +19,7 @@ interface TransacaoFormFieldsProps {
     data_transacao: string;
     cliente_associado_id: string;
     processo_associado_id: string;
+    status_pagamento: string;
   };
   onChange: (field: string, value: string) => void;
 }
@@ -38,8 +39,8 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
-                <SelectItem value="entrada">Entrada</SelectItem>
-                <SelectItem value="saida">Saída</SelectItem>
+                <SelectItem value="Receita">Receita</SelectItem>
+                <SelectItem value="Despesa">Despesa</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -76,16 +77,31 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
           </div>
           
           <div>
-            <Label htmlFor="data_transacao" className="text-gray-700 font-medium">Data da Transação *</Label>
-            <Input
-              id="data_transacao"
-              type="date"
-              value={formData.data_transacao}
-              onChange={(e) => onChange('data_transacao', e.target.value)}
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-              required
-            />
+            <Label htmlFor="status_pagamento" className="text-gray-700 font-medium">Status *</Label>
+            <Select value={formData.status_pagamento} onValueChange={(value) => onChange('status_pagamento', value)}>
+              <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
+                <SelectItem value="Pendente">Pendente</SelectItem>
+                <SelectItem value="Pago">Pago</SelectItem>
+                <SelectItem value="Recebido">Recebido</SelectItem>
+                <SelectItem value="Atrasado">Atrasado</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+        </div>
+
+        <div>
+          <Label htmlFor="data_transacao" className="text-gray-700 font-medium">Data da Transação *</Label>
+          <Input
+            id="data_transacao"
+            type="date"
+            value={formData.data_transacao}
+            onChange={(e) => onChange('data_transacao', e.target.value)}
+            className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+            required
+          />
         </div>
 
         <div>

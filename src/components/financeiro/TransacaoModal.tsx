@@ -22,36 +22,39 @@ const TransacaoModal: React.FC<TransacaoModalProps> = ({
   transacao
 }) => {
   const [formData, setFormData] = useState({
-    tipo: 'entrada',
+    tipo: 'Receita',
     categoria: '',
     valor: '',
     descricao: '',
     data_transacao: '',
     cliente_associado_id: '',
-    processo_associado_id: ''
+    processo_associado_id: '',
+    status_pagamento: 'Pendente'
   });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (transacao) {
       setFormData({
-        tipo: transacao.tipo || 'entrada',
+        tipo: transacao.tipo_transacao || 'Receita',
         categoria: transacao.categoria || '',
         valor: transacao.valor?.toString() || '',
         descricao: transacao.descricao || '',
         data_transacao: transacao.data_transacao || '',
         cliente_associado_id: transacao.cliente_associado_id || '',
-        processo_associado_id: transacao.processo_associado_id || ''
+        processo_associado_id: transacao.processo_associado_id || '',
+        status_pagamento: transacao.status_pagamento || 'Pendente'
       });
     } else {
       setFormData({
-        tipo: 'entrada',
+        tipo: 'Receita',
         categoria: '',
         valor: '',
         descricao: '',
         data_transacao: '',
         cliente_associado_id: '',
-        processo_associado_id: ''
+        processo_associado_id: '',
+        status_pagamento: 'Pendente'
       });
     }
   }, [transacao, isOpen]);

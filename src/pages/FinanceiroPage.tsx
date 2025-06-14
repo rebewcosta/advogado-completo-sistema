@@ -264,7 +264,7 @@ const FinanceiroPage = () => {
       valor: parseFloat(transacaoData.valor),
       categoria: transacaoData.categoria,
       data_transacao: transacaoData.data_transacao,
-      status_pagamento: 'Pendente' as TransacaoSupabase['status_pagamento'],
+      status_pagamento: transacaoData.status_pagamento as TransacaoSupabase['status_pagamento'],
       cliente_associado_id: transacaoData.cliente_associado_id || null,
       processo_associado_id: transacaoData.processo_associado_id || null,
     };
