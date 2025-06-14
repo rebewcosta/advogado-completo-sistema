@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import AdminLayout from '@/components/AdminLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from '@/components/ui/spinner';
@@ -7,7 +8,6 @@ import { User, CreditCard, Shield } from 'lucide-react';
 import GerenciarAssinatura from '@/components/assinatura/GerenciarAssinatura';
 import PerfilInfoTab from '@/components/perfil/PerfilInfoTab';
 import SegurancaTab from '@/components/perfil/SegurancaTab';
-import { Toaster } from "@/components/ui/toaster";
 
 const PerfilUsuarioPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -25,16 +25,17 @@ const PerfilUsuarioPage = () => {
 
   if (isLoading && !user) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8 flex items-center justify-center">
-        <Spinner size="lg" />
-        <Toaster />
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center h-full">
+          <Spinner size="lg" />
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
+    <AdminLayout>
+      <div className="container mx-auto py-8 px-4 md:px-6">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Minha Conta</h1>
           <p className="text-gray-500">Gerencie suas informações, assinatura e segurança.</p>
@@ -72,8 +73,7 @@ const PerfilUsuarioPage = () => {
           </TabsContent>
         </Tabs>
       </div>
-      <Toaster />
-    </div>
+    </AdminLayout>
   );
 };
 
