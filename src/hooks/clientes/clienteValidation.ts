@@ -15,7 +15,7 @@ export const prepareClientDataForSave = (clientData: ClienteFormData): any => {
     observacoes: clientData.observacoes || ''
   };
 
-  // Só incluir email se não estiver vazio para evitar conflito de unique constraint
+  // Só incluir email se não estiver vazio - agora o campo permite null no banco
   if (clientData.email && clientData.email.trim()) {
     dataToSave.email = clientData.email.trim();
   }

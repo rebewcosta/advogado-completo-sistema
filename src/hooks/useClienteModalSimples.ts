@@ -46,7 +46,7 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
       observacoes: ''
     };
     
-    // Só incluir email se não estiver vazio
+    // Só incluir email se não estiver vazio - agora funciona com campo nullable
     if (formData.email && formData.email.trim()) {
       dataToSave.email = formData.email.trim();
     }

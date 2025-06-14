@@ -84,7 +84,7 @@ export type Database = {
           cidade: string | null
           cpfCnpj: string
           created_at: string
-          email: string
+          email: string | null
           endereco: string | null
           estado: string | null
           id: string
@@ -101,7 +101,7 @@ export type Database = {
           cidade?: string | null
           cpfCnpj: string
           created_at?: string
-          email: string
+          email?: string | null
           endereco?: string | null
           estado?: string | null
           id?: string
@@ -118,7 +118,7 @@ export type Database = {
           cidade?: string | null
           cpfCnpj?: string
           created_at?: string
-          email?: string
+          email?: string | null
           endereco?: string | null
           estado?: string | null
           id?: string
