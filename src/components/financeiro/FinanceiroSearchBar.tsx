@@ -19,22 +19,26 @@ const FinanceiroSearchBar: React.FC<FinanceiroSearchBarProps> = ({
   isLoading
 }) => {
   return (
-    <Card className="mb-6 shadow-md rounded-lg border border-slate-700 bg-slate-800">
-      <CardContent className="p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <Card className="mb-6 bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl animate-slide-in">
+      <CardContent className="p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="relative flex-grow sm:max-w-xs md:max-w-sm">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               type="text"
               placeholder="Buscar por descrição, categoria..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
-              className="pl-10 text-sm h-10 w-full bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-slate-500"
+              className="pl-10 text-sm h-11 w-full bg-white/80 backdrop-blur-sm border-white/30 text-gray-700 placeholder:text-gray-400 focus:border-blue-300 focus:ring-blue-200 rounded-xl shadow-sm transition-all duration-200"
             />
           </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs h-10 bg-transparent border-slate-600 text-white hover:bg-slate-700 hover:text-white rounded-lg">
-              <Filter className="mr-1.5 h-3.5 w-3.5 text-white" />
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full sm:w-auto text-sm h-11 bg-white/60 backdrop-blur-sm border-white/30 text-gray-700 hover:bg-white/80 hover:text-gray-800 rounded-xl shadow-sm transition-all duration-200 hover:shadow-md"
+            >
+              <Filter className="mr-2 h-4 w-4" />
               Filtrar
             </Button>
             <Button 
@@ -42,9 +46,9 @@ const FinanceiroSearchBar: React.FC<FinanceiroSearchBarProps> = ({
               variant="outline" 
               size="sm" 
               disabled={isLoading} 
-              className="w-full sm:w-auto text-xs h-10 bg-transparent border-slate-600 text-white hover:bg-slate-700 hover:text-white rounded-lg"
+              className="w-full sm:w-auto text-sm h-11 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
-              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 text-white ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               {isLoading ? 'Atualizando...' : 'Atualizar Transações'}
             </Button>
           </div>

@@ -291,18 +291,28 @@ const FinanceiroPage = () => {
   const isLoadingCombined = isLoadingAccess || isLoadingTransactions || isRefreshingManually;
 
   if (isLoadingAccess) {
-    return ( <AdminLayout><div className="flex items-center justify-center min-h-[calc(100vh-150px)]"><Loader2 className="h-12 w-12 animate-spin text-lawyer-primary" /></div></AdminLayout> );
+    return ( 
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
+          <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
+        </div>
+      </AdminLayout> 
+    );
   }
 
   if (!user || (pinCheckResult && !pinCheckResult.verified && !pinCheckResult.pinNotSet) ) {
     if (!user) {
-        return ( <AdminLayout><div className="flex items-center justify-center min-h-[calc(100vh-150px)] p-4">
-            <Alert variant="destructive" className="max-w-lg">
-                <ShieldAlert className="h-5 w-5" />
-                <AlertTitle>Autenticação Necessária</AlertTitle>
-                <AlertDescription>Por favor, faça login para acessar esta página.</AlertDescription>
-            </Alert>
-        </div></AdminLayout> );
+        return ( 
+          <AdminLayout>
+            <div className="flex items-center justify-center min-h-[calc(100vh-150px)] p-4">
+              <Alert variant="destructive" className="max-w-lg">
+                  <ShieldAlert className="h-5 w-5" />
+                  <AlertTitle>Autenticação Necessária</AlertTitle>
+                  <AlertDescription>Por favor, faça login para acessar esta página.</AlertDescription>
+              </Alert>
+            </div>
+          </AdminLayout> 
+        );
     }
     return (
       <AdminLayout>
@@ -317,9 +327,11 @@ const FinanceiroPage = () => {
   if (isLoadingCombined && !transactions.length && !isRefreshingManually && pinCheckResult?.verified) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
-          <Loader2 className="h-12 w-12 animate-spin text-lawyer-primary" />
-          <span className="text-gray-500 mt-3">Carregando dados financeiros...</span>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-6 lg:p-8 flex flex-col justify-center items-center">
+          <div className="bg-white/60 backdrop-blur-lg rounded-2xl border border-white/20 shadow-xl p-8 animate-fade-in">
+            <Loader2 className="h-12 w-12 animate-spin text-blue-500 mx-auto" />
+            <span className="text-gray-600 mt-3 block text-center">Carregando dados financeiros...</span>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -327,65 +339,67 @@ const FinanceiroPage = () => {
 
   return (
     <AdminLayout>
-      <main className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <SharedPageHeader
-            title="Controle Financeiro"
-            description="Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório."
-            pageIcon={<BadgePercent />}
-            actionButtonText="Nova Transação"
-            onActionButtonClick={handleOpenModal}
+      <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+          <SharedPageHeader
+              title="Controle Financeiro"
+              description="Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório."
+              pageIcon={<BadgePercent />}
+              actionButtonText="Nova Transação"
+              onActionButtonClick={handleOpenModal}
+              isLoading={isLoadingCombined}
+          />
+
+          {pinCheckResult?.pinNotSet && (
+              <Alert variant="default" className="mb-6 text-xs bg-blue-100/60 backdrop-blur-sm border-blue-200/50 text-blue-700 max-w-md animate-slide-in">
+                  <ShieldAlert className="h-4 w-4" />
+                  <AlertTitle className="font-medium">PIN de Segurança</AlertTitle>
+                  <AlertDescription>
+                      Para maior segurança, configure um PIN para esta seção em Configurações {'>'} Segurança.
+                  </AlertDescription>
+              </Alert>
+          )}
+            
+          <FinanceiroStatsCards stats={stats} />
+
+          <FinanceiroSearchBar
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onRefresh={handleManualRefresh}
             isLoading={isLoadingCombined}
-        />
+          />
+            
+          <div className="hidden md:block">
+              <TransacaoTable
+                  transacoes={filteredTransactions}
+                  onEdit={handleEditTransaction}
+                  onDelete={handleDeleteTransaction}
+                  isLoading={isLoadingCombined}
+                  searchTerm={searchTerm}
+              />
+          </div>
+          <div className="md:hidden">
+              <TransacaoListAsCards
+                  transacoes={filteredTransactions}
+                  onEdit={handleEditTransaction}
+                  onDelete={handleDeleteTransaction}
+                  isLoading={isLoadingCombined}
+                  searchTerm={searchTerm}
+              />
+          </div>
 
-        {pinCheckResult?.pinNotSet && (
-            <Alert variant="default" className="mb-6 text-xs bg-blue-50 border-blue-200 text-blue-700 max-w-md">
-                <ShieldAlert className="h-4 w-4" />
-                <AlertTitle className="font-medium">PIN de Segurança</AlertTitle>
-                <AlertDescription>
-                    Para maior segurança, configure um PIN para esta seção em Configurações {'>'} Segurança.
-                </AlertDescription>
-            </Alert>
-        )}
-          
-        <FinanceiroStatsCards stats={stats} />
-
-        <FinanceiroSearchBar
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onRefresh={handleManualRefresh}
-          isLoading={isLoadingCombined}
-        />
-          
-        <div className="hidden md:block">
-            <TransacaoTable
-                transacoes={filteredTransactions}
-                onEdit={handleEditTransaction}
-                onDelete={handleDeleteTransaction}
-                isLoading={isLoadingCombined}
-                searchTerm={searchTerm}
-            />
+          <TransacaoModal
+            isOpen={isModalOpen}
+            currentTransaction={currentTransaction}
+            formData={formData}
+            isLoading={isLoadingTransactions}
+            onClose={handleCloseModal}
+            onSubmit={handleAddOrUpdateTransaction}
+            handleChange={handleChange}
+            handleSelectChange={handleSelectChange}
+          />
         </div>
-        <div className="md:hidden">
-            <TransacaoListAsCards
-                transacoes={filteredTransactions}
-                onEdit={handleEditTransaction}
-                onDelete={handleDeleteTransaction}
-                isLoading={isLoadingCombined}
-                searchTerm={searchTerm}
-            />
-        </div>
-
-        <TransacaoModal
-          isOpen={isModalOpen}
-          currentTransaction={currentTransaction}
-          formData={formData}
-          isLoading={isLoadingTransactions}
-          onClose={handleCloseModal}
-          onSubmit={handleAddOrUpdateTransaction}
-          handleChange={handleChange}
-          handleSelectChange={handleSelectChange}
-        />
-        </main>
+      </main>
     </AdminLayout>
   );
 };
