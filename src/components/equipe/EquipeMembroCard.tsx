@@ -23,13 +23,10 @@ const EquipeMembroCard: React.FC<EquipeMembroCardProps> = ({
   onDelete,
   isSubmitting
 }) => {
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Ativo': return 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0';
-      case 'Inativo': return 'bg-gradient-to-r from-red-500 to-red-600 text-white border-0';
-      case 'Pendente': return 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white border-0';
-      default: return 'bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0';
-    }
+  const getStatusColor = (ativo: boolean) => {
+    return ativo 
+      ? 'bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0'
+      : 'bg-gradient-to-r from-red-500 to-red-600 text-white border-0';
   };
 
   const getCargoColor = (cargo: string | null) => {
@@ -85,8 +82,8 @@ const EquipeMembroCard: React.FC<EquipeMembroCardProps> = ({
                 {membro.cargo}
               </Badge>
             )}
-            <Badge variant="outline" className={getStatusColor(membro.status)}>
-              {membro.status}
+            <Badge variant="outline" className={getStatusColor(membro.ativo)}>
+              {membro.ativo ? 'Ativo' : 'Inativo'}
             </Badge>
           </div>
         </div>

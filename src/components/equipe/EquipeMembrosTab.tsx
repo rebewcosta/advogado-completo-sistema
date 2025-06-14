@@ -49,6 +49,11 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
     setEditingMembro(null);
   };
 
+  const handleFormSuccess = () => {
+    handleCloseForm();
+    onRefresh();
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 animate-fade-in">
@@ -118,11 +123,8 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
         <EquipeMembroForm
           isOpen={showForm}
           onClose={handleCloseForm}
-          onSuccess={() => {
-            handleCloseForm();
-            onRefresh();
-          }}
-          editingMembro={editingMembro}
+          onSave={handleFormSuccess}
+          membro={editingMembro}
           setIsSubmitting={setIsSubmitting}
         />
       )}
