@@ -344,9 +344,8 @@ const FinanceiroPage = () => {
               title="Controle Financeiro"
               description="Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório."
               pageIcon={<BadgePercent />}
-              actionButtonText="Nova Transação"
-              onActionButtonClick={handleOpenModal}
               isLoading={isLoadingCombined}
+              showActionButton={false}
           />
 
           {pinCheckResult?.pinNotSet && (
