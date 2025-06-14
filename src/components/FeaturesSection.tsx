@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Users, FileText, Calendar, DollarSign, BarChart2, Archive, CheckSquare, BookOpen, Settings, ArrowRight, Sparkles } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -11,15 +10,13 @@ const FeaturesSection = () => {
       icon: <Users className="h-8 w-8" />,
       title: "Gestão de Clientes",
       description: "Cadastre e gerencie todos os seus clientes com informações completas e organizadas.",
-      link: "/clientes",
-      highlight: "Novo"
+      link: "/clientes"
     },
     {
       icon: <FileText className="h-8 w-8" />,
       title: "Processos Jurídicos",
       description: "Acompanhe todos os processos, prazos e seus andamentos em tempo real.",
-      link: "/processos",
-      highlight: "Popular"
+      link: "/processos"
     },
     {
       icon: <Calendar className="h-8 w-8" />,
@@ -49,14 +46,15 @@ const FeaturesSection = () => {
       icon: <CheckSquare className="h-8 w-8" />,
       title: "Gestão de Tarefas",
       description: "Organize e acompanhe todas as suas tarefas e atividades diárias.",
-      link: "/tarefas"
+      link: "/tarefas",
+      highlight: "Novo"
     },
     {
       icon: <BookOpen className="h-8 w-8" />,
       title: "Publicações Oficiais",
       description: "Monitore automaticamente publicações nos diários oficiais.",
       link: "/publicacoes",
-      highlight: "IA"
+      highlight: "Popular"
     },
     {
       icon: <Settings className="h-8 w-8" />,
