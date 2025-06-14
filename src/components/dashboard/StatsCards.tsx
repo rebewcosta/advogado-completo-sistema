@@ -1,13 +1,14 @@
-// src/components/dashboard/StatsCards.tsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, FileText, Calendar, DollarSign, AlertCircle } from 'lucide-react';
+import { Users, FileText, Calendar, DollarSign, AlertCircle, TrendingUp, TrendingDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { format, startOfMonth, endOfMonth, startOfDay, endOfDay } from 'date-fns';
 import { Spinner } from '@/components/ui/spinner';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
 
 interface Stats {
   clientesAtivos: number | null;
@@ -16,35 +17,61 @@ interface Stats {
   receitaMes: number | null;
 }
 
-interface StatCardProps {
+interface ModernStatCardProps {
   title: string;
   value: string | number | null;
   description: string;
   icon: React.ReactNode;
   isLoading: boolean;
-  bgColorClass: string; // e.g., 'bg-lawyer-primary'
-  iconColorClass?: string; // e.g., 'text-blue-300'
+  gradient: string;
+  trend?: number;
+  formatValue?: (value: number) => string;
 }
 
-const StatCard: React.FC<StatCardProps> = ({ title, value, description, icon, isLoading, bgColorClass, iconColorClass = 'text-white/70' }) => {
+const ModernStatCard: React.FC<ModernStatCardProps> = ({ 
+  title, 
+  value, 
+  description, 
+  icon, 
+  isLoading, 
+  gradient, 
+  trend,
+  formatValue 
+}) => {
   return (
-    <Card className={cn("shadow-lg rounded-lg text-white", bgColorClass)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <div className={cn(iconColorClass)}>
-          {icon}
+    <Card className={`relative overflow-hidden ${gradient} border-0 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 animate-fade-in`}>
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between">
+          <div className="p-2 bg-white/20 rounded-lg backdrop-blur-sm">
+            {icon}
+          </div>
+          {trend !== undefined && (
+            <div className={`flex items-center text-sm font-medium ${trend >= 0 ? 'text-green-200' : 'text-red-200'}`}>
+              {trend >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
+              {Math.abs(trend)}%
+            </div>
+          )}
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? <Spinner size="sm" className="text-white"/> : <div className="text-2xl font-bold">{value ?? 0}</div>}
-        <p className="text-xs text-white/80">
-          {isLoading ? "Carregando..." : description}
-        </p>
+        <div className="space-y-1">
+          {isLoading ? (
+            <div className="flex items-center space-x-2">
+              <Spinner size="sm" className="text-white"/>
+              <span className="text-lg font-medium text-white/80">Carregando...</span>
+            </div>
+          ) : (
+            <h3 className="text-2xl font-bold">
+              {typeof value === 'number' && formatValue ? formatValue(value) : value ?? 0}
+            </h3>
+          )}
+          <p className="text-white/80 text-sm font-medium">{title}</p>
+          <p className="text-white/60 text-xs">{isLoading ? "Aguarde..." : description}</p>
+        </div>
       </CardContent>
     </Card>
   );
 };
-
 
 const StatsCards: React.FC = () => {
   const { user } = useAuth();
@@ -117,70 +144,72 @@ const StatsCards: React.FC = () => {
     fetchStats();
   }, [fetchStats]);
 
-  if (error) {
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {Array(4).fill(0).map((_, index) => (
-                <Card key={index} className="bg-red-700 text-white shadow-lg rounded-lg">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Erro ao Carregar</CardTitle>
-                        <AlertCircle className="h-4 w-4 text-red-300" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-xs text-red-200 truncate">
-                            Falha ao buscar dados.
-                        </div>
-                        <p className="text-xs text-white/70 mt-1">
-                            Tente atualizar a página.
-                        </p>
-                    </CardContent>
-                </Card>
-            ))}
-        </div>
-    );
-  }
-  
-  const cardBgColors = {
-    clientes: 'bg-lawyer-primary', // Azul primário do sistema
-    processos: 'bg-slate-700',     // Um cinza escuro elegante
-    compromissos: 'bg-sky-700',   // Um azul mais claro, mas ainda escuro
-    receita: 'bg-emerald-700'      // Verde escuro para receita
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
   };
 
+  if (error) {
+    return (
+      <Card className="border-red-200 bg-red-50 shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-red-700 flex items-center">
+            <AlertCircle className="mr-2 h-5 w-5"/>
+            Erro ao Carregar Estatísticas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-red-600 text-sm mb-4">{error}</p>
+          <Button variant="outline" size="sm" onClick={fetchStats} className="border-red-300 text-red-700 hover:bg-red-100">
+            <RefreshCw className="mr-2 h-4 w-4"/> Tentar Novamente
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-      <StatCard
+      <ModernStatCard
         title="Clientes Ativos"
         value={stats.clientesAtivos}
         description={(stats.clientesAtivos ?? 0) === 0 ? "Nenhum cliente ativo" : `Total de ${stats.clientesAtivos} clientes`}
-        icon={<Users className="h-5 w-5" />}
+        icon={<Users className="h-6 w-6" />}
         isLoading={isLoading}
-        bgColorClass={cardBgColors.clientes}
+        gradient="bg-gradient-to-r from-blue-500 to-blue-600"
+        trend={12}
       />
-      <StatCard
+      <ModernStatCard
         title="Processos em Andamento"
         value={stats.processosAndamento}
         description={(stats.processosAndamento ?? 0) === 0 ? "Nenhum processo ativo" : `Total de ${stats.processosAndamento} processos`}
-        icon={<FileText className="h-5 w-5" />}
+        icon={<FileText className="h-6 w-6" />}
         isLoading={isLoading}
-        bgColorClass={cardBgColors.processos}
+        gradient="bg-gradient-to-r from-indigo-500 to-indigo-600"
+        trend={5}
       />
-      <StatCard
+      <ModernStatCard
         title="Compromissos Hoje"
         value={stats.compromissosHoje}
         description={(stats.compromissosHoje ?? 0) === 0 ? "Nenhum compromisso hoje" : `Total de ${stats.compromissosHoje} para hoje`}
-        icon={<Calendar className="h-5 w-5" />}
+        icon={<Calendar className="h-6 w-6" />}
         isLoading={isLoading}
-        bgColorClass={cardBgColors.compromissos}
+        gradient="bg-gradient-to-r from-purple-500 to-purple-600"
+        trend={-3}
       />
-      <StatCard
+      <ModernStatCard
         title="Receita no Mês"
-        value={`R$ ${(stats.receitaMes ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+        value={stats.receitaMes}
         description={(stats.receitaMes ?? 0) === 0 ? "Nenhuma receita este mês" : "Receita acumulada do mês atual"}
-        icon={<DollarSign className="h-5 w-5" />}
+        icon={<DollarSign className="h-6 w-6" />}
         isLoading={isLoading}
-        bgColorClass={cardBgColors.receita}
+        gradient="bg-gradient-to-r from-emerald-500 to-emerald-600"
+        formatValue={formatCurrency}
+        trend={15}
       />
     </div>
   );
