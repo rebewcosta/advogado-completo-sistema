@@ -63,6 +63,22 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
   setMonitoramentoAtivo,
   onSave
 }) => {
+  const handleRemoveNome = (index: number) => {
+    // Só permite remover se há mais de um nome
+    if (nomesMonitoramento.length > 1) {
+      const novosNomes = nomesMonitoramento.filter((_, i) => i !== index);
+      setNomesMonitoramento(novosNomes);
+    }
+  };
+
+  const handleRemovePalavra = (index: number) => {
+    // Só permite remover se há mais de uma palavra
+    if (palavrasChave.length > 1) {
+      const novasPalavras = palavrasChave.filter((_, i) => i !== index);
+      setPalavrasChave(novasPalavras);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -92,16 +108,14 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                       setNomesMonitoramento(novosNomes);
                     }}
                     placeholder="Nome do advogado"
+                    className="flex-1"
                   />
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if (nomesMonitoramento.length > 1) {
-                        setNomesMonitoramento(nomesMonitoramento.filter((_, i) => i !== index));
-                      }
-                    }}
+                    onClick={() => handleRemoveNome(index)}
+                    disabled={nomesMonitoramento.length <= 1}
                   >
                     Remover
                   </Button>
@@ -154,16 +168,14 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                       setPalavrasChave(novasPalavras);
                     }}
                     placeholder="Palavra-chave"
+                    className="flex-1"
                   />
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      if (palavrasChave.length > 1) {
-                        setPalavrasChave(palavrasChave.filter((_, i) => i !== index));
-                      }
-                    }}
+                    onClick={() => handleRemovePalavra(index)}
+                    disabled={palavrasChave.length <= 1}
                   >
                     Remover
                   </Button>
