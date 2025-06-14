@@ -1,274 +1,187 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
+import { Calendar } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { CalendarDays, RefreshCw, Calendar as CalendarView, Table, Search } from 'lucide-react';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Card, CardContent } from '@/components/ui/card';
-import { Calendar as ShadcnCalendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Plus, RefreshCw, Filter } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePickerWithRange } from "@/components/ui/date-picker";
+import { addDays, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
 import { useToast } from "@/hooks/use-toast";
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { cn } from "@/lib/utils";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import type { Database } from '@/integrations/supabase/types';
 import { Spinner } from '@/components/ui/spinner';
-import { AgendaEventForm } from '@/components/AgendaEventForm';
-import { AgendaEventDetail } from '@/components/AgendaEventDetail';
-import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards';
-import AgendaEventTable from '@/components/agenda/AgendaEventTable';
-import ModernCalendarView from '@/components/agenda/ModernCalendarView';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AgendaCalendarView from '@/components/agenda/AgendaCalendarView';
+import AgendaEventTable from '@/components/agenda/AgendaEventTable';
+import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards';
+import AgendaEventForm from '@/components/AgendaEventForm';
 
-export type EventoAgenda = Database['public']['Tables']['agenda_eventos']['Row'] & {
-    clientes?: { id: string; nome: string } | null;
-    processos?: { id: string; numero_processo: string } | null;
-};
-export type EventoAgendaFormData = {
-  titulo: string;
-  descricao_evento?: string | null;
-  data_hora_inicio: Date;
-  duracao_minutos: number;
-  local_evento?: string | null;
-  cliente_associado_id?: string | null;
-  processo_associado_id?: string | null;
-  prioridade: 'baixa' | 'média' | 'alta';
-  tipo_evento?: string | null;
-  status_evento?: string | null;
-};
-
-type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
-type ProcessoParaSelect = Pick<Database['public']['Tables']['processos']['Row'], 'id' | 'numero_processo'>;
+type AgendaEvent = Database['public']['Tables']['agenda']['Row'];
 
 const AgendaPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-
-  const [events, setEvents] = useState<EventoAgenda[]>([]);
+  
+  const [searchTerm, setSearchTerm] = useState("");
+  const [events, setEvents] = useState<AgendaEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState("lista");
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState<EventoAgenda | null>(null);
-  const [eventoParaForm, setEventoParaForm] = useState<Partial<EventoAgendaFormData> & { id?: string} | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
+  
+  // Filtros
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: addDays(new Date(), 30)
+  });
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
 
-  const [clientesDoUsuario, setClientesDoUsuario] = useState<ClienteParaSelect[]>([]);
-  const [processosDoUsuario, setProcessosDoUsuario] = useState<ProcessoParaSelect[]>([]);
-  const [isLoadingDropdownData, setIsLoadingDropdownData] = useState(false);
-  const [isRefreshingManually, setIsRefreshingManually] = useState(false);
-
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
-  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
-
-  const fetchEvents = useCallback(async (showLoadingSpinner = true) => {
-    if (!user) {
-      setEvents([]);
-      if (showLoadingSpinner) setIsLoading(false);
-      setIsRefreshingManually(false);
-      return;
-    }
-    if (showLoadingSpinner) setIsLoading(true);
-    setIsRefreshingManually(true);
-
+  const fetchEvents = useCallback(async () => {
+    if (!user) return;
+    
     try {
       let query = supabase
-        .from('agenda_eventos')
-        .select(`*, clientes (id, nome), processos (id, numero_processo)`)
+        .from('agenda')
+        .select('*')
         .eq('user_id', user.id)
-        .order('data_hora_inicio', { ascending: true });
-      
-      const { data, error } = await query;
+        .order('data_evento', { ascending: true });
 
+      // Aplicar filtro de data se definido
+      if (dateRange?.from) {
+        query = query.gte('data_evento', format(dateRange.from, 'yyyy-MM-dd'));
+      }
+      if (dateRange?.to) {
+        query = query.lte('data_evento', format(dateRange.to, 'yyyy-MM-dd'));
+      }
+
+      const { data, error } = await query;
+      
       if (error) throw error;
       setEvents(data || []);
     } catch (error: any) {
-      toast({ title: "Erro ao buscar eventos", description: error.message || "Ocorreu um erro.", variant: "destructive" });
-      setEvents([]);
+      toast({
+        title: "Erro ao carregar eventos",
+        description: error.message,
+        variant: "destructive"
+      });
     } finally {
-      if (showLoadingSpinner) setIsLoading(false);
-      setIsRefreshingManually(false);
+      setIsLoading(false);
     }
-  }, [user, toast]);
-
-  const fetchDropdownData = useCallback(async () => {
-    if (!user) return;
-    setIsLoadingDropdownData(true);
-    try {
-      const [clientesRes, processosRes] = await Promise.all([
-        supabase.from('clientes').select('id, nome').eq('user_id', user.id).order('nome'),
-        supabase.from('processos').select('id, numero_processo').eq('user_id', user.id).order('numero_processo')
-      ]);
-      if (clientesRes.error) throw clientesRes.error;
-      setClientesDoUsuario(clientesRes.data || []);
-      if (processosRes.error) throw processosRes.error;
-      setProcessosDoUsuario(processosRes.data || []);
-    } catch (error: any) {
-      toast({ title: "Erro ao carregar dados para formulário", description: error.message, variant: "destructive" });
-    } finally {
-      setIsLoadingDropdownData(false);
-    }
-  }, [user, toast]);
+  }, [user, dateRange, toast]);
 
   useEffect(() => {
-    if (user) {
-      fetchEvents(); 
-      fetchDropdownData(); 
-    } else {
-      setEvents([]);
-      setIsLoading(false); 
-    }
-  }, [user, fetchEvents, fetchDropdownData]);
+    fetchEvents();
+  }, [fetchEvents]);
 
-  const filteredEvents = events.filter(event => {
-    const matchesSearch = searchTerm === '' || 
-      event.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.descricao_evento?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      event.local_evento?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const eventDate = parseISO(event.data_hora_inicio);
-    
-    if (dateFrom || dateTo) {
-      const matchesDateRange = (!dateFrom || eventDate >= dateFrom) && 
-                              (!dateTo || eventDate <= dateTo);
-      return matchesSearch && matchesDateRange;
-    }
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const matchesFromToday = eventDate >= today;
-    
-    return matchesSearch && matchesFromToday;
-  });
-
-  const handleOpenForm = (eventToEdit?: EventoAgenda) => {
-    if (eventToEdit) {
-        const formData: Partial<EventoAgendaFormData> & { id: string } = {
-            id: eventToEdit.id,
-            titulo: eventToEdit.titulo,
-            descricao_evento: eventToEdit.descricao_evento,
-            data_hora_inicio: new Date(eventToEdit.data_hora_inicio),
-            duracao_minutos: eventToEdit.duracao_minutos,
-            local_evento: eventToEdit.local_evento,
-            cliente_associado_id: eventToEdit.cliente_associado_id,
-            processo_associado_id: eventToEdit.processo_associado_id,
-            prioridade: eventToEdit.prioridade as 'baixa' | 'média' | 'alta',
-            tipo_evento: eventToEdit.tipo_evento,
-            status_evento: eventToEdit.status_evento,
-        };
-        setEventoParaForm(formData);
-        setCurrentEvent(null);
-    } else {
-        const initialDate = selectedDate || new Date();
-        setEventoParaForm({ 
-            data_hora_inicio: initialDate, 
-            duracao_minutos: 60, 
-            prioridade: 'média', 
-            status_evento: 'Agendado',
-            tipo_evento: 'Reunião'
-        });
-        setCurrentEvent(null);
-    }
-    setIsFormOpen(true);
-    setIsDetailOpen(false);
-  };
-
-  const handleSaveEvent = async (formData: EventoAgendaFormData) => {
-    if (!user) return;
-    setIsSubmitting(true);
-    const dataHoraInicioISO = formData.data_hora_inicio.toISOString();
-    const dadosParaSupabase = {
-        user_id: user.id,
-        titulo: formData.titulo,
-        descricao_evento: formData.descricao_evento,
-        data_hora_inicio: dataHoraInicioISO,
-        duracao_minutos: Number(formData.duracao_minutos),
-        local_evento: formData.local_evento,
-        cliente_associado_id: formData.cliente_associado_id || null,
-        processo_associado_id: formData.processo_associado_id || null,
-        prioridade: formData.prioridade,
-        tipo_evento: formData.tipo_evento || null,
-        status_evento: formData.status_evento || 'Agendado',
-    };
+  const handleSaveEvent = async (eventData: Omit<AgendaEvent, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+    if (!user) return false;
 
     try {
-        if (eventoParaForm && eventoParaForm.id) {
-            const { data: updatedEvent, error } = await supabase
-                .from('agenda_eventos')
-                .update(dadosParaSupabase)
-                .eq('id', eventoParaForm.id)
-                .eq('user_id', user.id)
-                .select('*, clientes (id, nome), processos (id, numero_processo)')
-                .single();
-            if (error) throw error;
-            toast({ title: "Evento atualizado!", description: `O evento "${updatedEvent?.titulo}" foi atualizado.` });
-        } else {
-            const { data: newEvent, error } = await supabase
-                .from('agenda_eventos')
-                .insert(dadosParaSupabase)
-                .select('*, clientes (id, nome), processos (id, numero_processo)')
-                .single();
-            if (error) throw error;
-            toast({ title: "Evento criado!", description: `O evento "${newEvent?.titulo}" foi adicionado à agenda.` });
-        }
-        fetchEvents();
-        setIsFormOpen(false);
-        setEventoParaForm(null);
+      if (selectedEvent) {
+        const { error } = await supabase
+          .from('agenda')
+          .update({
+            ...eventData,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', selectedEvent.id);
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Evento atualizado",
+          description: "O evento foi atualizado com sucesso."
+        });
+      } else {
+        const { error } = await supabase
+          .from('agenda')
+          .insert({
+            ...eventData,
+            user_id: user.id
+          });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Evento criado",
+          description: "O evento foi criado com sucesso."
+        });
+      }
+      
+      await fetchEvents();
+      setIsFormOpen(false);
+      setSelectedEvent(null);
+      return true;
     } catch (error: any) {
-        toast({ title: "Erro ao salvar evento", description: error.message || "Ocorreu um erro.", variant: "destructive" });
-    } finally {
-        setIsSubmitting(false);
+      toast({
+        title: "Erro ao salvar evento",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
     }
+  };
+
+  const handleEditEvent = (event: AgendaEvent) => {
+    setSelectedEvent(event);
+    setIsFormOpen(true);
   };
 
   const handleDeleteEvent = async (eventId: string) => {
-    if (!user || isSubmitting) return;
-    const eventToDelete = events.find(e => e.id === eventId);
-    if (eventToDelete && window.confirm(`Tem certeza que deseja excluir o evento "${eventToDelete.titulo}"?`)) {
-        setIsSubmitting(true);
-        try {
-            const { error } = await supabase
-                .from('agenda_eventos')
-                .delete()
-                .eq('id', eventId)
-                .eq('user_id', user.id);
-            if (error) throw error;
-            toast({ title: "Evento excluído!", description: `O evento "${eventToDelete.titulo}" foi removido.` });
-            fetchEvents();
-            setIsDetailOpen(false);
-            setCurrentEvent(null);
-        } catch (error: any) {
-            toast({ title: "Erro ao excluir evento", description: error.message || "Ocorreu um erro.", variant: "destructive" });
-        } finally {
-            setIsSubmitting(false);
-        }
+    try {
+      const { error } = await supabase
+        .from('agenda')
+        .delete()
+        .eq('id', eventId);
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Evento excluído",
+        description: "O evento foi excluído com sucesso."
+      });
+      
+      await fetchEvents();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir evento",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   };
 
-  const handleViewDetails = (event: EventoAgenda) => {
-    setCurrentEvent(event);
-    setIsDetailOpen(true);
-    setIsFormOpen(false);
-  };
-  
-  const handleManualRefresh = () => {
-    fetchEvents(true); 
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchEvents();
+    setIsRefreshing(false);
+    toast({
+      title: "Eventos atualizados",
+      description: "A lista de eventos foi atualizada com sucesso."
+    });
   };
 
-  const isLoadingCombined = isLoading || isSubmitting || isRefreshingManually;
+  // Filtrar eventos
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         event.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || event.status === statusFilter;
+    const matchesType = typeFilter === "all" || event.tipo === typeFilter;
+    
+    return matchesSearch && matchesStatus && matchesType;
+  });
 
-  if (isLoadingCombined && events.length === 0 && !isRefreshingManually) {
+  if (isLoading && events.length === 0) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
@@ -283,201 +196,107 @@ const AgendaPage = () => {
     <AdminLayout>
       <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
         <SharedPageHeader
-            title="Agenda de Compromissos"
-            description="Organize seus prazos, audiências e reuniões."
-            pageIcon={<CalendarDays />}
-            actionButtonText="Novo Evento"
-            onActionButtonClick={() => handleOpenForm()}
-            isLoading={isLoadingCombined}
+          title="Agenda de Compromissos"
+          description="Organize seus prazos, audiências e reuniões."
+          pageIcon={<Calendar />}
+          actionButtonText="Novo Evento"
+          onActionButtonClick={() => {
+            setSelectedEvent(null);
+            setIsFormOpen(true);
+          }}
+          isLoading={isLoading || isRefreshing}
         />
-        
-        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
-            <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <Button 
-                            variant={"outline"} 
-                            className={cn(
-                                "w-full sm:w-auto justify-start text-left font-normal text-sm h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg",
-                                !selectedDate && "text-muted-foreground"
-                            )}
-                        >
-                            <CalendarDays className="mr-2 h-4 w-4" />
-                            {selectedDate ? format(selectedDate, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
-                        </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <ShadcnCalendar mode="single" selected={selectedDate} onSelect={setSelectedDate} initialFocus locale={ptBR} className="p-3 pointer-events-auto" />
-                        </PopoverContent>
-                    </Popover>
-                    
-                    <Button 
-                        onClick={() => fetchEvents(true)} 
-                        variant="outline" 
-                        size="sm" 
-                        disabled={isLoadingCombined} 
-                        className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg"
-                    >
-                        <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoadingCombined ? 'animate-spin' : ''}`} />
-                        {isLoadingCombined ? 'Atualizando...' : 'Atualizar Eventos'}
-                    </Button>
+
+        {/* Barra de filtros */}
+        <Card className="mb-6 shadow-md rounded-lg border border-slate-700 bg-slate-800">
+          <CardContent className="p-4">
+            <div className="flex flex-col lg:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 flex-1">
+                <div className="relative flex-grow">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
+                  <Input
+                    placeholder="Buscar eventos..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-slate-500"
+                  />
                 </div>
-            </CardContent>
+                <div className="flex gap-2">
+                  <DatePickerWithRange
+                    date={dateRange}
+                    onDateChange={setDateRange}
+                    placeholder="Data de"
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                  />
+                  <DatePickerWithRange
+                    date={dateRange}
+                    onDateChange={setDateRange}
+                    placeholder="Data até"
+                    className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+                  />
+                </div>
+              </div>
+              <Button 
+                onClick={handleRefresh} 
+                variant="outline" 
+                size="sm" 
+                disabled={isRefreshing}
+                className="bg-transparent border-slate-600 text-white hover:bg-slate-700 hover:text-white"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 text-white ${isRefreshing ? 'animate-spin' : ''}`} />
+                {isRefreshing ? "Atualizando..." : "Atualizar Eventos"}
+              </Button>
+            </div>
+          </CardContent>
         </Card>
 
-        <Tabs value={viewMode} onValueChange={(value: string) => setViewMode(value as 'list' | 'calendar')} className="mb-6">
-          <TabsList className="grid w-full grid-cols-2 max-w-md">
-            <TabsTrigger value="list" className="flex items-center gap-2">
-              <Table className="h-4 w-4" />
-              <span className="hidden sm:inline">Lista</span>
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <CalendarView className="h-4 w-4" />
-              <span className="hidden sm:inline">Calendário</span>
-            </TabsTrigger>
+        {/* Tabs de visualização */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="lista">Lista</TabsTrigger>
+            <TabsTrigger value="calendario">Calendário</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="list" className="mt-6">
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                    <Input
-                      placeholder="Buscar eventos..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                  
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !dateFrom && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarDays className="mr-2 h-4 w-4" />
-                        {dateFrom ? format(dateFrom, "PPP", { locale: ptBR }) : "Data de"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <ShadcnCalendar
-                        mode="single"
-                        selected={dateFrom}
-                        onSelect={setDateFrom}
-                        initialFocus
-                        locale={ptBR}
-                      />
-                    </PopoverContent>
-                  </Popover>
-
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !dateTo && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarDays className="mr-2 h-4 w-4" />
-                        {dateTo ? format(dateTo, "PPP", { locale: ptBR }) : "Data até"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <ShadcnCalendar
-                        mode="single"
-                        selected={dateTo}
-                        onSelect={setDateTo}
-                        initialFocus
-                        locale={ptBR}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {(searchTerm || dateFrom || dateTo) && (
-                  <div className="mt-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setSearchTerm('');
-                        setDateFrom(undefined);
-                        setDateTo(undefined);
-                      }}
-                    >
-                      Limpar filtros
-                    </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
+          <TabsContent value="lista">
             <div className="hidden md:block">
-                <AgendaEventTable
-                    events={filteredEvents}
-                    onEdit={handleOpenForm}
-                    onView={handleViewDetails}
-                    onDelete={handleDeleteEvent}
-                    isLoading={isLoadingCombined}
-                    selectedDate={undefined}
-                />
+              <AgendaEventTable
+                events={filteredEvents}
+                onEdit={handleEditEvent}
+                onDelete={handleDeleteEvent}
+                isLoading={isLoading || isRefreshing}
+              />
             </div>
             <div className="md:hidden">
-                <AgendaEventListAsCards
-                    events={filteredEvents}
-                    onEdit={handleOpenForm}
-                    onView={handleViewDetails}
-                    onDelete={handleDeleteEvent}
-                    isLoading={isLoadingCombined}
-                    selectedDate={undefined}
-                />
+              <AgendaEventListAsCards
+                events={filteredEvents}
+                onEdit={handleEditEvent}
+                onDelete={handleDeleteEvent}
+                isLoading={isLoading || isRefreshing}
+              />
             </div>
           </TabsContent>
 
-          <TabsContent value="calendar" className="mt-6">
-            <ModernCalendarView
-              events={events}
-              selectedDate={selectedDate}
-              onDateSelect={setSelectedDate}
-              onEventClick={handleViewDetails}
+          <TabsContent value="calendario">
+            <AgendaCalendarView
+              events={filteredEvents}
+              onEventClick={handleEditEvent}
+              onDateClick={(date) => {
+                setSelectedEvent(null);
+                setIsFormOpen(true);
+              }}
             />
           </TabsContent>
         </Tabs>
 
-        {isFormOpen && (
-            <AgendaEventForm
-                key={eventoParaForm ? eventoParaForm.id || 'new-event-key' : 'new-event-key'}
-                isOpen={isFormOpen}
-                onOpenChange={(open) => {
-                    if (!open) setEventoParaForm(null);
-                    setIsFormOpen(open);
-                }}
-                initialEventData={eventoParaForm || { data_hora_inicio: selectedDate || new Date(), duracao_minutos: 60, prioridade: 'média', tipo_evento: 'Reunião', status_evento: 'Agendado' }}
-                onSave={handleSaveEvent}
-                clientes={clientesDoUsuario}
-                processos={processosDoUsuario}
-                isLoadingDropdownData={isLoadingDropdownData}
-            />
-        )}
-
-        {isDetailOpen && currentEvent && (
-            <AgendaEventDetail
-                event={currentEvent}
-                onClose={() => { setIsDetailOpen(false); setCurrentEvent(null); }}
-                onDelete={handleDeleteEvent}
-                onEdit={(eventToEdit) => {
-                    setIsDetailOpen(false); 
-                    handleOpenForm(eventToEdit); 
-                }}
-            />
-        )}
+        <AgendaEventForm
+          isOpen={isFormOpen}
+          onClose={() => {
+            setIsFormOpen(false);
+            setSelectedEvent(null);
+          }}
+          onSave={handleSaveEvent}
+          event={selectedEvent}
+        />
       </div>
     </AdminLayout>
   );
