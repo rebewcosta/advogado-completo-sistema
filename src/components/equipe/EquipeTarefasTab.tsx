@@ -105,6 +105,19 @@ const EquipeTarefasTab: React.FC<EquipeTarefasTabProps> = ({
     }
   };
 
+  // Convert database type to form interface when editing
+  const convertToFormInterface = (tarefa: EquipeTarefa) => {
+    return {
+      id: tarefa.id,
+      titulo: tarefa.titulo,
+      descricao: tarefa.descricao_detalhada || '',
+      responsavel: tarefa.responsavel?.nome || '',
+      prazo: tarefa.data_vencimento ? new Date(tarefa.data_vencimento) : undefined,
+      prioridade: tarefa.prioridade.toLowerCase() as 'baixa' | 'media' | 'alta',
+      status: tarefa.status.toLowerCase().replace(' ', '_') as 'pendente' | 'em_andamento' | 'concluida'
+    };
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -248,8 +261,7 @@ const EquipeTarefasTab: React.FC<EquipeTarefasTabProps> = ({
           isOpen={isFormOpen}
           onClose={handleCloseForm}
           onSave={onRefresh}
-          tarefa={tarefaEditando}
-          membros={membros}
+          tarefa={tarefaEditando ? convertToFormInterface(tarefaEditando) : null}
         />
       )}
     </>

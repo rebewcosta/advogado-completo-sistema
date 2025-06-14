@@ -88,6 +88,19 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
     }
   };
 
+  // Convert database type to form interface when editing
+  const convertToFormInterface = (membro: EquipeMembro) => {
+    return {
+      id: membro.id,
+      nome: membro.nome,
+      email: membro.email,
+      cargo: membro.cargo || '',
+      telefone: membro.telefone || '',
+      nivel_acesso: 'visualizador' as const, // Default mapping
+      status: membro.ativo ? 'ativo' as const : 'inativo' as const
+    };
+  };
+
   return (
     <>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -192,7 +205,7 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
           isOpen={isFormOpen}
           onClose={handleCloseForm}
           onSave={onRefresh}
-          membro={membroEditando}
+          membro={membroEditando ? convertToFormInterface(membroEditando) : null}
         />
       )}
     </>

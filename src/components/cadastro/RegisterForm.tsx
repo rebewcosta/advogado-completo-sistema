@@ -80,7 +80,7 @@ const RegisterForm = () => {
     setIsLoading(true);
     
     try {
-      const result = await signUp(
+      await signUp(
         formData.email,
         formData.senha,
         {
@@ -91,10 +91,6 @@ const RegisterForm = () => {
           plano: formData.plano
         }
       );
-
-      if (result && result.error) {
-        throw result.error;
-      }
 
       toast({
         title: "Conta criada com sucesso!",
