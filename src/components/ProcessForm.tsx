@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { format, parse, isValid } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
@@ -141,14 +142,14 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   };
 
   return (
-    <div className="bg-lawyer-dark min-h-screen">
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
       <div className="p-6">
-        <div className="bg-blue-900 p-6 rounded-lg">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl mb-6">
           <ProcessFormHeader isEdit={isEdit} onCancel={onCancel} />
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="bg-slate-800 p-6 rounded-lg mt-4">
+          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
             <ProcessFormFields
               numero={numero}
               setNumero={setNumero}
@@ -168,7 +169,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
             />
           </div>
 
-          <div className="bg-blue-900 p-6 rounded-lg mt-4">
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl">
             <ProcessFormActions isEdit={isEdit} onCancel={onCancel} />
           </div>
         </form>
