@@ -23,7 +23,10 @@ export const savePublicacoes = async (publicacoes: any[], userId: string, supaba
 };
 
 export const getFontesConsultadas = (estados: string[]) => {
-  const estadosConsultados = estados.length > 0 ? estados : ['SP', 'RJ', 'MG', 'CE', 'PR'];
+  // Lista completa de estados brasileiros
+  const todosEstados = ['SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO', 'PE', 'ES', 'DF', 'MT', 'MS', 'PA', 'AM', 'RO', 'AC', 'RR', 'AP', 'TO', 'MA', 'PI', 'AL', 'SE', 'PB', 'RN'];
+  
+  const estadosConsultados = estados.length > 0 ? estados : todosEstados.slice(0, 10); // Primeiros 10 estados principais
   const fontes: string[] = [];
   
   estadosConsultados.forEach(estado => {

@@ -1,4 +1,3 @@
-
 export interface PublicacaoEncontrada {
   nome_advogado: string;
   titulo_publicacao: string;
@@ -21,7 +20,6 @@ export class DiarioScraper {
     try {
       console.log('🔍 Buscando no Diário Oficial de São Paulo...');
       
-      // URL do Diário Oficial de SP
       const url = 'https://www.imprensaoficial.com.br/DO/BuscaDO2001Resultado_11_3.aspx';
       
       const response = await fetch(url, {
@@ -39,10 +37,8 @@ export class DiarioScraper {
 
       const html = await response.text();
       
-      // Buscar por nomes nos textos
       for (const nome of nomes) {
         if (html.toLowerCase().includes(nome.toLowerCase())) {
-          // Extrair contexto ao redor do nome encontrado
           const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
           const matches = html.match(regex);
           
@@ -116,53 +112,6 @@ export class DiarioScraper {
     return publicacoes;
   }
 
-  async buscarPublicacoesCE(nomes: string[]): Promise<PublicacaoEncontrada[]> {
-    const publicacoes: PublicacaoEncontrada[] = [];
-    
-    try {
-      console.log('🔍 Buscando no Diário Oficial do Ceará...');
-      
-      const url = 'https://www.doe.seplag.ce.gov.br/';
-      
-      const response = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-        },
-        signal: AbortSignal.timeout(this.timeoutMs)
-      });
-
-      if (response.ok) {
-        const html = await response.text();
-        
-        for (const nome of nomes) {
-          if (html.toLowerCase().includes(nome.toLowerCase())) {
-            const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
-            const matches = html.match(regex);
-            
-            if (matches) {
-              for (const match of matches) {
-                publicacoes.push({
-                  nome_advogado: nome,
-                  titulo_publicacao: 'Publicação no Diário Oficial CE',
-                  conteudo_publicacao: this.limparTexto(match),
-                  data_publicacao: new Date().toISOString().split('T')[0],
-                  diario_oficial: 'Diário Oficial do Estado do Ceará',
-                  estado: 'CE',
-                  url_publicacao: url
-                });
-              }
-            }
-          }
-        }
-      }
-      
-    } catch (error) {
-      console.error('❌ Erro ao buscar no Diário do CE:', error);
-    }
-    
-    return publicacoes;
-  }
-
   async buscarPublicacoesMG(nomes: string[]): Promise<PublicacaoEncontrada[]> {
     const publicacoes: PublicacaoEncontrada[] = [];
     
@@ -205,6 +154,100 @@ export class DiarioScraper {
       
     } catch (error) {
       console.error('❌ Erro ao buscar no Diário de MG:', error);
+    }
+    
+    return publicacoes;
+  }
+
+  async buscarPublicacoesRS(nomes: string[]): Promise<PublicacaoEncontrada[]> {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    try {
+      console.log('🔍 Buscando no Diário Oficial do Rio Grande do Sul...');
+      
+      const url = 'https://www.corag.com.br/doe';
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(this.timeoutMs)
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+        
+        for (const nome of nomes) {
+          if (html.toLowerCase().includes(nome.toLowerCase())) {
+            const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
+            const matches = html.match(regex);
+            
+            if (matches) {
+              for (const match of matches) {
+                publicacoes.push({
+                  nome_advogado: nome,
+                  titulo_publicacao: 'Publicação no Diário Oficial RS',
+                  conteudo_publicacao: this.limparTexto(match),
+                  data_publicacao: new Date().toISOString().split('T')[0],
+                  diario_oficial: 'Diário Oficial do Estado do Rio Grande do Sul',
+                  estado: 'RS',
+                  url_publicacao: url
+                });
+              }
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar no Diário do RS:', error);
+    }
+    
+    return publicacoes;
+  }
+
+  async buscarPublicacoesCE(nomes: string[]): Promise<PublicacaoEncontrada[]> {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    try {
+      console.log('🔍 Buscando no Diário Oficial do Ceará...');
+      
+      const url = 'https://www.doe.seplag.ce.gov.br/';
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(this.timeoutMs)
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+        
+        for (const nome of nomes) {
+          if (html.toLowerCase().includes(nome.toLowerCase())) {
+            const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
+            const matches = html.match(regex);
+            
+            if (matches) {
+              for (const match of matches) {
+                publicacoes.push({
+                  nome_advogado: nome,
+                  titulo_publicacao: 'Publicação no Diário Oficial CE',
+                  conteudo_publicacao: this.limparTexto(match),
+                  data_publicacao: new Date().toISOString().split('T')[0],
+                  diario_oficial: 'Diário Oficial do Estado do Ceará',
+                  estado: 'CE',
+                  url_publicacao: url
+                });
+              }
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar no Diário do CE:', error);
     }
     
     return publicacoes;
@@ -257,6 +300,194 @@ export class DiarioScraper {
     return publicacoes;
   }
 
+  async buscarPublicacoesSC(nomes: string[]): Promise<PublicacaoEncontrada[]> {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    try {
+      console.log('🔍 Buscando no Diário Oficial de Santa Catarina...');
+      
+      const url = 'https://doe.sea.sc.gov.br/';
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(this.timeoutMs)
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+        
+        for (const nome of nomes) {
+          if (html.toLowerCase().includes(nome.toLowerCase())) {
+            const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
+            const matches = html.match(regex);
+            
+            if (matches) {
+              for (const match of matches) {
+                publicacoes.push({
+                  nome_advogado: nome,
+                  titulo_publicacao: 'Publicação no Diário Oficial SC',
+                  conteudo_publicacao: this.limparTexto(match),
+                  data_publicacao: new Date().toISOString().split('T')[0],
+                  diario_oficial: 'Diário Oficial do Estado de Santa Catarina',
+                  estado: 'SC',
+                  url_publicacao: url
+                });
+              }
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar no Diário de SC:', error);
+    }
+    
+    return publicacoes;
+  }
+
+  async buscarPublicacoesBA(nomes: string[]): Promise<PublicacaoEncontrada[]> {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    try {
+      console.log('🔍 Buscando no Diário Oficial da Bahia...');
+      
+      const url = 'http://www.egba.ba.gov.br/';
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(this.timeoutMs)
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+        
+        for (const nome of nomes) {
+          if (html.toLowerCase().includes(nome.toLowerCase())) {
+            const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
+            const matches = html.match(regex);
+            
+            if (matches) {
+              for (const match of matches) {
+                publicacoes.push({
+                  nome_advogado: nome,
+                  titulo_publicacao: 'Publicação no Diário Oficial BA',
+                  conteudo_publicacao: this.limparTexto(match),
+                  data_publicacao: new Date().toISOString().split('T')[0],
+                  diario_oficial: 'Diário Oficial do Estado da Bahia',
+                  estado: 'BA',
+                  url_publicacao: url
+                });
+              }
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar no Diário da BA:', error);
+    }
+    
+    return publicacoes;
+  }
+
+  async buscarPublicacoesGO(nomes: string[]): Promise<PublicacaoEncontrada[]> {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    try {
+      console.log('🔍 Buscando no Diário Oficial de Goiás...');
+      
+      const url = 'https://www.dio.go.gov.br/';
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(this.timeoutMs)
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+        
+        for (const nome of nomes) {
+          if (html.toLowerCase().includes(nome.toLowerCase())) {
+            const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
+            const matches = html.match(regex);
+            
+            if (matches) {
+              for (const match of matches) {
+                publicacoes.push({
+                  nome_advogado: nome,
+                  titulo_publicacao: 'Publicação no Diário Oficial GO',
+                  conteudo_publicacao: this.limparTexto(match),
+                  data_publicacao: new Date().toISOString().split('T')[0],
+                  diario_oficial: 'Diário Oficial do Estado de Goiás',
+                  estado: 'GO',
+                  url_publicacao: url
+                });
+              }
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar no Diário de GO:', error);
+    }
+    
+    return publicacoes;
+  }
+
+  async buscarPublicacoesPE(nomes: string[]): Promise<PublicacaoEncontrada[]> {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    try {
+      console.log('🔍 Buscando no Diário Oficial de Pernambuco...');
+      
+      const url = 'https://www.cepe.com.br/diario-oficial';
+      
+      const response = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        signal: AbortSignal.timeout(this.timeoutMs)
+      });
+
+      if (response.ok) {
+        const html = await response.text();
+        
+        for (const nome of nomes) {
+          if (html.toLowerCase().includes(nome.toLowerCase())) {
+            const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
+            const matches = html.match(regex);
+            
+            if (matches) {
+              for (const match of matches) {
+                publicacoes.push({
+                  nome_advogado: nome,
+                  titulo_publicacao: 'Publicação no Diário Oficial PE',
+                  conteudo_publicacao: this.limparTexto(match),
+                  data_publicacao: new Date().toISOString().split('T')[0],
+                  diario_oficial: 'Diário Oficial do Estado de Pernambuco',
+                  estado: 'PE',
+                  url_publicacao: url
+                });
+              }
+            }
+          }
+        }
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro ao buscar no Diário de PE:', error);
+    }
+    
+    return publicacoes;
+  }
+
   private limparTexto(texto: string): string {
     return texto
       .replace(/<[^>]*>/g, '') // Remove HTML tags
@@ -274,32 +505,47 @@ export class DiarioScraper {
       { estado: 'RJ', scraper: () => this.buscarPublicacoesRJ(nomes) },
       { estado: 'CE', scraper: () => this.buscarPublicacoesCE(nomes) },
       { estado: 'MG', scraper: () => this.buscarPublicacoesMG(nomes) },
-      { estado: 'PR', scraper: () => this.buscarPublicacoesPR(nomes) }
+      { estado: 'PR', scraper: () => this.buscarPublicacoesPR(nomes) },
+      { estado: 'RS', scraper: () => this.buscarPublicacoesRS(nomes) },
+      { estado: 'SC', scraper: () => this.buscarPublicacoesSC(nomes) },
+      { estado: 'BA', scraper: () => this.buscarPublicacoesBA(nomes) },
+      { estado: 'GO', scraper: () => this.buscarPublicacoesGO(nomes) },
+      { estado: 'PE', scraper: () => this.buscarPublicacoesPE(nomes) }
     ];
 
-    // Filtrar por estados se especificado
+    // Filtrar por estados se especificado, senão busca em todos
     const scrapersParaExecutar = estadosFiltro.length > 0 
       ? scrapers.filter(s => estadosFiltro.includes(s.estado))
       : scrapers;
 
+    console.log(`🌍 Executando busca em ${scrapersParaExecutar.length} estados: ${scrapersParaExecutar.map(s => s.estado).join(', ')}`);
+
     // Executar scrapers em paralelo com limite de concorrência
-    const promises = scrapersParaExecutar.map(async ({ scraper }) => {
+    const promises = scrapersParaExecutar.map(async ({ estado, scraper }) => {
       try {
-        return await scraper();
+        console.log(`🔄 Iniciando busca no estado: ${estado}`);
+        const resultado = await scraper();
+        console.log(`✅ Estado ${estado}: ${resultado.length} publicações encontradas`);
+        return resultado;
       } catch (error) {
-        console.error('Erro no scraper:', error);
+        console.error(`❌ Erro no scraper do estado ${estado}:`, error);
         return [];
       }
     });
 
     const resultados = await Promise.allSettled(promises);
     
-    resultados.forEach((resultado) => {
+    resultados.forEach((resultado, index) => {
+      const estado = scrapersParaExecutar[index].estado;
       if (resultado.status === 'fulfilled') {
         todasPublicacoes.push(...resultado.value);
+        console.log(`📊 Estado ${estado}: ${resultado.value.length} publicações adicionadas`);
+      } else {
+        console.error(`💥 Falha total no estado ${estado}:`, resultado.reason);
       }
     });
 
+    console.log(`🎯 Total de publicações encontradas em todos os estados: ${todasPublicacoes.length}`);
     return todasPublicacoes;
   }
 }
