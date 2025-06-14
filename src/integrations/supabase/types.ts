@@ -377,6 +377,78 @@ export type Database = {
           },
         ]
       }
+      fontes_diarios: {
+        Row: {
+          ativo: boolean | null
+          created_at: string
+          estado: string
+          id: string
+          nome: string
+          seletor_css: string | null
+          tipo_fonte: string
+          ultima_verificacao: string | null
+          url_base: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string
+          estado: string
+          id?: string
+          nome: string
+          seletor_css?: string | null
+          tipo_fonte?: string
+          ultima_verificacao?: string | null
+          url_base: string
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string
+          estado?: string
+          id?: string
+          nome?: string
+          seletor_css?: string | null
+          tipo_fonte?: string
+          ultima_verificacao?: string | null
+          url_base?: string
+        }
+        Relationships: []
+      }
+      logs_monitoramento: {
+        Row: {
+          created_at: string
+          data_execucao: string
+          erros: string | null
+          fontes_consultadas: string[] | null
+          id: string
+          publicacoes_encontradas: number | null
+          status: string
+          tempo_execucao_segundos: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_execucao?: string
+          erros?: string | null
+          fontes_consultadas?: string[] | null
+          id?: string
+          publicacoes_encontradas?: number | null
+          status?: string
+          tempo_execucao_segundos?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_execucao?: string
+          erros?: string | null
+          fontes_consultadas?: string[] | null
+          id?: string
+          publicacoes_encontradas?: number | null
+          status?: string
+          tempo_execucao_segundos?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       processos: {
         Row: {
           cliente_id: string | null
@@ -645,6 +717,10 @@ export type Database = {
       check_user_storage_limit: {
         Args: { uid: string; novo_tamanho: number }
         Returns: boolean
+      }
+      executar_monitoramento_automatico: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       get_user_by_email: {
         Args: { email_to_check: string }

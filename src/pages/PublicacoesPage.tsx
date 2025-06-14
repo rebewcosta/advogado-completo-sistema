@@ -10,6 +10,7 @@ import PublicacoesStats from '@/components/publicacoes/PublicacoesStats';
 import PublicacoesFilters from '@/components/publicacoes/PublicacoesFilters';
 import ConfiguracaoDialog from '@/components/publicacoes/ConfiguracaoDialog';
 import PublicacoesList from '@/components/publicacoes/PublicacoesList';
+import MonitoramentoManual from '@/components/publicacoes/MonitoramentoManual';
 
 interface Publicacao {
   id: string;
@@ -244,18 +245,29 @@ const PublicacoesPage: React.FC = () => {
 
       <PublicacoesStats publicacoes={publicacoes} configuracao={configuracao} />
 
-      <PublicacoesFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        filtroEstado={filtroEstado}
-        setFiltroEstado={setFiltroEstado}
-        filtroTipo={filtroTipo}
-        setFiltroTipo={setFiltroTipo}
-        filtroLida={filtroLida}
-        setFiltroLida={setFiltroLida}
-        onRefresh={fetchPublicacoes}
-        onOpenConfig={() => setShowConfigDialog(true)}
-      />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2">
+          <PublicacoesFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filtroEstado={filtroEstado}
+            setFiltroEstado={setFiltroEstado}
+            filtroTipo={filtroTipo}
+            setFiltroTipo={setFiltroTipo}
+            filtroLida={filtroLida}
+            setFiltroLida={setFiltroLida}
+            onRefresh={fetchPublicacoes}
+            onOpenConfig={() => setShowConfigDialog(true)}
+          />
+        </div>
+        
+        <div className="lg:col-span-1">
+          <MonitoramentoManual 
+            configuracao={configuracao}
+            onMonitoramentoCompleto={fetchPublicacoes}
+          />
+        </div>
+      </div>
 
       <ConfiguracaoDialog
         open={showConfigDialog}
