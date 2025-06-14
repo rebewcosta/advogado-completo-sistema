@@ -14,6 +14,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { FileText } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
+import { Toaster } from "@/components/ui/toaster";
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -176,18 +177,19 @@ const ProcessesPageContent = () => {
 
   if (isLoadingCombined && !processes.length && !isRefreshingManually) {
     return (
-      <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+      <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8 flex items-center justify-center">
+        <div className="flex flex-col items-center">
           <Spinner size="lg" />
           <span className="text-gray-500 mt-3">Carregando processos...</span>
         </div>
-      </AdminLayout>
+        <Toaster />
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
         <SharedPageHeader
             title="Meus Processos"
             description="Gerencie e acompanhe todos os seus processos jurídicos."
@@ -253,7 +255,8 @@ const ProcessesPageContent = () => {
           isLoadingClientes={isLoadingClients}
         />
       </div>
-    </AdminLayout>
+      <Toaster />
+    </div>
   );
 };
 

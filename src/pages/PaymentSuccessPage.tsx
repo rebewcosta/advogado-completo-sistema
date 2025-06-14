@@ -5,6 +5,7 @@ import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { Toaster } from "@/components/ui/toaster";
 
 const PaymentSuccessPage = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const PaymentSuccessPage = () => {
   }, [navigate, toast]);
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 py-12">
+    <div className="min-h-screen bg-gray-50 px-4 py-12 flex items-center justify-center">
       <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-8 text-center">
         <div className="mx-auto w-16 h-16 flex items-center justify-center bg-green-100 rounded-full mb-6">
           <CheckCircle className="h-10 w-10 text-green-600" />
@@ -79,6 +80,7 @@ const PaymentSuccessPage = () => {
           </p>
         </div>
       </div>
+      <Toaster />
     </div>
   );
 };
