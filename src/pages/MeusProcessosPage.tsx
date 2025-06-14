@@ -1,180 +1,46 @@
-// src/pages/MeusProcessosPage.tsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { useToast } from "@/hooks/use-toast";
+
+import React from 'react';
 import AdminLayout from '@/components/AdminLayout';
-import { useProcessesStore, ProcessoComCliente } from '@/stores/useProcessesStore';
+import { Spinner } from '@/components/ui/spinner';
+import { FileText } from 'lucide-react';
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import ProcessSearchActionBar from '@/components/processos/ProcessSearchActionBar';
 import ProcessListAsCards from '@/components/processos/ProcessListAsCards';
 import MeusProcessosTable from '@/components/processos/MeusProcessosTable';
 import ProcessDialogs from '@/components/processos/ProcessDialogs';
-import type { Database } from '@/integrations/supabase/types';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import { Spinner } from '@/components/ui/spinner';
-import { FileText } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card'; 
-import SharedPageHeader from '@/components/shared/SharedPageHeader';
-
-type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
-
-type ProcessoFormData = {
-  numero: string;
-  cliente_id: string | null;
-  nome_cliente_text?: string;
-  tipo: string;
-  vara: string;
-  status: 'Em andamento' | 'Concluído' | 'Suspenso';
-  prazo: string;
-};
-
-type ProcessoFormDataParaForm = {
-  numero: string;
-  cliente_id: string | null;
-  nome_cliente_text?: string;
-  tipo: string;
-  vara: string;
-  status: 'Em andamento' | 'Concluído' | 'Suspenso';
-  prazo: string;
-  id?: string;
-};
+import { useProcessesPage } from '@/hooks/useProcessesPage';
 
 const MeusProcessosPage = () => {
-  const { toast } = useToast();
-  const { user } = useAuth();
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [formDialogOpen, setFormDialogOpen] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
-  const [selectedProcess, setSelectedProcess] = useState<ProcessoComCliente | null>(null);
-  const [processoParaForm, setProcessoParaForm] = useState<ProcessoFormDataParaForm | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
-  const [userClients, setUserClients] = useState<ClienteParaSelect[]>([]);
-  const [isLoadingClients, setIsLoadingClients] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const {
+    searchTerm,
+    formDialogOpen,
+    detailsDialogOpen,
+    selectedProcess,
+    processoParaForm,
+    isEditing,
+    userClients,
+    isLoadingClients,
+    filteredProcesses,
+    isLoadingCombined,
     processes,
-    isLoading: isLoadingProcessesStore,
-    addProcess,
-    updateProcess,
-    toggleProcessStatus,
-    deleteProcess,
+    handleSearchChange,
+    handleOpenNewProcessForm,
+    handleSaveProcess,
+    handleEditProcess,
+    handleViewProcess,
+    handleToggleStatus,
+    handleDeleteProcess,
+    handleManualRefresh,
+    setFormDialogOpen,
+    setDetailsDialogOpen,
+    setProcessoParaForm,
+    setIsEditing,
+    setSelectedProcess,
     getProcessById,
-    fetchProcesses,
-  } = useProcessesStore();
+    fetchUserClients
+  } = useProcessesPage();
 
-  const [isRefreshingManually, setIsRefreshingManually] = useState(false);
-
-  const fetchUserClients = useCallback(async () => {
-    if (!user) { setUserClients([]); setIsLoadingClients(false); return; }
-    setIsLoadingClients(true);
-    try {
-      const { data, error } = await supabase.from('clientes').select('id, nome').eq('user_id', user.id).order('nome', { ascending: true });
-      if (error) { toast({ title: "Erro ao carregar clientes", description: error.message, variant: "destructive" });}
-      setUserClients(data || []);
-    } catch (error: any) {
-      toast({ title: "Erro crítico ao carregar clientes", description: error.message, variant: "destructive" });
-      setUserClients([]);
-    } finally {
-      setIsLoadingClients(false);
-    }
-  }, [user, toast]);
-
-  useEffect(() => {
-    if (user) { fetchUserClients(); } 
-    else { setUserClients([]); setIsLoadingClients(false); }
-  }, [user, fetchUserClients]);
-
-  const filteredProcesses = processes.filter(process =>
-    process.numero_processo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (process.nome_cliente_text && process.nome_cliente_text.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (process.clientes?.nome && process.clientes.nome.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    process.tipo_processo?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleSearchChange = (term: string) => {
-    setSearchTerm(term);
-  };
-
-  const handleOpenNewProcessForm = () => {
-    setProcessoParaForm(null);
-    setSelectedProcess(null); 
-    setIsEditing(false);
-    setFormDialogOpen(true);
-  };
-
-  const handleSaveProcess = async (processFormData: ProcessoFormData) => {
-    setIsSubmitting(true);
-    let result;
-    if (isEditing && processoParaForm && processoParaForm.id) {
-      result = await updateProcess(processoParaForm.id, processFormData);
-    } else {
-      result = await addProcess(processFormData);
-    }
-    if (result) {
-      toast({
-        title: isEditing ? "Processo atualizado" : "Processo cadastrado",
-        description: `O processo ${result.numero_processo} foi ${isEditing ? 'atualizado' : 'cadastrado'}.`,
-      });
-      setFormDialogOpen(false);
-      setProcessoParaForm(null);
-      setIsEditing(false);
-    }
-    setIsSubmitting(false);
-  };
-
-  const handleEditProcess = (processo: ProcessoComCliente) => {
-    const formData: ProcessoFormDataParaForm = {
-      id: processo.id,
-      numero: processo.numero_processo || "",
-      cliente_id: processo.cliente_id || null,
-      nome_cliente_text: processo.clientes?.nome || processo.nome_cliente_text || "",
-      tipo: processo.tipo_processo || "",
-      vara: processo.vara_tribunal || "",
-      status: (processo.status_processo as ProcessoFormData['status']) || "Em andamento",
-      prazo: processo.proximo_prazo ? new Date(processo.proximo_prazo + 'T00:00:00Z').toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : "",
-    };
-    setProcessoParaForm(formData);
-    setSelectedProcess(null); 
-    setIsEditing(true);
-    setFormDialogOpen(true);
-    setDetailsDialogOpen(false);
-  };
-
-  const handleViewProcess = (processo: ProcessoComCliente) => {
-    setSelectedProcess(processo);
-    setProcessoParaForm(null);
-    setDetailsDialogOpen(true);
-    setFormDialogOpen(false);
-  };
-
-  const handleToggleStatus = async (processo: ProcessoComCliente) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    await toggleProcessStatus(processo.id);
-    setIsSubmitting(false);
-  };
-
-  const handleDeleteProcess = async (id: string) => {
-    if (isSubmitting) return;
-    const process = getProcessById(id);
-    if (process && window.confirm(`Tem certeza que deseja excluir o processo ${process.numero_processo}?`)) {
-      setIsSubmitting(true);
-      await deleteProcess(id);
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleManualRefresh = async () => {
-    setIsRefreshingManually(true);
-    await fetchProcesses(); 
-    setIsRefreshingManually(false);
-    toast({title: "Lista de processos atualizada!"});
-  };
-  
-  const isLoadingCombined = isLoadingProcessesStore || isRefreshingManually || isSubmitting;
-
-  if (isLoadingCombined && !processes.length && !isRefreshingManually) {
+  if (isLoadingCombined && !processes.length) {
     return (
       <AdminLayout>
         <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full flex flex-col justify-center items-center">
@@ -205,7 +71,7 @@ const MeusProcessosPage = () => {
           onSearchChange={handleSearchChange}
           onAddProcess={handleOpenNewProcessForm}
           onRefresh={handleManualRefresh}
-          isLoading={isRefreshingManually}
+          isLoading={isLoadingCombined}
         />
         
         {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
@@ -248,7 +114,7 @@ const MeusProcessosPage = () => {
           onSaveProcess={handleSaveProcess}
           onEditProcess={(id) => { 
             const processToEdit = getProcessById(id); 
-            if (processToEdit) handleEditProcess(processToEdit as ProcessoComCliente);
+            if (processToEdit) handleEditProcess(processToEdit);
           }}
           clientesDoUsuario={userClients}
           isLoadingClientes={isLoadingClients}
