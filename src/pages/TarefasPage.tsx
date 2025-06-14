@@ -10,6 +10,7 @@ import TarefaFormDialog from '@/components/tarefas/TarefaFormDialog';
 import { useTarefas } from '@/hooks/useTarefas';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import { Toaster } from "@/components/ui/toaster";
+import type { TarefaComRelacoes } from '@/types/tarefas';
 
 const TarefasPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -30,7 +31,14 @@ const TarefasPage = () => {
     fetchTarefas();
   }, [fetchTarefas]);
 
-  const filteredTarefas = tarefas.filter(tarefa => {
+  // Convert tarefas to TarefaComRelacoes format
+  const tarefasComRelacoes: TarefaComRelacoes[] = tarefas.map(tarefa => ({
+    ...tarefa,
+    descricao: tarefa.descricao_detalhada,
+    status: tarefa.status as 'Pendente' | 'Em Andamento' | 'Concluída' | 'Cancelada'
+  }));
+
+  const filteredTarefas = tarefasComRelacoes.filter(tarefa => {
     const matchesSearch = tarefa.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          tarefa.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "todas" || tarefa.status === statusFilter;
@@ -92,7 +100,7 @@ const TarefasPage = () => {
         </div>
 
         <TarefaFormDialog
-          open={isFormDialogOpen}
+          isOpen={isFormDialogOpen}
           onOpenChange={setIsFormDialogOpen}
           onSubmit={createTarefa}
         />

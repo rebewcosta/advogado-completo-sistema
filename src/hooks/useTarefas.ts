@@ -10,11 +10,13 @@ import type { TarefaComRelacoes, StatusTarefa } from '@/types/tarefas';
 type Tarefa = Database['public']['Tables']['tarefas']['Row'] & {
   processos?: { id: string; numero_processo: string } | null;
   clientes?: { id: string; nome: string } | null;
+  descricao_detalhada?: string | null;
 };
 
 export type TarefaFormData = {
   titulo: string;
   descricao?: string | null;
+  descricao_detalhada?: string | null;
   data_conclusao?: string | null;
   prioridade: 'Baixa' | 'Média' | 'Alta' | 'Crítica';
   status: 'Pendente' | 'Em Andamento' | 'Concluída' | 'Cancelada';
@@ -89,45 +91,66 @@ export const useTarefas = () => {
     }
   }, [user, toast]);
 
-  const saveTarefa = async (formData: TarefaFormData, tarefaId?: string) => {
+  const createTarefa = async (formData: TarefaFormData) => {
     if (!user) return false;
     setIsSubmitting(true);
     
     const dadosParaSupabase = {
         user_id: user.id,
         titulo: formData.titulo,
-        descricao_detalhada: formData.descricao,
+        descricao_detalhada: formData.descricao || formData.descricao_detalhada,
         data_conclusao: formData.data_conclusao || null,
         prioridade: formData.prioridade,
         status: formData.status,
-        responsavel_id: formData.responsavel_id || null,
         processo_id: formData.processo_id || null,
         cliente_id: formData.cliente_id || null,
     };
 
     try {
-        if (tarefaId) {
-            const { data: updatedTarefa, error } = await supabase
-                .from('tarefas')
-                .update(dadosParaSupabase)
-                .eq('id', tarefaId)
-                .select('*, processos(id, numero_processo), clientes(id, nome)')
-                .single();
-            if (error) throw error;
-            toast({ title: "Tarefa atualizada!", description: `A tarefa "${updatedTarefa?.titulo}" foi atualizada.` });
-        } else {
-            const { data: newTarefa, error } = await supabase
-                .from('tarefas')
-                .insert(dadosParaSupabase)
-                .select('*, processos(id, numero_processo), clientes(id, nome)')
-                .single();
-            if (error) throw error;
-            toast({ title: "Tarefa criada!", description: `A tarefa "${newTarefa?.titulo}" foi adicionada.` });
-        }
+        const { data: newTarefa, error } = await supabase
+            .from('tarefas')
+            .insert(dadosParaSupabase)
+            .select('*, processos(id, numero_processo), clientes(id, nome)')
+            .single();
+        if (error) throw error;
+        toast({ title: "Tarefa criada!", description: `A tarefa "${newTarefa?.titulo}" foi adicionada.` });
         fetchTarefas(false);
         return true;
     } catch (error: any) {
-        toast({ title: "Erro ao salvar tarefa", description: error.message, variant: "destructive" });
+        toast({ title: "Erro ao criar tarefa", description: error.message, variant: "destructive" });
+        return false;
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
+  const updateTarefa = async (tarefaId: string, formData: Partial<TarefaFormData>) => {
+    if (!user || isSubmitting) return false;
+    setIsSubmitting(true);
+    
+    const dadosParaSupabase = {
+        titulo: formData.titulo,
+        descricao_detalhada: formData.descricao || formData.descricao_detalhada,
+        data_conclusao: formData.data_conclusao || null,
+        prioridade: formData.prioridade,
+        status: formData.status,
+        processo_id: formData.processo_id || null,
+        cliente_id: formData.cliente_id || null,
+    };
+
+    try {
+        const { data: updatedTarefa, error } = await supabase
+            .from('tarefas')
+            .update(dadosParaSupabase)
+            .eq('id', tarefaId)
+            .select('*, processos(id, numero_processo), clientes(id, nome)')
+            .single();
+        if (error) throw error;
+        toast({ title: "Tarefa atualizada!", description: `A tarefa "${updatedTarefa?.titulo}" foi atualizada.` });
+        fetchTarefas(false);
+        return true;
+    } catch (error: any) {
+        toast({ title: "Erro ao atualizar tarefa", description: error.message, variant: "destructive" });
         return false;
     } finally {
         setIsSubmitting(false);
@@ -155,26 +178,16 @@ export const useTarefas = () => {
     return false;
   };
 
-  const toggleStatusTarefa = async (tarefa: Tarefa, novoStatus: TarefaFormData['status']) => {
-    if(!user || isSubmitting) return false;
-    setIsSubmitting(true);
-    try {
-        const { data, error } = await supabase
-            .from('tarefas')
-            .update({ status: novoStatus })
-            .eq('id', tarefa.id)
-            .select('*, processos(id, numero_processo), clientes(id, nome)')
-            .single();
-        if (error) throw error;
-        toast({ title: "Status da tarefa atualizado!", description: `Tarefa "${data?.titulo}" agora está ${novoStatus}.`});
-        fetchTarefas(false);
-        return true;
-    } catch (error: any) {
-        toast({ title: "Erro ao atualizar status", description: error.message, variant: "destructive" });
-        return false;
-    } finally {
-        setIsSubmitting(false);
+  const saveTarefa = async (formData: TarefaFormData, tarefaId?: string) => {
+    if (tarefaId) {
+      return await updateTarefa(tarefaId, formData);
+    } else {
+      return await createTarefa(formData);
     }
+  };
+
+  const toggleStatusTarefa = async (tarefa: Tarefa, novoStatus: TarefaFormData['status']) => {
+    return await updateTarefa(tarefa.id, { status: novoStatus });
   };
 
   useEffect(() => {
@@ -200,9 +213,12 @@ export const useTarefas = () => {
     processosDoUsuario,
     clientesDoUsuario,
     isLoadingDropdownData,
-    saveTarefa,
+    createTarefa,
+    updateTarefa,
     deleteTarefa,
+    saveTarefa,
     toggleStatusTarefa,
+    fetchTarefas,
     handleManualRefresh
   };
 };

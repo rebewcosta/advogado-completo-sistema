@@ -37,11 +37,6 @@ const DocumentosPage = () => {
     listarDocumentos();
   };
 
-  const handleEdit = (id: string) => {
-    // Implementar lógica de edição
-    console.log('Edit document:', id);
-  };
-
   const handleView = async (path: string) => {
     try {
       const url = await obterUrlDocumento(path);
@@ -103,7 +98,6 @@ const DocumentosPage = () => {
             isRefreshing={isRefreshing}
             searchTerm={searchTerm}
             filterType={filterType}
-            onEdit={handleEdit}
             onView={handleView}
             onDelete={handleDelete}
           />
@@ -114,7 +108,6 @@ const DocumentosPage = () => {
             isLoading={isLoading}
             searchTerm={searchTerm}
             filterType={filterType}
-            onEdit={handleEdit}
             onView={handleView}
             onDelete={handleDelete}
           />
