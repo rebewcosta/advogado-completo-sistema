@@ -110,7 +110,7 @@ const TarefasPage = () => {
   if (isLoading && (!tarefas || tarefas.length === 0)) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center items-center">
           <Spinner size="lg" />
           <span className="text-gray-500 mt-3">Carregando tarefas...</span>
         </div>
@@ -120,53 +120,55 @@ const TarefasPage = () => {
   
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <SharedPageHeader
-          title="Gerenciador de Tarefas"
-          description="Organize e acompanhe suas pendências e prazos."
-          pageIcon={<ListChecks />} 
-          actionButtonText="Nova Tarefa"
-          onActionButtonClick={() => handleOpenForm()}
-          isLoading={isLoading}
-        />
-        
-        <TarefaSearchActionBar
-          searchTerm={searchTerm}
-          onSearchChange={(e) => setSearchTerm(e.target.value)}
-          onRefresh={handleManualRefresh}
-          isLoading={isLoading}
-        />
-
-        <div className="hidden md:block">
-          <TarefaTable
-            tarefas={tarefasComRelacoes}
-            onEdit={handleOpenForm}
-            onDelete={handleDeleteTarefa}
-            onToggleStatus={handleToggleStatusTarefa}
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="p-4 md:p-6 lg:p-8">
+          <SharedPageHeader
+            title="Gerenciador de Tarefas"
+            description="Organize e acompanhe suas pendências e prazos."
+            pageIcon={<ListChecks />} 
+            actionButtonText="Nova Tarefa"
+            onActionButtonClick={() => handleOpenForm()}
             isLoading={isLoading}
+          />
+          
+          <TarefaSearchActionBar
             searchTerm={searchTerm}
-          />
-        </div>
-        <div className="md:hidden">
-          <TarefaListAsCards
-            tarefas={tarefasComRelacoes}
-            onEdit={handleOpenForm}
-            onDelete={handleDeleteTarefa}
-            onToggleStatus={handleToggleStatusTarefa}
+            onSearchChange={(e) => setSearchTerm(e.target.value)}
+            onRefresh={handleManualRefresh}
             isLoading={isLoading}
           />
-        </div>
 
-        <TarefaFormDialog
-          isOpen={isFormOpen}
-          onClose={handleCloseForm}
-          onSave={handleSaveTarefa}
-          tarefaParaForm={tarefaParaForm}
-          processos={processosDoUsuario || []}
-          clientes={clientesDoUsuario || []}
-          isLoadingDropdownData={isLoadingDropdownData}
-          isSubmitting={isSubmitting}
-        />
+          <div className="hidden md:block">
+            <TarefaTable
+              tarefas={tarefasComRelacoes}
+              onEdit={handleOpenForm}
+              onDelete={handleDeleteTarefa}
+              onToggleStatus={handleToggleStatusTarefa}
+              isLoading={isLoading}
+              searchTerm={searchTerm}
+            />
+          </div>
+          <div className="md:hidden">
+            <TarefaListAsCards
+              tarefas={tarefasComRelacoes}
+              onEdit={handleOpenForm}
+              onDelete={handleDeleteTarefa}
+              onToggleStatus={handleToggleStatusTarefa}
+              isLoading={isLoading}
+            />
+          </div>
+
+          <TarefaFormDialog
+            isOpen={isFormOpen}
+            onClose={handleCloseForm}
+            onSave={handleSaveTarefa}
+            tarefaParaForm={tarefaParaForm}
+            processos={processosDoUsuario || []}
+            clientes={clientesDoUsuario || []}
+            isLoadingDropdownData={isLoadingDropdownData}
+            isSubmitting={isSubmitting}
+          />
+        </div>
       </div>
     </AdminLayout>
   );

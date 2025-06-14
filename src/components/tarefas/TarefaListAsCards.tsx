@@ -57,52 +57,52 @@ const TarefaCard: React.FC<TarefaCardProps> = ({ tarefa, onEdit, onDelete, onTog
   };
 
   return (
-    <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
-      <CardHeader>
+    <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-all duration-300 hover:scale-105 animate-fade-in">
+      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-lg">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">{tarefa.titulo || 'Sem título'}</CardTitle>
+          <CardTitle className="text-lg font-semibold text-gray-800">{tarefa.titulo || 'Sem título'}</CardTitle>
           <div className="flex space-x-2">
-            <Button size="icon" variant="ghost" onClick={() => onEdit(tarefa)}>
-              <Edit className="h-4 w-4" />
+            <Button size="icon" variant="ghost" onClick={() => onEdit(tarefa)} className="hover:bg-indigo-100 rounded-lg transition-all duration-200">
+              <Edit className="h-4 w-4 text-indigo-600" />
             </Button>
-            <Button size="icon" variant="ghost" onClick={() => onDelete(tarefa.id)}>
+            <Button size="icon" variant="ghost" onClick={() => onDelete(tarefa.id)} className="hover:bg-red-100 rounded-lg transition-all duration-200">
               <Trash2 className="h-4 w-4 text-red-500" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
+      <CardContent className="p-6">
+        <div className="space-y-3">
           <div className="flex items-center text-sm">
             {statusInfo.icon && <statusInfo.icon className="mr-2 h-4 w-4" />}
             <Badge 
-              className={cn("font-medium cursor-pointer", statusInfo.color, `border-transparent`)}
+              className={cn("font-medium cursor-pointer transition-all duration-200 hover:scale-105 shadow-lg", statusInfo.color, `border-transparent`)}
               onClick={() => onToggleStatus(tarefa)}
             >
               {statusInfo.label}
             </Badge>
           </div>
           <div className="flex items-center text-sm">
-            <span className="mr-2">Prioridade:</span>
-             <Badge className={cn("font-medium", prioridadeInfo.color, `border-transparent`)}>
+            <span className="mr-2 text-gray-600">Prioridade:</span>
+             <Badge className={cn("font-medium shadow-lg", prioridadeInfo.color, `border-transparent`)}>
               {prioridadeInfo.label}
             </Badge>
           </div>
           {tarefa.data_vencimento && (
-            <div className="flex items-center text-sm">
-              <CalendarDays className="mr-2 h-4 w-4" />
+            <div className="flex items-center text-sm text-gray-600">
+              <CalendarDays className="mr-2 h-4 w-4 text-indigo-500" />
               <span>Vencimento: {formatDate(tarefa.data_vencimento)}</span>
             </div>
           )}
           {tarefa.clientes && (
-            <div className="flex items-center text-sm">
-              <User className="mr-2 h-4 w-4" />
+            <div className="flex items-center text-sm text-gray-600">
+              <User className="mr-2 h-4 w-4 text-indigo-500" />
               <span>Cliente: {tarefa.clientes.nome}</span>
             </div>
           )}
           {tarefa.processos && (
-            <div className="flex items-center text-sm">
-              <FileText className="mr-2 h-4 w-4" />
+            <div className="flex items-center text-sm text-gray-600">
+              <FileText className="mr-2 h-4 w-4 text-indigo-500" />
               <span>Processo: {tarefa.processos.numero_processo}</span>
             </div>
           )}
@@ -121,16 +121,16 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {[...Array(6)].map((_, index) => (
-          <Card key={index} className="animate-pulse">
-            <CardHeader>
-              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <Card key={index} className="animate-pulse shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-t-lg">
+              <div className="h-4 bg-gray-300 rounded w-3/4"></div>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+            <CardContent className="p-6">
+              <div className="space-y-3">
+                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                <div className="h-3 bg-gray-300 rounded w-2/3"></div>
               </div>
             </CardContent>
           </Card>
@@ -150,15 +150,20 @@ const TarefaListAsCards: React.FC<TarefaListAsCardsProps> = ({
   }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {tarefas.map((tarefa) => (
-        <TarefaCard
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 animate-fade-in">
+      {tarefas.map((tarefa, index) => (
+        <div 
           key={tarefa.id}
-          tarefa={tarefa}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          onToggleStatus={onToggleStatus}
-        />
+          className="animate-slide-in"
+          style={{ animationDelay: `${index * 100}ms` }}
+        >
+          <TarefaCard
+            tarefa={tarefa}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onToggleStatus={onToggleStatus}
+          />
+        </div>
       ))}
     </div>
   );

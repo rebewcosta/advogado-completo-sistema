@@ -91,28 +91,28 @@ const TarefaTable: React.FC<TarefaTableProps> = ({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200/80 shadow-md bg-white">
+    <div className="overflow-x-auto rounded-xl border-0 shadow-2xl bg-white/80 backdrop-blur-sm animate-fade-in">
       <Table className="min-w-full">
-        <TableHeader className="bg-lawyer-dark">
-          <TableRow className="hover:bg-lawyer-dark/90">
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Título</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Status</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell">Prioridade</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">Vencimento</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">Associado a</TableHead>
-            <TableHead className="px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wider w-[80px]">Ações</TableHead>
+        <TableHeader className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+          <TableRow className="hover:bg-gradient-to-r hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-300">
+            <TableHead className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">Título</TableHead>
+            <TableHead className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider">Status</TableHead>
+            <TableHead className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider hidden md:table-cell">Prioridade</TableHead>
+            <TableHead className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider hidden lg:table-cell">Vencimento</TableHead>
+            <TableHead className="px-6 py-4 text-left text-sm font-bold text-white uppercase tracking-wider hidden lg:table-cell">Associado a</TableHead>
+            <TableHead className="px-6 py-4 text-right text-sm font-bold text-white uppercase tracking-wider w-[80px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody className="divide-y divide-gray-200/70">
+        <TableBody className="divide-y divide-gray-100/50 backdrop-blur-sm">
           {tarefas.length > 0 ? (
             tarefas.map((tarefa) => {
               const statusInfo = getStatusBadgeInfo(tarefa.status as StatusTarefa);
               const priorityInfo = getPriorityBadgeInfo(tarefa.prioridade as PrioridadeTarefa);
               return (
-                <TableRow key={tarefa.id} className="hover:bg-gray-50/60 transition-colors text-left">
-                  <TableCell className="px-4 py-3 whitespace-nowrap">
+                <TableRow key={tarefa.id} className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:via-indigo-50/50 hover:to-purple-50/50 transition-all duration-300 text-left backdrop-blur-sm">
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div 
-                      className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer"
+                      className="text-sm font-medium text-gray-800 hover:text-indigo-600 cursor-pointer transition-colors duration-200"
                       onClick={() => onEdit(tarefa)}
                       title={tarefa.descricao_detalhada || tarefa.titulo}
                     >
@@ -124,10 +124,10 @@ const TarefaTable: React.FC<TarefaTableProps> = ({
                         </div>
                     )}
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap">
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <Badge
                       variant="outline"
-                      className={cn("text-xs py-0.5 px-2 font-medium rounded-full cursor-pointer", statusInfo.bgColor, statusInfo.textColor, `border-transparent`)}
+                      className={cn("text-xs py-1 px-3 font-medium rounded-full cursor-pointer transition-all duration-200 hover:scale-105", statusInfo.bgColor, statusInfo.textColor, `border-transparent shadow-lg`)}
                       onClick={() => onToggleStatus(tarefa)}
                       title="Clique para alterar status"
                     >
@@ -135,38 +135,38 @@ const TarefaTable: React.FC<TarefaTableProps> = ({
                       {statusInfo.label}
                     </Badge>
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap hidden md:table-cell">
-                     <Badge variant="outline" className={cn("text-xs py-0.5 px-2 font-medium rounded-full capitalize", priorityInfo.className)}>
+                  <TableCell className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                     <Badge variant="outline" className={cn("text-xs py-1 px-3 font-medium rounded-full capitalize shadow-lg", priorityInfo.className)}>
                         {priorityInfo.label}
                     </Badge>
                   </TableCell>
                   <TableCell 
                     className={cn(
-                        "px-4 py-3 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell",
+                        "px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell",
                         tarefa.data_vencimento && isPast(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && !isToday(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && tarefa.status !== 'Concluída' && "text-red-600 font-semibold",
                         tarefa.data_vencimento && isToday(parseISO(tarefa.data_vencimento + 'T00:00:00Z')) && tarefa.status !== 'Concluída' && "text-orange-600 font-semibold"
                     )}>
                     {formatDateString(tarefa.data_vencimento, true)}
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-xs text-gray-600 hidden lg:table-cell">
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-xs text-gray-600 hidden lg:table-cell">
                     {tarefa.clientes?.nome ? <span className="flex items-center"><User size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {tarefa.clientes.nome}</span> : 
                      tarefa.processos?.numero_processo ? <span className="flex items-center"><Briefcase size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {tarefa.processos.numero_processo}</span> : '-'}
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40 shadow-lg">
-                        <DropdownMenuItem onClick={() => onEdit(tarefa)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100 text-left">
-                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Editar
+                      <DropdownMenuContent align="end" className="w-40 shadow-xl bg-white/90 backdrop-blur-sm border-0">
+                        <DropdownMenuItem onClick={() => onEdit(tarefa)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-indigo-50 text-left rounded-lg transition-all duration-200">
+                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-indigo-600" /> Editar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-gray-200"/>
                         <DropdownMenuItem
                           onClick={() => onDelete(tarefa.id)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 text-left"
+                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 text-left rounded-lg transition-all duration-200"
                         >
                           <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
                         </DropdownMenuItem>

@@ -19,28 +19,30 @@ const TarefaSearchActionBar: React.FC<TarefaSearchActionBarProps> = ({
   isLoading
 }) => {
   return (
-    <Card className="mb-6 shadow-md rounded-lg border border-slate-700 bg-slate-800">
-      <CardContent className="p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="relative flex-grow sm:max-w-xs md:max-w-sm">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-            <Input
-              type="text"
-              placeholder="Buscar por título ou descrição..."
-              value={searchTerm}
-              onChange={onSearchChange}
-              className="pl-10 text-sm h-10 w-full bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-slate-500"
-            />
+    <Card className="mb-8 shadow-lg border-0 bg-gradient-to-r from-blue-600/90 via-indigo-600/90 to-purple-600/90 backdrop-blur-sm animate-fade-in">
+      <CardContent className="p-6">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 flex-1">
+            <div className="relative flex-grow">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
+              <Input
+                type="text"
+                placeholder="Buscar por título ou descrição..."
+                value={searchTerm}
+                onChange={onSearchChange}
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-white/20 backdrop-blur-sm"
+              />
+            </div>
           </div>
           <Button 
             onClick={onRefresh} 
             variant="outline" 
             size="sm" 
-            disabled={isLoading} 
-            className="w-full sm:w-auto text-xs h-10 bg-transparent border-slate-600 text-white hover:bg-slate-700 hover:text-white rounded-lg"
+            disabled={isLoading}
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm transition-all duration-300"
           >
-            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''} text-white`} />
-            {isLoading ? 'Atualizando...' : 'Atualizar Tarefas'}
+            <RefreshCw className={`mr-2 h-4 w-4 text-white ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? "Atualizando..." : "Atualizar Tarefas"}
           </Button>
         </div>
       </CardContent>
