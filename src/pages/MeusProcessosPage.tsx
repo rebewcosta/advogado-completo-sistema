@@ -195,8 +195,7 @@ const MeusProcessosPage = () => {
             title="Meus Processos"
             description="Gerencie e acompanhe todos os seus processos jurídicos com ferramentas modernas e eficientes."
             pageIcon={<FileText className="text-blue-500" />}
-            actionButtonText="Novo Processo"
-            onActionButtonClick={handleOpenNewProcessForm}
+            showActionButton={false}
             isLoading={isLoadingCombined}
           />
         </div>
