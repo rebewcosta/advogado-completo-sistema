@@ -49,10 +49,10 @@ function App() {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <PWAProvider>
-          <ThemeProvider>
-            <Router>
+      <PWAProvider>
+        <ThemeProvider>
+          <Router>
+            <AuthProvider>
               <div className="App min-h-screen bg-gray-50">
                 <Toaster />
                 
@@ -93,10 +93,10 @@ function App() {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
-            </Router>
-          </ThemeProvider>
-        </PWAProvider>
-      </AuthProvider>
+            </AuthProvider>
+          </Router>
+        </ThemeProvider>
+      </PWAProvider>
     </QueryClientProvider>
   );
 }
