@@ -29,17 +29,23 @@ const Navbar: React.FC = () => {
     return location.pathname === path ? 'bg-lawyer-primary/10 text-lawyer-primary' : '';
   };
 
-  // Define different navigation items based on authentication status
-  const navItems = user ? [
-    // For authenticated users, show dashboard navigation
+  // Se estiver na página inicial ("/") e usuário logado, não mostrar os links de navegação
+  const isHomePage = location.pathname === '/';
+  const shouldShowNavItems = user && !isHomePage;
+
+  // Define different navigation items based on authentication status and current page
+  const navItems = shouldShowNavItems ? [
+    // For authenticated users NOT on home page, show dashboard navigation
     { path: '/dashboard', label: 'Dashboard', icon: null },
     { path: '/meus-processos', label: 'Processos', icon: null },
     { path: '/clientes', label: 'Clientes', icon: null },
     { path: '/agenda', label: 'Agenda', icon: null },
   ] : [
-    // For non-authenticated users, show login/register
-    { path: '/login', label: 'Login', icon: null },
-    { path: '/cadastro', label: 'Cadastro', icon: null },
+    // For non-authenticated users or users on home page, show login/register
+    ...(user ? [] : [
+      { path: '/login', label: 'Login', icon: null },
+      { path: '/cadastro', label: 'Cadastro', icon: null },
+    ])
   ];
 
   return (
