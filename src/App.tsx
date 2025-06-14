@@ -42,6 +42,16 @@ import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
 
+// Layout component that renders navbar and outlet
+const AppLayout = () => {
+  return (
+    <>
+      <Navbar />
+      <Outlet />
+    </>
+  );
+};
+
 function App() {
   const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
     (navigator as any).standalone || 
@@ -67,26 +77,24 @@ function App() {
                   <Route path="/pagamento" element={<PagamentoPage />} />
                   <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
-                  {/* Rotas protegidas */}
-                  <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
-                    <Route element={<Navbar />}>
-                      <Route path="/dashboard" element={<DashboardPage />} />
-                      <Route path="/meus-processos" element={<MeusProcessosPage />} />
-                      <Route path="/clientes" element={<ClientesPage />} />
-                      <Route path="/agenda" element={<AgendaPage />} />
-                      <Route path="/tarefas" element={<TarefasPage />} />
-                      <Route path="/publicacoes" element={<PublicacoesPage />} />
-                      <Route path="/financeiro" element={<FinanceiroPage />} />
-                      <Route path="/documentos" element={<DocumentosPage />} />
-                      <Route path="/relatorios" element={<RelatoriosPage />} />
-                      <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-                      <Route path="/perfil-usuario" element={<PerfilUsuarioPage />} />
-                      <Route path="/equipe" element={<EquipePage />} />
-                      <Route path="/suporte" element={<SuportePage />} />
-                      <Route path="/admin" element={<AdminPage />} />
-                      <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
-                      <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
-                    </Route>
+                  {/* Rotas protegidas com layout */}
+                  <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/meus-processos" element={<MeusProcessosPage />} />
+                    <Route path="/clientes" element={<ClientesPage />} />
+                    <Route path="/agenda" element={<AgendaPage />} />
+                    <Route path="/tarefas" element={<TarefasPage />} />
+                    <Route path="/publicacoes" element={<PublicacoesPage />} />
+                    <Route path="/financeiro" element={<FinanceiroPage />} />
+                    <Route path="/documentos" element={<DocumentosPage />} />
+                    <Route path="/relatorios" element={<RelatoriosPage />} />
+                    <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+                    <Route path="/perfil-usuario" element={<PerfilUsuarioPage />} />
+                    <Route path="/equipe" element={<EquipePage />} />
+                    <Route path="/suporte" element={<SuportePage />} />
+                    <Route path="/admin" element={<AdminPage />} />
+                    <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
+                    <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
                   </Route>
 
                   {/* Rota 404 */}

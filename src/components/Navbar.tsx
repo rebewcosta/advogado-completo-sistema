@@ -1,7 +1,6 @@
 
-// src/components/Navbar.tsx
 import React from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Home, 
@@ -16,7 +15,7 @@ import {
   X,
   Shield,
   ListChecks,
-  BookOpen // ÍCONE PARA PUBLICAÇÕES
+  BookOpen
 } from 'lucide-react';
 import Logo from './navbar/Logo';
 import DesktopNav from './navbar/DesktopNav';
@@ -46,7 +45,7 @@ const Navbar: React.FC = () => {
     { path: '/clientes', label: 'Clientes', icon: <Users className="h-5 w-5" /> },
     { path: '/agenda', label: 'Agenda', icon: <Calendar className="h-5 w-5" /> },
     { path: '/tarefas', label: 'Tarefas', icon: <ListChecks className="h-5 w-5" /> },
-    { path: '/publicacoes', label: 'Publicações', icon: <BookOpen className="h-5 w-5" /> }, // ITEM PUBLICAÇÕES ADICIONADO
+    { path: '/publicacoes', label: 'Publicações', icon: <BookOpen className="h-5 w-5" /> },
     { path: '/financeiro', label: 'Financeiro', icon: <DollarSign className="h-5 w-5" /> },
     { path: '/documentos', label: 'Documentos', icon: <FileBox className="h-5 w-5" /> },
     { path: '/relatorios', label: 'Relatórios', icon: <BarChart2 className="h-5 w-5" /> },
@@ -54,46 +53,49 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <nav className="bg-lawyer-dark shadow-md">
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Logo />
+    <>
+      <nav className="bg-lawyer-dark shadow-md">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <Logo />
 
-          {/* Desktop Navigation */}
-          <DesktopNav 
-            user={user}
-            navItems={navItems} // Passa a lista de itens
-            isActive={isActive}
-            handleSignOut={handleSignOut}
-          />
+            {/* Desktop Navigation */}
+            <DesktopNav 
+              user={user}
+              navItems={navItems}
+              isActive={isActive}
+              handleSignOut={handleSignOut}
+            />
 
-          {/* Mobile menu button */}
-          <div className="md:hidden flex items-center">
-            <button
-              onClick={toggleMenu}
-              className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-lawyer-primary hover:bg-gray-700 focus:outline-none"
-            >
-              {isMenuOpen ? (
-                <X className="h-6 w-6" />
-              ) : (
-                <Menu className="h-6 w-6" />
-              )}
-            </button>
+            {/* Mobile menu button */}
+            <div className="md:hidden flex items-center">
+              <button
+                onClick={toggleMenu}
+                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-lawyer-primary hover:bg-gray-700 focus:outline-none"
+              >
+                {isMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Mobile Menu */}
-      <MobileMenu 
-        user={user}
-        isMenuOpen={isMenuOpen}
-        navItems={navItems} // Passa a lista de itens
-        isActive={isActive}
-        handleSignOut={handleSignOut}
-        setIsMenuOpen={setIsMenuOpen}
-      />
-    </nav>
+        {/* Mobile Menu */}
+        <MobileMenu 
+          user={user}
+          isMenuOpen={isMenuOpen}
+          navItems={navItems}
+          isActive={isActive}
+          handleSignOut={handleSignOut}
+          setIsMenuOpen={setIsMenuOpen}
+        />
+      </nav>
+      <Outlet />
+    </>
   );
 };
 
