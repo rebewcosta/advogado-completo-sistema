@@ -1,240 +1,239 @@
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter
-} from '@/components/ui/dialog';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import React, { useState, useRef } from 'react';
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { X, Info, Upload, File } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { useDocumentUpload } from '@/hooks/useDocumentUpload';
 import { useToast } from '@/hooks/use-toast';
-import { DocumentType, LIMITE_ARMAZENAMENTO_BYTES } from '@/hooks/useDocumentTypes';
-import { useDocumentos } from '@/hooks/useDocumentos';
-import DocumentUploadHeader from './DocumentUploadHeader';
 
 interface DocumentUploadDialogProps {
   isOpen: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({ 
-  isOpen, 
-  onOpenChange 
+const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
+  isOpen,
+  onClose,
+  onSuccess
 }) => {
+  const [formData, setFormData] = useState({
+    nome: '',
+    descricao: '',
+    categoria: '',
+    tags: ''
+  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [documentType, setDocumentType] = useState<DocumentType>('outro');
-  const [clientName, setClientName] = useState('');
-  const [processNumber, setProcessNumber] = useState('');
-  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadDocument, isUploading } = useDocumentUpload();
   const { toast } = useToast();
-  const { 
-    uploadDocumento, 
-    espacoDisponivel, 
-    formatarTamanhoArquivo,
-    isLoading 
-  } = useDocumentos();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      
-      // Verificar tamanho do arquivo
-      if (file.size > LIMITE_ARMAZENAMENTO_BYTES) {
-        toast({
-          title: "Arquivo muito grande",
-          description: `O arquivo excede o limite máximo de 3MB.`,
-          variant: "destructive"
-        });
-        e.target.value = '';
-        return;
-      }
-      
-      // Verificar se há espaço suficiente
-      if (file.size > espacoDisponivel) {
-        toast({
-          title: "Espaço insuficiente",
-          description: `Você não tem espaço suficiente. Disponível: ${formatarTamanhoArquivo(espacoDisponivel)}`,
-          variant: "destructive"
-        });
-        e.target.value = '';
-        return;
-      }
-      
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
       setSelectedFile(file);
+      if (!formData.nome) {
+        setFormData(prev => ({ ...prev, nome: file.name }));
+      }
     }
   };
 
-  const handleUploadSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedFile) {
       toast({
-        title: "Erro no upload",
+        title: "Erro",
         description: "Por favor, selecione um arquivo para upload.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!clientName) {
-      toast({
-        title: "Erro no upload",
-        description: "Por favor, informe o nome do cliente.",
-        variant: "destructive",
+        variant: "destructive"
       });
       return;
     }
 
     try {
-      // Fazer upload do documento
-      await uploadDocumento(
-        selectedFile,
-        documentType,
-        clientName,
-        processNumber || undefined
-      );
-
-      // Fechar diálogo e resetar campos
-      onOpenChange(false);
-      setSelectedFile(null);
-      setDocumentType('outro');
-      setClientName('');
-      setProcessNumber('');
-      
+      await uploadDocument(selectedFile, formData);
       toast({
-        title: "Documento enviado com sucesso",
-        description: `${selectedFile.name} foi adicionado à sua biblioteca.`,
+        title: "Sucesso",
+        description: "Documento enviado com sucesso!",
       });
+      onSuccess();
+      onClose();
+      // Reset form
+      setFormData({
+        nome: '',
+        descricao: '',
+        categoria: '',
+        tags: ''
+      });
+      setSelectedFile(null);
     } catch (error) {
-      console.error('Erro no upload:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao enviar documento. Tente novamente.",
+        variant: "destructive"
+      });
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] bg-lawyer-dark border border-blue-600">
-        <DocumentUploadHeader />
-        <DialogDescription className="text-blue-200">
-          Faça upload de um documento e associe-o a um cliente ou processo.
-        </DialogDescription>
-        
-        <form onSubmit={handleUploadSubmit}>
-          <div className="grid gap-6 py-4">
-            {/* Arquivo */}
-            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
-              <Label className="text-sm font-semibold text-gray-100 mb-2 block">
-                📎 Arquivo
-              </Label>
-              <Input
-                id="file"
-                type="file"
-                onChange={handleFileChange}
-                required
-                disabled={isLoading}
-                className="bg-white"
-              />
-              {selectedFile && (
-                <p className="text-xs text-blue-200 mt-2">
-                  {selectedFile.name} ({formatarTamanhoArquivo(selectedFile.size)})
-                </p>
-              )}
-              <p className="text-xs text-blue-200 mt-1">
-                Limite máximo: 3MB. Espaço disponível: {formatarTamanhoArquivo(espacoDisponivel)}
-              </p>
-            </div>
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+        <div className="h-full flex flex-col rounded-xl overflow-hidden">
+          {/* Header com gradiente azul */}
+          <div className="p-6">
+            <TooltipProvider>
+              <div className="flex flex-row items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-white text-xl font-semibold">
+                    Upload de Documento
+                  </h2>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-blue-200 cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>
+                        Faça upload de um novo documento preenchendo as informações e selecionando o arquivo.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onClose}
+                  className="text-white hover:bg-white/20 -mr-2 -mt-2"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+            </TooltipProvider>
+          </div>
 
-            {/* Tipo e Cliente */}
-            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-              <Label className="text-sm font-semibold text-blue-100 mb-3 block">
-                📋 Informações do Documento
-              </Label>
-              <div className="grid gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="type" className="text-blue-100">
-                    Tipo de documento
-                  </Label>
-                  <Select 
-                    value={documentType} 
-                    onValueChange={(value) => setDocumentType(value as DocumentType)}
-                    disabled={isLoading}
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+            {/* Campos do formulário com fundo branco */}
+            <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
+              <div className="space-y-6">
+                {/* Área de Upload */}
+                <div>
+                  <Label className="text-gray-700 font-medium">Arquivo *</Label>
+                  <div 
+                    className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
                   >
-                    <SelectTrigger className="bg-white">
-                      <SelectValue placeholder="Selecione o tipo" />
+                    {selectedFile ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <File className="h-6 w-6 text-blue-500" />
+                        <span className="text-gray-700">{selectedFile.name}</span>
+                      </div>
+                    ) : (
+                      <div>
+                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                        <p className="text-gray-500">Clique para selecionar um arquivo</p>
+                        <p className="text-sm text-gray-400 mt-1">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG</p>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="nome" className="text-gray-700 font-medium">Nome do Documento *</Label>
+                  <Input
+                    id="nome"
+                    value={formData.nome}
+                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
+                    placeholder="Nome do documento"
+                    className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="categoria" className="text-gray-700 font-medium">Categoria</Label>
+                  <Select value={formData.categoria} onValueChange={(value) => setFormData({...formData, categoria: value})}>
+                    <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                      <SelectValue placeholder="Selecione uma categoria" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
                       <SelectItem value="contrato">Contrato</SelectItem>
-                      <SelectItem value="petição">Petição</SelectItem>
-                      <SelectItem value="procuração">Procuração</SelectItem>
-                      <SelectItem value="decisão">Decisão</SelectItem>
-                      <SelectItem value="outro">Outro</SelectItem>
+                      <SelectItem value="peticao">Petição</SelectItem>
+                      <SelectItem value="decisao">Decisão</SelectItem>
+                      <SelectItem value="protocolo">Protocolo</SelectItem>
+                      <SelectItem value="parecer">Parecer</SelectItem>
+                      <SelectItem value="outros">Outros</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="client" className="text-blue-100">
-                    Cliente <span className="text-red-400">*</span>
-                  </Label>
+
+                <div>
+                  <Label htmlFor="tags" className="text-gray-700 font-medium">Tags</Label>
                   <Input
-                    id="client"
-                    value={clientName}
-                    onChange={(e) => setClientName(e.target.value)}
-                    placeholder="Nome do cliente"
-                    required
-                    disabled={isLoading}
-                    className="bg-white"
+                    id="tags"
+                    value={formData.tags}
+                    onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                    placeholder="Tags separadas por vírgula"
+                    className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="descricao" className="text-gray-700 font-medium">Descrição</Label>
+                  <Textarea
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                    placeholder="Descrição do documento"
+                    rows={4}
+                    className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Processo */}
-            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
-              <Label className="text-sm font-semibold text-gray-100 mb-2 block">
-                ⚖️ Processo (Opcional)
-              </Label>
-              <div className="grid gap-2">
-                <Label htmlFor="process" className="text-gray-100">
-                  Número do processo
-                </Label>
-                <Input
-                  id="process"
-                  value={processNumber}
-                  onChange={(e) => setProcessNumber(e.target.value)}
-                  placeholder="Ex: 0001234-56.2023.8.26.0000"
-                  disabled={isLoading}
-                  className="bg-white"
-                />
+            {/* Footer com gradiente azul e botões */}
+            <div className="p-6">
+              <div className="flex justify-end gap-3">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={onClose}
+                  className="px-6 py-3 h-12 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                  disabled={isUploading}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  type="submit"
+                  className="px-6 py-3 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+                  disabled={isUploading}
+                >
+                  {isUploading ? 'Enviando...' : 'Enviar Documento'}
+                </Button>
               </div>
             </div>
-          </div>
-          <DialogFooter className="border-t border-blue-600 pt-4">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={() => onOpenChange(false)}
-              disabled={isLoading}
-              className="bg-white"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              disabled={isLoading || !selectedFile}
-              className="bg-lawyer-primary hover:bg-lawyer-primary/90"
-            >
-              {isLoading ? "Enviando..." : "Enviar documento"}
-            </Button>
-          </DialogFooter>
-        </form>
+          </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
