@@ -105,10 +105,10 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
   return (
     <TooltipProvider>
       <Dialog open={open} onOpenChange={handleClose}>
-        <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+        <DialogContent className="max-w-4xl h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
           <div className="h-full flex flex-col rounded-xl overflow-hidden">
             {/* Header */}
-            <div className="p-6">
+            <div className="p-6 flex-shrink-0">
               <div className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h2 className="text-white text-xl font-semibold">Configurações de Monitoramento</h2>
@@ -136,9 +136,9 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Campos do formulário com ScrollArea */}
-            <div className="bg-white mx-6 rounded-xl flex-1 overflow-hidden">
-              <ScrollArea className="h-full p-6">
-                <div className="space-y-6 pr-4">
+            <div className="bg-white mx-6 rounded-xl flex-1 min-h-0">
+              <ScrollArea className="h-full">
+                <div className="p-6 space-y-6">
                   {/* Status do Monitoramento */}
                   <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                     <div className="flex items-center space-x-2">
@@ -384,12 +384,15 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                       </Button>
                     </div>
                   </div>
+
+                  {/* Espaço extra no final para garantir que o último item seja visível */}
+                  <div className="h-4"></div>
                 </div>
               </ScrollArea>
             </div>
 
             {/* Footer */}
-            <div className="p-6">
+            <div className="p-6 flex-shrink-0">
               <div className="flex justify-end gap-3">
                 <Button 
                   type="button" 
