@@ -42,36 +42,36 @@ const TransacaoModal: React.FC<TransacaoModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <Card className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-        <CardHeader className="p-4 border-b sticky top-0 bg-white z-10">
+      <Card className="bg-blue-900 rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col border border-blue-700">
+        <CardHeader className="p-4 border-b border-blue-700 sticky top-0 bg-blue-900 z-10 rounded-t-lg">
           <div className="flex justify-between items-center">
-            <CardTitle className="text-lg font-semibold text-gray-800">
+            <CardTitle className="text-lg font-semibold text-gray-100">
               {currentTransaction ? 'Editar Transação' : 'Nova Transação'}
             </CardTitle>
             <Button
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-7 w-7 text-gray-500 hover:text-gray-700 -mr-1 -mt-1"
+              className="h-7 w-7 text-gray-300 hover:text-gray-100 hover:bg-blue-800 -mr-1 -mt-1"
             >
               <X className="h-5 w-5" />
             </Button>
           </div>
         </CardHeader>
         <form onSubmit={onSubmit} className="flex-grow overflow-y-auto">
-          <CardContent className="p-4">
+          <CardContent className="p-4 bg-blue-900">
             <TransacaoFormFields
               formData={formData}
               handleChange={handleChange}
               handleSelectChange={handleSelectChange}
             />
           </CardContent>
-          <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-gray-50 z-10">
+          <div className="p-4 border-t border-blue-700 flex justify-end gap-2 sticky bottom-0 bg-blue-900 z-10 rounded-b-lg">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="text-gray-700 hover:bg-gray-100 border-gray-300"
+              className="text-gray-100 hover:bg-blue-800 border-blue-600 bg-transparent"
             >
               Cancelar
             </Button>
