@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { BookOpen } from 'lucide-react';
+import AdminLayout from '@/components/AdminLayout';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import { Spinner } from '@/components/ui/spinner';
 import PublicacoesStats from '@/components/publicacoes/PublicacoesStats';
@@ -249,73 +250,82 @@ const PublicacoesPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-2 md:p-4 flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
+      <AdminLayout>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+          <div className="text-center">
+            <Spinner size="lg" />
+            <span className="text-gray-500 mt-3 block">Carregando publicações...</span>
+          </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-2 md:p-4 lg:p-6">
-      <div className="max-w-7xl mx-auto">
-        <SharedPageHeader
-          title="Monitoramento de Publicações"
-          description="Acompanhe suas publicações nos diários oficiais do Brasil"
-          pageIcon={<BookOpen />}
-          showActionButton={false}
-        />
+    <AdminLayout>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="p-4 md:p-6 lg:p-8">
+          <SharedPageHeader
+            title="Monitoramento de Publicações"
+            description="Acompanhe suas publicações nos diários oficiais do Brasil"
+            pageIcon={<BookOpen />}
+            showActionButton={false}
+          />
 
-        <PublicacoesStats publicacoes={publicacoesParaExibir} configuracao={configuracao} />
+          <PublicacoesStats publicacoes={publicacoesParaExibir} configuracao={configuracao} />
 
-        <div className="space-y-4 mb-4">
-          <div className="w-full">
-            <PublicacoesFilters
-              searchTerm={searchTerm}
-              setSearchTerm={setSearchTerm}
-              filtroEstado={filtroEstado}
-              setFiltroEstado={setFiltroEstado}
-              filtroTipo={filtroTipo}
-              setFiltroTipo={setFiltroTipo}
-              filtroLida={filtroLida}
-              setFiltroLida={setFiltroLida}
-              onRefresh={fetchPublicacoes}
-              onOpenConfig={() => setShowConfigDialog(true)}
+          <div className="space-y-6 mb-6">
+            <div className="w-full animate-fade-in" style={{ animationDelay: '300ms' }}>
+              <PublicacoesFilters
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+                filtroEstado={filtroEstado}
+                setFiltroEstado={setFiltroEstado}
+                filtroTipo={filtroTipo}
+                setFiltroTipo={setFiltroTipo}
+                filtroLida={filtroLida}
+                setFiltroLida={setFiltroLida}
+                onRefresh={fetchPublicacoes}
+                onOpenConfig={() => setShowConfigDialog(true)}
+              />
+            </div>
+            
+            <div className="w-full animate-fade-in" style={{ animationDelay: '400ms' }}>
+              <MonitoramentoManual 
+                configuracao={configuracao}
+                onMonitoramentoCompleto={fetchPublicacoes}
+              />
+            </div>
+          </div>
+
+          <div className="animate-fade-in" style={{ animationDelay: '500ms' }}>
+            <PublicacoesList
+              publicacoes={publicacoesParaExibir}
+              onToggleLida={toggleLida}
+              onToggleImportante={toggleImportante}
             />
           </div>
-          
-          <div className="w-full">
-            <MonitoramentoManual 
-              configuracao={configuracao}
-              onMonitoramentoCompleto={fetchPublicacoes}
-            />
-          </div>
+
+          <ConfiguracaoDialog
+            open={showConfigDialog}
+            onOpenChange={setShowConfigDialog}
+            nomesMonitoramento={nomesMonitoramento}
+            setNomesMonitoramento={setNomesMonitoramento}
+            estadosMonitoramento={estadosMonitoramento}
+            setEstadosMonitoramento={setEstadosMonitoramento}
+            palavrasChave={palavrasChave}
+            setPalavrasChave={setPalavrasChave}
+            numerosOAB={numerosOAB}
+            setNumerosOAB={setNumerosOAB}
+            nomesEscritorio={nomesEscritorio}
+            setNomesEscritorio={setNomesEscritorio}
+            monitoramentoAtivo={monitoramentoAtivo}
+            setMonitoramentoAtivo={setMonitoramentoAtivo}
+            onSave={salvarConfiguracao}
+          />
         </div>
-
-        <ConfiguracaoDialog
-          open={showConfigDialog}
-          onOpenChange={setShowConfigDialog}
-          nomesMonitoramento={nomesMonitoramento}
-          setNomesMonitoramento={setNomesMonitoramento}
-          estadosMonitoramento={estadosMonitoramento}
-          setEstadosMonitoramento={setEstadosMonitoramento}
-          palavrasChave={palavrasChave}
-          setPalavrasChave={setPalavrasChave}
-          numerosOAB={numerosOAB}
-          setNumerosOAB={setNumerosOAB}
-          nomesEscritorio={nomesEscritorio}
-          setNomesEscritorio={setNomesEscritorio}
-          monitoramentoAtivo={monitoramentoAtivo}
-          setMonitoramentoAtivo={setMonitoramentoAtivo}
-          onSave={salvarConfiguracao}
-        />
-
-        <PublicacoesList
-          publicacoes={publicacoesParaExibir}
-          onToggleLida={toggleLida}
-          onToggleImportante={toggleImportante}
-        />
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 

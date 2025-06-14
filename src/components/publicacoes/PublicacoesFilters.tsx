@@ -62,47 +62,57 @@ const PublicacoesFilters: React.FC<PublicacoesFiltersProps> = ({
   onOpenConfig
 }) => {
   return (
-    <Card className="shadow-sm bg-slate-800 border-slate-700">
+    <Card className="shadow-xl border-0 bg-gradient-to-r from-blue-600/90 via-indigo-600/90 to-purple-600/90 backdrop-blur-sm animate-fade-in">
       <CardHeader className="pb-3">
         <div className="flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0">
           <CardTitle className="flex items-center gap-2 text-lg text-white">
-            <Filter className="h-4 w-4 text-white" />
+            <Filter className="h-5 w-5 text-white" />
             Filtros e Ações
           </CardTitle>
-          <div className="flex gap-2">
-            <Button onClick={onRefresh} variant="outline" size="sm" className="flex-1 md:flex-initial bg-transparent border-slate-600 text-white hover:bg-slate-700 hover:text-white">
-              <RefreshCw className="h-4 w-4 mr-1 text-white" />
+          <div className="flex gap-3">
+            <Button 
+              onClick={onRefresh} 
+              variant="outline" 
+              size="sm" 
+              className="flex-1 md:flex-initial bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm transition-all duration-300"
+            >
+              <RefreshCw className="h-4 w-4 mr-2 text-white" />
               <span className="md:inline">Atualizar</span>
             </Button>
-            <Button onClick={onOpenConfig} variant="outline" size="sm" className="flex-1 md:flex-initial bg-transparent border-slate-600 text-white hover:bg-slate-700 hover:text-white">
-              <Settings className="h-4 w-4 mr-1 text-white" />
+            <Button 
+              onClick={onOpenConfig} 
+              variant="outline" 
+              size="sm" 
+              className="flex-1 md:flex-initial bg-white/10 border-white/20 text-white hover:bg-white/20 hover:border-white/30 backdrop-blur-sm transition-all duration-300"
+            >
+              <Settings className="h-4 w-4 mr-2 text-white" />
               <span className="md:inline">Configurar</span>
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4 p-6">
         {/* Campo de busca sempre primeiro e em largura total */}
         <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-4 w-4" />
           <Input
             placeholder="Buscar publicações..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-slate-500"
+            className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-white/60 focus:border-white/40 focus:ring-white/20 backdrop-blur-sm"
           />
         </div>
         
         {/* Filtros em grid responsivo */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Select value={filtroEstado} onValueChange={setFiltroEstado}>
-            <SelectTrigger className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
-              <SelectValue placeholder="Estado" className="text-slate-400" />
+            <SelectTrigger className="bg-white/10 border-white/20 text-white hover:bg-white/15 backdrop-blur-sm">
+              <SelectValue placeholder="Estado" className="text-white/70" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-700 border-slate-600">
-              <SelectItem value="todos" className="text-white hover:bg-slate-600 focus:bg-slate-600">Todos os estados</SelectItem>
+            <SelectContent className="bg-white/95 backdrop-blur-md border-white/20">
+              <SelectItem value="todos" className="hover:bg-blue-50 focus:bg-blue-50">Todos os estados</SelectItem>
               {estados.map(estado => (
-                <SelectItem key={estado.uf} value={estado.uf} className="text-white hover:bg-slate-600 focus:bg-slate-600">
+                <SelectItem key={estado.uf} value={estado.uf} className="hover:bg-blue-50 focus:bg-blue-50">
                   {estado.uf} - {estado.nome}
                 </SelectItem>
               ))}
@@ -110,28 +120,28 @@ const PublicacoesFilters: React.FC<PublicacoesFiltersProps> = ({
           </Select>
           
           <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-            <SelectTrigger className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
-              <SelectValue placeholder="Tipo" className="text-slate-400" />
+            <SelectTrigger className="bg-white/10 border-white/20 text-white hover:bg-white/15 backdrop-blur-sm">
+              <SelectValue placeholder="Tipo" className="text-white/70" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-700 border-slate-600">
-              <SelectItem value="todos" className="text-white hover:bg-slate-600 focus:bg-slate-600">Todos os tipos</SelectItem>
-              <SelectItem value="Citação" className="text-white hover:bg-slate-600 focus:bg-slate-600">Citação</SelectItem>
-              <SelectItem value="Intimação" className="text-white hover:bg-slate-600 focus:bg-slate-600">Intimação</SelectItem>
-              <SelectItem value="Sentença" className="text-white hover:bg-slate-600 focus:bg-slate-600">Sentença</SelectItem>
-              <SelectItem value="Despacho" className="text-white hover:bg-slate-600 focus:bg-slate-600">Despacho</SelectItem>
-              <SelectItem value="Decisão" className="text-white hover:bg-slate-600 focus:bg-slate-600">Decisão</SelectItem>
-              <SelectItem value="Edital" className="text-white hover:bg-slate-600 focus:bg-slate-600">Edital</SelectItem>
+            <SelectContent className="bg-white/95 backdrop-blur-md border-white/20">
+              <SelectItem value="todos" className="hover:bg-blue-50 focus:bg-blue-50">Todos os tipos</SelectItem>
+              <SelectItem value="Citação" className="hover:bg-blue-50 focus:bg-blue-50">Citação</SelectItem>
+              <SelectItem value="Intimação" className="hover:bg-blue-50 focus:bg-blue-50">Intimação</SelectItem>
+              <SelectItem value="Sentença" className="hover:bg-blue-50 focus:bg-blue-50">Sentença</SelectItem>
+              <SelectItem value="Despacho" className="hover:bg-blue-50 focus:bg-blue-50">Despacho</SelectItem>
+              <SelectItem value="Decisão" className="hover:bg-blue-50 focus:bg-blue-50">Decisão</SelectItem>
+              <SelectItem value="Edital" className="hover:bg-blue-50 focus:bg-blue-50">Edital</SelectItem>
             </SelectContent>
           </Select>
           
           <Select value={filtroLida} onValueChange={setFiltroLida}>
-            <SelectTrigger className="bg-slate-700 border-slate-600 text-white hover:bg-slate-600">
-              <SelectValue placeholder="Status" className="text-slate-400" />
+            <SelectTrigger className="bg-white/10 border-white/20 text-white hover:bg-white/15 backdrop-blur-sm">
+              <SelectValue placeholder="Status" className="text-white/70" />
             </SelectTrigger>
-            <SelectContent className="bg-slate-700 border-slate-600">
-              <SelectItem value="todas" className="text-white hover:bg-slate-600 focus:bg-slate-600">Todas</SelectItem>
-              <SelectItem value="lida" className="text-white hover:bg-slate-600 focus:bg-slate-600">Lidas</SelectItem>
-              <SelectItem value="nao-lida" className="text-white hover:bg-slate-600 focus:bg-slate-600">Não lidas</SelectItem>
+            <SelectContent className="bg-white/95 backdrop-blur-md border-white/20">
+              <SelectItem value="todas" className="hover:bg-blue-50 focus:bg-blue-50">Todas</SelectItem>
+              <SelectItem value="lida" className="hover:bg-blue-50 focus:bg-blue-50">Lidas</SelectItem>
+              <SelectItem value="nao-lida" className="hover:bg-blue-50 focus:bg-blue-50">Não lidas</SelectItem>
             </SelectContent>
           </Select>
         </div>
