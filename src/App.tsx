@@ -83,23 +83,23 @@ function App() {
                   <Route path="/pagamento" element={<PublicLayout><PagamentoPage /></PublicLayout>} />
                   <Route path="/payment-success" element={<PublicLayout><PaymentSuccessPage /></PublicLayout>} />
 
-                  {/* Rotas protegidas apenas com sidebar */}
+                  {/* Rotas protegidas com sidebar */}
                   <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><DashboardPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/meus-processos" element={<ProtectedRoute><ProtectedLayout><MeusProcessosPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/clientes" element={<ProtectedRoute><ProtectedLayout><ClientesPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/equipe" element={<ProtectedRoute><ProtectedLayout><EquipePage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/agenda" element={<ProtectedRoute><ProtectedLayout><AgendaPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/tarefas" element={<ProtectedRoute><ProtectedLayout><TarefasPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/publicacoes" element={<ProtectedRoute><ProtectedLayout><PublicacoesPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/financeiro" element={<ProtectedRoute><ProtectedLayout><FinanceiroPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/documentos" element={<ProtectedRoute><ProtectedLayout><DocumentosPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/relatorios" element={<ProtectedRoute><ProtectedLayout><RelatoriosPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/configuracoes" element={<ProtectedRoute><ProtectedLayout><ConfiguracoesPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/perfil-usuario" element={<ProtectedRoute><ProtectedLayout><PerfilUsuarioPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/suporte" element={<ProtectedRoute><ProtectedLayout><SuportePage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/admin" element={<ProtectedRoute><ProtectedLayout><AdminPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/redefinir-pin-financeiro" element={<ProtectedRoute><ProtectedLayout><RedefinirPinFinanceiroPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/emails-transacionais" element={<ProtectedRoute><ProtectedLayout><EmailsTransacionaisPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/meus-processos" element={<ProtectedRoute><MeusProcessosPage /></ProtectedRoute>} />
+                  <Route path="/clientes" element={<ProtectedRoute><ClientesPage /></ProtectedRoute>} />
+                  <Route path="/equipe" element={<ProtectedRoute><EquipePage /></ProtectedRoute>} />
+                  <Route path="/agenda" element={<ProtectedRoute><AgendaPage /></ProtectedRoute>} />
+                  <Route path="/tarefas" element={<ProtectedRoute><TarefasPage /></ProtectedRoute>} />
+                  <Route path="/publicacoes" element={<ProtectedRoute><PublicacoesPage /></ProtectedRoute>} />
+                  <Route path="/financeiro" element={<ProtectedRoute><FinanceiroPage /></ProtectedRoute>} />
+                  <Route path="/documentos" element={<ProtectedRoute><DocumentosPage /></ProtectedRoute>} />
+                  <Route path="/relatorios" element={<ProtectedRoute><RelatoriosPage /></ProtectedRoute>} />
+                  <Route path="/configuracoes" element={<ProtectedRoute><ConfiguracoesPage /></ProtectedRoute>} />
+                  <Route path="/perfil-usuario" element={<ProtectedRoute><PerfilUsuarioPage /></ProtectedRoute>} />
+                  <Route path="/suporte" element={<ProtectedRoute><SuportePage /></ProtectedRoute>} />
+                  <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+                  <Route path="/redefinir-pin-financeiro" element={<ProtectedRoute><RedefinirPinFinanceiroPage /></ProtectedRoute>} />
+                  <Route path="/emails-transacionais" element={<ProtectedRoute><EmailsTransacionaisPage /></ProtectedRoute>} />
 
                   {/* Rota 404 */}
                   <Route path="*" element={<NotFound />} />
