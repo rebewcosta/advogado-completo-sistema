@@ -7,6 +7,7 @@ import FeaturesSection from '../components/FeaturesSection';
 import AboutSection from '../components/AboutSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import PricingSection from '../components/PricingSection';
+import CtaSection from '../components/CtaSection';
 import MobileHeader from '../components/MobileHeader';
 import { useAuth } from '@/hooks/useAuth';
 import { usePWA } from '@/contexts/PWAContext';
@@ -62,6 +63,7 @@ const Index = () => {
         <AboutSection />
         <TestimonialsSection />
         <PricingSection />
+        <CtaSection />
       </main>
       <Footer />
     </div>
