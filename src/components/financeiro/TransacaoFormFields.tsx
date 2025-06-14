@@ -31,7 +31,7 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
   handleSelectChange
 }) => {
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-6 bg-slate-900">
       {/* Dados da Transação */}
       <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
         <Label className="text-sm font-semibold text-gray-100 mb-3 block">
