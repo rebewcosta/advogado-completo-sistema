@@ -20,6 +20,7 @@ const ClientesPage = () => {
     email: '',
     telefone: '',
     cpfCnpj: '',
+    tipo: '', // Added missing tipo property
     tipo_cliente: 'Pessoa Física' as const,
     endereco: '',
     cidade: '',
@@ -30,12 +31,13 @@ const ClientesPage = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleEdit = (cliente: Cliente) => {

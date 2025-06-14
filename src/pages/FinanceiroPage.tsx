@@ -14,31 +14,34 @@ const FinanceiroPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [transacoes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Updated stats to match StatsData interface
   const stats = {
-    totalReceitas: 0,
-    totalDespesas: 0,
+    receitasConfirmadas: 0,
+    despesasConfirmadas: 0,
     saldoAtual: 0,
-    transacoesRecentes: 0
+    receitasPendentes: 0,
+    despesasPendentes: 0
   };
 
   const handlePinVerified = () => {
     console.log('PIN verified');
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
   };
 
   const handleRefresh = () => {
     console.log('Refresh clicked');
   };
 
-  const handleEdit = (id: string) => {
-    console.log('Edit transaction:', id);
+  const handleEdit = (transacao: any) => {
+    console.log('Edit transaction:', transacao.id);
   };
 
-  const handleDelete = (id: string) => {
-    console.log('Delete transaction:', id);
+  const handleDelete = (transacao: any) => {
+    console.log('Delete transaction:', transacao.id);
   };
 
   return (

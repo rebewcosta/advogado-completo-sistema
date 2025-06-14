@@ -10,7 +10,7 @@ import TarefaFormDialog from '@/components/tarefas/TarefaFormDialog';
 import { useTarefas } from '@/hooks/useTarefas';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import { Toaster } from "@/components/ui/toaster";
-import type { TarefaComRelacoes } from '@/types/tarefas';
+import type { TarefaComRelacoes, StatusTarefa, PrioridadeTarefa } from '@/types/tarefas';
 
 const TarefasPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,26 +21,27 @@ const TarefasPage = () => {
   const {
     tarefas,
     isLoading,
-    createTarefa,
-    updateTarefa,
+    adicionarTarefa,
+    atualizarTarefa,
     deleteTarefa,
-    fetchTarefas
+    handleManualRefresh
   } = useTarefas();
 
   useEffect(() => {
-    fetchTarefas();
-  }, [fetchTarefas]);
+    handleManualRefresh();
+  }, [handleManualRefresh]);
 
-  // Convert tarefas to TarefaComRelacoes format
+  // Convert tarefas to TarefaComRelacoes format with proper type casting
   const tarefasComRelacoes: TarefaComRelacoes[] = tarefas.map(tarefa => ({
     ...tarefa,
-    descricao: tarefa.descricao_detalhada,
-    status: tarefa.status as 'Pendente' | 'Em Andamento' | 'Concluída' | 'Cancelada'
+    descricao_detalhada: tarefa.descricao_detalhada || '',
+    status: tarefa.status as StatusTarefa,
+    prioridade: tarefa.prioridade as PrioridadeTarefa
   }));
 
   const filteredTarefas = tarefasComRelacoes.filter(tarefa => {
     const matchesSearch = tarefa.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         tarefa.descricao?.toLowerCase().includes(searchTerm.toLowerCase());
+                         tarefa.descricao_detalhada?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "todas" || tarefa.status === statusFilter;
     const matchesPrioridade = prioridadeFilter === "todas" || tarefa.prioridade === prioridadeFilter;
     
@@ -85,7 +86,7 @@ const TarefasPage = () => {
         <div className="hidden md:block">
           <TarefaTable
             tarefas={filteredTarefas}
-            onUpdate={updateTarefa}
+            onUpdate={atualizarTarefa}
             onDelete={deleteTarefa}
             isLoading={isLoading}
           />
@@ -93,7 +94,7 @@ const TarefasPage = () => {
         <div className="md:hidden">
           <TarefaListAsCards
             tarefas={filteredTarefas}
-            onUpdate={updateTarefa}
+            onUpdate={atualizarTarefa}
             onDelete={deleteTarefa}
             isLoading={isLoading}
           />
@@ -102,7 +103,7 @@ const TarefasPage = () => {
         <TarefaFormDialog
           isOpen={isFormDialogOpen}
           onOpenChange={setIsFormDialogOpen}
-          onSubmit={createTarefa}
+          onSubmit={adicionarTarefa}
         />
       </div>
       <Toaster />
