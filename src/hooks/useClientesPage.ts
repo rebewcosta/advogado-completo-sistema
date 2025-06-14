@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
@@ -51,11 +50,23 @@ export const useClientesPage = () => {
 
     setIsSubmitting(true);
     try {
+      // Garantir que campos obrigatórios estão preenchidos
+      const dataToSave = {
+        ...clientData,
+        email: clientData.email || '',
+        telefone: clientData.telefone || '',
+        endereco: clientData.endereco || '',
+        cidade: clientData.cidade || '',
+        estado: clientData.estado || '',
+        cep: clientData.cep || '',
+        observacoes: clientData.observacoes || ''
+      };
+
       if (clienteParaEdicao) {
         const { error } = await supabase
           .from('clientes')
           .update({
-            ...clientData,
+            ...dataToSave,
             updated_at: new Date().toISOString()
           })
           .eq('id', clienteParaEdicao.id);
@@ -70,7 +81,7 @@ export const useClientesPage = () => {
         const { error } = await supabase
           .from('clientes')
           .insert({
-            ...clientData,
+            ...dataToSave,
             user_id: user.id
           });
         
@@ -87,9 +98,10 @@ export const useClientesPage = () => {
       setClienteParaEdicao(null);
       return true;
     } catch (error: any) {
+      console.error('Erro ao salvar cliente:', error);
       toast({
         title: "Erro ao salvar cliente",
-        description: error.message,
+        description: error.message || "Ocorreu um erro inesperado. Tente novamente.",
         variant: "destructive"
       });
       return false;

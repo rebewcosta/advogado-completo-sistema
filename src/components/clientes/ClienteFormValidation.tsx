@@ -19,6 +19,7 @@ export const useClienteFormValidation = () => {
   const { toast } = useToast();
 
   const validateForm = (formData: ClienteFormData): boolean => {
+    // Nome é obrigatório
     if (!formData.nome.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -29,7 +30,7 @@ export const useClienteFormValidation = () => {
     }
 
     // Email validation only if provided
-    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
+    if (formData.email && formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
       toast({
         title: "Email inválido",
         description: "Por favor, insira um endereço de email válido.",
@@ -38,6 +39,7 @@ export const useClienteFormValidation = () => {
       return false;
     }
     
+    // CPF/CNPJ é obrigatório
     if (!formData.cpfCnpj.trim()) {
       toast({
         title: "Campo obrigatório",
