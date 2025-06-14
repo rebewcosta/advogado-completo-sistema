@@ -18,7 +18,6 @@ export type TarefaFormData = {
   data_conclusao?: string | null;
   prioridade: 'Baixa' | 'Média' | 'Alta' | 'Crítica';
   status: 'Pendente' | 'Em Andamento' | 'Concluída' | 'Cancelada';
-  responsavel_id?: string | null;
   processo_id?: string | null;
   cliente_id?: string | null;
 };
@@ -100,7 +99,6 @@ export const useTarefas = () => {
         data_conclusao: formData.data_conclusao || null,
         prioridade: formData.prioridade,
         status: formData.status,
-        responsavel_id: formData.responsavel_id || null,
         processo_id: formData.processo_id || null,
         cliente_id: formData.cliente_id || null,
     };
