@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
@@ -34,6 +34,8 @@ import PublicacoesPage from './pages/PublicacoesPage';
 // Components
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from '@/components/AppSidebar';
 
 // Contexts
 import { PWAProvider } from './contexts/PWAContext';
@@ -42,60 +44,68 @@ import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
 
-// Layout component that renders navbar and outlet
-const AppLayout = () => {
+// Layout para páginas públicas (com navbar)
+const PublicLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <Navbar />
-      <Outlet />
+      {children}
     </>
   );
 };
 
+// Layout para páginas protegidas (apenas sidebar)
+const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <AppSidebar />
+        <main className="flex-1 bg-gray-50">
+          {children}
+        </main>
+      </div>
+    </SidebarProvider>
+  );
+};
+
 function App() {
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
-    (navigator as any).standalone || 
-    document.referrer.includes('android-app://');
-  
   return (
     <QueryClientProvider client={queryClient}>
       <PWAProvider>
         <ThemeProvider>
           <Router>
             <AuthProvider>
-              <div className="App min-h-screen bg-gray-50">
+              <div className="App min-h-screen">
                 <Toaster />
                 
                 <Routes>
-                  {/* Rotas públicas */}
-                  <Route path="/" element={<Index />} />
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/cadastro" element={<CadastroPage />} />
-                  <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-                  <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
-                  <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
-                  <Route path="/pagamento" element={<PagamentoPage />} />
-                  <Route path="/payment-success" element={<PaymentSuccessPage />} />
+                  {/* Rotas públicas com navbar */}
+                  <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
+                  <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
+                  <Route path="/cadastro" element={<PublicLayout><CadastroPage /></PublicLayout>} />
+                  <Route path="/recuperar-senha" element={<PublicLayout><RecuperarSenhaPage /></PublicLayout>} />
+                  <Route path="/atualizar-senha" element={<PublicLayout><AtualizarSenhaPage /></PublicLayout>} />
+                  <Route path="/termos-privacidade" element={<PublicLayout><TermosPrivacidadePage /></PublicLayout>} />
+                  <Route path="/pagamento" element={<PublicLayout><PagamentoPage /></PublicLayout>} />
+                  <Route path="/payment-success" element={<PublicLayout><PaymentSuccessPage /></PublicLayout>} />
 
-                  {/* Rotas protegidas com layout */}
-                  <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-                    <Route path="/dashboard" element={<DashboardPage />} />
-                    <Route path="/meus-processos" element={<MeusProcessosPage />} />
-                    <Route path="/clientes" element={<ClientesPage />} />
-                    <Route path="/agenda" element={<AgendaPage />} />
-                    <Route path="/tarefas" element={<TarefasPage />} />
-                    <Route path="/publicacoes" element={<PublicacoesPage />} />
-                    <Route path="/financeiro" element={<FinanceiroPage />} />
-                    <Route path="/documentos" element={<DocumentosPage />} />
-                    <Route path="/relatorios" element={<RelatoriosPage />} />
-                    <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-                    <Route path="/perfil-usuario" element={<PerfilUsuarioPage />} />
-                    <Route path="/equipe" element={<EquipePage />} />
-                    <Route path="/suporte" element={<SuportePage />} />
-                    <Route path="/admin" element={<AdminPage />} />
-                    <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
-                    <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
-                  </Route>
+                  {/* Rotas protegidas apenas com sidebar */}
+                  <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><DashboardPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/meus-processos" element={<ProtectedRoute><ProtectedLayout><MeusProcessosPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/clientes" element={<ProtectedRoute><ProtectedLayout><ClientesPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/equipe" element={<ProtectedRoute><ProtectedLayout><EquipePage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/agenda" element={<ProtectedRoute><ProtectedLayout><AgendaPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/tarefas" element={<ProtectedRoute><ProtectedLayout><TarefasPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/publicacoes" element={<ProtectedRoute><ProtectedLayout><PublicacoesPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/financeiro" element={<ProtectedRoute><ProtectedLayout><FinanceiroPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/documentos" element={<ProtectedRoute><ProtectedLayout><DocumentosPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/relatorios" element={<ProtectedRoute><ProtectedLayout><RelatoriosPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/configuracoes" element={<ProtectedRoute><ProtectedLayout><ConfiguracoesPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/perfil-usuario" element={<ProtectedRoute><ProtectedLayout><PerfilUsuarioPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/suporte" element={<ProtectedRoute><ProtectedLayout><SuportePage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/admin" element={<ProtectedRoute><ProtectedLayout><AdminPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/redefinir-pin-financeiro" element={<ProtectedRoute><ProtectedLayout><RedefinirPinFinanceiroPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/emails-transacionais" element={<ProtectedRoute><ProtectedLayout><EmailsTransacionaisPage /></ProtectedLayout></ProtectedRoute>} />
 
                   {/* Rota 404 */}
                   <Route path="*" element={<NotFound />} />
