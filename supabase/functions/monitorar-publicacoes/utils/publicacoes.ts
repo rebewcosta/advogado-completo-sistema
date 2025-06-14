@@ -23,10 +23,15 @@ export const savePublicacoes = async (publicacoes: any[], userId: string, supaba
 };
 
 export const getFontesConsultadas = (estados: string[]) => {
-  // Lista completa de estados brasileiros
-  const todosEstados = ['SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO', 'PE', 'ES', 'DF', 'MT', 'MS', 'PA', 'AM', 'RO', 'AC', 'RR', 'AP', 'TO', 'MA', 'PI', 'AL', 'SE', 'PB', 'RN'];
+  // Lista completa de todos os 27 estados brasileiros
+  const todosEstados = [
+    'SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO', 'PE', // 10 principais
+    'ES', 'DF', 'MT', 'MS', 'PA', 'AM', 'RO', 'AC', 'RR', 'AP', // Região Norte/Centro-Oeste/Sudeste
+    'TO', 'MA', 'PI', 'AL', 'SE', 'PB', 'RN' // Região Nordeste/Norte
+  ];
   
-  const estadosConsultados = estados.length > 0 ? estados : todosEstados.slice(0, 10); // Primeiros 10 estados principais
+  // Se não especificado, consulta todos os 27 estados
+  const estadosConsultados = estados.length > 0 ? estados : todosEstados;
   const fontes: string[] = [];
   
   estadosConsultados.forEach(estado => {
