@@ -57,8 +57,19 @@ const TarefasPage = () => {
     setIsFormOpen(true);
   };
 
-  const handleSaveTarefa = async (formData: TarefaFormData): Promise<boolean> => {
-    const success = await saveTarefa(formData, tarefaParaForm?.id);
+  const handleSaveTarefa = async (formData: any): Promise<boolean> => {
+    // Convert formData to TarefaFormData format ensuring proper types
+    const tarefaFormData: TarefaFormData = {
+      titulo: formData.titulo || '',
+      descricao: formData.descricao || '',
+      data_conclusao: formData.data_conclusao,
+      prioridade: (formData.prioridade as TarefaFormData['prioridade']) || 'Média',
+      status: (formData.status as TarefaFormData['status']) || 'Pendente',
+      processo_id: formData.processo_id,
+      cliente_id: formData.cliente_id,
+    };
+    
+    const success = await saveTarefa(tarefaFormData, tarefaParaForm?.id);
     if (success) {
       setTarefaParaForm(null);
     }

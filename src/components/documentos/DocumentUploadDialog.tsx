@@ -22,11 +22,13 @@ import LowStorageWarning from './LowStorageWarning';
 interface DocumentUploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
+  espacoDisponivel?: number;
 }
 
 const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   isOpen,
-  onClose
+  onClose,
+  espacoDisponivel = 0
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState('');
@@ -40,7 +42,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   
   const calcularEspacoDisponivel = async () => {
     // This would normally calculate available space
-    return 50 * 1024 * 1024; // 50MB default
+    return espacoDisponivel || 50 * 1024 * 1024; // 50MB default
   };
   
   const { uploadDocumento, isUploading, uploadError } = useDocumentUpload(
@@ -134,7 +136,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
             {/* Campos do formulário com fundo branco */}
             <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
-              <LowStorageWarning />
+              <LowStorageWarning espacoDisponivel={espacoDisponivel} />
               
               <div className="space-y-6">
                 {/* Área de upload */}

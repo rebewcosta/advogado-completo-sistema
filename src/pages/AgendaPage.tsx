@@ -6,7 +6,7 @@ import { Spinner } from '@/components/ui/spinner';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import AgendaFilters from '@/components/agenda/AgendaFilters';
 import AgendaEventTabs from '@/components/agenda/AgendaEventTabs';
-import { AgendaEventForm } from '@/components/AgendaEventForm';
+import AgendaEventForm from '@/components/AgendaEventForm';
 import { useAgendaEvents } from '@/hooks/useAgendaEvents';
 import type { AgendaEvent } from '@/types/agenda';
 

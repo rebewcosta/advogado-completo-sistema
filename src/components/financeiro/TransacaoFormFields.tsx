@@ -9,176 +9,122 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info } from 'lucide-react';
-
-interface TransacaoFormData {
-  tipo: string;
-  descricao: string;
-  valor: string;
-  categoria: string;
-  data: string;
-  status: string;
-}
 
 interface TransacaoFormFieldsProps {
-  formData: TransacaoFormData;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleSelectChange: (name: string, value: string) => void;
+  formData: {
+    tipo: string;
+    categoria: string;
+    valor: string;
+    descricao: string;
+    data_transacao: string;
+    cliente_associado_id: string;
+    processo_associado_id: string;
+  };
+  onChange: (field: string, value: string) => void;
 }
 
-const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
-  formData,
-  handleChange,
-  handleSelectChange
+const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({ 
+  formData, 
+  onChange 
 }) => {
   return (
-    <TooltipProvider>
-      <div className="space-y-6 p-6 bg-lawyer-dark">
-        {/* Dados da Transação */}
-        <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
-          <Label className="text-sm font-semibold text-gray-100 mb-3 block">
-            💰 Dados da Transação
-          </Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label className="text-gray-100">
-                Tipo <span className="text-red-400">*</span>
-              </Label>
-              <div className="flex gap-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="tipo"
-                    value="Receita"
-                    checked={formData.tipo === "Receita"}
-                    onChange={handleChange}
-                    className="mr-2 form-radio h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
-                  />
-                  <span className="text-sm text-gray-100">Receita</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="tipo"
-                    value="Despesa"
-                    checked={formData.tipo === "Despesa"}
-                    onChange={handleChange}
-                    className="mr-2 form-radio h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
-                  />
-                  <span className="text-sm text-gray-100">Despesa</span>
-                </label>
-              </div>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="valor_transacao_form" className="text-gray-100">
-                Valor (R$) <span className="text-red-400">*</span>
-              </Label>
-              <Input
-                type="number"
-                id="valor_transacao_form"
-                name="valor"
-                min="0"
-                step="0.01"
-                value={formData.valor}
-                onChange={handleChange}
-                required
-                className="bg-white"
-              />
-            </div>
-            <div className="md:col-span-2 space-y-1">
-              <Label htmlFor="descricao_transacao_form" className="text-gray-100">
-                Descrição <span className="text-red-400">*</span>
-              </Label>
-              <Input
-                type="text"
-                id="descricao_transacao_form"
-                name="descricao"
-                value={formData.descricao}
-                onChange={handleChange}
-                placeholder="Descrição da transação"
-                required
-                className="bg-white"
-              />
-            </div>
+    <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label htmlFor="tipo" className="text-gray-700 font-medium">Tipo de Transação *</Label>
+            <Select value={formData.tipo} onValueChange={(value) => onChange('tipo', value)}>
+              <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
+                <SelectItem value="entrada">Entrada</SelectItem>
+                <SelectItem value="saida">Saída</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="categoria" className="text-gray-700 font-medium">Categoria *</Label>
+            <Select value={formData.categoria} onValueChange={(value) => onChange('categoria', value)}>
+              <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                <SelectValue placeholder="Selecione a categoria" />
+              </SelectTrigger>
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
+                <SelectItem value="honorarios">Honorários</SelectItem>
+                <SelectItem value="despesas_operacionais">Despesas Operacionais</SelectItem>
+                <SelectItem value="investimentos">Investimentos</SelectItem>
+                <SelectItem value="outros">Outros</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Categorização */}
-        <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-          <Label className="text-sm font-semibold text-blue-100 mb-3 block">
-            🏷️ Categorização
-          </Label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <Label htmlFor="categoria_transacao_form" className="text-blue-100">
-                Categoria <span className="text-red-400">*</span>
-              </Label>
-              <Select 
-                value={formData.categoria}
-                onValueChange={(value) => handleSelectChange('categoria', value)}
-              >
-                <SelectTrigger id="categoria_transacao_form" className="bg-white">
-                  <SelectValue placeholder="Selecione a categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Honorários">Honorários</SelectItem>
-                  <SelectItem value="Consultas">Consultas</SelectItem>
-                  <SelectItem value="Custas Processuais">Custas Processuais</SelectItem>
-                  <SelectItem value="Infraestrutura">Infraestrutura</SelectItem>
-                  <SelectItem value="Software">Software</SelectItem>
-                  <SelectItem value="Salários">Salários</SelectItem>
-                  <SelectItem value="Impostos">Impostos</SelectItem>
-                  <SelectItem value="Suprimentos">Suprimentos</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="Outros">Outros</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="status_transacao_form" className="text-blue-100">
-                Status <span className="text-red-400">*</span>
-              </Label>
-              <Select 
-                value={formData.status}
-                onValueChange={(value) => handleSelectChange('status', value)}
-              >
-                <SelectTrigger id="status_transacao_form" className="bg-white">
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pendente">Pendente</SelectItem>
-                  <SelectItem value="Pago">Pago</SelectItem>
-                  <SelectItem value="Recebido">Recebido</SelectItem>
-                  <SelectItem value="Atrasado">Atrasado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        {/* Data */}
-        <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
-          <Label className="text-sm font-semibold text-gray-100 mb-3 block">
-            📅 Data
-          </Label>
-          <div className="space-y-1">
-            <Label htmlFor="data_transacao_form" className="text-gray-100">
-              Data da Transação <span className="text-red-400">*</span>
-            </Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label htmlFor="valor" className="text-gray-700 font-medium">Valor *</Label>
             <Input
-              type="date"
-              id="data_transacao_form"
-              name="data"
-              value={formData.data}
-              onChange={handleChange}
+              id="valor"
+              type="number"
+              step="0.01"
+              value={formData.valor}
+              onChange={(e) => onChange('valor', e.target.value)}
+              placeholder="0,00"
+              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
               required
-              className="bg-white"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="data_transacao" className="text-gray-700 font-medium">Data da Transação *</Label>
+            <Input
+              id="data_transacao"
+              type="date"
+              value={formData.data_transacao}
+              onChange={(e) => onChange('data_transacao', e.target.value)}
+              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <Label htmlFor="descricao" className="text-gray-700 font-medium">Descrição *</Label>
+          <Input
+            id="descricao"
+            value={formData.descricao}
+            onChange={(e) => onChange('descricao', e.target.value)}
+            placeholder="Descrição da transação"
+            className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+            required
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <Label htmlFor="cliente_associado_id" className="text-gray-700 font-medium">Cliente Associado</Label>
+            <Input
+              id="cliente_associado_id"
+              value={formData.cliente_associado_id}
+              onChange={(e) => onChange('cliente_associado_id', e.target.value)}
+              placeholder="ID do cliente (opcional)"
+              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+            />
+          </div>
+          
+          <div>
+            <Label htmlFor="processo_associado_id" className="text-gray-700 font-medium">Processo Associado</Label>
+            <Input
+              id="processo_associado_id"
+              value={formData.processo_associado_id}
+              onChange={(e) => onChange('processo_associado_id', e.target.value)}
+              placeholder="ID do processo (opcional)"
+              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
             />
           </div>
         </div>
       </div>
-    </TooltipProvider>
+    </div>
   );
 };
 

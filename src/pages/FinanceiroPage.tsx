@@ -34,14 +34,6 @@ const FinanceiroPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState<TransacaoSupabase | null>(null);
-  const [formData, setFormData] = useState({
-    tipo: 'Receita',
-    descricao: '',
-    valor: '',
-    categoria: 'Honorários',
-    data: new Date().toISOString().split('T')[0],
-    status: 'Pendente'
-  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -161,14 +153,6 @@ const FinanceiroPage = () => {
 
   const handleEditTransaction = (transaction: TransacaoSupabase) => {
     setCurrentTransaction(transaction);
-    setFormData({
-      tipo: transaction.tipo_transacao || 'Receita',
-      descricao: transaction.descricao || '',
-      valor: String(transaction.valor || ''),
-      categoria: transaction.categoria || 'Honorários',
-      data: transaction.data_transacao || new Date().toISOString().split('T')[0],
-      status: transaction.status_pagamento || 'Pendente'
-    });
     setIsModalOpen(true);
   };
 
@@ -203,82 +187,12 @@ const FinanceiroPage = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleAddOrUpdateTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!user || isLoadingTransactions) {
-        toast({ title: "Aguarde ou usuário não autenticado", variant: "destructive" });
-        return;
-    }
-    setIsLoadingTransactions(true);
-
-    const transactionDataForSupabase = {
-      user_id: user.id,
-      tipo_transacao: formData.tipo as 'Receita' | 'Despesa',
-      descricao: formData.descricao,
-      valor: parseFloat(formData.valor),
-      categoria: formData.categoria,
-      data_transacao: formData.data,
-      status_pagamento: formData.status as TransacaoSupabase['status_pagamento'],
-    };
-
-    try {
-      if (currentTransaction) {
-        const { data: updatedData, error } = await supabase
-          .from('transacoes_financeiras')
-          .update(transactionDataForSupabase)
-          .eq('id', currentTransaction.id)
-          .eq('user_id', user.id)
-          .select()
-          .single();
-        
-        if (error) throw error;
-        toast({ title: "Transação atualizada", description: "Os dados da transação foram atualizados." });
-      } else {
-        const { data: insertedData, error } = await supabase
-          .from('transacoes_financeiras')
-          .insert(transactionDataForSupabase)
-          .select()
-          .single();
-        
-        if (error) throw error;
-        toast({ title: "Transação adicionada", description: "A nova transação foi registrada." });
-      }
-      fetchTransactions(false);
-      handleCloseModal();
-    } catch (error: any) {
-      toast({
-        title: "Erro ao salvar transação",
-        description: error.message || "Ocorreu um erro.",
-        variant: "destructive",
-      });
-    } finally {
-        setIsLoadingTransactions(false);
-    }
-  };
-  
   const handleManualRefresh = () => {
     fetchTransactions(true);
   };
 
   const handleOpenModal = () => {
     setCurrentTransaction(null);
-    setFormData({
-      tipo: 'Receita',
-      descricao: '',
-      valor: '',
-      categoria: 'Honorários',
-      data: new Date().toISOString().split('T')[0],
-      status: 'Pendente'
-    });
     setIsModalOpen(true);
   };
 
@@ -336,6 +250,61 @@ const FinanceiroPage = () => {
     );
   }
 
+  const handleSaveTransaction = async (transacaoData: any): Promise<boolean> => {
+    if (!user || isLoadingTransactions) {
+      toast({ title: "Aguarde ou usuário não autenticado", variant: "destructive" });
+      return false;
+    }
+    setIsLoadingTransactions(true);
+
+    const transactionDataForSupabase = {
+      user_id: user.id,
+      tipo_transacao: transacaoData.tipo as 'Receita' | 'Despesa',
+      descricao: transacaoData.descricao,
+      valor: parseFloat(transacaoData.valor),
+      categoria: transacaoData.categoria,
+      data_transacao: transacaoData.data_transacao,
+      status_pagamento: 'Pendente' as TransacaoSupabase['status_pagamento'],
+      cliente_associado_id: transacaoData.cliente_associado_id || null,
+      processo_associado_id: transacaoData.processo_associado_id || null,
+    };
+
+    try {
+      if (currentTransaction) {
+        const { data: updatedData, error } = await supabase
+          .from('transacoes_financeiras')
+          .update(transactionDataForSupabase)
+          .eq('id', currentTransaction.id)
+          .eq('user_id', user.id)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        toast({ title: "Transação atualizada", description: "Os dados da transação foram atualizados." });
+      } else {
+        const { data: insertedData, error } = await supabase
+          .from('transacoes_financeiras')
+          .insert(transactionDataForSupabase)
+          .select()
+          .single();
+        
+        if (error) throw error;
+        toast({ title: "Transação adicionada", description: "A nova transação foi registrada." });
+      }
+      fetchTransactions(false);
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar transação",
+        description: error.message || "Ocorreu um erro.",
+        variant: "destructive",
+      });
+      return false;
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <main className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4 md:p-6 lg:p-8">
@@ -389,13 +358,9 @@ const FinanceiroPage = () => {
 
           <TransacaoModal
             isOpen={isModalOpen}
-            currentTransaction={currentTransaction}
-            formData={formData}
-            isLoading={isLoadingTransactions}
             onClose={handleCloseModal}
-            onSubmit={handleAddOrUpdateTransaction}
-            handleChange={handleChange}
-            handleSelectChange={handleSelectChange}
+            onSave={handleSaveTransaction}
+            transacao={currentTransaction}
           />
         </div>
       </main>

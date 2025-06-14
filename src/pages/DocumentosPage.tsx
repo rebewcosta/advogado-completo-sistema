@@ -1,4 +1,3 @@
-
 // src/pages/DocumentosPage.tsx
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
@@ -134,7 +133,8 @@ const DocumentosPage = () => {
         
         <DocumentUploadDialog 
           isOpen={isUploadDialogOpen} 
-          onOpenChange={setIsUploadDialogOpen}
+          onClose={() => setIsUploadDialogOpen(false)}
+          espacoDisponivel={espacoDisponivel}
         />
       </div>
     </AdminLayout>
