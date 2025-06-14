@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -50,9 +51,7 @@ const PublicacoesPage: React.FC = () => {
   const [configuracao, setConfiguracao] = useState<ConfiguracaoMonitoramento | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filtroEstado, setFiltroEstado] = useState('');
-  const [filtroTipo, setFiltroTipo] = useState('');
-  const [filtroLida, setFiltroLida] = useState('');
+  const [statusFilter, setStatusFilter] = useState('todas');
   const [showConfigDialog, setShowConfigDialog] = useState(false);
   
   // Estados para configuração
@@ -236,13 +235,12 @@ const PublicacoesPage: React.FC = () => {
                          pub.conteudo_publicacao.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          pub.nome_advogado.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesEstado = !filtroEstado || filtroEstado === 'todos' || pub.estado === filtroEstado;
-    const matchesTipo = !filtroTipo || filtroTipo === 'todos' || pub.tipo_publicacao === filtroTipo;
-    const matchesLida = !filtroLida || filtroLida === 'todas' ||
-                       (filtroLida === 'lida' && pub.lida) ||
-                       (filtroLida === 'nao-lida' && !pub.lida);
+    const matchesStatus = statusFilter === 'todas' ||
+                         (statusFilter === 'nao_lidas' && !pub.lida) ||
+                         (statusFilter === 'importantes' && pub.importante) ||
+                         (statusFilter === 'lidas' && pub.lida);
     
-    return matchesSearch && matchesEstado && matchesTipo && matchesLida;
+    return matchesSearch && matchesStatus;
   });
 
   // Só mostra publicações se o monitoramento estiver ativo
@@ -278,15 +276,12 @@ const PublicacoesPage: React.FC = () => {
             <div className="w-full animate-fade-in" style={{ animationDelay: '300ms' }}>
               <PublicacoesFilters
                 searchTerm={searchTerm}
-                setSearchTerm={setSearchTerm}
-                filtroEstado={filtroEstado}
-                setFiltroEstado={setFiltroEstado}
-                filtroTipo={filtroTipo}
-                setFiltroTipo={setFiltroTipo}
-                filtroLida={filtroLida}
-                setFiltroLida={setFiltroLida}
+                onSearchChange={setSearchTerm}
+                statusFilter={statusFilter}
+                onStatusFilterChange={setStatusFilter}
                 onRefresh={fetchPublicacoes}
                 onOpenConfig={() => setShowConfigDialog(true)}
+                isLoading={isLoading}
               />
             </div>
             
