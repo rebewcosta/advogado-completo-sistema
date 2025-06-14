@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { DiarioScraper } from './scrapers/diarioScraper.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +19,148 @@ interface PublicacaoEncontrada {
   numero_processo?: string;
   tipo_publicacao?: string;
   url_publicacao?: string;
+}
+
+// Classe base para scraping simples
+class BaseScraper {
+  protected readonly timeoutMs = 10000;
+
+  protected limparTexto(texto: string): string {
+    return texto
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/[^\w\sÀ-ÿ\-.,():/]/g, '')
+      .trim()
+      .substring(0, 1000);
+  }
+
+  protected async fetchWithTimeout(url: string): Promise<Response> {
+    try {
+      return await fetch(url, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+        },
+        signal: AbortSignal.timeout(this.timeoutMs)
+      });
+    } catch (error) {
+      console.error(`Erro ao acessar ${url}:`, error);
+      throw error;
+    }
+  }
+
+  protected buscarNomesNoHtml(html: string, nomes: string[], estadoSigla: string, estadoNome: string, url: string): PublicacaoEncontrada[] {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    for (const nome of nomes) {
+      if (html.toLowerCase().includes(nome.toLowerCase())) {
+        const regex = new RegExp(`.{0,200}${nome.replace(/\s+/g, '\\s+')}.{0,200}`, 'gi');
+        const matches = html.match(regex);
+        
+        if (matches) {
+          for (const match of matches) {
+            publicacoes.push({
+              nome_advogado: nome,
+              titulo_publicacao: `Publicação no Diário Oficial ${estadoSigla}`,
+              conteudo_publicacao: this.limparTexto(match),
+              data_publicacao: new Date().toISOString().split('T')[0],
+              diario_oficial: `Diário Oficial do Estado ${estadoNome}`,
+              estado: estadoSigla,
+              url_publicacao: url
+            });
+          }
+        }
+      }
+    }
+    
+    return publicacoes;
+  }
+}
+
+// Scraper principal
+class DiarioScraper extends BaseScraper {
+  async buscarEmTodosEstados(nomes: string[], estadosEspecificos: string[] = []): Promise<PublicacaoEncontrada[]> {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    const estadosParaBuscar = estadosEspecificos.length > 0 
+      ? estadosEspecificos 
+      : ['SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO'];
+    
+    console.log(`🌐 Iniciando busca REAL em ${estadosParaBuscar.length} estados: ${estadosParaBuscar.join(', ')}`);
+
+    // URLs dos diários oficiais por estado
+    const urlsEstados: Record<string, string> = {
+      'SP': 'https://www.imprensaoficial.com.br/',
+      'RJ': 'https://www.ioerj.com.br/',
+      'MG': 'https://www.jornalminasgerais.mg.gov.br/',
+      'CE': 'https://www.egov.ce.gov.br/diario-oficial',
+      'PR': 'https://www.aen.pr.gov.br/Diario',
+      'RS': 'https://www.corag.com.br/doe',
+      'SC': 'https://doe.sea.sc.gov.br/',
+      'BA': 'https://egov.ba.gov.br/',
+      'GO': 'https://www.dio.go.gov.br/'
+    };
+
+    const promises: Promise<PublicacaoEncontrada[]>[] = [];
+
+    for (const estado of estadosParaBuscar) {
+      if (urlsEstados[estado]) {
+        promises.push(this.buscarPorEstado(nomes, estado, urlsEstados[estado]));
+      }
+    }
+
+    try {
+      console.log(`🔍 Executando ${promises.length} buscas REAIS em paralelo...`);
+      const resultados = await Promise.allSettled(promises);
+      
+      resultados.forEach((resultado, index) => {
+        if (resultado.status === 'fulfilled') {
+          console.log(`✅ Busca ${index + 1} concluída: ${resultado.value.length} publicações`);
+          publicacoes.push(...resultado.value);
+        } else {
+          console.error(`❌ Erro na busca ${index + 1}:`, resultado.reason);
+        }
+      });
+
+      console.log(`✅ Busca REAL concluída: ${publicacoes.length} publicações encontradas no total`);
+      return publicacoes;
+
+    } catch (error) {
+      console.error('❌ Erro geral na busca REAL:', error);
+      return publicacoes;
+    }
+  }
+
+  private async buscarPorEstado(nomes: string[], estado: string, url: string): Promise<PublicacaoEncontrada[]> {
+    try {
+      console.log(`🔍 Buscando no Diário Oficial de ${estado}...`);
+      
+      const response = await this.fetchWithTimeout(url);
+
+      if (response.ok) {
+        const html = await response.text();
+        const estadosNomes: Record<string, string> = {
+          'SP': 'de São Paulo',
+          'RJ': 'do Rio de Janeiro', 
+          'MG': 'de Minas Gerais',
+          'CE': 'do Ceará',
+          'PR': 'do Paraná',
+          'RS': 'do Rio Grande do Sul',
+          'SC': 'de Santa Catarina',
+          'BA': 'da Bahia',
+          'GO': 'de Goiás'
+        };
+        
+        return this.buscarNomesNoHtml(html, nomes, estado, estadosNomes[estado] || estado, url);
+      }
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar no Diário de ${estado}:`, error);
+    }
+    
+    return [];
+  }
 }
 
 serve(async (req) => {
