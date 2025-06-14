@@ -1,5 +1,4 @@
 
-// src/pages/Index.tsx
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -27,23 +26,23 @@ const Index = () => {
   const showPWAInstallBanner = canInstallPWA;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Navbar sempre visível */}
       <Navbar />
       
-      {/* Cabeçalho adicional apenas para usuários logados - REMOVIDO O BOTÃO SAIR DUPLICADO */}
+      {/* Cabeçalho adicional apenas para usuários logados */}
       {user && (
         <>
           {/* Cabeçalho Mobile - Apenas para smartphone */}
           <MobileHeader />
           
-          {/* Cabeçalho Desktop - Apenas para desktop - SEM BOTÃO SAIR */}
-          <div className="hidden md:block bg-gradient-to-r from-lawyer-dark to-blue-800 shadow-md">
-            <div className="container mx-auto py-2 px-4 flex items-center justify-center">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></div>
+          {/* Cabeçalho Desktop - Apenas para desktop */}
+          <div className="hidden md:block bg-gradient-to-r from-blue-900 via-indigo-900 to-purple-900 shadow-lg border-b border-blue-800/20">
+            <div className="container mx-auto py-3 px-4 flex items-center justify-center">
+              <div className="flex items-center gap-3">
+                <div className="h-2.5 w-2.5 rounded-full bg-green-400 animate-pulse shadow-lg shadow-green-400/50"></div>
                 <p className="text-white text-sm md:text-base font-medium">
-                  Bem-vindo, <span className="font-semibold">{user.user_metadata?.nome || user.email?.split('@')[0]}</span>
+                  Bem-vindo de volta, <span className="font-semibold text-blue-200">{user.user_metadata?.nome || user.email?.split('@')[0]}</span>
                 </p>
               </div>
             </div>
