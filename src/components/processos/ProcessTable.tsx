@@ -80,13 +80,13 @@ const ProcessTable: React.FC<ProcessTableProps> = ({
     <div className="overflow-x-auto">
       <Table className="min-w-full">
         <TableHeader>
-          <TableRow className="border-b-gray-200/50 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200">
-            <TableHead className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-[30%] whitespace-nowrap">Processo / Vara</TableHead>
-            <TableHead className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-[25%] whitespace-nowrap">Cliente</TableHead>
-            <TableHead className="hidden md:table-cell px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Tipo</TableHead>
-            <TableHead className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Status</TableHead>
-            <TableHead className="hidden sm:table-cell px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Próximo Prazo</TableHead>
-            <TableHead className="px-4 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider w-[80px] whitespace-nowrap">Ações</TableHead>
+          <TableRow className="border-b-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-200">
+            <TableHead className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-[30%] whitespace-nowrap">Processo / Vara</TableHead>
+            <TableHead className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-[25%] whitespace-nowrap">Cliente</TableHead>
+            <TableHead className="hidden md:table-cell px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">Tipo</TableHead>
+            <TableHead className="px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">Status</TableHead>
+            <TableHead className="hidden sm:table-cell px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap">Próximo Prazo</TableHead>
+            <TableHead className="px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wider w-[80px] whitespace-nowrap">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody className="bg-white/50 backdrop-blur-sm divide-y divide-gray-200/50">
