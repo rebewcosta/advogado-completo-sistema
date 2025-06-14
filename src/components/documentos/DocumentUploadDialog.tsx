@@ -6,9 +6,7 @@ import {
   Dialog, 
   DialogContent, 
   DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+  DialogFooter
 } from '@/components/ui/dialog';
 import { 
   Select, 
@@ -21,6 +19,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentType, LIMITE_ARMAZENAMENTO_BYTES } from '@/hooks/useDocumentTypes';
 import { useDocumentos } from '@/hooks/useDocumentos';
+import DocumentUploadHeader from './DocumentUploadHeader';
 
 interface DocumentUploadDialogProps {
   isOpen: boolean;
@@ -123,12 +122,11 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] bg-lawyer-dark border border-blue-600">
-        <DialogHeader>
-          <DialogTitle className="text-white">Enviar novo documento</DialogTitle>
-          <DialogDescription className="text-blue-200">
-            Faça upload de um documento e associe-o a um cliente ou processo.
-          </DialogDescription>
-        </DialogHeader>
+        <DocumentUploadHeader />
+        <DialogDescription className="text-blue-200">
+          Faça upload de um documento e associe-o a um cliente ou processo.
+        </DialogDescription>
+        
         <form onSubmit={handleUploadSubmit}>
           <div className="grid gap-6 py-4">
             {/* Arquivo */}

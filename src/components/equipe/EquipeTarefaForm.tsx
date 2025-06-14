@@ -1,40 +1,34 @@
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/useAuth';
-import type { Database } from '@/integrations/supabase/types';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import EquipeTarefaFormHeader from './EquipeTarefaFormHeader';
 
-type EquipeMembro = Database['public']['Tables']['equipe_membros']['Row'];
-type EquipeTarefa = Database['public']['Tables']['equipe_tarefas']['Row'] & {
-  responsavel?: { id: string; nome: string } | null;
-  delegado_por?: { id: string; nome: string } | null;
-};
-
-type EquipeTarefaFormData = {
+interface Tarefa {
+  id?: string;
   titulo: string;
-  descricao_detalhada: string;
-  responsavel_id: string;
-  data_vencimento: string;
-  prioridade: string;
-  status: string;
-  tempo_estimado_horas: string;
-  tempo_gasto_horas: string;
-  observacoes_conclusao: string;
-};
+  descricao: string;
+  responsavel: string;
+  prazo: Date | undefined;
+  prioridade: 'baixa' | 'media' | 'alta';
+  status: 'pendente' | 'em_andamento' | 'concluida';
+}
 
 interface EquipeTarefaFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
-  tarefa?: EquipeTarefa | null;
-  membros: EquipeMembro[];
+  onSave: (tarefa: Omit<Tarefa, 'id'>) => void;
+  tarefa?: Tarefa | null;
+  isEdit?: boolean;
 }
 
 const EquipeTarefaForm: React.FC<EquipeTarefaFormProps> = ({
@@ -42,303 +36,200 @@ const EquipeTarefaForm: React.FC<EquipeTarefaFormProps> = ({
   onClose,
   onSave,
   tarefa,
-  membros
+  isEdit = false
 }) => {
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const [formData, setFormData] = useState<EquipeTarefaFormData>({
+  const [formData, setFormData] = useState<Omit<Tarefa, 'id'>>({
     titulo: '',
-    descricao_detalhada: '',
-    responsavel_id: '',
-    data_vencimento: '',
-    prioridade: 'Média',
-    status: 'Pendente',
-    tempo_estimado_horas: '',
-    tempo_gasto_horas: '',
-    observacoes_conclusao: ''
+    descricao: '',
+    responsavel: '',
+    prazo: undefined,
+    prioridade: 'media',
+    status: 'pendente'
   });
 
-  const membrosAtivos = membros.filter(m => m.ativo);
-
   useEffect(() => {
-    if (tarefa) {
+    if (isEdit && tarefa) {
       setFormData({
         titulo: tarefa.titulo,
-        descricao_detalhada: tarefa.descricao_detalhada || '',
-        responsavel_id: tarefa.responsavel_id || '',
-        data_vencimento: tarefa.data_vencimento || '',
+        descricao: tarefa.descricao,
+        responsavel: tarefa.responsavel,
+        prazo: tarefa.prazo,
         prioridade: tarefa.prioridade,
-        status: tarefa.status,
-        tempo_estimado_horas: tarefa.tempo_estimado_horas?.toString() || '',
-        tempo_gasto_horas: tarefa.tempo_gasto_horas?.toString() || '',
-        observacoes_conclusao: tarefa.observacoes_conclusao || ''
+        status: tarefa.status
       });
     } else {
       setFormData({
         titulo: '',
-        descricao_detalhada: '',
-        responsavel_id: '',
-        data_vencimento: '',
-        prioridade: 'Média',
-        status: 'Pendente',
-        tempo_estimado_horas: '',
-        tempo_gasto_horas: '',
-        observacoes_conclusao: ''
+        descricao: '',
+        responsavel: '',
+        prazo: undefined,
+        prioridade: 'media',
+        status: 'pendente'
       });
     }
-  }, [tarefa]);
+  }, [isEdit, tarefa, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    onSave(formData);
+    onClose();
+  };
 
-    setIsSubmitting(true);
-
-    try {
-      const dadosParaSupabase = {
-        user_id: user.id,
-        titulo: formData.titulo,
-        descricao_detalhada: formData.descricao_detalhada || null,
-        responsavel_id: formData.responsavel_id || null,
-        data_vencimento: formData.data_vencimento || null,
-        prioridade: formData.prioridade,
-        status: formData.status,
-        tempo_estimado_horas: formData.tempo_estimado_horas ? parseInt(formData.tempo_estimado_horas) : null,
-        tempo_gasto_horas: formData.tempo_gasto_horas ? parseInt(formData.tempo_gasto_horas) : null,
-        observacoes_conclusao: formData.observacoes_conclusao || null,
-        data_conclusao: formData.status === 'Concluída' ? new Date().toISOString() : null
-      };
-
-      if (tarefa) {
-        const { error } = await supabase
-          .from('equipe_tarefas')
-          .update(dadosParaSupabase)
-          .eq('id', tarefa.id)
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-        
-        toast({
-          title: "Tarefa atualizada!",
-          description: `A tarefa "${formData.titulo}" foi atualizada.`
-        });
-      } else {
-        const { error } = await supabase
-          .from('equipe_tarefas')
-          .insert(dadosParaSupabase);
-
-        if (error) throw error;
-        
-        toast({
-          title: "Tarefa criada!",
-          description: `A tarefa "${formData.titulo}" foi delegada.`
-        });
-      }
-
-      onSave();
-      onClose();
-    } catch (error: any) {
-      toast({
-        title: "Erro ao salvar tarefa",
-        description: error.message,
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleChange = (field: keyof Omit<Tarefa, 'id'>, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-lawyer-dark border border-blue-600">
-        <DialogHeader>
-          <DialogTitle className="text-white">
-            {tarefa ? 'Editar Tarefa' : 'Nova Tarefa'}
-          </DialogTitle>
-        </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Informações Básicas */}
-          <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
-            <Label className="text-sm font-semibold text-gray-100 mb-3 block">
-              📋 Informações da Tarefa
-            </Label>
-            <div>
-              <Label htmlFor="titulo" className="text-gray-100">Título da Tarefa *</Label>
-              <Input
-                id="titulo"
-                value={formData.titulo}
-                onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
-                required
-                className="bg-white"
-              />
-            </div>
-
-            <div className="mt-4">
-              <Label htmlFor="descricao_detalhada" className="text-gray-100">Descrição Detalhada</Label>
-              <Textarea
-                id="descricao_detalhada"
-                value={formData.descricao_detalhada}
-                onChange={(e) => setFormData(prev => ({ ...prev, descricao_detalhada: e.target.value }))}
-                placeholder="Descreva a tarefa detalhadamente..."
-                rows={3}
-                className="bg-white"
-              />
-            </div>
-          </div>
-
-          {/* Responsável e Prazo */}
-          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-            <Label className="text-sm font-semibold text-blue-100 mb-3 block">
-              👥 Atribuição e Prazo
-            </Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="responsavel_id" className="text-blue-100">Responsável</Label>
-                <Select
-                  value={formData.responsavel_id}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, responsavel_id: value }))}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue placeholder="Selecione um responsável" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {membrosAtivos.map((membro) => (
-                      <SelectItem key={membro.id} value={membro.id}>
-                        {membro.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="data_vencimento" className="text-blue-100">Data de Vencimento</Label>
-                <Input
-                  id="data_vencimento"
-                  type="date"
-                  value={formData.data_vencimento}
-                  onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
-                  className="bg-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Status e Prioridade */}
-          <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
-            <Label className="text-sm font-semibold text-gray-100 mb-3 block">
-              🎯 Status e Prioridade
-            </Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="prioridade" className="text-gray-100">Prioridade</Label>
-                <Select
-                  value={formData.prioridade}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: value }))}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Baixa">Baixa</SelectItem>
-                    <SelectItem value="Média">Média</SelectItem>
-                    <SelectItem value="Alta">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="status" className="text-gray-100">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-                >
-                  <SelectTrigger className="bg-white">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Pendente">Pendente</SelectItem>
-                    <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                    <SelectItem value="Concluída">Concluída</SelectItem>
-                    <SelectItem value="Cancelada">Cancelada</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          {/* Tempo */}
-          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-            <Label className="text-sm font-semibold text-blue-100 mb-3 block">
-              ⏱️ Controle de Tempo
-            </Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="tempo_estimado_horas" className="text-blue-100">Tempo Estimado (horas)</Label>
-                <Input
-                  id="tempo_estimado_horas"
-                  type="number"
-                  min="0"
-                  value={formData.tempo_estimado_horas}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tempo_estimado_horas: e.target.value }))}
-                  className="bg-white"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="tempo_gasto_horas" className="text-blue-100">Tempo Gasto (horas)</Label>
-                <Input
-                  id="tempo_gasto_horas"
-                  type="number"
-                  min="0"
-                  value={formData.tempo_gasto_horas}
-                  onChange={(e) => setFormData(prev => ({ ...prev, tempo_gasto_horas: e.target.value }))}
-                  className="bg-white"
-                />
-              </div>
-            </div>
-          </div>
-
-          {formData.status === 'Concluída' && (
+      <DialogContent className="sm:max-w-[500px] bg-lawyer-dark border border-blue-600">
+        <EquipeTarefaFormHeader isEdit={isEdit} />
+        <DialogDescription className="text-blue-200">
+          {isEdit 
+            ? "Atualize as informações da tarefa."
+            : "Crie uma nova tarefa para a equipe com prazo e responsável definidos."}
+        </DialogDescription>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-6 py-4">
+            {/* Informações da Tarefa */}
             <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
               <Label className="text-sm font-semibold text-gray-100 mb-3 block">
-                ✅ Conclusão
+                📋 Informações da Tarefa
               </Label>
-              <div>
-                <Label htmlFor="observacoes_conclusao" className="text-gray-100">Observações de Conclusão</Label>
-                <Textarea
-                  id="observacoes_conclusao"
-                  value={formData.observacoes_conclusao}
-                  onChange={(e) => setFormData(prev => ({ ...prev, observacoes_conclusao: e.target.value }))}
-                  placeholder="Observações sobre a conclusão da tarefa..."
-                  rows={2}
-                  className="bg-white"
-                />
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="titulo" className="text-gray-100">
+                    Título <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="titulo"
+                    value={formData.titulo}
+                    onChange={(e) => handleChange('titulo', e.target.value)}
+                    placeholder="Título da tarefa"
+                    required
+                    className="bg-white"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="descricao" className="text-gray-100">
+                    Descrição
+                  </Label>
+                  <Textarea
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => handleChange('descricao', e.target.value)}
+                    placeholder="Descreva os detalhes da tarefa"
+                    rows={3}
+                    className="bg-white"
+                  />
+                </div>
               </div>
             </div>
-          )}
 
-          <div className="flex gap-2 pt-4 border-t border-blue-600">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isSubmitting}
-              className="flex-1 bg-white"
-            >
+            {/* Atribuição e Prazo */}
+            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+              <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+                👤 Atribuição e Prazo
+              </Label>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="responsavel" className="text-blue-100">
+                    Responsável <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="responsavel"
+                    value={formData.responsavel}
+                    onChange={(e) => handleChange('responsavel', e.target.value)}
+                    placeholder="Nome do responsável"
+                    required
+                    className="bg-white"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label className="text-blue-100">Prazo</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal bg-white",
+                          !formData.prazo && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.prazo ? format(formData.prazo, "dd/MM/yyyy") : "Selecione uma data"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={formData.prazo}
+                        onSelect={(date) => handleChange('prazo', date)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            </div>
+
+            {/* Status e Prioridade */}
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+              <Label className="text-sm font-semibold text-gray-100 mb-3 block">
+                ⚡ Status e Prioridade
+              </Label>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="prioridade" className="text-gray-100">
+                    Prioridade
+                  </Label>
+                  <Select 
+                    value={formData.prioridade} 
+                    onValueChange={(value: 'baixa' | 'media' | 'alta') => handleChange('prioridade', value)}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Selecione a prioridade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baixa">Baixa</SelectItem>
+                      <SelectItem value="media">Média</SelectItem>
+                      <SelectItem value="alta">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="status" className="text-gray-100">
+                    Status
+                  </Label>
+                  <Select 
+                    value={formData.status} 
+                    onValueChange={(value: 'pendente' | 'em_andamento' | 'concluida') => handleChange('status', value)}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pendente">Pendente</SelectItem>
+                      <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                      <SelectItem value="concluida">Concluída</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter className="border-t border-blue-600 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 bg-lawyer-primary hover:bg-lawyer-primary/90"
-            >
-              {isSubmitting ? 'Salvando...' : tarefa ? 'Atualizar' : 'Criar Tarefa'}
+            <Button type="submit">
+              {isEdit ? 'Salvar Alterações' : 'Criar Tarefa'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
