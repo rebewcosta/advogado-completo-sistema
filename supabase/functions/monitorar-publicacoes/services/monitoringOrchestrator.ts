@@ -28,12 +28,12 @@ export class MonitoringOrchestrator {
     userId: string, 
     supabase: any
   ): Promise<{ publicacoes: number; fontes: string[] }> {
-    console.log('🚀 INICIANDO BUSCA OFICIAL COM APIs DOS TRIBUNAIS...');
+    console.log('🚀 INICIANDO BUSCA OFICIAL NACIONAL COM APIs DE TODOS OS TRIBUNAIS DO BRASIL...');
     console.log('📋 Nomes válidos:', nomes);
-    console.log('🌍 Estados válidos:', estados.length > 0 ? estados : 'PRINCIPAIS ESTADOS');
+    console.log('🌍 Estados válidos:', estados.length > 0 ? estados : 'TODOS OS 26 ESTADOS + DF (Cobertura Nacional)');
     
     const todasPublicacoes: PublicacaoEncontrada[] = [];
-    const fontesConsultadas = ['CNJ API', 'APIs Tribunais', 'Jusbrasil'];
+    const fontesConsultadas = ['CNJ API', 'APIs Tribunais Nacionais (27 Tribunais)', 'Jusbrasil'];
 
     try {
       // 1. Buscar na API oficial do CNJ (prioritária)
@@ -41,8 +41,8 @@ export class MonitoringOrchestrator {
       const publicacoesCNJ = await this.cnjApiService.buscarPublicacoesCNJ(nomes, estados);
       todasPublicacoes.push(...publicacoesCNJ);
       
-      // 2. Buscar nas APIs oficiais dos tribunais estaduais
-      console.log('🏛️ Consultando APIs oficiais dos Tribunais...');
+      // 2. Buscar nas APIs oficiais de TODOS os tribunais estaduais do Brasil
+      console.log('🏛️ Consultando APIs oficiais de TODOS os 27 Tribunais do Brasil (26 estados + DF)...');
       const publicacoesTribunais = await this.tribunalApiService.buscarPublicacoes(nomes, estados);
       todasPublicacoes.push(...publicacoesTribunais);
       
@@ -51,7 +51,7 @@ export class MonitoringOrchestrator {
       const publicacoesJusbrasil = await this.jusbrassilService.buscarPublicacoes(nomes, estados);
       todasPublicacoes.push(...publicacoesJusbrasil);
 
-      console.log(`📄 Total de publicações coletadas: ${todasPublicacoes.length}`);
+      console.log(`📄 Total de publicações coletadas em TODO O BRASIL: ${todasPublicacoes.length}`);
 
       // Remover duplicatas baseado no conteúdo
       const publicacoesUnicas = removerDuplicatas(todasPublicacoes);
@@ -68,7 +68,7 @@ export class MonitoringOrchestrator {
       };
 
     } catch (searchError: any) {
-      console.error('❌ Erro durante busca oficial:', searchError);
+      console.error('❌ Erro durante busca oficial nacional:', searchError);
       throw searchError;
     }
   }

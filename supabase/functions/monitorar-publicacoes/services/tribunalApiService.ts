@@ -1,4 +1,3 @@
-
 import { PublicacaoEncontrada } from '../scrapers/types.ts';
 
 interface TribunalAPI {
@@ -15,6 +14,7 @@ interface TribunalAPI {
 
 export class TribunalApiService {
   private readonly apis: TribunalAPI[] = [
+    // Região Sudeste
     {
       estado: 'SP',
       nome: 'TJ-SP',
@@ -44,6 +44,17 @@ export class TribunalApiService {
       }
     },
     {
+      estado: 'ES',
+      nome: 'TJ-ES',
+      baseUrl: 'https://sistemas.tjes.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+
+    // Região Sul
+    {
       estado: 'RS',
       nome: 'TJ-RS',
       baseUrl: 'https://www.tjrs.jus.br',
@@ -60,6 +71,201 @@ export class TribunalApiService {
       endpoints: {
         publicacoes: '/jurisprudencia/api/publicacoes'
       }
+    },
+    {
+      estado: 'SC',
+      nome: 'TJ-SC',
+      baseUrl: 'https://esaj.tjsc.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+
+    // Região Nordeste
+    {
+      estado: 'BA',
+      nome: 'TJ-BA',
+      baseUrl: 'https://www5.tjba.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'PE',
+      nome: 'TJ-PE',
+      baseUrl: 'https://www.tjpe.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'CE',
+      nome: 'TJ-CE',
+      baseUrl: 'https://esaj.tjce.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'PB',
+      nome: 'TJ-PB',
+      baseUrl: 'https://www.tjpb.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'RN',
+      nome: 'TJ-RN',
+      baseUrl: 'https://www.tjrn.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'AL',
+      nome: 'TJ-AL',
+      baseUrl: 'https://www2.tjal.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'SE',
+      nome: 'TJ-SE',
+      baseUrl: 'https://www.tjse.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'PI',
+      nome: 'TJ-PI',
+      baseUrl: 'https://www.tjpi.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'MA',
+      nome: 'TJ-MA',
+      baseUrl: 'https://www.tjma.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+
+    // Região Centro-Oeste
+    {
+      estado: 'GO',
+      nome: 'TJ-GO',
+      baseUrl: 'https://projudi.tjgo.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'MT',
+      nome: 'TJ-MT',
+      baseUrl: 'https://www.tjmt.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'MS',
+      nome: 'TJ-MS',
+      baseUrl: 'https://www.tjms.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'DF',
+      nome: 'TJ-DF',
+      baseUrl: 'https://www.tjdft.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+
+    // Região Norte
+    {
+      estado: 'AM',
+      nome: 'TJ-AM',
+      baseUrl: 'https://consultasaj.tjam.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'PA',
+      nome: 'TJ-PA',
+      baseUrl: 'https://www.tjpa.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'AC',
+      nome: 'TJ-AC',
+      baseUrl: 'https://esaj.tjac.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'RO',
+      nome: 'TJ-RO',
+      baseUrl: 'https://www.tjro.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'RR',
+      nome: 'TJ-RR',
+      baseUrl: 'https://www.tjrr.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'AP',
+      nome: 'TJ-AP',
+      baseUrl: 'https://www.tjap.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
+    },
+    {
+      estado: 'TO',
+      nome: 'TJ-TO',
+      baseUrl: 'https://www.tjto.jus.br',
+      authRequired: false,
+      endpoints: {
+        publicacoes: '/dje/api/publicacoes'
+      }
     }
   ];
 
@@ -68,11 +274,14 @@ export class TribunalApiService {
   async buscarPublicacoes(nomes: string[], estadosEspecificos: string[] = []): Promise<PublicacaoEncontrada[]> {
     const publicacoes: PublicacaoEncontrada[] = [];
     
-    console.log('🏛️ Iniciando busca via APIs OFICIAIS dos Tribunais...');
+    console.log('🏛️ Iniciando busca via APIs OFICIAIS dos Tribunais de TODO O BRASIL...');
+    console.log(`📊 Total de tribunais disponíveis: ${this.apis.length} (todos os 26 estados + DF)`);
     
     const apisParaBuscar = estadosEspecificos.length > 0 
       ? this.apis.filter(api => estadosEspecificos.includes(api.estado))
-      : this.apis;
+      : this.apis; // Agora busca em TODOS os tribunais por padrão
+
+    console.log(`🔍 Consultando ${apisParaBuscar.length} tribunais: ${apisParaBuscar.map(api => api.estado).join(', ')}`);
 
     for (const api of apisParaBuscar) {
       try {
@@ -84,14 +293,14 @@ export class TribunalApiService {
         console.log(`✅ ${api.nome}: ${resultados.length} publicações encontradas`);
         
         // Delay respeitoso entre chamadas para APIs oficiais
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        await new Promise(resolve => setTimeout(resolve, 500));
         
       } catch (error) {
         console.error(`❌ Erro na API ${api.nome}:`, error);
       }
     }
     
-    console.log(`✅ APIs Oficiais: Total de ${publicacoes.length} publicações encontradas`);
+    console.log(`✅ APIs Oficiais: Total de ${publicacoes.length} publicações encontradas em ${apisParaBuscar.length} tribunais`);
     return publicacoes;
   }
 

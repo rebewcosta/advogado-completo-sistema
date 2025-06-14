@@ -38,9 +38,10 @@ export const createSuccessResponse = (
   nomes: string[],
   estados: string[]
 ) => {
+  const estadosConsultados = estados.length > 0 ? estados : ['TODOS OS 26 ESTADOS + DF'];
   const message = publicacoesEncontradas > 0 
-    ? `✅ Busca OFICIAL concluída: ${publicacoesEncontradas} publicações encontradas via APIs oficiais`
-    : `ℹ️ Busca OFICIAL concluída: Nenhuma publicação encontrada nas fontes oficiais`;
+    ? `✅ Busca OFICIAL NACIONAL concluída: ${publicacoesEncontradas} publicações encontradas em todo o Brasil`
+    : `ℹ️ Busca OFICIAL NACIONAL concluída: Nenhuma publicação encontrada nas fontes oficiais de todo o Brasil`;
 
   return createCorsResponse({
     success: true,
@@ -48,12 +49,13 @@ export const createSuccessResponse = (
     fontes_consultadas: fontesConsultadas.length,
     tempo_execucao: tempoExecucao,
     message: message,
-    status_integracao: 'INTEGRADO_APIS_OFICIAIS',
+    status_integracao: 'INTEGRADO_APIS_OFICIAIS_NACIONAL',
     detalhes_busca: {
       nomes_buscados: nomes,
-      estados_consultados: estados.length > 0 ? estados : ['SP', 'RJ', 'MG', 'RS', 'PR'],
+      estados_consultados: estadosConsultados,
       fontes_utilizadas: fontesConsultadas,
-      busca_tipo: 'Busca oficial via APIs dos Tribunais: CNJ, TJ-SP, TJ-RJ, TJ-MG, TJ-RS, TJ-PR'
+      busca_tipo: 'Busca oficial NACIONAL via APIs de TODOS os Tribunais do Brasil: CNJ + 27 Tribunais Estaduais (26 estados + DF)',
+      cobertura: 'NACIONAL - Todo o território brasileiro'
     }
   });
 };
