@@ -35,6 +35,8 @@ interface ConfiguracaoMonitoramento {
   nomes_monitoramento: string[];
   estados_monitoramento: string[];
   palavras_chave: string[];
+  numeros_oab: string[];
+  nomes_escritorio: string[];
   monitoramento_ativo: boolean;
   ultima_busca?: string;
 }
@@ -56,6 +58,8 @@ const PublicacoesPage: React.FC = () => {
   const [nomesMonitoramento, setNomesMonitoramento] = useState<string[]>(['']);
   const [estadosMonitoramento, setEstadosMonitoramento] = useState<string[]>([]);
   const [palavrasChave, setPalavrasChave] = useState<string[]>(['']);
+  const [numerosOAB, setNumerosOAB] = useState<string[]>(['']);
+  const [nomesEscritorio, setNomesEscritorio] = useState<string[]>(['']);
   const [monitoramentoAtivo, setMonitoramentoAtivo] = useState(true);
 
   const fetchPublicacoes = useCallback(async () => {
@@ -97,6 +101,8 @@ const PublicacoesPage: React.FC = () => {
         setNomesMonitoramento(data.nomes_monitoramento.length > 0 ? data.nomes_monitoramento : ['']);
         setEstadosMonitoramento(data.estados_monitoramento || []);
         setPalavrasChave(data.palavras_chave.length > 0 ? data.palavras_chave : ['']);
+        setNumerosOAB(data.numeros_oab?.length > 0 ? data.numeros_oab : ['']);
+        setNomesEscritorio(data.nomes_escritorio?.length > 0 ? data.nomes_escritorio : ['']);
         setMonitoramentoAtivo(data.monitoramento_ativo);
       }
     } catch (error: any) {
@@ -180,16 +186,19 @@ const PublicacoesPage: React.FC = () => {
     try {
       const nomesFiltrados = nomesMonitoramento.filter(n => n.trim() !== '');
       const palavrasFiltradas = palavrasChave.filter(p => p.trim() !== '');
+      const numerosFiltrados = numerosOAB.filter(n => n.trim() !== '');
+      const escritoriosFiltrados = nomesEscritorio.filter(n => n.trim() !== '');
       
       const configData = {
         user_id: user.id,
         nomes_monitoramento: nomesFiltrados,
         estados_monitoramento: estadosMonitoramento,
         palavras_chave: palavrasFiltradas,
+        numeros_oab: numerosFiltrados,
+        nomes_escritorio: escritoriosFiltrados,
         monitoramento_ativo: monitoramentoAtivo
       };
 
-      // Se já existe configuração, faz update. Senão, faz insert
       if (configuracao) {
         const { error } = await supabase
           .from('configuracoes_monitoramento')
@@ -207,7 +216,7 @@ const PublicacoesPage: React.FC = () => {
       
       toast({
         title: "Configurações salvas",
-        description: "Suas configurações de monitoramento foram atualizadas"
+        description: "Suas configurações de monitoramento foram atualizadas com os novos filtros de precisão"
       });
       
       setShowConfigDialog(false);
@@ -256,7 +265,6 @@ const PublicacoesPage: React.FC = () => {
         <PublicacoesStats publicacoes={publicacoes} configuracao={configuracao} />
 
         <div className="space-y-4 mb-4">
-          {/* Filtros sempre em coluna única no mobile */}
           <div className="w-full">
             <PublicacoesFilters
               searchTerm={searchTerm}
@@ -272,7 +280,6 @@ const PublicacoesPage: React.FC = () => {
             />
           </div>
           
-          {/* Monitoramento manual responsivo */}
           <div className="w-full">
             <MonitoramentoManual 
               configuracao={configuracao}
@@ -290,6 +297,10 @@ const PublicacoesPage: React.FC = () => {
           setEstadosMonitoramento={setEstadosMonitoramento}
           palavrasChave={palavrasChave}
           setPalavrasChave={setPalavrasChave}
+          numerosOAB={numerosOAB}
+          setNumerosOAB={setNumerosOAB}
+          nomesEscritorio={nomesEscritorio}
+          setNomesEscritorio={setNomesEscritorio}
           monitoramentoAtivo={monitoramentoAtivo}
           setMonitoramentoAtivo={setMonitoramentoAtivo}
           onSave={salvarConfiguracao}

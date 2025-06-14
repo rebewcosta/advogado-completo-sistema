@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, Info } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 const estados = [
   { uf: 'AC', nome: 'Acre' },
@@ -49,6 +50,10 @@ interface ConfiguracaoDialogProps {
   setPalavrasChave: (palavras: string[]) => void;
   monitoramentoAtivo: boolean;
   setMonitoramentoAtivo: (ativo: boolean) => void;
+  numerosOAB: string[];
+  setNumerosOAB: (numeros: string[]) => void;
+  nomesEscritorio: string[];
+  setNomesEscritorio: (nomes: string[]) => void;
   onSave: () => void;
 }
 
@@ -63,18 +68,30 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
   setPalavrasChave,
   monitoramentoAtivo,
   setMonitoramentoAtivo,
+  numerosOAB,
+  setNumerosOAB,
+  nomesEscritorio,
+  setNomesEscritorio,
   onSave
 }) => {
   const handleRemoveNome = (index: number) => {
-    // Só permite remover se há mais de um nome
     if (nomesMonitoramento.length > 1) {
       const novosNomes = nomesMonitoramento.filter((_, i) => i !== index);
       setNomesMonitoramento(novosNomes);
     }
   };
 
+  const handleRemoveOAB = (index: number) => {
+    const novosNumeros = numerosOAB.filter((_, i) => i !== index);
+    setNumerosOAB(novosNumeros);
+  };
+
+  const handleRemoveEscritorio = (index: number) => {
+    const novosNomes = nomesEscritorio.filter((_, i) => i !== index);
+    setNomesEscritorio(novosNomes);
+  };
+
   const handleRemovePalavra = (index: number) => {
-    // Só permite remover se há mais de uma palavra
     if (palavrasChave.length > 1) {
       const novasPalavras = palavrasChave.filter((_, i) => i !== index);
       setPalavrasChave(novasPalavras);
@@ -84,9 +101,22 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
   return (
     <TooltipProvider>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Configurações de Monitoramento</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              Configurações de Monitoramento
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-blue-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>
+                    Configure filtros precisos para evitar capturar publicações de advogados 
+                    com nomes similares. Use número da OAB para máxima precisão.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-6">
             <div className="flex items-center space-x-2">
@@ -98,8 +128,16 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
               <Label htmlFor="monitoramento-ativo">Monitoramento ativo</Label>
             </div>
             
+            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-2">🎯 Filtros de Precisão</h3>
+              <p className="text-sm text-blue-700">
+                Para evitar capturar publicações de outros advogados com o mesmo nome, 
+                configure os filtros abaixo. O número da OAB é o mais eficaz.
+              </p>
+            </div>
+
             <div>
-              <Label className="text-sm font-medium">Nomes para monitoramento</Label>
+              <Label className="text-sm font-medium">Nomes para monitoramento *</Label>
               <div className="space-y-2 mt-2">
                 {nomesMonitoramento.map((nome, index) => (
                   <div key={index} className="flex gap-2 items-center">
@@ -110,7 +148,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                         novosNomes[index] = e.target.value;
                         setNomesMonitoramento(novosNomes);
                       }}
-                      placeholder="Nome do advogado"
+                      placeholder="Nome completo do advogado"
                       className="flex-1"
                     />
                     <div className="flex items-center gap-1">
@@ -129,8 +167,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
-                            Para remover um nome, você precisa ter pelo menos dois nomes cadastrados. 
-                            Adicione outro nome primeiro para poder remover este.
+                            Pelo menos um nome é obrigatório para o monitoramento funcionar.
                           </p>
                         </TooltipContent>
                       </Tooltip>
@@ -147,6 +184,94 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                 </Button>
               </div>
             </div>
+
+            <Separator />
+
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2">
+                Números da OAB (Recomendado) 
+                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Máxima Precisão</span>
+              </Label>
+              <p className="text-xs text-gray-600 mb-2">
+                Ex: "123.456/SP" ou "789.012/RJ" - Evita confusão com advogados de mesmo nome
+              </p>
+              <div className="space-y-2">
+                {numerosOAB.map((numero, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      value={numero}
+                      onChange={(e) => {
+                        const novosNumeros = [...numerosOAB];
+                        novosNumeros[index] = e.target.value;
+                        setNumerosOAB(novosNumeros);
+                      }}
+                      placeholder="Ex: 123.456/SP"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveOAB(index)}
+                    >
+                      Remover
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNumerosOAB([...numerosOAB, ''])}
+                >
+                  Adicionar Número OAB
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium flex items-center gap-2">
+                Nomes de Escritórios
+                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Filtro Adicional</span>
+              </Label>
+              <p className="text-xs text-gray-600 mb-2">
+                Ex: "Silva & Associados", "Costa Advocacia" - Ajuda a identificar o escritório
+              </p>
+              <div className="space-y-2">
+                {nomesEscritorio.map((nome, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      value={nome}
+                      onChange={(e) => {
+                        const novosNomes = [...nomesEscritorio];
+                        novosNomes[index] = e.target.value;
+                        setNomesEscritorio(novosNomes);
+                      }}
+                      placeholder="Nome do escritório ou sociedade"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveEscritorio(index)}
+                    >
+                      Remover
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNomesEscritorio([...nomesEscritorio, ''])}
+                >
+                  Adicionar Escritório
+                </Button>
+              </div>
+            </div>
+
+            <Separator />
             
             <div>
               <Label className="text-sm font-medium">Estados para monitorar (vazio = todos)</Label>
@@ -202,8 +327,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
-                            Para remover uma palavra-chave, você precisa ter pelo menos duas palavras cadastradas. 
-                            Adicione outra palavra primeiro para poder remover esta.
+                            Para remover uma palavra-chave, você precisa ter pelo menos duas palavras cadastradas.
                           </p>
                         </TooltipContent>
                       </Tooltip>

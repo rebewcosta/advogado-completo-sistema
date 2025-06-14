@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Plus } from 'lucide-react';
+import { Plus, Info } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const estados = [
   { uf: 'AC', nome: 'Acre' }, { uf: 'AL', nome: 'Alagoas' }, { uf: 'AP', nome: 'Amapá' },
@@ -37,6 +38,8 @@ const AdicionarPublicacaoDialog: React.FC<AdicionarPublicacaoDialogProps> = ({ o
   
   const [formData, setFormData] = useState({
     nome_advogado: '',
+    numero_oab: '',
+    nome_escritorio: '',
     titulo_publicacao: '',
     conteudo_publicacao: '',
     data_publicacao: new Date().toISOString().split('T')[0],
@@ -76,6 +79,8 @@ const AdicionarPublicacaoDialog: React.FC<AdicionarPublicacaoDialogProps> = ({ o
       // Reset form
       setFormData({
         nome_advogado: '',
+        numero_oab: '',
+        nome_escritorio: '',
         titulo_publicacao: '',
         conteudo_publicacao: '',
         data_publicacao: new Date().toISOString().split('T')[0],
@@ -103,129 +108,174 @@ const AdicionarPublicacaoDialog: React.FC<AdicionarPublicacaoDialogProps> = ({ o
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar Publicação
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Adicionar Nova Publicação</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <TooltipProvider>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Publicação
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Adicionar Nova Publicação
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-4 w-4 text-blue-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">
+                    Adicione informações precisas para facilitar futuras buscas. 
+                    Número da OAB e nome do escritório ajudam na identificação.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+              <h3 className="font-medium text-blue-800 mb-1">📋 Informações do Advogado</h3>
+              <p className="text-xs text-blue-700">
+                Preencha os dados do advogado para facilitar a identificação
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <Label htmlFor="nome_advogado">Nome do Advogado *</Label>
+                <Input
+                  id="nome_advogado"
+                  value={formData.nome_advogado}
+                  onChange={(e) => setFormData({...formData, nome_advogado: e.target.value})}
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="numero_oab" className="flex items-center gap-1">
+                  Número da OAB
+                  <span className="bg-green-100 text-green-800 text-xs px-1 py-0.5 rounded">Recomendado</span>
+                </Label>
+                <Input
+                  id="numero_oab"
+                  value={formData.numero_oab}
+                  onChange={(e) => setFormData({...formData, numero_oab: e.target.value})}
+                  placeholder="Ex: 123.456/SP"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="nome_escritorio">Nome do Escritório</Label>
+                <Input
+                  id="nome_escritorio"
+                  value={formData.nome_escritorio}
+                  onChange={(e) => setFormData({...formData, nome_escritorio: e.target.value})}
+                  placeholder="Ex: Silva & Associados"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="data_publicacao">Data da Publicação *</Label>
+                <Input
+                  id="data_publicacao"
+                  type="date"
+                  value={formData.data_publicacao}
+                  onChange={(e) => setFormData({...formData, data_publicacao: e.target.value})}
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="estado">Estado *</Label>
+                <Select value={formData.estado} onValueChange={(value) => setFormData({...formData, estado: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o estado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {estados.map(estado => (
+                      <SelectItem key={estado.uf} value={estado.uf}>
+                        {estado.uf} - {estado.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="nome_advogado">Nome do Advogado *</Label>
+              <Label htmlFor="titulo_publicacao">Título da Publicação *</Label>
               <Input
-                id="nome_advogado"
-                value={formData.nome_advogado}
-                onChange={(e) => setFormData({...formData, nome_advogado: e.target.value})}
+                id="titulo_publicacao"
+                value={formData.titulo_publicacao}
+                onChange={(e) => setFormData({...formData, titulo_publicacao: e.target.value})}
                 required
               />
             </div>
-            
+
             <div>
-              <Label htmlFor="data_publicacao">Data da Publicação *</Label>
-              <Input
-                id="data_publicacao"
-                type="date"
-                value={formData.data_publicacao}
-                onChange={(e) => setFormData({...formData, data_publicacao: e.target.value})}
+              <Label htmlFor="conteudo_publicacao">Conteúdo da Publicação *</Label>
+              <Textarea
+                id="conteudo_publicacao"
+                value={formData.conteudo_publicacao}
+                onChange={(e) => setFormData({...formData, conteudo_publicacao: e.target.value})}
+                rows={4}
                 required
               />
             </div>
-          </div>
 
-          <div>
-            <Label htmlFor="titulo_publicacao">Título da Publicação *</Label>
-            <Input
-              id="titulo_publicacao"
-              value={formData.titulo_publicacao}
-              onChange={(e) => setFormData({...formData, titulo_publicacao: e.target.value})}
-              required
-            />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="diario_oficial">Diário Oficial *</Label>
+                <Input
+                  id="diario_oficial"
+                  value={formData.diario_oficial}
+                  onChange={(e) => setFormData({...formData, diario_oficial: e.target.value})}
+                  placeholder="Ex: Diário da Justiça - SP"
+                  required
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="comarca">Comarca</Label>
+                <Input
+                  id="comarca"
+                  value={formData.comarca}
+                  onChange={(e) => setFormData({...formData, comarca: e.target.value})}
+                />
+              </div>
+            </div>
 
-          <div>
-            <Label htmlFor="conteudo_publicacao">Conteúdo da Publicação *</Label>
-            <Textarea
-              id="conteudo_publicacao"
-              value={formData.conteudo_publicacao}
-              onChange={(e) => setFormData({...formData, conteudo_publicacao: e.target.value})}
-              rows={4}
-              required
-            />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="tipo_publicacao">Tipo de Publicação</Label>
+                <Select value={formData.tipo_publicacao} onValueChange={(value) => setFormData({...formData, tipo_publicacao: value})}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Citação">Citação</SelectItem>
+                    <SelectItem value="Intimação">Intimação</SelectItem>
+                    <SelectItem value="Sentença">Sentença</SelectItem>
+                    <SelectItem value="Despacho">Despacho</SelectItem>
+                    <SelectItem value="Decisão">Decisão</SelectItem>
+                    <SelectItem value="Edital">Edital</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="numero_processo">Número do Processo</Label>
+                <Input
+                  id="numero_processo"
+                  value={formData.numero_processo}
+                  onChange={(e) => setFormData({...formData, numero_processo: e.target.value})}
+                />
+              </div>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="diario_oficial">Diário Oficial *</Label>
-              <Input
-                id="diario_oficial"
-                value={formData.diario_oficial}
-                onChange={(e) => setFormData({...formData, diario_oficial: e.target.value})}
-                placeholder="Ex: Diário da Justiça - SP"
-                required
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="estado">Estado *</Label>
-              <Select value={formData.estado} onValueChange={(value) => setFormData({...formData, estado: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  {estados.map(estado => (
-                    <SelectItem key={estado.uf} value={estado.uf}>
-                      {estado.uf} - {estado.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="comarca">Comarca</Label>
-              <Input
-                id="comarca"
-                value={formData.comarca}
-                onChange={(e) => setFormData({...formData, comarca: e.target.value})}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="tipo_publicacao">Tipo de Publicação</Label>
-              <Select value={formData.tipo_publicacao} onValueChange={(value) => setFormData({...formData, tipo_publicacao: value})}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Citação">Citação</SelectItem>
-                  <SelectItem value="Intimação">Intimação</SelectItem>
-                  <SelectItem value="Sentença">Sentença</SelectItem>
-                  <SelectItem value="Despacho">Despacho</SelectItem>
-                  <SelectItem value="Decisão">Decisão</SelectItem>
-                  <SelectItem value="Edital">Edital</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="numero_processo">Número do Processo</Label>
-              <Input
-                id="numero_processo"
-                value={formData.numero_processo}
-                onChange={(e) => setFormData({...formData, numero_processo: e.target.value})}
-              />
-            </div>
-            
             <div>
               <Label htmlFor="url_publicacao">URL da Publicação</Label>
               <Input
@@ -235,38 +285,38 @@ const AdicionarPublicacaoDialog: React.FC<AdicionarPublicacaoDialogProps> = ({ o
                 onChange={(e) => setFormData({...formData, url_publicacao: e.target.value})}
               />
             </div>
-          </div>
 
-          <div>
-            <Label htmlFor="observacoes">Observações</Label>
-            <Textarea
-              id="observacoes"
-              value={formData.observacoes}
-              onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-              rows={2}
-            />
-          </div>
+            <div>
+              <Label htmlFor="observacoes">Observações</Label>
+              <Textarea
+                id="observacoes"
+                value={formData.observacoes}
+                onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
+                rows={2}
+              />
+            </div>
 
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="segredo_justica"
-              checked={formData.segredo_justica}
-              onCheckedChange={(checked) => setFormData({...formData, segredo_justica: checked})}
-            />
-            <Label htmlFor="segredo_justica">Processo em segredo de justiça</Label>
-          </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="segredo_justica"
+                checked={formData.segredo_justica}
+                onCheckedChange={(checked) => setFormData({...formData, segredo_justica: checked})}
+              />
+              <Label htmlFor="segredo_justica">Processo em segredo de justiça</Label>
+            </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Adicionando...' : 'Adicionar Publicação'}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Adicionando...' : 'Adicionar Publicação'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 };
 
