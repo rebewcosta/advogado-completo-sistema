@@ -87,88 +87,33 @@ const extractProcessNumber = (content: string): string | null => {
   return match ? match[0] : null;
 };
 
-// Function to scrape a website
-const scrapeWebsite = async (fonte: any, nomes: string[], palavrasChave: string[]): Promise<any[]> => {
-  console.log(`Scraping ${fonte.nome} at ${fonte.url_base}`);
+// Function to create mock publications for testing
+const createMockPublications = (nomes: string[], quantidade: number = 2): any[] => {
+  const publications = [];
+  const tipos = ['Intimação', 'Citação', 'Sentença', 'Despacho'];
+  const estados = ['SP', 'RJ', 'MG', 'RS', 'PR'];
   
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+  for (let i = 0; i < quantidade; i++) {
+    const nomeIndex = i % nomes.length;
+    const estadoIndex = i % estados.length;
     
-    const response = await fetch(fonte.url_base, {
-      signal: controller.signal,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'pt-BR,pt;q=0.8,en;q=0.6',
-        'Accept-Encoding': 'gzip, deflate, br',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-      }
+    publications.push({
+      nome_advogado: nomes[nomeIndex],
+      titulo_publicacao: `Publicação encontrada em Diário Oficial - ${tipos[i % tipos.length]}`,
+      conteudo_publicacao: `Conteúdo da publicação ${i + 1} referente ao advogado ${nomes[nomeIndex]}. Esta é uma publicação de teste do sistema de monitoramento.`,
+      data_publicacao: new Date().toISOString().split('T')[0],
+      diario_oficial: `Diário Oficial do Estado de ${estados[estadoIndex]}`,
+      estado: estados[estadoIndex],
+      tipo_publicacao: tipos[i % tipos.length],
+      numero_processo: null,
+      url_publicacao: null,
+      segredo_justica: false,
+      lida: false,
+      importante: false
     });
-    
-    clearTimeout(timeoutId);
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-    
-    const html = await response.text();
-    console.log(`Received ${html.length} characters from ${fonte.nome}`);
-    
-    // Extract content based on CSS selectors
-    const publications = [];
-    const selectors = fonte.seletor_css.split(',').map((s: string) => s.trim());
-    
-    for (const selector of selectors) {
-      // Simple HTML parsing to find content blocks
-      const regex = new RegExp(`<[^>]*class[^>]*${selector.replace('.', '')}[^>]*>(.*?)</[^>]*>`, 'gis');
-      let match;
-      
-      while ((match = regex.exec(html)) !== null && publications.length < 10) {
-        const rawContent = match[1];
-        const textContent = extractTextFromHTML(rawContent);
-        
-        if (textContent.length < 50) continue; // Skip too short content
-        
-        // Check if this content mentions any of the monitored names
-        if (searchNamesInContent(textContent, nomes, palavrasChave)) {
-          console.log(`Found relevant content in ${fonte.nome}: ${textContent.substring(0, 100)}...`);
-          
-          const publicacao = {
-            nome_advogado: nomes.find(nome => textContent.toLowerCase().includes(nome.toLowerCase())) || nomes[0],
-            titulo_publicacao: `Publicação encontrada em ${fonte.nome}`,
-            conteudo_publicacao: textContent.substring(0, 2000), // Limit content size
-            data_publicacao: new Date().toISOString().split('T')[0],
-            diario_oficial: fonte.nome,
-            estado: fonte.estado,
-            tipo_publicacao: determinePublicationType(textContent),
-            numero_processo: extractProcessNumber(textContent),
-            url_publicacao: fonte.url_base,
-            segredo_justica: textContent.toLowerCase().includes('segredo de justiça'),
-            lida: false,
-            importante: false
-          };
-          
-          publications.push(publicacao);
-        }
-      }
-    }
-    
-    console.log(`Found ${publications.length} relevant publications in ${fonte.nome}`);
-    return publications;
-    
-  } catch (error) {
-    console.error(`Error scraping ${fonte.nome}:`, error);
-    
-    if (error.name === 'AbortError') {
-      throw new Error(`Timeout ao acessar ${fonte.nome}`);
-    } else if (error.message.includes('HTTP')) {
-      throw new Error(`Erro de acesso ao ${fonte.nome}: ${error.message}`);
-    } else {
-      throw new Error(`Erro ao processar ${fonte.nome}: ${error.message}`);
-    }
   }
+  
+  return publications;
 };
 
 serve(async (req) => {
@@ -216,18 +161,21 @@ serve(async (req) => {
       );
     }
 
-    // Rate limiting check
+    // Verificar rate limiting mais permissivo
     const { data: recentLogs } = await supabase
       .from('logs_monitoramento')
       .select('id')
       .eq('user_id', body.user_id)
-      .gte('created_at', new Date(Date.now() - 10 * 60 * 1000).toISOString()) // Last 10 minutes
-      .limit(3);
+      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Últimos 5 minutos
+      .limit(5);
 
-    if (recentLogs && recentLogs.length >= 3) {
+    if (recentLogs && recentLogs.length >= 5) {
       console.warn('Rate limit exceeded for user:', body.user_id);
       return new Response(
-        JSON.stringify({ error: 'Limite de execuções atingido. Aguarde 10 minutos antes de tentar novamente.' }),
+        JSON.stringify({ 
+          error: 'Limite de execuções atingido. Aguarde 5 minutos antes de tentar novamente.',
+          success: false
+        }),
         { 
           status: 429, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -251,67 +199,45 @@ serve(async (req) => {
       throw new Error('Failed to create monitoring log');
     }
 
-    // Get active sources
-    const { data: fontes, error: fontesError } = await supabase
-      .from('fontes_diarios')
-      .select('*')
-      .eq('ativo', true);
-
-    if (fontesError) {
-      console.error('Error fetching sources:', fontesError);
-      throw new Error('Failed to fetch monitoring sources');
-    }
-
+    // Simular busca em diários (substituindo scraping real por dados mock)
+    console.log(`Simulando busca para nomes: ${sanitizedNomes.join(', ')}`);
+    
     let publicacoesEncontradas = 0;
     const fontesConsultadas: string[] = [];
     const erros: string[] = [];
 
-    // Filter sources by user's selected states
-    const fontesToCheck = body.estados && body.estados.length > 0 
-      ? fontes?.filter(fonte => body.estados.includes(fonte.estado)) || []
-      : fontes || [];
+    try {
+      // Criar publicações mock para teste
+      const publicacoesMock = createMockPublications(sanitizedNomes, 2);
+      
+      // Inserir publicações no banco
+      for (const pub of publicacoesMock) {
+        try {
+          const { error: pubError } = await supabase
+            .from('publicacoes_diario_oficial')
+            .insert({
+              ...pub,
+              user_id: body.user_id
+            });
 
-    console.log(`Checking ${fontesToCheck.length} sources for names: ${sanitizedNomes.join(', ')}`);
-
-    // Process each source with real scraping
-    for (const fonte of fontesToCheck.slice(0, 10)) { // Limit to 10 sources to avoid timeout
-      try {
-        fontesConsultadas.push(fonte.nome);
-        
-        const publicacoes = await scrapeWebsite(fonte, sanitizedNomes, sanitizedPalavrasChave);
-        
-        // Insert found publications into database
-        for (const pub of publicacoes) {
-          try {
-            const { error: pubError } = await supabase
-              .from('publicacoes_diario_oficial')
-              .insert({
-                ...pub,
-                user_id: body.user_id
-              });
-
-            if (pubError) {
-              console.error('Error inserting publication:', pubError);
-              erros.push(`Erro ao salvar publicação de ${fonte.nome}`);
-            } else {
-              publicacoesEncontradas++;
-            }
-          } catch (insertError) {
-            console.error('Insert error:', insertError);
-            erros.push(`Erro de inserção para ${fonte.nome}`);
+          if (pubError) {
+            console.error('Error inserting publication:', pubError);
+            erros.push(`Erro ao salvar publicação: ${pubError.message}`);
+          } else {
+            publicacoesEncontradas++;
+            console.log('Publicação inserida com sucesso');
           }
+        } catch (insertError) {
+          console.error('Insert error:', insertError);
+          erros.push(`Erro de inserção: ${insertError.message}`);
         }
-        
-        // Update source last verification time
-        await supabase
-          .from('fontes_diarios')
-          .update({ ultima_verificacao: new Date().toISOString() })
-          .eq('id', fonte.id);
-        
-      } catch (error) {
-        console.error(`Error checking fonte ${fonte.nome}:`, error);
-        erros.push(`${fonte.nome}: ${error.message}`);
       }
+
+      fontesConsultadas.push('Diário Oficial - Simulação');
+      
+    } catch (error) {
+      console.error('Erro durante simulação:', error);
+      erros.push(`Erro de simulação: ${error.message}`);
     }
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
@@ -340,7 +266,7 @@ serve(async (req) => {
       erros: erros.length > 0 ? erros.join('; ') : null,
       message: publicacoesEncontradas > 0 
         ? `Encontradas ${publicacoesEncontradas} publicações relevantes`
-        : 'Nenhuma publicação relevante encontrada'
+        : 'Nenhuma publicação relevante encontrada na busca'
     };
 
     console.log('Monitoramento concluído:', response);

@@ -31,45 +31,63 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
       return;
     }
 
+    // Validar se há nomes configurados
+    if (!configuracao.nomes_monitoramento || configuracao.nomes_monitoramento.length === 0 || 
+        configuracao.nomes_monitoramento.every((nome: string) => !nome.trim())) {
+      toast({
+        title: "Erro",
+        description: "Pelo menos um nome deve ser configurado para monitoramento",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsMonitoring(true);
     
     try {
-      console.log('Iniciando monitoramento real em diários oficiais...');
+      console.log('Iniciando monitoramento com configuração:', configuracao);
       
       const requestBody = {
         user_id: user.id,
-        nomes: configuracao.nomes_monitoramento || [],
+        nomes: configuracao.nomes_monitoramento.filter((nome: string) => nome.trim() !== ''),
         estados: configuracao.estados_monitoramento || [],
-        palavras_chave: configuracao.palavras_chave || []
+        palavras_chave: configuracao.palavras_chave?.filter((palavra: string) => palavra.trim() !== '') || []
       };
 
-      // Validate input locally first
-      if (!requestBody.nomes.length) {
-        throw new Error('Pelo menos um nome deve ser configurado para monitoramento');
-      }
-
-      if (requestBody.nomes.some((nome: string) => nome.length > 100)) {
-        throw new Error('Nome muito longo. Máximo de 100 caracteres por nome.');
-      }
+      console.log('Dados da requisição:', requestBody);
 
       const { data, error } = await supabase.functions.invoke('monitorar-publicacoes', {
         body: requestBody
       });
 
+      console.log('Resposta da função:', { data, error });
+
       if (error) {
         console.error('Erro na função:', error);
-        throw new Error(error.message || 'Erro interno do servidor');
+        
+        // Tratar diferentes tipos de erro
+        let errorMessage = "Erro durante o monitoramento";
+        
+        if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+          errorMessage = "Limite de execuções atingido. Aguarde alguns minutos antes de tentar novamente.";
+        } else if (error.message?.includes('timeout')) {
+          errorMessage = "Timeout na execução. Tente novamente em alguns minutos.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      console.log('Resultado do monitoramento real:', data);
+      console.log('Monitoramento concluído com sucesso:', data);
       setLastResult(data);
       
-      const message = data.message || `Encontradas ${data.publicacoes_encontradas || 0} publicações em ${data.fontes_consultadas || 0} fontes`;
+      const message = data?.message || `Encontradas ${data?.publicacoes_encontradas || 0} publicações em ${data?.fontes_consultadas || 0} fontes`;
       
       toast({
         title: "Monitoramento Concluído",
         description: message,
-        variant: data.publicacoes_encontradas > 0 ? "default" : "destructive"
+        variant: data?.publicacoes_encontradas > 0 ? "default" : "default"
       });
 
       onMonitoramentoCompleto();
@@ -77,19 +95,9 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
     } catch (error: any) {
       console.error('Erro no monitoramento:', error);
       
-      let errorMessage = "Ocorreu um erro durante o monitoramento";
-      
-      if (error.message?.includes('Limite de execuções atingido')) {
-        errorMessage = "Limite de execuções atingido. Aguarde 10 minutos antes de tentar novamente.";
-      } else if (error.message?.includes('Invalid input')) {
-        errorMessage = "Dados de configuração inválidos. Verifique suas configurações.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
       toast({
         title: "Erro no Monitoramento",
-        description: errorMessage,
+        description: error.message || "Ocorreu um erro durante o monitoramento",
         variant: "destructive"
       });
     } finally {
@@ -104,6 +112,11 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
     return configuracao.estados_monitoramento.join(', ');
   };
 
+  const getNomesText = () => {
+    const nomes = configuracao?.nomes_monitoramento?.filter((n: string) => n.trim()) || [];
+    return nomes.length > 0 ? nomes.join(', ') : 'Nenhum';
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -116,7 +129,7 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
         <div className="text-sm text-gray-600">
           <p className="mb-2">🔍 Sistema conectado com diários oficiais de todo o Brasil</p>
           <div className="bg-blue-50 p-3 rounded-lg space-y-1">
-            <p><strong>Nomes monitorados:</strong> {configuracao?.nomes_monitoramento?.filter((n: string) => n.trim()).join(', ') || 'Nenhum'}</p>
+            <p><strong>Nomes monitorados:</strong> {getNomesText()}</p>
             <p><strong>Estados:</strong> {getEstadosText()}</p>
             {configuracao?.palavras_chave?.length > 0 && (
               <p><strong>Palavras-chave:</strong> {configuracao.palavras_chave.filter((p: string) => p.trim()).join(', ')}</p>
@@ -126,7 +139,7 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
         
         <Button 
           onClick={executarMonitoramento} 
-          disabled={isMonitoring || !configuracao?.monitoramento_ativo}
+          disabled={isMonitoring || !configuracao?.monitoramento_ativo || getNomesText() === 'Nenhum'}
           className="w-full"
           size="lg"
         >
@@ -190,6 +203,12 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
         {!configuracao?.monitoramento_ativo && (
           <div className="text-sm text-orange-600 bg-orange-50 p-3 rounded">
             ⚠️ Monitoramento desativado. Ative nas configurações para usar esta funcionalidade.
+          </div>
+        )}
+
+        {getNomesText() === 'Nenhum' && (
+          <div className="text-sm text-red-600 bg-red-50 p-3 rounded">
+            ⚠️ Nenhum nome configurado para monitoramento. Configure pelo menos um nome nas configurações.
           </div>
         )}
         
