@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, parse, isValid } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
@@ -144,28 +143,34 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   return (
     <div className="bg-lawyer-dark min-h-screen">
       <div className="p-6">
-        <ProcessFormHeader isEdit={isEdit} onCancel={onCancel} />
+        <div className="bg-blue-900 p-6 rounded-lg">
+          <ProcessFormHeader isEdit={isEdit} onCancel={onCancel} />
+        </div>
 
         <form onSubmit={handleSubmit}>
-          <ProcessFormFields
-            numero={numero}
-            setNumero={setNumero}
-            clienteIdSelecionado={clienteIdSelecionado}
-            setClienteIdSelecionado={setClienteIdSelecionado}
-            tipo={tipo}
-            setTipo={setTipo}
-            vara={vara}
-            setVara={setVara}
-            status={status}
-            setStatus={setStatus}
-            prazoDate={prazoDate}
-            setPrazoDate={setPrazoDate}
-            clientesDoUsuario={clientesDoUsuario}
-            isLoadingClientes={isLoadingClientes}
-            onShowClienteModal={() => setShowClienteModal(true)}
-          />
+          <div className="bg-slate-800 p-6 rounded-lg mt-4">
+            <ProcessFormFields
+              numero={numero}
+              setNumero={setNumero}
+              clienteIdSelecionado={clienteIdSelecionado}
+              setClienteIdSelecionado={setClienteIdSelecionado}
+              tipo={tipo}
+              setTipo={setTipo}
+              vara={vara}
+              setVara={setVara}
+              status={status}
+              setStatus={setStatus}
+              prazoDate={prazoDate}
+              setPrazoDate={setPrazoDate}
+              clientesDoUsuario={clientesDoUsuario}
+              isLoadingClientes={isLoadingClientes}
+              onShowClienteModal={() => setShowClienteModal(true)}
+            />
+          </div>
 
-          <ProcessFormActions isEdit={isEdit} onCancel={onCancel} />
+          <div className="bg-blue-900 p-6 rounded-lg mt-4">
+            <ProcessFormActions isEdit={isEdit} onCancel={onCancel} />
+          </div>
         </form>
       </div>
 

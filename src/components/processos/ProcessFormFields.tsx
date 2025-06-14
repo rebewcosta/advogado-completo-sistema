@@ -49,26 +49,26 @@ const ProcessFormFields: React.FC<ProcessFormFieldsProps> = ({
   onShowClienteModal
 }) => {
   return (
-    <div className="space-y-6 mt-6">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="numero">Número do Processo *</Label>
+          <Label htmlFor="numero" className="text-white">Número do Processo *</Label>
           <Input
             id="numero"
             type="text"
             value={numero}
             onChange={(e) => setNumero(e.target.value)}
             placeholder="Ex: 1234567-89.2023.8.12.3456"
-            className="mt-1"
+            className="mt-1 bg-white border-gray-300"
             required
           />
         </div>
 
         <div>
-          <Label htmlFor="cliente">Cliente</Label>
+          <Label htmlFor="cliente" className="text-white">Cliente</Label>
           <div className="flex gap-2 mt-1">
             <Select value={clienteIdSelecionado || "sem_cliente"} onValueChange={(value) => setClienteIdSelecionado(value === "sem_cliente" ? null : value)}>
-              <SelectTrigger className="flex-1">
+              <SelectTrigger className="flex-1 bg-white border-gray-300">
                 <SelectValue placeholder={isLoadingClientes ? "Carregando clientes..." : "Selecione um cliente"} />
               </SelectTrigger>
               <SelectContent>
@@ -94,9 +94,9 @@ const ProcessFormFields: React.FC<ProcessFormFieldsProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="tipo">Tipo de Processo *</Label>
+          <Label htmlFor="tipo" className="text-white">Tipo de Processo *</Label>
           <Select value={tipo} onValueChange={setTipo}>
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1 bg-white border-gray-300">
               <SelectValue placeholder="Selecione o tipo" />
             </SelectTrigger>
             <SelectContent>
@@ -115,23 +115,23 @@ const ProcessFormFields: React.FC<ProcessFormFieldsProps> = ({
         </div>
 
         <div>
-          <Label htmlFor="vara">Vara/Tribunal</Label>
+          <Label htmlFor="vara" className="text-white">Vara/Tribunal</Label>
           <Input
             id="vara"
             type="text"
             value={vara}
             onChange={(e) => setVara(e.target.value)}
             placeholder="Ex: 1ª Vara Cível de São Paulo"
-            className="mt-1"
+            className="mt-1 bg-white border-gray-300"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="status">Status *</Label>
+          <Label htmlFor="status" className="text-white">Status *</Label>
           <Select value={status} onValueChange={(value: 'Em andamento' | 'Concluído' | 'Suspenso') => setStatus(value)}>
-            <SelectTrigger className="mt-1">
+            <SelectTrigger className="mt-1 bg-white border-gray-300">
               <SelectValue placeholder="Selecione o status" />
             </SelectTrigger>
             <SelectContent>
@@ -143,13 +143,13 @@ const ProcessFormFields: React.FC<ProcessFormFieldsProps> = ({
         </div>
 
         <div>
-          <Label>Próximo Prazo</Label>
+          <Label className="text-white">Próximo Prazo</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
                 className={cn(
-                  "w-full justify-start text-left font-normal mt-1",
+                  "w-full justify-start text-left font-normal mt-1 bg-white border-gray-300",
                   !prazoDate && "text-muted-foreground"
                 )}
               >
