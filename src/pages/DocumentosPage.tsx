@@ -98,18 +98,14 @@ const DocumentosPage = () => {
         <DocumentoWarning />
         <DocumentoStorageInfo />
         
-        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
-            <CardContent className="p-4">
-                 <DocumentSearchBar 
-                    searchTerm={searchTerm}
-                    setSearchTerm={setSearchTerm}
-                    filterType={filterType}
-                    setFilterType={setFilterType}
-                    handleRefresh={handleRefresh}
-                    isRefreshing={isRefreshing}
-                />
-            </CardContent>
-        </Card>
+        <DocumentSearchBar 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          filterType={filterType}
+          setFilterType={setFilterType}
+          handleRefresh={handleRefresh}
+          isRefreshing={isRefreshing}
+        />
 
         <DocumentError error={error} /> 
         
