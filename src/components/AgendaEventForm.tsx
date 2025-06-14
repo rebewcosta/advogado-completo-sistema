@@ -18,11 +18,23 @@ import {
 import { X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
+interface AgendaEvent {
+  id?: string;
+  titulo: string;
+  descricao: string;
+  data_inicio: string;
+  data_fim: string;
+  tipo: string;
+  status: string;
+  cliente_id?: string;
+  processo_id?: string;
+}
+
 interface AgendaEventFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (eventData: any) => Promise<boolean>;
-  event?: any;
+  onSave: (eventData: Omit<AgendaEvent, 'id'>) => Promise<boolean>;
+  event?: AgendaEvent | null;
 }
 
 const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
@@ -34,13 +46,12 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
   const [formData, setFormData] = useState({
     titulo: '',
     descricao: '',
-    data_evento: '',
-    hora_inicio: '',
-    hora_fim: '',
-    tipo_evento: 'audiencia',
+    data_inicio: '',
+    data_fim: '',
+    tipo: 'audiencia',
     status: 'agendado',
-    local: '',
-    observacoes: ''
+    cliente_id: '',
+    processo_id: ''
   });
 
   useEffect(() => {
@@ -48,25 +59,23 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
       setFormData({
         titulo: event.titulo || '',
         descricao: event.descricao || '',
-        data_evento: event.data_evento || '',
-        hora_inicio: event.hora_inicio || '',
-        hora_fim: event.hora_fim || '',
-        tipo_evento: event.tipo_evento || 'audiencia',
+        data_inicio: event.data_inicio || '',
+        data_fim: event.data_fim || '',
+        tipo: event.tipo || 'audiencia',
         status: event.status || 'agendado',
-        local: event.local || '',
-        observacoes: event.observacoes || ''
+        cliente_id: event.cliente_id || '',
+        processo_id: event.processo_id || ''
       });
     } else {
       setFormData({
         titulo: '',
         descricao: '',
-        data_evento: '',
-        hora_inicio: '',
-        hora_fim: '',
-        tipo_evento: 'audiencia',
+        data_inicio: '',
+        data_fim: '',
+        tipo: 'audiencia',
         status: 'agendado',
-        local: '',
-        observacoes: ''
+        cliente_id: '',
+        processo_id: ''
       });
     }
   }, [event, isOpen]);
@@ -134,19 +143,8 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="data_evento" className="text-gray-700 font-medium">Data do Evento *</Label>
-                    <Input
-                      id="data_evento"
-                      type="date"
-                      value={formData.data_evento}
-                      onChange={(e) => setFormData({...formData, data_evento: e.target.value})}
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="tipo_evento" className="text-gray-700 font-medium">Tipo de Evento *</Label>
-                    <Select value={formData.tipo_evento} onValueChange={(value) => setFormData({...formData, tipo_evento: value})}>
+                    <Label htmlFor="tipo" className="text-gray-700 font-medium">Tipo *</Label>
+                    <Select value={formData.tipo} onValueChange={(value) => setFormData({...formData, tipo: value})}>
                       <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
@@ -154,58 +152,45 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                         <SelectItem value="audiencia">Audiência</SelectItem>
                         <SelectItem value="reuniao">Reunião</SelectItem>
                         <SelectItem value="prazo">Prazo</SelectItem>
-                        <SelectItem value="compromisso">Compromisso</SelectItem>
+                        <SelectItem value="outro">Outro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="hora_inicio" className="text-gray-700 font-medium">Hora de Início *</Label>
-                    <Input
-                      id="hora_inicio"
-                      type="time"
-                      value={formData.hora_inicio}
-                      onChange={(e) => setFormData({...formData, hora_inicio: e.target.value})}
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="hora_fim" className="text-gray-700 font-medium">Hora de Fim</Label>
-                    <Input
-                      id="hora_fim"
-                      type="time"
-                      value={formData.hora_fim}
-                      onChange={(e) => setFormData({...formData, hora_fim: e.target.value})}
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="status" className="text-gray-700 font-medium">Status</Label>
+                    <Label htmlFor="status" className="text-gray-700 font-medium">Status *</Label>
                     <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
                       <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                         <SelectValue placeholder="Selecione o status" />
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
                         <SelectItem value="agendado">Agendado</SelectItem>
-                        <SelectItem value="confirmado">Confirmado</SelectItem>
+                        <SelectItem value="realizado">Realizado</SelectItem>
                         <SelectItem value="cancelado">Cancelado</SelectItem>
-                        <SelectItem value="concluido">Concluído</SelectItem>
+                        <SelectItem value="remarcado">Remarcado</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="local" className="text-gray-700 font-medium">Local</Label>
+                    <Label htmlFor="data_inicio" className="text-gray-700 font-medium">Data/Hora de Início *</Label>
                     <Input
-                      id="local"
-                      value={formData.local}
-                      onChange={(e) => setFormData({...formData, local: e.target.value})}
-                      placeholder="Local do evento"
+                      id="data_inicio"
+                      type="datetime-local"
+                      value={formData.data_inicio}
+                      onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
+                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="data_fim" className="text-gray-700 font-medium">Data/Hora de Fim</Label>
+                    <Input
+                      id="data_fim"
+                      type="datetime-local"
+                      value={formData.data_fim}
+                      onChange={(e) => setFormData({...formData, data_fim: e.target.value})}
                       className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                     />
                   </div>
@@ -217,20 +202,8 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                     id="descricao"
                     value={formData.descricao}
                     onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                    placeholder="Descrição do evento"
-                    rows={3}
-                    className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="observacoes" className="text-gray-700 font-medium">Observações</Label>
-                  <Textarea
-                    id="observacoes"
-                    value={formData.observacoes}
-                    onChange={(e) => setFormData({...formData, observacoes: e.target.value})}
-                    placeholder="Observações adicionais sobre o evento"
-                    rows={3}
+                    placeholder="Descrição detalhada do evento"
+                    rows={4}
                     className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                   />
                 </div>

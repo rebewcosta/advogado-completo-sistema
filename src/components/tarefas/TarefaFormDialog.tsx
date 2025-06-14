@@ -36,31 +36,37 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     titulo: '',
-    descricao: '',
+    descricao_detalhada: '',
     status: 'pendente',
     prioridade: 'media',
     data_vencimento: '',
-    categoria: ''
+    data_conclusao: '',
+    cliente_id: '',
+    processo_id: ''
   });
 
   useEffect(() => {
     if (tarefa) {
       setFormData({
         titulo: tarefa.titulo || '',
-        descricao: tarefa.descricao || '',
+        descricao_detalhada: tarefa.descricao_detalhada || '',
         status: tarefa.status || 'pendente',
         prioridade: tarefa.prioridade || 'media',
         data_vencimento: tarefa.data_vencimento || '',
-        categoria: tarefa.categoria || ''
+        data_conclusao: tarefa.data_conclusao || '',
+        cliente_id: tarefa.cliente_id || '',
+        processo_id: tarefa.processo_id || ''
       });
     } else {
       setFormData({
         titulo: '',
-        descricao: '',
+        descricao_detalhada: '',
         status: 'pendente',
         prioridade: 'media',
         data_vencimento: '',
-        categoria: ''
+        data_conclusao: '',
+        cliente_id: '',
+        processo_id: ''
       });
     }
   }, [tarefa, isOpen]);
@@ -169,23 +175,23 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="categoria" className="text-gray-700 font-medium">Categoria</Label>
+                    <Label htmlFor="data_conclusao" className="text-gray-700 font-medium">Data de Conclusão</Label>
                     <Input
-                      id="categoria"
-                      value={formData.categoria}
-                      onChange={(e) => setFormData({...formData, categoria: e.target.value})}
-                      placeholder="Categoria da tarefa"
+                      id="data_conclusao"
+                      type="date"
+                      value={formData.data_conclusao}
+                      onChange={(e) => setFormData({...formData, data_conclusao: e.target.value})}
                       className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="descricao" className="text-gray-700 font-medium">Descrição</Label>
+                  <Label htmlFor="descricao_detalhada" className="text-gray-700 font-medium">Descrição</Label>
                   <Textarea
-                    id="descricao"
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                    id="descricao_detalhada"
+                    value={formData.descricao_detalhada}
+                    onChange={(e) => setFormData({...formData, descricao_detalhada: e.target.value})}
                     placeholder="Descrição detalhada da tarefa"
                     rows={4}
                     className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"

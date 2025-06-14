@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -7,7 +7,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -15,77 +14,72 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { X, Info, Upload, File } from 'lucide-react';
+import { X, Info, Upload, FileText, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDocumentUpload } from '@/hooks/useDocumentUpload';
-import { useToast } from '@/hooks/use-toast';
+import { LowStorageWarning } from './LowStorageWarning';
 
 interface DocumentUploadDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
 }
 
 const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   isOpen,
-  onClose,
-  onSuccess
+  onClose
 }) => {
-  const [formData, setFormData] = useState({
-    nome: '',
-    descricao: '',
-    categoria: '',
-    tags: ''
-  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { uploadDocument, isUploading } = useDocumentUpload();
-  const { toast } = useToast();
+  const [documentType, setDocumentType] = useState('');
+  const [clienteAssociado, setClienteAssociado] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
+  
+  const { uploadDocumento, isUploading, uploadError } = useDocumentUpload();
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      if (!formData.nome) {
-        setFormData(prev => ({ ...prev, nome: file.name }));
-      }
+  const handleFileSelect = (file: File) => {
+    if (file.size > 50 * 1024 * 1024) { // 50MB limit
+      alert('Arquivo muito grande. O tamanho máximo é 50MB.');
+      return;
     }
+    setSelectedFile(file);
   };
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleFileSelect(files[0]);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedFile) {
-      toast({
-        title: "Erro",
-        description: "Por favor, selecione um arquivo para upload.",
-        variant: "destructive"
-      });
+    if (!selectedFile || !documentType) {
+      alert('Por favor, selecione um arquivo e especifique o tipo de documento.');
       return;
     }
 
     try {
-      await uploadDocument(selectedFile, formData);
-      toast({
-        title: "Sucesso",
-        description: "Documento enviado com sucesso!",
-      });
-      onSuccess();
-      onClose();
+      await uploadDocumento(selectedFile, documentType, clienteAssociado);
       // Reset form
-      setFormData({
-        nome: '',
-        descricao: '',
-        categoria: '',
-        tags: ''
-      });
       setSelectedFile(null);
+      setDocumentType('');
+      setClienteAssociado('');
+      onClose();
     } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao enviar documento. Tente novamente.",
-        variant: "destructive"
-      });
+      console.error('Erro no upload:', error);
     }
   };
 
@@ -107,7 +101,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>
-                        Faça upload de um novo documento preenchendo as informações e selecionando o arquivo.
+                        Faça o upload de documentos para organizar e gerenciar seus arquivos. Arquivos até 50MB são suportados.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -127,87 +121,108 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
             {/* Campos do formulário com fundo branco */}
             <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
+              <LowStorageWarning />
+              
               <div className="space-y-6">
-                {/* Área de Upload */}
+                {/* Área de upload */}
                 <div>
                   <Label className="text-gray-700 font-medium">Arquivo *</Label>
-                  <div 
-                    className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
-                    onClick={() => fileInputRef.current?.click()}
+                  <div
+                    className={`mt-2 border-2 border-dashed rounded-lg p-8 text-center transition-all ${
+                      isDragOver 
+                        ? 'border-blue-500 bg-blue-50' 
+                        : selectedFile 
+                          ? 'border-green-500 bg-green-50' 
+                          : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
                   >
                     {selectedFile ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <File className="h-6 w-6 text-blue-500" />
-                        <span className="text-gray-700">{selectedFile.name}</span>
+                      <div className="flex items-center justify-center gap-3">
+                        <FileText className="h-8 w-8 text-green-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">{selectedFile.name}</p>
+                          <p className="text-sm text-gray-500">
+                            {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedFile(null)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          Remover
+                        </Button>
                       </div>
                     ) : (
                       <div>
-                        <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                        <p className="text-gray-500">Clique para selecionar um arquivo</p>
-                        <p className="text-sm text-gray-400 mt-1">PDF, DOC, DOCX, XLS, XLSX, JPG, PNG</p>
+                        <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                        <p className="text-gray-600 mb-2">
+                          Arraste e solte um arquivo aqui ou
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => document.getElementById('file-input')?.click()}
+                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                        >
+                          Selecionar arquivo
+                        </Button>
+                        <p className="text-xs text-gray-500 mt-2">
+                          Tamanho máximo: 50MB
+                        </p>
                       </div>
                     )}
                   </div>
                   <input
-                    ref={fileInputRef}
+                    id="file-input"
                     type="file"
-                    onChange={handleFileSelect}
                     className="hidden"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleFileSelect(file);
+                    }}
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="nome" className="text-gray-700 font-medium">Nome do Documento *</Label>
-                  <Input
-                    id="nome"
-                    value={formData.nome}
-                    onChange={(e) => setFormData({...formData, nome: e.target.value})}
-                    placeholder="Nome do documento"
-                    className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    required
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="documentType" className="text-gray-700 font-medium">Tipo de Documento *</Label>
+                    <Select value={documentType} onValueChange={setDocumentType}>
+                      <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                        <SelectValue placeholder="Selecione o tipo" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
+                        <SelectItem value="contrato">Contrato</SelectItem>
+                        <SelectItem value="ata">Ata</SelectItem>
+                        <SelectItem value="procuracao">Procuração</SelectItem>
+                        <SelectItem value="certidao">Certidão</SelectItem>
+                        <SelectItem value="outros">Outros</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="clienteAssociado" className="text-gray-700 font-medium">Cliente Associado</Label>
+                    <Input
+                      id="clienteAssociado"
+                      value={clienteAssociado}
+                      onChange={(e) => setClienteAssociado(e.target.value)}
+                      placeholder="Nome do cliente (opcional)"
+                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                    />
+                  </div>
                 </div>
 
-                <div>
-                  <Label htmlFor="categoria" className="text-gray-700 font-medium">Categoria</Label>
-                  <Select value={formData.categoria} onValueChange={(value) => setFormData({...formData, categoria: value})}>
-                    <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
-                      <SelectValue placeholder="Selecione uma categoria" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
-                      <SelectItem value="contrato">Contrato</SelectItem>
-                      <SelectItem value="peticao">Petição</SelectItem>
-                      <SelectItem value="decisao">Decisão</SelectItem>
-                      <SelectItem value="protocolo">Protocolo</SelectItem>
-                      <SelectItem value="parecer">Parecer</SelectItem>
-                      <SelectItem value="outros">Outros</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="tags" className="text-gray-700 font-medium">Tags</Label>
-                  <Input
-                    id="tags"
-                    value={formData.tags}
-                    onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                    placeholder="Tags separadas por vírgula"
-                    className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="descricao" className="text-gray-700 font-medium">Descrição</Label>
-                  <Textarea
-                    id="descricao"
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({...formData, descricao: e.target.value})}
-                    placeholder="Descrição do documento"
-                    rows={4}
-                    className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                  />
-                </div>
+                {uploadError && (
+                  <div className="flex items-center gap-2 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-red-600" />
+                    <p className="text-red-700">{uploadError}</p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -226,9 +241,9 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
                 <Button 
                   type="submit"
                   className="px-6 py-3 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
-                  disabled={isUploading}
+                  disabled={isUploading || !selectedFile || !documentType}
                 >
-                  {isUploading ? 'Enviando...' : 'Enviar Documento'}
+                  {isUploading ? 'Enviando...' : 'Fazer Upload'}
                 </Button>
               </div>
             </div>
