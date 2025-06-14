@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText } from 'lucide-react';
+import { FileText, Settings } from 'lucide-react';
 import PublicacaoCard from './PublicacaoCard';
 
 interface Publicacao {
@@ -46,7 +46,13 @@ const PublicacoesList: React.FC<PublicacoesListProps> = ({
           <div className="text-center py-12 text-gray-500">
             <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
             <p className="text-lg font-medium">Nenhuma publicação encontrada</p>
-            <p className="text-sm mt-2">Configure o monitoramento para começar a receber publicações</p>
+            <div className="mt-4 space-y-2">
+              <p className="text-sm">Para começar a receber publicações:</p>
+              <div className="flex items-center justify-center gap-2 text-sm text-blue-600">
+                <Settings className="h-4 w-4" />
+                <span>Configure o monitoramento e ative-o</span>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="space-y-3 md:space-y-4">
