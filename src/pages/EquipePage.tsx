@@ -26,8 +26,8 @@ const EquipePage = () => {
   if (isLoading) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full flex flex-col justify-center items-center">
-          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-xl">
+        <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-full flex flex-col justify-center items-center">
+          <div className="bg-white/70 backdrop-blur-lg border border-white/20 rounded-2xl p-8 shadow-2xl animate-fade-in">
             <Spinner size="lg" className="text-blue-500" />
             <span className="text-gray-700 mt-4 block font-medium">Carregando equipe...</span>
           </div>
@@ -38,7 +38,7 @@ const EquipePage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full">
+      <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 min-h-full">
         <div className="animate-fade-in">
           <SharedPageHeader
             title="Gestão de Equipe"

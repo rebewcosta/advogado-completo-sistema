@@ -39,24 +39,24 @@ const EquipeTabs: React.FC<EquipeTabsProps> = ({
   return (
     <div className="animate-fade-in">
       <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-8">
-        <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm shadow-lg border-0 h-14 p-1 rounded-xl">
+        <TabsList className="grid w-full grid-cols-3 bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl h-14 p-1 rounded-2xl">
           <TabsTrigger 
             value="membros" 
-            className="flex items-center gap-2 h-12 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            className="flex items-center gap-2 h-12 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-blue-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:bg-blue-50"
           >
             <UserPlus className="h-4 w-4" />
             <span className="hidden sm:inline font-medium">Membros</span>
           </TabsTrigger>
           <TabsTrigger 
             value="tarefas" 
-            className="flex items-center gap-2 h-12 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            className="flex items-center gap-2 h-12 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:bg-indigo-50"
           >
             <ClipboardList className="h-4 w-4" />
             <span className="hidden sm:inline font-medium">Tarefas</span>
           </TabsTrigger>
           <TabsTrigger 
             value="produtividade" 
-            className="flex items-center gap-2 h-12 rounded-lg data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300"
+            className="flex items-center gap-2 h-12 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-purple-600 data-[state=active]:text-white data-[state=active]:shadow-lg transition-all duration-300 hover:bg-purple-50"
           >
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline font-medium">Produtividade</span>

@@ -27,7 +27,7 @@ const EquipeTarefasHeader: React.FC<EquipeTarefasHeaderProps> = ({
         </div>
         <Button 
           onClick={onCreateNew}
-          className="mt-4 sm:mt-0 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+          className="mt-4 sm:mt-0 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl"
           disabled={membros.length === 0}
         >
           <Plus className="mr-2 h-4 w-4" />
@@ -36,14 +36,14 @@ const EquipeTarefasHeader: React.FC<EquipeTarefasHeaderProps> = ({
       </div>
 
       {membros.length === 0 && (
-        <Card className="mb-8 border-0 bg-gradient-to-r from-amber-50 to-orange-50 shadow-lg animate-fade-in">
+        <Card className="mb-8 bg-white/70 backdrop-blur-lg border border-amber-200/50 shadow-xl rounded-2xl animate-fade-in">
           <CardContent className="p-6">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-amber-100 rounded-lg">
+              <div className="p-3 bg-gradient-to-r from-amber-100 to-orange-100 rounded-xl shadow-sm">
                 <AlertTriangle className="h-5 w-5 text-amber-600" />
               </div>
               <div>
-                <h3 className="font-medium text-amber-800">Adicione membros primeiro</h3>
+                <h3 className="font-semibold text-amber-800">Adicione membros primeiro</h3>
                 <p className="text-amber-700 text-sm mt-1">
                   Para criar tarefas, você precisa ter membros cadastrados na equipe.
                 </p>
