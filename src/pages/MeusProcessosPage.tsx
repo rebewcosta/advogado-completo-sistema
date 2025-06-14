@@ -1,4 +1,3 @@
-
 // src/pages/MeusProcessosPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -178,9 +177,11 @@ const MeusProcessosPage = () => {
   if (isLoadingCombined && !processes.length && !isRefreshingManually) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
-          <Spinner size="lg" />
-          <span className="text-gray-500 mt-3">Carregando processos...</span>
+        <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full flex flex-col justify-center items-center">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-xl">
+            <Spinner size="lg" className="text-blue-500" />
+            <span className="text-gray-700 mt-4 block font-medium">Carregando processos...</span>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -188,30 +189,28 @@ const MeusProcessosPage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <SharedPageHeader
+      <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full">
+        <div className="animate-fade-in">
+          <SharedPageHeader
             title="Meus Processos"
-            description="Gerencie e acompanhe todos os seus processos jurídicos."
-            pageIcon={<FileText />}
+            description="Gerencie e acompanhe todos os seus processos jurídicos com ferramentas modernas e eficientes."
+            pageIcon={<FileText className="text-blue-500" />}
             actionButtonText="Novo Processo"
             onActionButtonClick={handleOpenNewProcessForm}
             isLoading={isLoadingCombined}
-        />
+          />
+        </div>
 
-        <Card className="mb-6 shadow-md rounded-lg border border-slate-700 bg-slate-800">
-            <CardContent className="p-4"> 
-                <ProcessSearchActionBar
-                searchTerm={searchTerm}
-                onSearchChange={handleSearchChange}
-                onNewProcess={handleOpenNewProcessForm}
-                onRefresh={handleManualRefresh}
-                isRefreshing={isRefreshingManually}
-                />
-            </CardContent>
-        </Card>
+        <ProcessSearchActionBar
+          searchTerm={searchTerm}
+          onSearchChange={handleSearchChange}
+          onNewProcess={handleOpenNewProcessForm}
+          onRefresh={handleManualRefresh}
+          isRefreshing={isRefreshingManually}
+        />
         
         {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
-        <div className="hidden md:block">
+        <div className="hidden md:block animate-fade-in">
           <MeusProcessosTable
             processes={filteredProcesses}
             onEdit={handleEditProcess}
@@ -222,7 +221,7 @@ const MeusProcessosPage = () => {
             searchTerm={searchTerm}
           />
         </div>
-        <div className="md:hidden">
+        <div className="md:hidden animate-fade-in">
           <ProcessListAsCards
             processes={filteredProcesses}
             onEdit={handleEditProcess}
