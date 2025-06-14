@@ -63,16 +63,11 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
     }
   }, [cliente, isEdit]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    if (name === 'tipo_cliente') {
-      setFormData(prev => ({ ...prev, [name]: value, tipo: value }));
+  const handleFieldChange = (field: string, value: string) => {
+    if (field === 'tipo_cliente') {
+      setFormData(prev => ({ ...prev, [field]: value, tipo: value }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [field]: value }));
     }
   };
 
@@ -87,15 +82,14 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
     <div className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
       <div className="p-6">
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl mb-6">
-          <ClienteFormHeader isEdit={isEdit} onCancel={onCancel} />
+          <ClienteFormHeader isEdit={isEdit} onClose={onCancel} />
         </div>
 
         <form onSubmit={handleSubmit}>
           <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
             <ClienteFormFields
               formData={formData}
-              handleChange={handleChange}
-              handleSelectChange={handleSelectChange}
+              onChange={handleFieldChange}
             />
           </div>
 

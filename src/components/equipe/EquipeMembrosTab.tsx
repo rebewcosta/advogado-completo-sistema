@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, UserPlus, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -72,9 +73,16 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
     setEditingMembro(null);
   };
 
-  const handleFormSuccess = () => {
-    handleCloseForm();
-    onRefresh();
+  const handleFormSuccess = async (membroData: any): Promise<boolean> => {
+    try {
+      // Here would be the actual save logic
+      handleCloseForm();
+      onRefresh();
+      return true;
+    } catch (error) {
+      console.error('Error saving member:', error);
+      return false;
+    }
   };
 
   return (

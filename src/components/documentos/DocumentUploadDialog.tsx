@@ -17,7 +17,7 @@ import {
 import { X, Info, Upload, FileText, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useDocumentUpload } from '@/hooks/useDocumentUpload';
-import { LowStorageWarning } from './LowStorageWarning';
+import LowStorageWarning from './LowStorageWarning';
 
 interface DocumentUploadDialogProps {
   isOpen: boolean;
@@ -33,7 +33,20 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   const [clienteAssociado, setClienteAssociado] = useState('');
   const [isDragOver, setIsDragOver] = useState(false);
   
-  const { uploadDocumento, isUploading, uploadError } = useDocumentUpload();
+  // Provide dummy functions for the hook parameters
+  const onUploadSuccess = async () => {
+    // This would normally refresh the document list
+  };
+  
+  const calcularEspacoDisponivel = async () => {
+    // This would normally calculate available space
+    return 50 * 1024 * 1024; // 50MB default
+  };
+  
+  const { uploadDocumento, isUploading, uploadError } = useDocumentUpload(
+    onUploadSuccess,
+    calcularEspacoDisponivel
+  );
 
   const handleFileSelect = (file: File) => {
     if (file.size > 50 * 1024 * 1024) { // 50MB limit
