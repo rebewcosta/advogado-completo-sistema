@@ -13,7 +13,7 @@ import LowStorageWarning from '@/components/documentos/LowStorageWarning';
 import { useDocumentos } from '@/hooks/useDocumentos';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileArchive, Upload } from 'lucide-react';
+import { FileArchive } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 
@@ -90,11 +90,7 @@ const DocumentosPage = () => {
               title="Gestão de Documentos"
               description="Organize e acesse os arquivos importantes do seu escritório."
               pageIcon={<FileArchive />}
-              actionButtonText="Enviar Documento"
-              onActionButtonClick={() => setIsUploadDialogOpen(true)}
-              isLoading={isLoadingCombined}
-              actionButtonDisabled={espacoDisponivel < 1024}
-              actionButtonIcon={<Upload className="h-4 w-4 mr-2"/>}
+              showActionButton={false}
           />
           
           <DocumentoWarning />
