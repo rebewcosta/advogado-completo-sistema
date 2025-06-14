@@ -23,7 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus, X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from "@/lib/utils";
-import ClienteFormDialog from '@/components/clientes/ClienteFormDialog';
+import ClienteModalSimples from '@/components/processos/ClienteModalSimples';
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -343,11 +343,11 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
         </div>
       </DialogContent>
 
-      <ClienteFormDialog
-        isOpen={showClienteModal}
-        onClose={() => setShowClienteModal(false)}
-        onSave={handleSaveCliente}
-        cliente={null}
+      <ClienteModalSimples
+        open={showClienteModal}
+        onOpenChange={setShowClienteModal}
+        onSaveCliente={handleSaveCliente}
+        isSaving={isSavingCliente}
       />
     </>
   );
