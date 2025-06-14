@@ -11,6 +11,7 @@ import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import { Toaster } from "@/components/ui/toaster";
 
 const FinanceiroPage = () => {
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [transacoes] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,6 +27,7 @@ const FinanceiroPage = () => {
 
   const handlePinVerified = () => {
     console.log('PIN verified');
+    setIsUnlocked(true);
   };
 
   const handleSearchChange = (value: string) => {
@@ -44,52 +46,59 @@ const FinanceiroPage = () => {
     console.log('Delete transaction:', transacao.id);
   };
 
+  if (!isUnlocked) {
+    return (
+      <PinLock 
+        onPinVerified={handlePinVerified} 
+        pageName="Financeiro"
+      />
+    );
+  }
+
   return (
-    <PinLock onPinVerified={handlePinVerified} pageName="Financeiro">
-      <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
-        <div className="max-w-7xl mx-auto">
-          <SharedPageHeader
-            title="Financeiro"
-            description="Controle suas receitas, despesas e fluxo de caixa."
-            pageIcon={<DollarSign />}
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
+      <div className="max-w-7xl mx-auto">
+        <SharedPageHeader
+          title="Financeiro"
+          description="Controle suas receitas, despesas e fluxo de caixa."
+          pageIcon={<DollarSign />}
+        />
+
+        <FinanceiroStatsCards stats={stats} />
+
+        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
+          <CardContent className="p-4">
+            <FinanceiroSearchBar 
+              searchTerm={searchTerm}
+              onSearchChange={handleSearchChange}
+              onRefresh={handleRefresh}
+              isLoading={isLoading}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
+        <div className="hidden md:block">
+          <TransacaoTable 
+            transacoes={transacoes}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isLoading={isLoading}
+            searchTerm={searchTerm}
           />
-
-          <FinanceiroStatsCards stats={stats} />
-
-          <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
-            <CardContent className="p-4">
-              <FinanceiroSearchBar 
-                searchTerm={searchTerm}
-                onSearchChange={handleSearchChange}
-                onRefresh={handleRefresh}
-                isLoading={isLoading}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
-          <div className="hidden md:block">
-            <TransacaoTable 
-              transacoes={transacoes}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isLoading={isLoading}
-              searchTerm={searchTerm}
-            />
-          </div>
-          <div className="md:hidden">
-            <TransacaoListAsCards 
-              transacoes={transacoes}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              isLoading={isLoading}
-              searchTerm={searchTerm}
-            />
-          </div>
         </div>
-        <Toaster />
+        <div className="md:hidden">
+          <TransacaoListAsCards 
+            transacoes={transacoes}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            isLoading={isLoading}
+            searchTerm={searchTerm}
+          />
+        </div>
       </div>
-    </PinLock>
+      <Toaster />
+    </div>
   );
 };
 

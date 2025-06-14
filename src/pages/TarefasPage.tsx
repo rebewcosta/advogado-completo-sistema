@@ -21,8 +21,8 @@ const TarefasPage = () => {
   const {
     tarefas,
     isLoading,
-    adicionarTarefa,
-    atualizarTarefa,
+    criarTarefa,
+    editarTarefa,
     deleteTarefa,
     handleManualRefresh
   } = useTarefas();
@@ -73,11 +73,8 @@ const TarefasPage = () => {
             <TarefaSearchActionBar
               searchTerm={searchTerm}
               onSearchChange={handleSearchChange}
-              statusFilter={statusFilter}
-              onStatusFilterChange={setStatusFilter}
-              prioridadeFilter={prioridadeFilter}
-              onPrioridadeFilterChange={setPrioridadeFilter}
-              onNewTask={handleOpenNewTaskForm}
+              onRefresh={handleManualRefresh}
+              isLoading={isLoading}
             />
           </CardContent>
         </Card>
@@ -86,24 +83,31 @@ const TarefasPage = () => {
         <div className="hidden md:block">
           <TarefaTable
             tarefas={filteredTarefas}
-            onUpdate={atualizarTarefa}
+            onEdit={editarTarefa}
             onDelete={deleteTarefa}
+            onToggleStatus={editarTarefa}
             isLoading={isLoading}
           />
         </div>
         <div className="md:hidden">
           <TarefaListAsCards
             tarefas={filteredTarefas}
-            onUpdate={atualizarTarefa}
+            onEdit={editarTarefa}
             onDelete={deleteTarefa}
+            onToggleStatus={editarTarefa}
             isLoading={isLoading}
           />
         </div>
 
         <TarefaFormDialog
           isOpen={isFormDialogOpen}
-          onOpenChange={setIsFormDialogOpen}
-          onSubmit={adicionarTarefa}
+          onClose={() => setIsFormDialogOpen(false)}
+          onSave={criarTarefa}
+          tarefaParaForm={null}
+          processos={[]}
+          clientes={[]}
+          isLoadingDropdownData={false}
+          isSubmitting={isLoading}
         />
       </div>
       <Toaster />

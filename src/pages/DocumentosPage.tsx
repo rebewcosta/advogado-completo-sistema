@@ -25,7 +25,8 @@ const DocumentosPage = () => {
     uploadDocumento,
     obterUrlDocumento,
     excluirDocumento,
-    listarDocumentos
+    listarDocumentos,
+    error
   } = useDocumentos();
 
   const handleUploadClick = () => {
@@ -46,9 +47,9 @@ const DocumentosPage = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, path: string) => {
     try {
-      await excluirDocumento(id);
+      await excluirDocumento(id, path);
     } catch (error) {
       console.error('Erro ao excluir documento:', error);
     }
@@ -98,8 +99,9 @@ const DocumentosPage = () => {
             isRefreshing={isRefreshing}
             searchTerm={searchTerm}
             filterType={filterType}
-            onView={handleView}
-            onDelete={handleDelete}
+            onRefresh={handleRefresh}
+            onUploadClick={handleUploadClick}
+            error={error}
           />
         </div>
         <div className="md:hidden">
