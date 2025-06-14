@@ -50,10 +50,11 @@ export const useClientesPage = () => {
 
     setIsSubmitting(true);
     try {
-      // Garantir que campos obrigatórios estão preenchidos
+      // Preparar dados para salvamento, convertendo campos vazios para valores apropriados
       const dataToSave = {
         ...clientData,
-        email: clientData.email || '',
+        // Converter email vazio para null para evitar conflito de unique constraint
+        email: clientData.email && clientData.email.trim() ? clientData.email.trim() : null,
         telefone: clientData.telefone || '',
         endereco: clientData.endereco || '',
         cidade: clientData.cidade || '',
@@ -61,6 +62,8 @@ export const useClientesPage = () => {
         cep: clientData.cep || '',
         observacoes: clientData.observacoes || ''
       };
+
+      console.log('Dados para salvar:', dataToSave);
 
       if (clienteParaEdicao) {
         const { error } = await supabase
@@ -71,7 +74,10 @@ export const useClientesPage = () => {
           })
           .eq('id', clienteParaEdicao.id);
         
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao atualizar cliente:', error);
+          throw error;
+        }
         
         toast({
           title: "Cliente atualizado",
@@ -85,7 +91,10 @@ export const useClientesPage = () => {
             user_id: user.id
           });
         
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao inserir cliente:', error);
+          throw error;
+        }
         
         toast({
           title: "Cliente cadastrado",
@@ -99,9 +108,20 @@ export const useClientesPage = () => {
       return true;
     } catch (error: any) {
       console.error('Erro ao salvar cliente:', error);
+      
+      let errorMessage = "Ocorreu um erro inesperado. Tente novamente.";
+      
+      if (error.message?.includes('clientes_email_key')) {
+        errorMessage = "Este email já está cadastrado para outro cliente.";
+      } else if (error.message?.includes('duplicate key')) {
+        errorMessage = "Já existe um cliente com essas informações.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: "Erro ao salvar cliente",
-        description: error.message || "Ocorreu um erro inesperado. Tente novamente.",
+        description: errorMessage,
         variant: "destructive"
       });
       return false;

@@ -45,7 +45,14 @@ const ClienteModalSimples: React.FC<ClienteModalSimplesProps> = ({
       alert('Por favor, preencha o nome do cliente.');
       return;
     }
-    onSaveCliente(formData);
+    
+    // Preparar dados, convertendo email vazio para null
+    const dataToSave = {
+      ...formData,
+      email: formData.email && formData.email.trim() ? formData.email.trim() : null
+    };
+    
+    onSaveCliente(dataToSave);
   };
 
   const handleClose = () => {
