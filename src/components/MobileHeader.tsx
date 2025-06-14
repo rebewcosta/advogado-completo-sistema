@@ -1,15 +1,10 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
-import { LogOut, Scale, Shield } from 'lucide-react';
+import { Scale, Shield } from 'lucide-react';
 
 const MobileHeader: React.FC = () => {
-  const { user, signOut } = useAuth();
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
+  const { user } = useAuth();
 
   const getUserFirstName = () => {
     if (user?.user_metadata?.nome) {
@@ -35,15 +30,6 @@ const MobileHeader: React.FC = () => {
               <p className="text-blue-100 text-xs">Sistema Jurídico Completo</p>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleSignOut}
-            className="flex items-center gap-1 text-white hover:bg-white/10 bg-white/20 backdrop-blur-sm"
-          >
-            <LogOut className="h-4 w-4" /> 
-            <span className="text-xs">Sair</span>
-          </Button>
         </div>
 
         {/* Barra de Status do Usuário */}

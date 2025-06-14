@@ -41,8 +41,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               />
             ))}
             
-            {/* Admin link for authorized users in mobile menu */}
-            {isAdmin && isAdmin() && (
+            {/* Admin link APENAS para webercostag@gmail.com */}
+            {user.email === 'webercostag@gmail.com' && (
               <Link 
                 to="/admin" 
                 className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}

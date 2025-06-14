@@ -29,8 +29,8 @@ const DesktopNav: React.FC<DesktopNavProps> = ({ user, navItems, isActive, handl
             />
           ))}
           
-          {/* Admin link for authorized users - icon only in header */}
-          {isAdmin && isAdmin() && (
+          {/* Admin link APENAS para webercostag@gmail.com */}
+          {user.email === 'webercostag@gmail.com' && (
             <Link 
               to="/admin" 
               className={`flex items-center px-2 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}
