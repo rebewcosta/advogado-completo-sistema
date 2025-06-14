@@ -42,13 +42,12 @@ serve(async (req) => {
 
     const startTime = Date.now();
     
-    // Parse request body com tratamento robusto de erros
+    // Parse request body
     let body;
     
     try {
       console.log('📦 Lendo corpo da requisição...');
       
-      // Verificar se o request tem body
       if (!req.body) {
         console.error('❌ Request não possui body');
         return new Response(
@@ -65,7 +64,7 @@ serve(async (req) => {
       }
 
       const requestText = await req.text();
-      console.log('📄 Texto bruto recebido (primeiros 200 chars):', requestText.substring(0, 200));
+      console.log('📄 Texto bruto recebido:', requestText.substring(0, 200));
       
       if (!requestText || requestText.trim() === '') {
         console.error('❌ Corpo da requisição está vazio');
@@ -82,12 +81,11 @@ serve(async (req) => {
         );
       }
       
-      console.log('🔍 Fazendo parse do JSON...');
       body = JSON.parse(requestText);
       console.log('✅ JSON parseado com sucesso:', JSON.stringify(body, null, 2));
       
     } catch (parseError) {
-      console.error('❌ Erro crítico no parse do JSON:', parseError);
+      console.error('❌ Erro no parse do JSON:', parseError);
       
       return new Response(
         JSON.stringify({ 
@@ -103,12 +101,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('🔍 MONITORAMENTO INICIADO');
-    console.log('👤 Usuário:', body?.user_id);
-    console.log('📝 Nomes para buscar:', body?.nomes);
-    console.log('🌍 Estados específicos:', body?.estados);
-    
-    // Validação rigorosa dos dados
+    // Validação dos dados
     if (!body?.user_id || typeof body.user_id !== 'string') {
       console.error('❌ user_id inválido:', body?.user_id);
       return new Response(
@@ -139,13 +132,13 @@ serve(async (req) => {
       );
     }
 
-    // Sanitizar e validar nomes
+    // Sanitizar nomes
     const nomesValidos = body.nomes
       .filter((nome: any) => typeof nome === 'string' && nome.trim().length > 0)
       .map((nome: string) => nome.trim());
 
     if (nomesValidos.length === 0) {
-      console.error('❌ Nenhum nome válido encontrado após sanitização');
+      console.error('❌ Nenhum nome válido encontrado');
       return new Response(
         JSON.stringify({ 
           success: false,
@@ -159,33 +152,31 @@ serve(async (req) => {
       );
     }
 
-    // Sanitizar estados (opcional)
+    // Sanitizar estados
     const estadosValidos = Array.isArray(body.estados)
       ? body.estados
           .filter((estado: any) => typeof estado === 'string' && estado.trim().length > 0)
           .map((estado: string) => estado.trim().toUpperCase())
       : [];
 
-    console.log('🚀 DADOS VALIDADOS - INICIANDO BUSCA REAL...');
+    console.log('🚀 INICIANDO BUSCA REAL...');
     console.log('📋 Nomes válidos:', nomesValidos);
     console.log('🌍 Estados válidos:', estadosValidos.length > 0 ? estadosValidos : 'PRINCIPAIS ESTADOS');
     
     let publicacoesEncontradas = 0;
 
     try {
-      // Executar busca REAL com scraper
       const scraper = new DiarioScraper();
       
-      console.log('🌐 Consultando diários oficiais REAIS...');
+      console.log('🌐 Consultando diários oficiais...');
       
       const publicacoesReais: PublicacaoEncontrada[] = await scraper.buscarEmTodosEstados(
         nomesValidos,
         estadosValidos
       );
 
-      console.log(`📄 Publicações encontradas em busca REAL: ${publicacoesReais.length}`);
+      console.log(`📄 Publicações encontradas: ${publicacoesReais.length}`);
 
-      // Salvar no banco se houver publicações
       if (publicacoesReais.length > 0) {
         const publicacoesParaSalvar = publicacoesReais.map(pub => ({
           ...pub,
@@ -195,7 +186,7 @@ serve(async (req) => {
           importante: false
         }));
 
-        console.log('💾 Salvando publicações REAIS no banco...');
+        console.log('💾 Salvando publicações no banco...');
         const { error: saveError } = await supabase
           .from('publicacoes_diario_oficial')
           .insert(publicacoesParaSalvar);
@@ -203,23 +194,22 @@ serve(async (req) => {
         if (saveError) {
           console.error('❌ Erro ao salvar publicações:', saveError);
         } else {
-          console.log(`✅ ${publicacoesReais.length} publicações REAIS salvas com sucesso`);
+          console.log(`✅ ${publicacoesReais.length} publicações salvas com sucesso`);
         }
       }
 
       publicacoesEncontradas = publicacoesReais.length;
 
     } catch (searchError: any) {
-      console.error('❌ Erro durante busca REAL:', searchError);
-      // Continuar execução mesmo com erro na busca
+      console.error('❌ Erro durante busca:', searchError);
     }
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
     const fontesConsultadas = estadosValidos.length > 0 ? estadosValidos : ['SP', 'RJ', 'MG', 'CE', 'PR'];
 
     const message = publicacoesEncontradas > 0 
-      ? `✅ Busca REAL concluída com sucesso: ${publicacoesEncontradas} publicações encontradas`
-      : `ℹ️ Busca REAL concluída: Nenhuma publicação encontrada para os critérios especificados`;
+      ? `✅ Busca concluída: ${publicacoesEncontradas} publicações encontradas`
+      : `ℹ️ Busca concluída: Nenhuma publicação encontrada`;
 
     const response = {
       success: true,
@@ -235,7 +225,7 @@ serve(async (req) => {
       }
     };
 
-    console.log('✅ Resposta de busca REAL preparada:', response);
+    console.log('✅ Resposta preparada:', response);
 
     return new Response(
       JSON.stringify(response),
@@ -246,13 +236,13 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('💥 Erro crítico não tratado:', error);
+    console.error('💥 Erro crítico:', error);
     
     return new Response(
       JSON.stringify({ 
         success: false,
         error: 'Erro interno do sistema', 
-        message: 'Ocorreu um erro inesperado. Tente novamente em alguns minutos.',
+        message: 'Ocorreu um erro inesperado. Tente novamente.',
         status_integracao: 'ERRO',
         details: error.message
       }),
