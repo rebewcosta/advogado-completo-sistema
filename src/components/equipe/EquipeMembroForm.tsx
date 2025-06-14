@@ -138,109 +138,143 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-lawyer-dark border border-blue-600">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-white">
             {membro ? 'Editar Membro' : 'Adicionar Membro'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="nome">Nome *</Label>
-              <Input
-                id="nome"
-                value={formData.nome}
-                onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                required
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Dados Principais */}
+          <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+            <Label className="text-sm font-semibold text-gray-100 mb-3 block">
+              👤 Dados Principais
+            </Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="nome" className="text-gray-100">Nome *</Label>
+                <Input
+                  id="nome"
+                  value={formData.nome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                  required
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="email" className="text-gray-100">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                  className="bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Contato e Cargo */}
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+              💼 Informações Profissionais
+            </Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="telefone" className="text-blue-100">Telefone</Label>
+                <Input
+                  id="telefone"
+                  value={formData.telefone}
+                  onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                  className="bg-white"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="cargo" className="text-blue-100">Cargo</Label>
+                <Input
+                  id="cargo"
+                  value={formData.cargo}
+                  onChange={(e) => setFormData(prev => ({ ...prev, cargo: e.target.value }))}
+                  className="bg-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Permissões e Status */}
+          <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+            <Label className="text-sm font-semibold text-gray-100 mb-3 block">
+              🔐 Permissões e Status
+            </Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="nivel_permissao" className="text-gray-100">Nível de Permissão</Label>
+                <Select
+                  value={formData.nivel_permissao}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, nivel_permissao: value }))}
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Colaborador">Colaborador</SelectItem>
+                    <SelectItem value="Supervisor">Supervisor</SelectItem>
+                    <SelectItem value="Administrador">Administrador</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="data_ingresso" className="text-gray-100">Data de Ingresso</Label>
+                <Input
+                  id="data_ingresso"
+                  type="date"
+                  value={formData.data_ingresso}
+                  onChange={(e) => setFormData(prev => ({ ...prev, data_ingresso: e.target.value }))}
+                  className="bg-white"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 mt-4">
+              <Switch
+                id="ativo"
+                checked={formData.ativo}
+                onCheckedChange={(checked) => setFormData(prev => ({ ...prev, ativo: checked }))}
               />
+              <Label htmlFor="ativo" className="text-gray-100">Membro ativo</Label>
             </div>
+          </div>
 
+          {/* Observações */}
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+              📝 Observações
+            </Label>
             <div>
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                required
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="telefone">Telefone</Label>
-              <Input
-                id="telefone"
-                value={formData.telefone}
-                onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="cargo">Cargo</Label>
-              <Input
-                id="cargo"
-                value={formData.cargo}
-                onChange={(e) => setFormData(prev => ({ ...prev, cargo: e.target.value }))}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="nivel_permissao">Nível de Permissão</Label>
-              <Select
-                value={formData.nivel_permissao}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, nivel_permissao: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Colaborador">Colaborador</SelectItem>
-                  <SelectItem value="Supervisor">Supervisor</SelectItem>
-                  <SelectItem value="Administrador">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="data_ingresso">Data de Ingresso</Label>
-              <Input
-                id="data_ingresso"
-                type="date"
-                value={formData.data_ingresso}
-                onChange={(e) => setFormData(prev => ({ ...prev, data_ingresso: e.target.value }))}
+              <Label htmlFor="observacoes" className="text-blue-100">Observações</Label>
+              <Textarea
+                id="observacoes"
+                value={formData.observacoes}
+                onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                placeholder="Observações sobre o membro..."
+                rows={3}
+                className="bg-white"
               />
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="ativo"
-              checked={formData.ativo}
-              onCheckedChange={(checked) => setFormData(prev => ({ ...prev, ativo: checked }))}
-            />
-            <Label htmlFor="ativo">Membro ativo</Label>
-          </div>
-
-          <div>
-            <Label htmlFor="observacoes">Observações</Label>
-            <Textarea
-              id="observacoes"
-              value={formData.observacoes}
-              onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
-              placeholder="Observações sobre o membro..."
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-2 pt-4 border-t border-blue-600">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1"
+              className="flex-1 bg-white"
             >
               Cancelar
             </Button>

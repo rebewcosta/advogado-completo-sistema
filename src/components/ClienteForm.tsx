@@ -88,10 +88,10 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto border-0 shadow-none rounded-none md:rounded-lg md:shadow-md">
+    <Card className="w-full max-w-4xl mx-auto border-0 shadow-none rounded-none md:rounded-lg md:shadow-md bg-lawyer-dark">
       <ClienteFormHeader isEdit={isEdit} onCancel={onCancel} />
       <form onSubmit={handleSubmit}>
-        <CardContent className="p-4 md:p-6 max-h-[calc(90vh-200px)] overflow-y-auto">
+        <CardContent className="p-4 md:p-6 max-h-[calc(90vh-200px)] overflow-y-auto bg-lawyer-dark">
           <ClienteFormFields
             formData={formData}
             handleChange={handleChange}

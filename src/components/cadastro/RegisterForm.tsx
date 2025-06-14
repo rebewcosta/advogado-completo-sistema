@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
@@ -69,81 +70,107 @@ const RegisterForm = ({ onSubmitStart, onSubmitEnd }: RegisterFormProps) => {
   };
 
   return (
-    <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-      <div className="grid grid-cols-1 gap-6">
-        <InputField
-          id="nome"
-          label="Nome completo"
-          type="text"
-          autoComplete="name"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
-        />
-        
-        <InputField
-          id="email"
-          label="Email"
-          type="email"
-          autoComplete="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InputField
-            id="password"
-            label="Senha"
-            type="password"
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
+    <div className="bg-lawyer-dark p-6 rounded-lg">
+      <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <div className="space-y-6">
+          {/* Dados Pessoais */}
+          <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+            <h3 className="text-sm font-semibold text-gray-100 mb-3">
+              👤 Dados Pessoais
+            </h3>
+            <InputField
+              id="nome"
+              label="Nome completo"
+              type="text"
+              autoComplete="name"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+            />
+          </div>
           
-          <InputField
-            id="confirm-password"
-            label="Confirmar senha"
-            type="password"
-            autoComplete="new-password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-          />
-        </div>
-        
-        <div>
-          <PlanInfoBox />
-        </div>
-        
-        <div>
-          <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="terms"
-                name="terms"
-                type="checkbox"
-                className="h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary border-gray-300 rounded"
-                required
+          {/* Dados de Acesso */}
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <h3 className="text-sm font-semibold text-blue-100 mb-3">
+              🔐 Dados de Acesso
+            </h3>
+            <div className="space-y-4">
+              <InputField
+                id="email"
+                label="Email"
+                type="email"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InputField
+                  id="password"
+                  label="Senha"
+                  type="password"
+                  autoComplete="new-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                
+                <InputField
+                  id="confirm-password"
+                  label="Confirmar senha"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
             </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="terms" className="text-gray-600">
-                Concordo com os <Link to="/termos-privacidade" className="text-lawyer-primary hover:underline">Termos de Serviço</Link> e <Link to="/termos-privacidade" className="text-lawyer-primary hover:underline">Política de Privacidade</Link>
-              </label>
+          </div>
+          
+          {/* Plano */}
+          <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+            <h3 className="text-sm font-semibold text-gray-100 mb-3">
+              💰 Plano Selecionado
+            </h3>
+            <PlanInfoBox />
+          </div>
+          
+          {/* Termos */}
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <h3 className="text-sm font-semibold text-blue-100 mb-3">
+              📋 Termos e Condições
+            </h3>
+            <div className="flex items-start">
+              <div className="flex items-center h-5">
+                <input
+                  id="terms"
+                  name="terms"
+                  type="checkbox"
+                  className="h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary border-gray-300 rounded"
+                  required
+                />
+              </div>
+              <div className="ml-3 text-sm">
+                <label htmlFor="terms" className="text-blue-200">
+                  Concordo com os <Link to="/termos-privacidade" className="text-lawyer-primary hover:underline">Termos de Serviço</Link> e <Link to="/termos-privacidade" className="text-lawyer-primary hover:underline">Política de Privacidade</Link>
+                </label>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <SubmitButton isLoading={isSubmitting} />
+        <div className="pt-4 border-t border-blue-600">
+          <SubmitButton isLoading={isSubmitting} />
 
-      <div className="text-center mt-4">
-        <p className="text-sm text-gray-600">
-          Já tem uma conta?{' '}
-          <Link to="/login" className="font-medium text-lawyer-primary hover:text-blue-700">
-            Faça login
-          </Link>
-        </p>
-      </div>
-    </form>
+          <div className="text-center mt-4">
+            <p className="text-sm text-blue-200">
+              Já tem uma conta?{' '}
+              <Link to="/login" className="font-medium text-lawyer-primary hover:text-blue-700">
+                Faça login
+              </Link>
+            </p>
+          </div>
+        </div>
+      </form>
+    </div>
   );
 };
 

@@ -152,143 +152,182 @@ const EquipeTarefaForm: React.FC<EquipeTarefaFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto bg-lawyer-dark border border-blue-600">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-white">
             {tarefa ? 'Editar Tarefa' : 'Nova Tarefa'}
           </DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="titulo">Título da Tarefa *</Label>
-            <Input
-              id="titulo"
-              value={formData.titulo}
-              onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
-              required
-            />
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Informações Básicas */}
+          <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+            <Label className="text-sm font-semibold text-gray-100 mb-3 block">
+              📋 Informações da Tarefa
+            </Label>
+            <div>
+              <Label htmlFor="titulo" className="text-gray-100">Título da Tarefa *</Label>
+              <Input
+                id="titulo"
+                value={formData.titulo}
+                onChange={(e) => setFormData(prev => ({ ...prev, titulo: e.target.value }))}
+                required
+                className="bg-white"
+              />
+            </div>
+
+            <div className="mt-4">
+              <Label htmlFor="descricao_detalhada" className="text-gray-100">Descrição Detalhada</Label>
+              <Textarea
+                id="descricao_detalhada"
+                value={formData.descricao_detalhada}
+                onChange={(e) => setFormData(prev => ({ ...prev, descricao_detalhada: e.target.value }))}
+                placeholder="Descreva a tarefa detalhadamente..."
+                rows={3}
+                className="bg-white"
+              />
+            </div>
           </div>
 
-          <div>
-            <Label htmlFor="descricao_detalhada">Descrição Detalhada</Label>
-            <Textarea
-              id="descricao_detalhada"
-              value={formData.descricao_detalhada}
-              onChange={(e) => setFormData(prev => ({ ...prev, descricao_detalhada: e.target.value }))}
-              placeholder="Descreva a tarefa detalhadamente..."
-              rows={3}
-            />
+          {/* Responsável e Prazo */}
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+              👥 Atribuição e Prazo
+            </Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="responsavel_id" className="text-blue-100">Responsável</Label>
+                <Select
+                  value={formData.responsavel_id}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, responsavel_id: value }))}
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectValue placeholder="Selecione um responsável" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {membrosAtivos.map((membro) => (
+                      <SelectItem key={membro.id} value={membro.id}>
+                        {membro.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label htmlFor="data_vencimento" className="text-blue-100">Data de Vencimento</Label>
+                <Input
+                  id="data_vencimento"
+                  type="date"
+                  value={formData.data_vencimento}
+                  onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+                  className="bg-white"
+                />
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="responsavel_id">Responsável</Label>
-              <Select
-                value={formData.responsavel_id}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, responsavel_id: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  {membrosAtivos.map((membro) => (
-                    <SelectItem key={membro.id} value={membro.id}>
-                      {membro.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Status e Prioridade */}
+          <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+            <Label className="text-sm font-semibold text-gray-100 mb-3 block">
+              🎯 Status e Prioridade
+            </Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="prioridade" className="text-gray-100">Prioridade</Label>
+                <Select
+                  value={formData.prioridade}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: value }))}
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Baixa">Baixa</SelectItem>
+                    <SelectItem value="Média">Média</SelectItem>
+                    <SelectItem value="Alta">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Label htmlFor="data_vencimento">Data de Vencimento</Label>
-              <Input
-                id="data_vencimento"
-                type="date"
-                value={formData.data_vencimento}
-                onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
-              />
+              <div>
+                <Label htmlFor="status" className="text-gray-100">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
+                >
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Pendente">Pendente</SelectItem>
+                    <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                    <SelectItem value="Concluída">Concluída</SelectItem>
+                    <SelectItem value="Cancelada">Cancelada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+          </div>
 
-            <div>
-              <Label htmlFor="prioridade">Prioridade</Label>
-              <Select
-                value={formData.prioridade}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, prioridade: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Baixa">Baixa</SelectItem>
-                  <SelectItem value="Média">Média</SelectItem>
-                  <SelectItem value="Alta">Alta</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Tempo */}
+          <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+            <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+              ⏱️ Controle de Tempo
+            </Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="tempo_estimado_horas" className="text-blue-100">Tempo Estimado (horas)</Label>
+                <Input
+                  id="tempo_estimado_horas"
+                  type="number"
+                  min="0"
+                  value={formData.tempo_estimado_horas}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tempo_estimado_horas: e.target.value }))}
+                  className="bg-white"
+                />
+              </div>
 
-            <div>
-              <Label htmlFor="status">Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, status: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pendente">Pendente</SelectItem>
-                  <SelectItem value="Em Andamento">Em Andamento</SelectItem>
-                  <SelectItem value="Concluída">Concluída</SelectItem>
-                  <SelectItem value="Cancelada">Cancelada</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="tempo_estimado_horas">Tempo Estimado (horas)</Label>
-              <Input
-                id="tempo_estimado_horas"
-                type="number"
-                min="0"
-                value={formData.tempo_estimado_horas}
-                onChange={(e) => setFormData(prev => ({ ...prev, tempo_estimado_horas: e.target.value }))}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="tempo_gasto_horas">Tempo Gasto (horas)</Label>
-              <Input
-                id="tempo_gasto_horas"
-                type="number"
-                min="0"
-                value={formData.tempo_gasto_horas}
-                onChange={(e) => setFormData(prev => ({ ...prev, tempo_gasto_horas: e.target.value }))}
-              />
+              <div>
+                <Label htmlFor="tempo_gasto_horas" className="text-blue-100">Tempo Gasto (horas)</Label>
+                <Input
+                  id="tempo_gasto_horas"
+                  type="number"
+                  min="0"
+                  value={formData.tempo_gasto_horas}
+                  onChange={(e) => setFormData(prev => ({ ...prev, tempo_gasto_horas: e.target.value }))}
+                  className="bg-white"
+                />
+              </div>
             </div>
           </div>
 
           {formData.status === 'Concluída' && (
-            <div>
-              <Label htmlFor="observacoes_conclusao">Observações de Conclusão</Label>
-              <Textarea
-                id="observacoes_conclusao"
-                value={formData.observacoes_conclusao}
-                onChange={(e) => setFormData(prev => ({ ...prev, observacoes_conclusao: e.target.value }))}
-                placeholder="Observações sobre a conclusão da tarefa..."
-                rows={2}
-              />
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+              <Label className="text-sm font-semibold text-gray-100 mb-3 block">
+                ✅ Conclusão
+              </Label>
+              <div>
+                <Label htmlFor="observacoes_conclusao" className="text-gray-100">Observações de Conclusão</Label>
+                <Textarea
+                  id="observacoes_conclusao"
+                  value={formData.observacoes_conclusao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, observacoes_conclusao: e.target.value }))}
+                  placeholder="Observações sobre a conclusão da tarefa..."
+                  rows={2}
+                  className="bg-white"
+                />
+              </div>
             </div>
           )}
 
-          <div className="flex gap-2 pt-4">
+          <div className="flex gap-2 pt-4 border-t border-blue-600">
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
               disabled={isSubmitting}
-              className="flex-1"
+              className="flex-1 bg-white"
             >
               Cancelar
             </Button>

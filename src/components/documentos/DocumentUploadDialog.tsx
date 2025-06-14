@@ -17,6 +17,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { DocumentType, LIMITE_ARMAZENAMENTO_BYTES } from '@/hooks/useDocumentTypes';
 import { useDocumentos } from '@/hooks/useDocumentos';
@@ -121,94 +122,116 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] bg-lawyer-dark border border-blue-600">
         <DialogHeader>
-          <DialogTitle>Enviar novo documento</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-white">Enviar novo documento</DialogTitle>
+          <DialogDescription className="text-blue-200">
             Faça upload de um documento e associe-o a um cliente ou processo.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleUploadSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <label htmlFor="file" className="text-sm font-medium">
-                Arquivo
-              </label>
+          <div className="grid gap-6 py-4">
+            {/* Arquivo */}
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+              <Label className="text-sm font-semibold text-gray-100 mb-2 block">
+                📎 Arquivo
+              </Label>
               <Input
                 id="file"
                 type="file"
                 onChange={handleFileChange}
                 required
                 disabled={isLoading}
+                className="bg-white"
               />
               {selectedFile && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-blue-200 mt-2">
                   {selectedFile.name} ({formatarTamanhoArquivo(selectedFile.size)})
                 </p>
               )}
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-blue-200 mt-1">
                 Limite máximo: 3MB. Espaço disponível: {formatarTamanhoArquivo(espacoDisponivel)}
               </p>
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="type" className="text-sm font-medium">
-                Tipo de documento
-              </label>
-              <Select 
-                value={documentType} 
-                onValueChange={(value) => setDocumentType(value as DocumentType)}
-                disabled={isLoading}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="contrato">Contrato</SelectItem>
-                  <SelectItem value="petição">Petição</SelectItem>
-                  <SelectItem value="procuração">Procuração</SelectItem>
-                  <SelectItem value="decisão">Decisão</SelectItem>
-                  <SelectItem value="outro">Outro</SelectItem>
-                </SelectContent>
-              </Select>
+
+            {/* Tipo e Cliente */}
+            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+              <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+                📋 Informações do Documento
+              </Label>
+              <div className="grid gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="type" className="text-blue-100">
+                    Tipo de documento
+                  </Label>
+                  <Select 
+                    value={documentType} 
+                    onValueChange={(value) => setDocumentType(value as DocumentType)}
+                    disabled={isLoading}
+                  >
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="contrato">Contrato</SelectItem>
+                      <SelectItem value="petição">Petição</SelectItem>
+                      <SelectItem value="procuração">Procuração</SelectItem>
+                      <SelectItem value="decisão">Decisão</SelectItem>
+                      <SelectItem value="outro">Outro</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="client" className="text-blue-100">
+                    Cliente <span className="text-red-400">*</span>
+                  </Label>
+                  <Input
+                    id="client"
+                    value={clientName}
+                    onChange={(e) => setClientName(e.target.value)}
+                    placeholder="Nome do cliente"
+                    required
+                    disabled={isLoading}
+                    className="bg-white"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="grid gap-2">
-              <label htmlFor="client" className="text-sm font-medium">
-                Cliente
-              </label>
-              <Input
-                id="client"
-                value={clientName}
-                onChange={(e) => setClientName(e.target.value)}
-                placeholder="Nome do cliente"
-                required
-                disabled={isLoading}
-              />
-            </div>
-            <div className="grid gap-2">
-              <label htmlFor="process" className="text-sm font-medium">
-                Número do processo (opcional)
-              </label>
-              <Input
-                id="process"
-                value={processNumber}
-                onChange={(e) => setProcessNumber(e.target.value)}
-                placeholder="Ex: 0001234-56.2023.8.26.0000"
-                disabled={isLoading}
-              />
+
+            {/* Processo */}
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+              <Label className="text-sm font-semibold text-gray-100 mb-2 block">
+                ⚖️ Processo (Opcional)
+              </Label>
+              <div className="grid gap-2">
+                <Label htmlFor="process" className="text-gray-100">
+                  Número do processo
+                </Label>
+                <Input
+                  id="process"
+                  value={processNumber}
+                  onChange={(e) => setProcessNumber(e.target.value)}
+                  placeholder="Ex: 0001234-56.2023.8.26.0000"
+                  disabled={isLoading}
+                  className="bg-white"
+                />
+              </div>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="border-t border-blue-600 pt-4">
             <Button 
               type="button" 
               variant="outline" 
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
+              className="bg-white"
             >
               Cancelar
             </Button>
             <Button 
               type="submit"
               disabled={isLoading || !selectedFile}
+              className="bg-lawyer-primary hover:bg-lawyer-primary/90"
             >
               {isLoading ? "Enviando..." : "Enviar documento"}
             </Button>

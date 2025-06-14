@@ -142,7 +142,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   };
 
   return (
-    <>
+    <div className="bg-lawyer-dark min-h-screen">
       <div className="p-6">
         <ProcessFormHeader isEdit={isEdit} onCancel={onCancel} />
 
@@ -175,7 +175,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
         onSaveCliente={handleSaveCliente}
         isSaving={isSavingCliente}
       />
-    </>
+    </div>
   );
 };
 
