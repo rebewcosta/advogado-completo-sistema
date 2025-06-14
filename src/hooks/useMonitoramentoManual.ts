@@ -16,19 +16,19 @@ export const useMonitoramentoManual = (
   const executarMonitoramento = async () => {
     if (!user || !configuracao) {
       toast({
-        title: "Erro",
+        title: "Configuração Necessária",
         description: "Configure o monitoramento antes de executar",
         variant: "destructive"
       });
       return;
     }
 
-    // Validar se há nomes configurados
-    if (!configuracao.nomes_monitoramento || configuracao.nomes_monitoramento.length === 0 || 
-        configuracao.nomes_monitoramento.every((nome: string) => !nome.trim())) {
+    // Validar nomes
+    const nomesValidos = configuracao.nomes_monitoramento?.filter((nome: string) => nome?.trim()) || [];
+    if (nomesValidos.length === 0) {
       toast({
-        title: "Erro",
-        description: "Pelo menos um nome deve ser configurado para monitoramento",
+        title: "Nomes Obrigatórios",
+        description: "Configure pelo menos um nome para monitoramento",
         variant: "destructive"
       });
       return;
@@ -37,18 +37,21 @@ export const useMonitoramentoManual = (
     setIsMonitoring(true);
     
     try {
-      console.log('Iniciando monitoramento real com configuração:', configuracao);
+      console.log('Iniciando monitoramento com:', { 
+        user_id: user.id, 
+        nomes: nomesValidos,
+        estados: configuracao.estados_monitoramento || []
+      });
       
       const requestBody = {
         user_id: user.id,
-        nomes: configuracao.nomes_monitoramento.filter((nome: string) => nome.trim() !== ''),
+        nomes: nomesValidos,
         estados: configuracao.estados_monitoramento || [],
-        palavras_chave: configuracao.palavras_chave?.filter((palavra: string) => palavra.trim() !== '') || []
+        palavras_chave: configuracao.palavras_chave?.filter((palavra: string) => palavra?.trim()) || []
       };
 
-      console.log('Dados da requisição para busca real:', requestBody);
+      console.log('Enviando requisição:', requestBody);
 
-      // Chamar a edge function com tratamento de erro melhorado
       const { data, error } = await supabase.functions.invoke('monitorar-publicacoes', {
         body: requestBody,
         headers: {
@@ -56,56 +59,50 @@ export const useMonitoramentoManual = (
         }
       });
 
-      console.log('Resposta da busca real:', { data, error });
+      console.log('Resposta recebida:', { data, error });
 
       if (error) {
-        console.error('Erro na função de busca real:', error);
-        
-        // Tratar diferentes tipos de erro de forma mais específica
-        let errorMessage = "Erro durante o monitoramento real";
-        
-        if (error.message?.includes('Body da requisição vazio')) {
-          errorMessage = "Erro na requisição. Tente novamente.";
-        } else if (error.message?.includes('JSON inválido')) {
-          errorMessage = "Erro de formato nos dados. Tente novamente.";
-        } else if (error.message?.includes('Dados de entrada inválidos')) {
-          errorMessage = "Configure corretamente os nomes antes de executar o monitoramento.";
-        } else if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
-          errorMessage = "Limite de execuções atingido. Aguarde alguns minutos antes de tentar novamente.";
-        } else if (error.message?.includes('timeout')) {
-          errorMessage = "Timeout na execução. Tente novamente em alguns minutos.";
-        } else if (error.message?.includes('CORS')) {
-          errorMessage = "Erro de configuração do servidor. Tente novamente.";
-        } else if (error.message?.includes('Failed to send a request')) {
-          errorMessage = "Erro de conexão com o servidor. Verifique sua internet e tente novamente.";
-        } else if (error.message?.includes('non-2xx status code') || error.message?.includes('400')) {
-          errorMessage = "Erro na validação dos dados. Verifique sua configuração e tente novamente.";
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-        
-        throw new Error(errorMessage);
+        console.error('Erro na função:', error);
+        throw new Error(error.message || 'Erro na comunicação com o servidor');
       }
 
-      console.log('Monitoramento real concluído:', data);
+      if (!data?.success) {
+        throw new Error(data?.error || 'Erro desconhecido durante o monitoramento');
+      }
+
+      console.log('Monitoramento concluído:', data);
       setLastResult(data);
-      
-      const message = data?.message || `Busca concluída: ${data?.publicacoes_encontradas || 0} publicações encontradas em ${data?.fontes_consultadas || 0} fontes`;
       
       toast({
         title: "Monitoramento Concluído",
-        description: message,
-        variant: data?.publicacoes_encontradas > 0 ? "default" : "default"
+        description: data.message || `${data.publicacoes_encontradas || 0} publicações encontradas`,
+        variant: "default"
       });
 
       onMonitoramentoCompleto();
       
     } catch (error: any) {
-      console.error('Erro no monitoramento real:', error);
+      console.error('Erro no monitoramento:', error);
+      
+      let errorMessage = "Erro durante o monitoramento";
+      
+      if (error.message?.includes('Body da requisição')) {
+        errorMessage = "Erro na configuração. Verifique os dados e tente novamente.";
+      } else if (error.message?.includes('nomes')) {
+        errorMessage = "Configure pelo menos um nome válido para monitoramento.";
+      } else if (error.message?.includes('validação')) {
+        errorMessage = "Dados inválidos. Verifique sua configuração.";
+      } else if (error.message?.includes('timeout')) {
+        errorMessage = "Timeout na execução. Tente novamente.";
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = "Erro de conexão. Verifique sua internet.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
       
       toast({
         title: "Erro no Monitoramento",
-        description: error.message || "Ocorreu um erro durante o monitoramento",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

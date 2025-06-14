@@ -36,7 +36,7 @@ const SystemStatusCard: React.FC<SystemStatusCardProps> = ({ configuracao }) => 
           )}
         </div>
         <div className="mt-2 text-xs text-green-700 bg-green-100 p-2 rounded">
-          🇧🇷 <strong>COBERTURA NACIONAL COMPLETA:</strong> Todos os 27 estados brasileiros
+          COBERTURA NACIONAL COMPLETA: Todos os 27 estados brasileiros
           <br />
           📡 <strong>Tecnologia:</strong> Web scraping em tempo real dos sites oficiais
           <br />

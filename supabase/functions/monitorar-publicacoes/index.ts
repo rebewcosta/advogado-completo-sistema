@@ -71,18 +71,25 @@ const validateUserInput = (body: any) => {
   const errors = [];
   
   if (!body || typeof body !== 'object') {
-    errors.push('Body da requisição inválido');
-    return errors;
+    return ['Body da requisição é obrigatório'];
   }
   
   if (!body.user_id || typeof body.user_id !== 'string') {
-    errors.push('user_id é obrigatório e deve ser uma string');
+    errors.push('user_id é obrigatório');
   }
   
-  if (!body.nomes || !Array.isArray(body.nomes)) {
-    errors.push('nomes deve ser um array');
-  } else if (body.nomes.length === 0) {
-    errors.push('pelo menos um nome deve ser fornecido');
+  if (!body.nomes || !Array.isArray(body.nomes) || body.nomes.length === 0) {
+    errors.push('nomes é obrigatório e deve conter pelo menos um nome');
+  }
+  
+  // Verificar se há pelo menos um nome válido
+  if (body.nomes && Array.isArray(body.nomes)) {
+    const nomesValidos = body.nomes.filter((nome: any) => 
+      typeof nome === 'string' && nome.trim().length > 0
+    );
+    if (nomesValidos.length === 0) {
+      errors.push('Pelo menos um nome válido deve ser fornecido');
+    }
   }
   
   return errors;
@@ -187,15 +194,15 @@ serve(async (req) => {
     });
   }
 
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  );
-
   try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
     const startTime = Date.now();
     
-    // Parse request body with better error handling
+    // Parse request body com tratamento robusto de erro
     let body;
     try {
       const requestText = await req.text();
@@ -205,7 +212,7 @@ serve(async (req) => {
         console.error('Body da requisição está vazio');
         return new Response(
           JSON.stringify({ 
-            error: 'Body da requisição vazio',
+            error: 'Body da requisição é obrigatório',
             success: false 
           }),
           { 
@@ -216,13 +223,13 @@ serve(async (req) => {
       }
       
       body = JSON.parse(requestText);
-      console.log('Body parseado:', body);
+      console.log('Body parseado com sucesso:', body);
       
     } catch (parseError) {
       console.error('Erro ao fazer parse do JSON:', parseError);
       return new Response(
         JSON.stringify({ 
-          error: 'JSON inválido no body da requisição',
+          error: 'Formato de dados inválido',
           success: false 
         }),
         { 
@@ -232,19 +239,17 @@ serve(async (req) => {
       );
     }
 
-    console.log('🔍 MONITORAMENTO REAL INICIADO');
+    console.log('🔍 MONITORAMENTO INICIADO');
     console.log('👤 Usuário:', body?.user_id);
     console.log('📝 Nomes para buscar:', body?.nomes);
-    console.log('🌍 Estados:', body?.estados?.length > 0 ? body.estados : 'Todos os estados principais');
     
-    // Input validation
+    // Validação robusta dos dados de entrada
     const validationErrors = validateUserInput(body);
     if (validationErrors.length > 0) {
       console.error('❌ Erros de validação:', validationErrors);
       return new Response(
         JSON.stringify({ 
-          error: 'Dados de entrada inválidos', 
-          details: validationErrors,
+          error: validationErrors.join('. '),
           success: false 
         }),
         { 
@@ -254,13 +259,13 @@ serve(async (req) => {
       );
     }
 
-    // Sanitize inputs
+    // Sanitizar e preparar dados
     const { sanitizedNomes, sanitizedEstados, sanitizedPalavrasChave } = sanitizeInputs(body);
 
     if (sanitizedNomes.length === 0) {
       return new Response(
         JSON.stringify({ 
-          error: 'Pelo menos um nome válido deve ser fornecido para monitoramento',
+          error: 'Configure pelo menos um nome válido para monitoramento',
           success: false 
         }),
         { 
@@ -270,50 +275,49 @@ serve(async (req) => {
       );
     }
 
-    // Create initial log entry
+    // Criar log inicial
     const logEntry = await createMonitoringLog(body.user_id, supabase);
 
-    console.log('🚀 INICIANDO BUSCA REAL NOS DIÁRIOS OFICIAIS...');
-    console.log('📋 Configuração da busca:');
-    console.log('   - Nomes:', sanitizedNomes);
-    console.log('   - Estados:', sanitizedEstados.length > 0 ? sanitizedEstados : 'PRINCIPAIS ESTADOS (SP, RJ, MG, CE, PR)');
-    console.log('   - Palavras-chave:', sanitizedPalavrasChave);
+    console.log('🚀 INICIANDO BUSCA...');
+    console.log('📋 Nomes:', sanitizedNomes);
+    console.log('🌍 Estados:', sanitizedEstados.length > 0 ? sanitizedEstados : 'PRINCIPAIS');
     
     let publicacoesEncontradas = 0;
     const erros: string[] = [];
 
     try {
-      // Initialize real scraper
+      // Executar busca
       const scraper = new DiarioScraper();
       
-      console.log('🌐 Consultando diários oficiais reais...');
+      console.log('🌐 Consultando diários oficiais...');
       
-      // Search publications in official gazettes
       const publicacoesReais: PublicacaoEncontrada[] = await scraper.buscarEmTodosEstados(
         sanitizedNomes,
         sanitizedEstados
       );
 
-      console.log(`📄 Publicações encontradas: ${publicacoesReais.length}`);
+      console.log(`📄 Encontradas: ${publicacoesReais.length} publicações`);
 
-      // Save found publications to database
+      // Salvar no banco
       try {
         await savePublicacoes(publicacoesReais, body.user_id, supabase);
+        console.log('✅ Publicações salvas com sucesso');
       } catch (error: any) {
-        erros.push(error.message);
+        console.error('❌ Erro ao salvar:', error);
+        erros.push(`Erro ao salvar: ${error.message}`);
       }
 
       publicacoesEncontradas = publicacoesReais.length;
 
     } catch (error: any) {
-      console.error('❌ Erro durante o scraping:', error);
-      erros.push(`Erro durante a consulta aos diários: ${error.message}`);
+      console.error('❌ Erro durante busca:', error);
+      erros.push(`Erro na busca: ${error.message}`);
     }
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
-    const fontesConsultadas = sanitizedEstados.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO'];
+    const fontesConsultadas = sanitizedEstados.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR'];
 
-    // Update log entry with results
+    // Atualizar log
     await updateMonitoringLog(
       logEntry.id, 
       publicacoesEncontradas, 
@@ -324,8 +328,8 @@ serve(async (req) => {
     );
 
     const message = publicacoesEncontradas > 0 
-      ? `✅ BUSCA CONCLUÍDA: Encontradas ${publicacoesEncontradas} publicações nos diários oficiais consultados.`
-      : `ℹ️ BUSCA CONCLUÍDA: Nenhuma publicação foi encontrada nos diários oficiais consultados para os nomes e estados especificados.`;
+      ? `✅ Busca concluída: ${publicacoesEncontradas} publicações encontradas`
+      : `ℹ️ Nenhuma publicação encontrada para os critérios especificados`;
 
     const response = {
       success: true,
@@ -342,7 +346,7 @@ serve(async (req) => {
       }
     };
 
-    console.log('✅ Resposta final:', response);
+    console.log('✅ Resposta:', response);
 
     return new Response(
       JSON.stringify(response),
@@ -353,11 +357,11 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('💥 Erro crítico no monitoramento:', error);
+    console.error('💥 Erro crítico:', error);
     return new Response(
       JSON.stringify({ 
-        error: 'Erro interno do servidor', 
-        message: error.message || 'Erro interno do servidor',
+        error: 'Erro interno do sistema', 
+        message: 'Tente novamente em alguns minutos',
         success: false,
         status_integracao: 'ERRO'
       }),
