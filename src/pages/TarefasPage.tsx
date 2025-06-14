@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { ListChecks } from 'lucide-react';
@@ -126,9 +125,8 @@ const TarefasPage = () => {
             title="Gerenciador de Tarefas"
             description="Organize e acompanhe suas pendências e prazos."
             pageIcon={<ListChecks />} 
-            actionButtonText="Nova Tarefa"
-            onActionButtonClick={() => handleOpenForm()}
             isLoading={isLoading}
+            showActionButton={false}
           />
           
           <TarefaSearchActionBar
