@@ -32,7 +32,6 @@ import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
 import PublicacoesPage from './pages/PublicacoesPage';
 
 // Components
-import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from '@/components/AppSidebar';
@@ -44,14 +43,9 @@ import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
 
-// Layout para páginas públicas (com navbar)
+// Layout para páginas públicas (sem navbar, pois ela já está no Index)
 const PublicLayout = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <>
-      <Navbar />
-      {children}
-    </>
-  );
+  return <>{children}</>;
 };
 
 // Layout para páginas protegidas (apenas sidebar)
@@ -79,7 +73,7 @@ function App() {
                 <Toaster />
                 
                 <Routes>
-                  {/* Rotas públicas com navbar */}
+                  {/* Rotas públicas (Index já tem navbar integrada) */}
                   <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
                   <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
                   <Route path="/cadastro" element={<PublicLayout><CadastroPage /></PublicLayout>} />

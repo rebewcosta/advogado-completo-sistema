@@ -34,7 +34,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Navbar sempre visível */}
       <Navbar />
+      
+      {/* Cabeçalho adicional apenas para usuários logados */}
       {user && (
         <>
           {/* Cabeçalho Mobile - Apenas para smartphone */}
@@ -62,6 +65,7 @@ const Index = () => {
           </div>
         </>
       )}
+      
       <main className="flex-grow">
         <HeroSection 
           showPWAInstallBanner={showPWAInstallBanner}
