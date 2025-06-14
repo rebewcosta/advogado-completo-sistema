@@ -1,8 +1,6 @@
 
 import React from 'react';
-import { ArrowRight, CheckCircle, Star, Users, Zap } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { CheckCircle, Star, Users, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 
 const CtaSection = () => {
@@ -75,30 +73,6 @@ const CtaSection = () => {
                 <span className="text-sm md:text-base">{benefit}</span>
               </div>
             ))}
-          </div>
-
-          {/* CTA Buttons */}
-          <div className="text-center">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/cadastro">
-                <Button className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-2xl hover:shadow-green-500/25 transition-all duration-300 hover:scale-105 flex items-center gap-3">
-                  <Zap className="h-5 w-5" />
-                  Começar Gratuitamente
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-              
-              <Link to="/demo">
-                <Button variant="outline" className="bg-white/10 border-white/30 text-white hover:bg-white/20 px-8 py-4 rounded-xl text-lg font-semibold backdrop-blur-lg transition-all duration-300 hover:scale-105 flex items-center gap-3">
-                  Agendar Demonstração
-                  <ArrowRight className="h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-            
-            <p className="text-blue-300 text-sm mt-6">
-              Teste grátis por 30 dias • Sem compromisso • Suporte incluído
-            </p>
           </div>
 
         </div>
