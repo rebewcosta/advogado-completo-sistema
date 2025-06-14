@@ -1,18 +1,20 @@
-// src/components/documentos/DocumentListAsCards.tsx
+
 import React from 'react';
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Spinner } from '@/components/ui/spinner';
-import { cn } from "@/lib/utils";
-import { Card } from '@/components/ui/card';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { MoreVertical, Eye, Download, Trash2, FileText as FileIcon, User, Briefcase, CalendarDays, HardDrive, FilePlus, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileText, MoreVertical, Download, Trash2, Eye, File, FilePlus, RefreshCw, Calendar, User, Scale } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Document } from '@/hooks/useDocumentTypes';
+import { formatDate } from '@/lib/utils';
 import { useDocumentos } from '@/hooks/useDocumentos';
-import type { Document as DocumentType } from '@/hooks/useDocumentTypes';
 
 interface DocumentListAsCardsProps {
-  documents: DocumentType[];
+  documents: Document[];
   isLoading: boolean;
   searchTerm: string;
   filterType: string;
@@ -30,185 +32,218 @@ const DocumentListAsCards: React.FC<DocumentListAsCardsProps> = ({
   onUploadClick,
   error
 }) => {
-  const { obterUrlDocumento, excluirDocumento, formatarTamanhoArquivo, espacoDisponivel, isRefreshing } = useDocumentos();
+  const { obterUrlDocumento, excluirDocumento, formatarTamanhoArquivo, espacoDisponivel } = useDocumentos();
 
-  const handleDocumentAction = async (action: 'view' | 'download' | 'delete', doc: DocumentType) => {
+  const handleDocumentAction = async (action: string, doc: Document) => {
     switch (action) {
       case 'view':
         try {
           const url = await obterUrlDocumento(doc.path);
           window.open(url, '_blank');
-        } catch (err) {
-          console.error('Erro ao visualizar documento:', err);
+        } catch (error) {
+          console.error('Erro ao visualizar documento:', error);
         }
         break;
+
       case 'download':
         try {
           const url = await obterUrlDocumento(doc.path);
-          const a = document.createElement('a');
+          const a = window.document.createElement('a');
           a.href = url;
           a.download = doc.nome;
-          document.body.appendChild(a);
+          window.document.body.appendChild(a);
           a.click();
-          document.body.removeChild(a);
-        } catch (err) {
-          console.error('Erro ao baixar documento:', err);
+          window.document.body.removeChild(a);
+        } catch (error) {
+          console.error('Erro ao baixar documento:', error);
         }
         break;
+
       case 'delete':
-        if (window.confirm(`Tem certeza que deseja excluir o documento "${doc.nome}"?`)) {
-            try {
-                await excluirDocumento(doc.id, doc.path);
-            } catch (err) {
-                console.error('Erro ao excluir documento:', err);
-            }
+        try {
+          await excluirDocumento(doc.id, doc.path);
+        } catch (error) {
+          console.error('Erro ao excluir documento:', error);
         }
+        break;
+
+      default:
         break;
     }
   };
 
-  if (isLoading && documents.length === 0) {
+  if (isLoading) {
     return (
-      <div className="text-center py-16 flex flex-col justify-center items-center h-64">
-        <Spinner size="lg" />
-        <p className="text-gray-500 mt-3">Carregando documentos...</p>
-      </div>
+      <Card className="bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl animate-slide-in">
+        <CardContent className="py-12 text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+          <p className="mt-4 text-gray-500">Carregando documentos...</p>
+        </CardContent>
+      </Card>
     );
   }
-  
-  const columnConfig = [
-    { id: 'nome', label: "Nome do Arquivo", headerClass: "flex-1 min-w-0 px-4 text-left", itemClass: "flex-1 min-w-0" },
-    { id: 'tipo', label: "Tipo", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0" },
-    { id: 'cliente', label: "Cliente", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0" },
-    { id: 'processo', label: "Processo", headerClass: "w-2/12 min-w-0 px-4 text-left hidden lg:flex items-center", itemClass: "w-full md:w-2/12 min-w-0" },
-    { id: 'data', label: "Data Envio", headerClass: "w-[120px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[120px] flex-shrink-0" },
-    { id: 'tamanho', label: "Tamanho", headerClass: "w-[100px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[100px] flex-shrink-0" },
-    { id: 'acoes', label: "Ações", headerClass: "w-[80px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[80px] flex-shrink-0 flex justify-end md:justify-end items-center" }
-  ];
 
-  if (error && documents.length === 0) {
+  if (documents.length === 0 && !isLoading) {
     return (
-         <div className="px-6 py-16 text-center text-gray-500 bg-white rounded-lg shadow-md border border-red-200">
-            <AlertTriangle className="mx-auto h-12 w-12 text-red-400 mb-3" />
-            <p className="font-medium text-red-600 mb-1">Erro ao Carregar Documentos</p>
-            <p className="text-sm text-red-500 mb-4">{error}</p>
+      <Card className="bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl animate-slide-in">
+        <CardContent className="py-12 text-center">
+          <File className="mx-auto h-12 w-12 text-gray-300" />
+          <h3 className="mt-4 text-lg font-medium text-gray-700">Nenhum documento encontrado</h3>
+          <p className="mt-1 text-gray-500">
+            {searchTerm || filterType !== 'all' ?
+              'Tente ajustar seus filtros de busca' :
+              'Comece enviando seu primeiro documento'}
+          </p>
+          {!searchTerm && filterType === 'all' && !error && (
             <Button
-                variant="outline"
-                onClick={onRefresh}
-                disabled={isRefreshing}
+              variant="outline"
+              className="mt-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+              onClick={onUploadClick}
+              disabled={espacoDisponivel < 1024}
             >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                {isRefreshing ? "Atualizando..." : "Tentar novamente"}
+              <FilePlus className="mr-2 h-4 w-4" />
+              Enviar documento
             </Button>
-        </div>
+          )}
+          {error && (
+            <Button
+              variant="outline"
+              className="mt-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+              onClick={onRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? "Atualizando..." : "Tentar novamente"}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="mt-2">
-      {documents.length > 0 && (
-        <div className={cn(
-            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md items-center"
-        )}>
-          {columnConfig.map(col => (
-            <div key={col.id} className={cn(col.headerClass, "text-xs font-bold uppercase tracking-wider")}>
-              {col.label}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {documents.length > 0 ? (
-        <div className="space-y-3">
-          {documents.map((doc) => {
-            return (
-              <Card key={doc.id} className="bg-white shadow-md hover:shadow-lg transition-shadow rounded-lg border border-gray-200/80 overflow-hidden">
-                <div className={cn("p-3 md:p-0 md:flex md:flex-row md:items-start")}>
-                  
-                  <div className={cn(columnConfig[0].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
-                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[0].label}</div>
-                    <div className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer break-words flex items-center" onClick={() => handleDocumentAction('view', doc)}>
-                        <FileIcon size={14} className="mr-1.5 text-gray-500 flex-shrink-0" /> {doc.nome}
-                    </div>
-                  </div>
-
-                  <div className={cn(columnConfig[1].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
-                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[1].label}</div>
-                    <div className="text-sm text-gray-600 break-words capitalize">{doc.tipo}</div>
-                  </div>
-                  
-                  <div className={cn(columnConfig[2].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
-                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[2].label}</div>
-                    <div className="text-xs text-gray-700 break-words flex items-center">
-                        <User size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {doc.cliente}
-                    </div>
-                  </div>
-
-                   <div className={cn(columnConfig[3].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
-                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[3].label}</div>
-                    <div className="text-xs text-gray-700 break-words flex items-center">
-                        {doc.processo ? <><Briefcase size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {doc.processo}</> : '-'}
-                    </div>
-                  </div>
-                  
-                  <div className={cn(columnConfig[4].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
-                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[4].label}</div>
-                     <span className="text-gray-700 text-xs">{format(new Date(doc.created_at), "dd/MM/yy", { locale: ptBR })}</span>
-                  </div>
-
-                  <div className={cn(columnConfig[5].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
-                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[5].label}</div>
-                     <span className="text-gray-700 text-xs">{formatarTamanhoArquivo(doc.tamanho_bytes)}</span>
-                  </div>
-
-                  <div className={cn(columnConfig[6].itemClass, "px-3 md:px-4 py-2 md:py-3")}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40 shadow-lg">
-                        <DropdownMenuItem onClick={() => handleDocumentAction('view', doc)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
-                          <Eye className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Visualizar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDocumentAction('download', doc)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
-                          <Download className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Download
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-gray-200"/>
-                        <DropdownMenuItem
-                          onClick={() => handleDocumentAction('delete', doc)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+    <div className="grid gap-4 md:gap-6">
+      {documents.map((doc, index) => (
+        <Card 
+          key={doc.id} 
+          className="bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] animate-slide-in"
+          style={{ animationDelay: `${index * 100}ms` }}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                <div className="p-2 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl">
+                  <FileText className="h-5 w-5 text-blue-600" />
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-      ) : (
-         <div className="px-6 py-16 text-center text-gray-500 bg-white rounded-lg shadow-md border border-gray-200/80">
-            <FileIcon className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-            <p className="font-medium mb-1">Nenhum documento encontrado.</p>
-            <p className="text-sm mb-4">
-            {searchTerm || filterType !== 'all' ? "Tente ajustar sua busca ou filtros." : "Clique em \"Enviar Documento\" para adicionar."}
-            </p>
-            {!searchTerm && filterType === 'all' && (
-                <Button
-                    variant="outline"
-                    onClick={onUploadClick}
-                    disabled={espacoDisponivel < 1024 || isLoading} // isLoading geral ou isRefreshing específico do hook de docs
+                <span className="truncate">{doc.nome}</span>
+              </CardTitle>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="h-8 w-8 p-0 hover:bg-blue-100 rounded-lg transition-colors duration-200"
+                  >
+                    <span className="sr-only">Abrir menu</span>
+                    <MoreVertical className="h-4 w-4 text-gray-600" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent 
+                  align="end" 
+                  className="bg-white/95 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl"
                 >
-                    <FilePlus className="mr-2 h-4 w-4" />
-                    Enviar Documento
-                </Button>
-            )}
-        </div>
-      )}
+                  <DropdownMenuItem 
+                    onClick={() => handleDocumentAction('view', doc)}
+                    className="text-gray-700 hover:bg-blue-50 focus:bg-blue-50 rounded-lg cursor-pointer"
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    <span>Visualizar</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => handleDocumentAction('download', doc)}
+                    className="text-gray-700 hover:bg-blue-50 focus:bg-blue-50 rounded-lg cursor-pointer"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    <span>Download</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => handleDocumentAction('delete', doc)} 
+                    className="text-red-600 hover:bg-red-50 focus:bg-red-50 rounded-lg cursor-pointer"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    <span>Excluir</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center text-sm text-gray-600">
+                  <div className="p-1.5 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg mr-2">
+                    <FileText className="h-3 w-3 text-green-600" />
+                  </div>
+                  <span className="text-xs text-gray-500">Tipo:</span>
+                  <span className="ml-1 capitalize font-medium bg-blue-100 px-2 py-0.5 rounded-lg text-xs">
+                    {doc.tipo}
+                  </span>
+                </div>
+                <div className="flex items-center text-sm text-gray-600">
+                  <div className="p-1.5 bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg mr-2">
+                    <Calendar className="h-3 w-3 text-purple-600" />
+                  </div>
+                  <span className="text-xs text-gray-500">Data:</span>
+                  <span className="ml-1 font-medium">{formatDate(doc.created_at)}</span>
+                </div>
+              </div>
+              
+              <div className="flex items-center text-sm text-gray-600">
+                <div className="p-1.5 bg-gradient-to-br from-blue-100 to-cyan-100 rounded-lg mr-2">
+                  <User className="h-3 w-3 text-blue-600" />
+                </div>
+                <span className="text-xs text-gray-500">Cliente:</span>
+                <span className="ml-1 font-medium truncate">{doc.cliente}</span>
+              </div>
+              
+              {doc.processo && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <div className="p-1.5 bg-gradient-to-br from-yellow-100 to-amber-100 rounded-lg mr-2">
+                    <Scale className="h-3 w-3 text-yellow-600" />
+                  </div>
+                  <span className="text-xs text-gray-500">Processo:</span>
+                  <span className="ml-1 font-medium truncate">{doc.processo}</span>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-lg">
+                  {formatarTamanhoArquivo(doc.tamanho_bytes)}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDocumentAction('view', doc)}
+                    className="text-xs bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105"
+                  >
+                    <Eye className="h-3 w-3 mr-1" />
+                    Ver
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDocumentAction('download', doc)}
+                    className="text-xs bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 rounded-lg shadow-sm transition-all duration-200 hover:shadow-md hover:scale-105"
+                  >
+                    <Download className="h-3 w-3 mr-1" />
+                    Baixar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 };

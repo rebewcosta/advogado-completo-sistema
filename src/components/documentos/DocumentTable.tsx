@@ -1,25 +1,28 @@
-// src/components/documentos/DocumentTable.tsx
+
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { FileText, MoreVertical, Download, Trash2, Eye, File, FilePlus, RefreshCw } from 'lucide-react';
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Spinner } from '@/components/ui/spinner';
-import { cn } from "@/lib/utils";
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { MoreVertical, Eye, Download, Trash2, FileText as FileIcon, User, Briefcase, CalendarDays, RefreshCw, AlertTriangle, FilePlus } from 'lucide-react';
+  TableRow
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Document } from '@/hooks/useDocumentTypes';
+import { formatDate } from '@/lib/utils';
 import { useDocumentos } from '@/hooks/useDocumentos';
-import type { Document as DocumentType } from '@/hooks/useDocumentTypes';
 
 interface DocumentTableProps {
-  documents: DocumentType[];
+  documents: Document[];
   isLoading: boolean;
   searchTerm: string;
   filterType: string;
@@ -37,156 +40,185 @@ const DocumentTable: React.FC<DocumentTableProps> = ({
   onUploadClick,
   error
 }) => {
-  const { obterUrlDocumento, excluirDocumento, formatarTamanhoArquivo, espacoDisponivel, isRefreshing: isActionRefreshing } = useDocumentos();
+  const { obterUrlDocumento, excluirDocumento, formatarTamanhoArquivo, espacoDisponivel } = useDocumentos();
 
-  const handleDocumentAction = async (action: 'view' | 'download' | 'delete', doc: DocumentType) => {
+  const handleDocumentAction = async (action: string, doc: Document) => {
     switch (action) {
       case 'view':
         try {
           const url = await obterUrlDocumento(doc.path);
           window.open(url, '_blank');
-        } catch (err) {
-          console.error('Erro ao visualizar documento:', err);
+        } catch (error) {
+          console.error('Erro ao visualizar documento:', error);
         }
         break;
+
       case 'download':
         try {
           const url = await obterUrlDocumento(doc.path);
-          const a = document.createElement('a');
+          const a = window.document.createElement('a');
           a.href = url;
           a.download = doc.nome;
-          document.body.appendChild(a);
+          window.document.body.appendChild(a);
           a.click();
-          document.body.removeChild(a);
-        } catch (err) {
-          console.error('Erro ao baixar documento:', err);
+          window.document.body.removeChild(a);
+        } catch (error) {
+          console.error('Erro ao baixar documento:', error);
         }
         break;
+
       case 'delete':
-        if (window.confirm(`Tem certeza que deseja excluir o documento "${doc.nome}"?`)) {
-            try {
-                await excluirDocumento(doc.id, doc.path);
-            } catch (err) {
-                console.error('Erro ao excluir documento:', err);
-            }
+        try {
+          await excluirDocumento(doc.id, doc.path);
+        } catch (error) {
+          console.error('Erro ao excluir documento:', error);
         }
+        break;
+
+      default:
         break;
     }
   };
 
-  if (isLoading && documents.length === 0) {
+  if (isLoading) {
     return (
-      <div className="text-center py-16 flex flex-col justify-center items-center h-64">
-        <Spinner size="lg" />
-        <p className="text-gray-500 mt-3">Carregando documentos...</p>
-      </div>
+      <Card className="bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl animate-slide-in">
+        <CardContent className="py-12 text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
+          <p className="mt-4 text-gray-500">Carregando documentos...</p>
+        </CardContent>
+      </Card>
     );
   }
 
-  if (error && documents.length === 0) {
+  if (documents.length === 0 && !isLoading) {
     return (
-         <div className="px-6 py-16 text-center text-gray-500 bg-white rounded-lg shadow-md border border-red-200">
-            <AlertTriangle className="mx-auto h-12 w-12 text-red-400 mb-3" />
-            <p className="font-medium text-red-600 mb-1">Erro ao Carregar Documentos</p>
-            <p className="text-sm text-red-500 mb-4">{error}</p>
+      <Card className="bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl animate-slide-in">
+        <CardContent className="py-12 text-center">
+          <File className="mx-auto h-12 w-12 text-gray-300" />
+          <h3 className="mt-4 text-lg font-medium text-gray-700">Nenhum documento encontrado</h3>
+          <p className="mt-1 text-gray-500">
+            {searchTerm || filterType !== 'all' ?
+              'Tente ajustar seus filtros de busca' :
+              'Comece enviando seu primeiro documento'}
+          </p>
+          {!searchTerm && filterType === 'all' && !error && (
             <Button
-                variant="outline"
-                onClick={onRefresh}
-                disabled={isLoading || isActionRefreshing}
+              variant="outline"
+              className="mt-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+              onClick={onUploadClick}
+              disabled={espacoDisponivel < 1024}
             >
-                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading || isActionRefreshing ? 'animate-spin' : ''}`} />
-                {isLoading || isActionRefreshing ? "Atualizando..." : "Tentar novamente"}
+              <FilePlus className="mr-2 h-4 w-4" />
+              Enviar documento
             </Button>
-        </div>
+          )}
+          {error && (
+            <Button
+              variant="outline"
+              className="mt-4 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105"
+              onClick={onRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              {isLoading ? "Atualizando..." : "Tentar novamente"}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
     );
   }
-  
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200/80 shadow-md bg-white">
-      <Table className="min-w-full">
-        <TableHeader className="bg-lawyer-dark">
-          <TableRow className="hover:bg-lawyer-dark/90">
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Nome do Arquivo</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell">Tipo</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Cliente</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">Processo</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell">Data Envio</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell">Tamanho</TableHead>
-            <TableHead className="px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wider w-[80px]">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody className="divide-y divide-gray-200/70">
-          {documents.length > 0 ? (
-            documents.map((doc) => {
-              return (
-                <TableRow key={doc.id} className="hover:bg-gray-50/60 transition-colors text-left">
-                  <TableCell className="px-4 py-3 whitespace-nowrap">
-                    <div 
-                      className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer flex items-center"
-                      onClick={() => handleDocumentAction('view', doc)}
-                    >
-                      <FileIcon size={14} className="mr-1.5 text-gray-500 flex-shrink-0" /> {doc.nome}
+    <Card className="bg-white/70 backdrop-blur-lg border border-white/20 shadow-xl rounded-2xl animate-slide-in">
+      <CardHeader className="border-b border-white/20 bg-gradient-to-r from-blue-500/10 to-indigo-600/10 rounded-t-2xl">
+        <CardTitle className="text-gray-800 font-semibold flex items-center gap-2">
+          <FileText className="h-5 w-5 text-blue-600" />
+          Documentos ({documents.length})
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-white/20 hover:bg-blue-50/50">
+                <TableHead className="text-gray-700 font-medium">Nome</TableHead>
+                <TableHead className="text-gray-700 font-medium">Tipo</TableHead>
+                <TableHead className="text-gray-700 font-medium">Cliente</TableHead>
+                <TableHead className="text-gray-700 font-medium">Processo</TableHead>
+                <TableHead className="text-gray-700 font-medium">Data</TableHead>
+                <TableHead className="text-gray-700 font-medium">Tamanho</TableHead>
+                <TableHead className="w-[80px] text-gray-700 font-medium">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {documents.map((doc, index) => (
+                <TableRow 
+                  key={doc.id} 
+                  className="border-b border-white/10 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-indigo-50/50 transition-all duration-200 animate-slide-in"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <TableCell className="font-medium">
+                    <div className="flex items-center">
+                      <FileText className="mr-2 h-4 w-4 text-blue-600" />
+                      <span className="text-gray-700">{doc.nome}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell capitalize">{doc.tipo}</TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-600">{doc.cliente}</TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 hidden lg:table-cell">{doc.processo || '-'}</TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 hidden sm:table-cell">
-                    {format(parseISO(doc.created_at), "dd/MM/yy", { locale: ptBR })}
+                  <TableCell>
+                    <span className="capitalize text-gray-600 bg-blue-100 px-2 py-1 rounded-lg text-xs font-medium">
+                      {doc.tipo}
+                    </span>
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 hidden sm:table-cell">{formatarTamanhoArquivo(doc.tamanho_bytes)}</TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                  <TableCell className="text-gray-700">{doc.cliente}</TableCell>
+                  <TableCell className="text-gray-700">{doc.processo || '-'}</TableCell>
+                  <TableCell className="text-gray-700">{formatDate(doc.created_at)}</TableCell>
+                  <TableCell className="text-gray-700">{formatarTamanhoArquivo(doc.tamanho_bytes)}</TableCell>
+                  <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
-                          <MoreVertical className="h-4 w-4" />
+                        <Button 
+                          variant="ghost" 
+                          className="h-8 w-8 p-0 hover:bg-blue-100 rounded-lg transition-colors duration-200"
+                        >
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreVertical className="h-4 w-4 text-gray-600" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40 shadow-lg">
-                        <DropdownMenuItem onClick={() => handleDocumentAction('view', doc)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100 text-left">
-                          <Eye className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Visualizar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDocumentAction('download', doc)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100 text-left">
-                          <Download className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Download
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-gray-200"/>
-                        <DropdownMenuItem
-                          onClick={() => handleDocumentAction('delete', doc)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 text-left"
+                      <DropdownMenuContent 
+                        align="end" 
+                        className="bg-white/95 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl"
+                      >
+                        <DropdownMenuItem 
+                          onClick={() => handleDocumentAction('view', doc)}
+                          className="text-gray-700 hover:bg-blue-50 focus:bg-blue-50 rounded-lg cursor-pointer"
                         >
-                          <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
+                          <Eye className="mr-2 h-4 w-4" />
+                          <span>Visualizar</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDocumentAction('download', doc)}
+                          className="text-gray-700 hover:bg-blue-50 focus:bg-blue-50 rounded-lg cursor-pointer"
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          <span>Download</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleDocumentAction('delete', doc)} 
+                          className="text-red-600 hover:bg-red-50 focus:bg-red-50 rounded-lg cursor-pointer"
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Excluir</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              );
-            })
-          ) : (
-            <TableRow>
-              <TableCell colSpan={7} className="px-6 py-16 text-center text-gray-500">
-                 <FileIcon className="mx-auto h-12 w-12 text-gray-300 mb-3" />
-                <p className="font-medium mb-1">Nenhum documento encontrado.</p>
-                <p className="text-sm mb-4">
-                  {searchTerm || filterType !== 'all' ? "Tente ajustar sua busca ou filtros." : "Clique em \"Enviar Documento\" para adicionar."}
-                </p>
-                {!searchTerm && filterType === 'all' && (
-                    <Button
-                        variant="outline"
-                        onClick={onUploadClick}
-                        disabled={espacoDisponivel < 1024 || isLoading || isActionRefreshing}
-                    >
-                        <FilePlus className="mr-2 h-4 w-4" />
-                        Enviar Documento
-                    </Button>
-                )}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

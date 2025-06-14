@@ -1,3 +1,4 @@
+
 // src/pages/DocumentosPage.tsx
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/AdminLayout';
@@ -12,9 +13,9 @@ import LowStorageWarning from '@/components/documentos/LowStorageWarning';
 import { useDocumentos } from '@/hooks/useDocumentos';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileArchive, Upload } from 'lucide-react'; // FileArchive para o header
+import { FileArchive, Upload } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
-import SharedPageHeader from '@/components/shared/SharedPageHeader'; // <<< IMPORTAR
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
 
 const DocumentosPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,7 +74,7 @@ const DocumentosPage = () => {
   if (isLoadingCombined && documents.length === 0 && !isRefreshing) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center items-center">
           <Spinner size="lg" />
           <span className="text-gray-500 mt-3">Carregando documentos...</span>
         </div>
@@ -83,62 +84,64 @@ const DocumentosPage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <SharedPageHeader
-            title="Gestão de Documentos"
-            description="Organize e acesse os arquivos importantes do seu escritório."
-            pageIcon={<FileArchive />}
-            actionButtonText="Enviar Documento"
-            onActionButtonClick={() => setIsUploadDialogOpen(true)}
-            isLoading={isLoadingCombined}
-            actionButtonDisabled={espacoDisponivel < 1024} // Desabilita se não houver espaço
-            actionButtonIcon={<Upload className="h-4 w-4 mr-2"/>}
-        />
-        
-        <DocumentoWarning />
-        <DocumentoStorageInfo />
-        
-        <DocumentSearchBar 
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          filterType={filterType}
-          setFilterType={setFilterType}
-          handleRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-        />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="p-4 md:p-6 lg:p-8">
+          <SharedPageHeader
+              title="Gestão de Documentos"
+              description="Organize e acesse os arquivos importantes do seu escritório."
+              pageIcon={<FileArchive />}
+              actionButtonText="Enviar Documento"
+              onActionButtonClick={() => setIsUploadDialogOpen(true)}
+              isLoading={isLoadingCombined}
+              actionButtonDisabled={espacoDisponivel < 1024}
+              actionButtonIcon={<Upload className="h-4 w-4 mr-2"/>}
+          />
+          
+          <DocumentoWarning />
+          <DocumentoStorageInfo />
+          
+          <DocumentSearchBar 
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            filterType={filterType}
+            setFilterType={setFilterType}
+            handleRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+          />
 
-        <DocumentError error={error} /> 
-        
-        <div className="hidden md:block">
-            <DocumentTable
-                documents={filteredDocuments}
-                isLoading={isLoadingCombined}
-                searchTerm={searchTerm}
-                filterType={filterType}
-                onRefresh={handleRefresh}
-                onUploadClick={() => setIsUploadDialogOpen(true)}
-                error={error}
-            />
+          <DocumentError error={error} /> 
+          
+          <div className="hidden md:block">
+              <DocumentTable
+                  documents={filteredDocuments}
+                  isLoading={isLoadingCombined}
+                  searchTerm={searchTerm}
+                  filterType={filterType}
+                  onRefresh={handleRefresh}
+                  onUploadClick={() => setIsUploadDialogOpen(true)}
+                  error={error}
+              />
+          </div>
+          <div className="md:hidden">
+              <DocumentListAsCards
+                  documents={filteredDocuments}
+                  isLoading={isLoadingCombined}
+                  searchTerm={searchTerm}
+                  filterType={filterType}
+                  onRefresh={handleRefresh}
+                  onUploadClick={() => setIsUploadDialogOpen(true)}
+                  error={error}
+              />
+          </div>
+          
+          <LowStorageWarning espacoDisponivel={espacoDisponivel} />
         </div>
-        <div className="md:hidden">
-            <DocumentListAsCards
-                documents={filteredDocuments}
-                isLoading={isLoadingCombined}
-                searchTerm={searchTerm}
-                filterType={filterType}
-                onRefresh={handleRefresh}
-                onUploadClick={() => setIsUploadDialogOpen(true)}
-                error={error}
-            />
-        </div>
         
-        <LowStorageWarning espacoDisponivel={espacoDisponivel} />
+        <DocumentUploadDialog 
+          isOpen={isUploadDialogOpen} 
+          onOpenChange={setIsUploadDialogOpen}
+        />
       </div>
-      
-      <DocumentUploadDialog 
-        isOpen={isUploadDialogOpen} 
-        onOpenChange={setIsUploadDialogOpen}
-      />
     </AdminLayout>
   );
 };
