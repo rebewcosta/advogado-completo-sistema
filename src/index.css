@@ -109,15 +109,23 @@
 
 /* Modern feature cards */
 .feature-card {
-  @apply bg-white/95 backdrop-blur-lg p-8 rounded-2xl shadow-xl border border-white/20 transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:border-blue-200/50 group;
+  @apply bg-white/95 backdrop-blur-lg p-8 rounded-2xl shadow-xl border border-white/20 transition-all duration-500 hover:shadow-2xl hover:scale-105 hover:border-blue-200/50;
 }
 
 .feature-icon {
-  @apply text-white bg-gradient-to-br from-blue-600 to-purple-600 w-12 h-12 mb-6 p-3 rounded-xl shadow-lg group-hover:scale-110 transition-transform duration-500;
+  @apply text-white bg-gradient-to-br from-blue-600 to-purple-600 w-12 h-12 mb-6 p-3 rounded-xl shadow-lg transition-transform duration-500;
+}
+
+.feature-card:hover .feature-icon {
+  @apply scale-110;
 }
 
 .feature-title {
-  @apply text-xl font-bold mb-3 text-gray-800 group-hover:text-blue-600 transition-colors duration-300;
+  @apply text-xl font-bold mb-3 text-gray-800 transition-colors duration-300;
+}
+
+.feature-card:hover .feature-title {
+  @apply text-blue-600;
 }
 
 .feature-description {
@@ -125,7 +133,11 @@
 }
 
 .feature-link {
-  @apply text-blue-600 hover:text-purple-600 flex items-center gap-2 font-semibold transition-all duration-300 group-hover:gap-3;
+  @apply text-blue-600 hover:text-purple-600 flex items-center gap-2 font-semibold transition-all duration-300;
+}
+
+.feature-card:hover .feature-link {
+  @apply gap-3;
 }
 
 .btn-primary {
