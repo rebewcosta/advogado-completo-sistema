@@ -1,11 +1,11 @@
 
-import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface Publicacao {
+export interface Publicacao {
   id: string;
+  user_id: string;
   nome_advogado: string;
   titulo_publicacao: string;
   conteudo_publicacao: string;
@@ -21,186 +21,132 @@ interface Publicacao {
   importante: boolean;
   observacoes?: string;
   created_at: string;
+  updated_at: string;
 }
 
-interface ConfiguracaoMonitoramento {
-  id: string;
-  nomes_monitoramento: string[];
-  estados_monitoramento: string[];
-  palavras_chave: string[];
-  monitoramento_ativo: boolean;
-  ultima_busca?: string;
-}
-
-export function usePublicacoes() {
-  const { user } = useAuth();
+export const usePublicacoes = () => {
   const { toast } = useToast();
-  
-  const [publicacoes, setPublicacoes] = useState<Publicacao[]>([]);
-  const [configuracao, setConfiguracao] = useState<ConfiguracaoMonitoramento | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchPublicacoes = useCallback(async () => {
-    if (!user) return;
-    
-    try {
-      setError(null);
+  const {
+    data: publicacoes = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ['publicacoes'],
+    queryFn: async (): Promise<Publicacao[]> => {
+      console.log('Buscando publicações...');
       const { data, error } = await supabase
         .from('publicacoes_diario_oficial')
         .select('*')
-        .eq('user_id', user.id)
-        .order('data_publicacao', { ascending: false })
-        .order('created_at', { ascending: false });
+        .order('data_publicacao', { ascending: false });
 
-      if (error) throw error;
-      setPublicacoes(data || []);
-    } catch (error: any) {
-      const errorMessage = error.message || 'Erro ao carregar publicações';
-      setError(errorMessage);
-      toast({
-        title: "Erro ao carregar publicações",
-        description: errorMessage,
-        variant: "destructive"
-      });
-    }
-  }, [user, toast]);
+      if (error) {
+        console.error('Erro ao buscar publicações:', error);
+        throw error;
+      }
 
-  const fetchConfiguracao = useCallback(async () => {
-    if (!user) return;
-    
-    try {
+      console.log('Publicações encontradas:', data?.length);
+      return data || [];
+    },
+  });
+
+  const adicionarPublicacao = useMutation({
+    mutationFn: async (novaPublicacao: Omit<Publicacao, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Usuário não autenticado');
+
       const { data, error } = await supabase
-        .from('configuracoes_monitoramento')
-        .select('*')
-        .eq('user_id', user.id)
+        .from('publicacoes_diario_oficial')
+        .insert({
+          ...novaPublicacao,
+          user_id: user.id,
+        })
+        .select()
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      setConfiguracao(data);
-    } catch (error: any) {
-      console.error('Erro ao carregar configurações:', error);
-    }
-  }, [user]);
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publicacoes'] });
+      toast({
+        title: "Sucesso!",
+        description: "Publicação adicionada com sucesso.",
+      });
+    },
+    onError: (error) => {
+      console.error('Erro ao adicionar publicação:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao adicionar publicação. Tente novamente.",
+        variant: "destructive",
+      });
+    },
+  });
 
-  const toggleLida = useCallback(async (publicacaoId: string, currentStatus: boolean) => {
-    if (!user) return;
-    
-    try {
+  const marcarComoLida = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('publicacoes_diario_oficial')
-        .update({ lida: !currentStatus })
-        .eq('id', publicacaoId)
-        .eq('user_id', user.id);
+        .update({ lida: true })
+        .eq('id', id);
 
       if (error) throw error;
-      
-      setPublicacoes(prev => prev.map(p => 
-        p.id === publicacaoId ? { ...p, lida: !currentStatus } : p
-      ));
-      
-      toast({
-        title: !currentStatus ? "Marcada como lida" : "Marcada como não lida",
-        description: "Status atualizado com sucesso"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar status",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  }, [user, toast]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publicacoes'] });
+    },
+  });
 
-  const toggleImportante = useCallback(async (publicacaoId: string, currentStatus: boolean) => {
-    if (!user) return;
-    
-    try {
+  const marcarComoImportante = useMutation({
+    mutationFn: async ({ id, importante }: { id: string; importante: boolean }) => {
       const { error } = await supabase
         .from('publicacoes_diario_oficial')
-        .update({ importante: !currentStatus })
-        .eq('id', publicacaoId)
-        .eq('user_id', user.id);
+        .update({ importante })
+        .eq('id', id);
 
       if (error) throw error;
-      
-      setPublicacoes(prev => prev.map(p => 
-        p.id === publicacaoId ? { ...p, importante: !currentStatus } : p
-      ));
-      
-      toast({
-        title: !currentStatus ? "Marcada como importante" : "Removida dos importantes",
-        description: "Status atualizado com sucesso"
-      });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao atualizar importância",
-        description: error.message,
-        variant: "destructive"
-      });
-    }
-  }, [user, toast]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publicacoes'] });
+    },
+  });
 
-  const salvarConfiguracao = useCallback(async (configData: Omit<ConfiguracaoMonitoramento, 'id' | 'ultima_busca'>) => {
-    if (!user) return;
-    
-    try {
+  const excluirPublicacao = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('configuracoes_monitoramento')
-        .upsert({
-          ...configData,
-          user_id: user.id
-        });
+        .from('publicacoes_diario_oficial')
+        .delete()
+        .eq('id', id);
 
       if (error) throw error;
-      
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['publicacoes'] });
       toast({
-        title: "Configurações salvas",
-        description: "Suas configurações de monitoramento foram atualizadas"
+        title: "Sucesso!",
+        description: "Publicação excluída com sucesso.",
       });
-      
-      await fetchConfiguracao();
-      return true;
-    } catch (error: any) {
+    },
+    onError: (error) => {
+      console.error('Erro ao excluir publicação:', error);
       toast({
-        title: "Erro ao salvar configurações",
-        description: error.message,
-        variant: "destructive"
+        title: "Erro",
+        description: "Erro ao excluir publicação. Tente novamente.",
+        variant: "destructive",
       });
-      return false;
-    }
-  }, [user, toast, fetchConfiguracao]);
-
-  useEffect(() => {
-    const loadData = async () => {
-      if (user) {
-        setIsLoading(true);
-        await Promise.all([fetchPublicacoes(), fetchConfiguracao()]);
-        setIsLoading(false);
-      }
-    };
-    
-    loadData();
-  }, [user, fetchPublicacoes, fetchConfiguracao]);
-
-  const stats = {
-    total: publicacoes.length,
-    naoLidas: publicacoes.filter(p => !p.lida).length,
-    importantes: publicacoes.filter(p => p.importante).length,
-    monitoramentoAtivo: configuracao?.monitoramento_ativo || false
-  };
+    },
+  });
 
   return {
     publicacoes,
-    configuracao,
-    stats,
     isLoading,
     error,
-    fetchPublicacoes,
-    fetchConfiguracao,
-    toggleLida,
-    toggleImportante,
-    salvarConfiguracao
+    adicionarPublicacao: adicionarPublicacao.mutate,
+    marcarComoLida: marcarComoLida.mutate,
+    marcarComoImportante: marcarComoImportante.mutate,
+    excluirPublicacao: excluirPublicacao.mutate,
+    isAdicionando: adicionarPublicacao.isPending,
   };
-}
+};

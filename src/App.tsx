@@ -1,7 +1,8 @@
+
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { BrowserRouter as Router, Route, Routes, Outlet } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Pages
 import Index from './pages/Index';
@@ -41,9 +42,10 @@ import { ThemeProvider } from "@/components/theme-provider"
 const queryClient = new QueryClient();
 
 function App() {
-  const isPWA = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone || document.referrer.includes('android-app://');
-  const initialTheme = isPWA ? 'dark' : 'light';
-
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+    (navigator as any).standalone || 
+    document.referrer.includes('android-app://');
+  
   return (
     <QueryClientProvider client={queryClient}>
       <PWAProvider>
@@ -64,7 +66,7 @@ function App() {
                 <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
                 {/* Rotas protegidas */}
-                <Route element={<ProtectedRoute />}>
+                <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
                   <Route element={<Navbar />}>
                     <Route path="/dashboard" element={<DashboardPage />} />
                     <Route path="/meus-processos" element={<MeusProcessosPage />} />
