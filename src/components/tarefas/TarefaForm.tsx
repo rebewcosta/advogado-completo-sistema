@@ -38,8 +38,8 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
   const [status, setStatus] = useState<StatusTarefa>('Pendente');
   const [prioridade, setPrioridade] = useState<PrioridadeTarefa>('Média');
   const [dataVencimento, setDataVencimento] = useState<Date | undefined>(undefined);
-  const [processoId, setProcessoId] = useState<string>('');
-  const [clienteId, setClienteId] = useState<string>('');
+  const [processoId, setProcessoId] = useState<string>('none');
+  const [clienteId, setClienteId] = useState<string>('none');
 
   useEffect(() => {
     if (initialData) {
@@ -48,16 +48,16 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
       setStatus(initialData.status || 'Pendente');
       setPrioridade(initialData.prioridade || 'Média');
       setDataVencimento(initialData.data_conclusao ? new Date(initialData.data_conclusao) : undefined);
-      setProcessoId(initialData.processo_id || '');
-      setClienteId(initialData.cliente_id || '');
+      setProcessoId(initialData.processo_id || 'none');
+      setClienteId(initialData.cliente_id || 'none');
     } else {
       setTitulo('');
       setDescricao('');
       setStatus('Pendente');
       setPrioridade('Média');
       setDataVencimento(undefined);
-      setProcessoId('');
-      setClienteId('');
+      setProcessoId('none');
+      setClienteId('none');
     }
   }, [initialData]);
 
@@ -68,8 +68,8 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
       status,
       prioridade,
       data_conclusao: dataVencimento ? format(dataVencimento, 'yyyy-MM-dd', { locale: ptBR }) : null,
-      processo_id: processoId || null,
-      cliente_id: clienteId || null,
+      processo_id: processoId === 'none' ? null : processoId,
+      cliente_id: clienteId === 'none' ? null : clienteId,
     };
     await onSave(data);
   };
@@ -145,7 +145,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
             <SelectValue placeholder="Selecione um processo" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Nenhum processo</SelectItem>
+            <SelectItem value="none">Nenhum processo</SelectItem>
             {processos.map((processo) => (
               <SelectItem key={processo.id} value={processo.id}>
                 {processo.numero_processo}
@@ -166,7 +166,7 @@ const TarefaForm: React.FC<TarefaFormProps> = ({
             <SelectValue placeholder="Selecione um cliente" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Nenhum cliente</SelectItem>
+            <SelectItem value="none">Nenhum cliente</SelectItem>
             {clientes.map((cliente) => (
               <SelectItem key={cliente.id} value={cliente.id}>
                 {cliente.nome}
