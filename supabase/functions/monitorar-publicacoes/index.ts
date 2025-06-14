@@ -68,31 +68,30 @@ class DiarioScraper {
 }
 
 const validateUserInput = (body: any) => {
-  const errors = [];
+  console.log('🔍 Validando entrada do usuário:', body);
   
   if (!body || typeof body !== 'object') {
-    return ['Body da requisição é obrigatório'];
+    return ['Body da requisição inválido ou ausente'];
   }
   
-  if (!body.user_id || typeof body.user_id !== 'string') {
-    errors.push('user_id é obrigatório');
+  if (!body.user_id || typeof body.user_id !== 'string' || body.user_id.trim() === '') {
+    return ['user_id é obrigatório e deve ser uma string válida'];
   }
   
-  if (!body.nomes || !Array.isArray(body.nomes) || body.nomes.length === 0) {
-    errors.push('nomes é obrigatório e deve conter pelo menos um nome');
+  if (!body.nomes || !Array.isArray(body.nomes)) {
+    return ['nomes deve ser um array'];
   }
   
-  // Verificar se há pelo menos um nome válido
-  if (body.nomes && Array.isArray(body.nomes)) {
-    const nomesValidos = body.nomes.filter((nome: any) => 
-      typeof nome === 'string' && nome.trim().length > 0
-    );
-    if (nomesValidos.length === 0) {
-      errors.push('Pelo menos um nome válido deve ser fornecido');
-    }
+  const nomesValidos = body.nomes.filter((nome: any) => 
+    typeof nome === 'string' && nome.trim().length > 0
+  );
+  
+  if (nomesValidos.length === 0) {
+    return ['Pelo menos um nome válido deve ser fornecido'];
   }
   
-  return errors;
+  console.log('✅ Validação concluída com sucesso');
+  return [];
 };
 
 const sanitizeInputs = (body: any) => {
@@ -179,6 +178,8 @@ const savePublicacoes = async (publicacoes: PublicacaoEncontrada[], userId: stri
       console.error('Erro ao salvar publicações:', error);
       throw new Error('Erro ao salvar publicações no banco de dados');
     }
+    
+    console.log(`✅ ${publicacoes.length} publicações salvas com sucesso`);
   } catch (error) {
     console.error('Erro ao salvar publicações:', error);
     throw error;
@@ -186,6 +187,8 @@ const savePublicacoes = async (publicacoes: PublicacaoEncontrada[], userId: stri
 };
 
 serve(async (req) => {
+  console.log(`📝 Nova requisição: ${req.method} ${req.url}`);
+  
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { 
@@ -206,10 +209,10 @@ serve(async (req) => {
     let body;
     try {
       const requestText = await req.text();
-      console.log('Request body recebido:', requestText);
+      console.log('📦 Request body recebido:', requestText);
       
       if (!requestText || requestText.trim() === '') {
-        console.error('Body da requisição está vazio');
+        console.error('❌ Body da requisição está vazio');
         return new Response(
           JSON.stringify({ 
             error: 'Body da requisição é obrigatório',
@@ -223,13 +226,13 @@ serve(async (req) => {
       }
       
       body = JSON.parse(requestText);
-      console.log('Body parseado com sucesso:', body);
+      console.log('✅ Body parseado com sucesso:', body);
       
     } catch (parseError) {
-      console.error('Erro ao fazer parse do JSON:', parseError);
+      console.error('❌ Erro ao fazer parse do JSON:', parseError);
       return new Response(
         JSON.stringify({ 
-          error: 'Formato de dados inválido',
+          error: 'Formato JSON inválido no body da requisição',
           success: false 
         }),
         { 
@@ -249,7 +252,7 @@ serve(async (req) => {
       console.error('❌ Erros de validação:', validationErrors);
       return new Response(
         JSON.stringify({ 
-          error: validationErrors.join('. '),
+          error: `Erro de validação: ${validationErrors.join(', ')}`,
           success: false 
         }),
         { 
@@ -263,6 +266,7 @@ serve(async (req) => {
     const { sanitizedNomes, sanitizedEstados, sanitizedPalavrasChave } = sanitizeInputs(body);
 
     if (sanitizedNomes.length === 0) {
+      console.error('❌ Nenhum nome válido encontrado');
       return new Response(
         JSON.stringify({ 
           error: 'Configure pelo menos um nome válido para monitoramento',
@@ -346,7 +350,7 @@ serve(async (req) => {
       }
     };
 
-    console.log('✅ Resposta:', response);
+    console.log('✅ Resposta final:', response);
 
     return new Response(
       JSON.stringify(response),

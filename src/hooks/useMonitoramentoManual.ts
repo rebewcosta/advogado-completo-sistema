@@ -37,7 +37,7 @@ export const useMonitoramentoManual = (
     setIsMonitoring(true);
     
     try {
-      console.log('Iniciando monitoramento com:', { 
+      console.log('🚀 Iniciando monitoramento com:', { 
         user_id: user.id, 
         nomes: nomesValidos,
         estados: configuracao.estados_monitoramento || []
@@ -50,7 +50,7 @@ export const useMonitoramentoManual = (
         palavras_chave: configuracao.palavras_chave?.filter((palavra: string) => palavra?.trim()) || []
       };
 
-      console.log('Enviando requisição:', requestBody);
+      console.log('📤 Enviando requisição para Edge Function:', requestBody);
 
       const { data, error } = await supabase.functions.invoke('monitorar-publicacoes', {
         body: requestBody,
@@ -59,18 +59,36 @@ export const useMonitoramentoManual = (
         }
       });
 
-      console.log('Resposta recebida:', { data, error });
+      console.log('📥 Resposta da Edge Function:', { data, error });
 
       if (error) {
-        console.error('Erro na função:', error);
-        throw new Error(error.message || 'Erro na comunicação com o servidor');
+        console.error('❌ Erro na Edge Function:', error);
+        
+        // Tratamento específico para diferentes tipos de erro
+        let errorMessage = "Erro durante o monitoramento";
+        
+        if (error.message?.includes('FunctionsHttpError')) {
+          errorMessage = "Erro de comunicação com o servidor. Tente novamente.";
+        } else if (error.message?.includes('400')) {
+          errorMessage = "Erro na validação dos dados. Verifique sua configuração.";
+        } else if (error.message?.includes('timeout')) {
+          errorMessage = "Timeout na execução. Tente novamente.";
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        throw new Error(errorMessage);
       }
 
-      if (!data?.success) {
-        throw new Error(data?.error || 'Erro desconhecido durante o monitoramento');
+      if (!data) {
+        throw new Error('Nenhuma resposta recebida do servidor');
       }
 
-      console.log('Monitoramento concluído:', data);
+      if (!data.success) {
+        throw new Error(data.error || 'Erro desconhecido durante o monitoramento');
+      }
+
+      console.log('✅ Monitoramento concluído com sucesso:', data);
       setLastResult(data);
       
       toast({
@@ -82,20 +100,20 @@ export const useMonitoramentoManual = (
       onMonitoramentoCompleto();
       
     } catch (error: any) {
-      console.error('Erro no monitoramento:', error);
+      console.error('❌ Erro no monitoramento:', error);
       
       let errorMessage = "Erro durante o monitoramento";
       
-      if (error.message?.includes('Body da requisição')) {
-        errorMessage = "Erro na configuração. Verifique os dados e tente novamente.";
-      } else if (error.message?.includes('nomes')) {
-        errorMessage = "Configure pelo menos um nome válido para monitoramento.";
-      } else if (error.message?.includes('validação')) {
+      if (error.message?.includes('validação')) {
         errorMessage = "Dados inválidos. Verifique sua configuração.";
       } else if (error.message?.includes('timeout')) {
         errorMessage = "Timeout na execução. Tente novamente.";
       } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
         errorMessage = "Erro de conexão. Verifique sua internet.";
+      } else if (error.message?.includes('Body da requisição')) {
+        errorMessage = "Erro na configuração. Verifique os dados e tente novamente.";
+      } else if (error.message?.includes('nomes')) {
+        errorMessage = "Configure pelo menos um nome válido para monitoramento.";
       } else if (error.message) {
         errorMessage = error.message;
       }
