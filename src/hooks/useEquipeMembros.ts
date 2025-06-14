@@ -12,6 +12,65 @@ export const useEquipeMembros = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const saveMembro = async (membroData: any) => {
+    if (!user) return false;
+    
+    setIsSubmitting(true);
+    try {
+      // Prepara os dados para salvamento
+      const dataToSave = {
+        user_id: user.id,
+        nome: membroData.nome.trim(),
+        email: membroData.email?.trim() || null,
+        cargo: membroData.cargo?.trim() || null,
+        departamento: membroData.departamento?.trim() || null,
+        telefone: membroData.telefone?.trim() || null,
+        nivel_permissao: membroData.nivel_acesso === 'admin' ? 'Administrador' : 
+                        membroData.nivel_acesso === 'editor' ? 'Editor' : 'Visualizador',
+        ativo: membroData.status === 'ativo'
+      };
+
+      if (membroData.id) {
+        // Atualizar membro existente
+        const { error } = await supabase
+          .from('equipe_membros')
+          .update(dataToSave)
+          .eq('id', membroData.id)
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Membro atualizado!",
+          description: `O membro "${membroData.nome}" foi atualizado com sucesso.`
+        });
+      } else {
+        // Criar novo membro
+        const { error } = await supabase
+          .from('equipe_membros')
+          .insert(dataToSave);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Membro cadastrado!",
+          description: `O membro "${membroData.nome}" foi adicionado à equipe.`
+        });
+      }
+      
+      return true;
+    } catch (error: any) {
+      toast({
+        title: "Erro ao salvar membro",
+        description: error.message,
+        variant: "destructive"
+      });
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const deleteMembro = async (membro: EquipeMembro, onRefresh: () => void) => {
     if (!user || isSubmitting) return;
     
@@ -46,6 +105,7 @@ export const useEquipeMembros = () => {
   return {
     isSubmitting,
     setIsSubmitting,
+    saveMembro,
     deleteMembro
   };
 };

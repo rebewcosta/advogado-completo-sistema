@@ -63,6 +63,13 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validação básica - apenas nome é obrigatório
+    if (!formData.nome.trim()) {
+      alert('Por favor, preencha o nome do membro.');
+      return;
+    }
+    
     const success = await onSave(formData);
     if (success) {
       onClose();
@@ -88,8 +95,8 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
                     <TooltipContent className="max-w-xs">
                       <p>
                         {membro 
-                          ? "Atualize as informações do membro da equipe. Campos com * são obrigatórios."
-                          : "Cadastre um novo membro da equipe preenchendo todos os campos obrigatórios."}
+                          ? "Atualize as informações do membro da equipe. Apenas o nome é obrigatório."
+                          : "Cadastre um novo membro da equipe. Apenas o nome é obrigatório."}
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -123,7 +130,7 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email" className="text-gray-700 font-medium">Email *</Label>
+                    <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
                     <Input
                       id="email"
                       type="email"
@@ -131,21 +138,19 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
                       placeholder="email@exemplo.com"
                       className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                      required
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="cargo" className="text-gray-700 font-medium">Cargo *</Label>
+                    <Label htmlFor="cargo" className="text-gray-700 font-medium">Cargo</Label>
                     <Input
                       id="cargo"
                       value={formData.cargo}
                       onChange={(e) => setFormData({...formData, cargo: e.target.value})}
                       placeholder="Cargo do funcionário"
                       className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                      required
                     />
                   </div>
                   <div>

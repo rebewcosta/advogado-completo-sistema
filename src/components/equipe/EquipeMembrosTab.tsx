@@ -37,7 +37,7 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [editingMembro, setEditingMembro] = useState<Membro | null>(null);
-  const { deleteMembro } = useEquipeMembros();
+  const { deleteMembro, saveMembro } = useEquipeMembros();
 
   // Convert EquipeMembro to Membro format
   const convertToMembroFormat = (equipeMembro: EquipeMembro): Membro => {
@@ -74,15 +74,12 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
   };
 
   const handleFormSuccess = async (membroData: any): Promise<boolean> => {
-    try {
-      // Here would be the actual save logic
+    const success = await saveMembro(membroData);
+    if (success) {
       handleCloseForm();
       onRefresh();
-      return true;
-    } catch (error) {
-      console.error('Error saving member:', error);
-      return false;
     }
+    return success;
   };
 
   return (
