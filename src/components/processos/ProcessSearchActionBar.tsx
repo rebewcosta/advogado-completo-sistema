@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { Plus, Search, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Plus, RefreshCw } from 'lucide-react';
 
 interface ProcessSearchActionBarProps {
   searchTerm: string;
@@ -20,38 +20,35 @@ const ProcessSearchActionBar: React.FC<ProcessSearchActionBarProps> = ({
   isLoading = false
 }) => {
   return (
-    <div className="mb-8 animate-slide-in">
-      <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-2xl p-1 shadow-2xl">
-        <div className="bg-white/95 backdrop-blur-lg rounded-xl p-4">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-            <div className="relative flex-grow">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="Buscar por número do processo, cliente, tipo..."
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-12 pr-4 py-3 text-base h-12 w-full bg-transparent border-0 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-0 rounded-lg"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={onRefresh}
-                disabled={isLoading}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 h-12 px-6"
-              >
-                <RefreshCw className={`h-5 w-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Atualizar Lista
-              </Button>
-              <Button
-                onClick={onAddProcess}
-                className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 h-12 px-6"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Novo Processo
-              </Button>
-            </div>
-          </div>
+    <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 rounded-xl shadow-xl mb-8 animate-fade-in">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-5 w-5" />
+          <Input
+            type="text"
+            placeholder="Buscar por número do processo, cliente, tipo..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20 focus:border-white/40 h-12 text-base backdrop-blur-sm"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Button 
+            onClick={onRefresh} 
+            variant="outline" 
+            disabled={isLoading} 
+            className="w-full sm:w-auto h-12 px-6 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? 'Atualizando...' : 'Atualizar Lista'}
+          </Button>
+          <Button 
+            onClick={onAddProcess} 
+            className="w-full sm:w-auto h-12 px-6 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Processo
+          </Button>
         </div>
       </div>
     </div>
