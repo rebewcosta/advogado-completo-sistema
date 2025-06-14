@@ -138,7 +138,9 @@ export type Database = {
           estados_monitoramento: string[] | null
           id: string
           monitoramento_ativo: boolean | null
+          nomes_escritorio: string[] | null
           nomes_monitoramento: string[]
+          numeros_oab: string[] | null
           palavras_chave: string[] | null
           ultima_busca: string | null
           updated_at: string
@@ -149,7 +151,9 @@ export type Database = {
           estados_monitoramento?: string[] | null
           id?: string
           monitoramento_ativo?: boolean | null
+          nomes_escritorio?: string[] | null
           nomes_monitoramento?: string[]
+          numeros_oab?: string[] | null
           palavras_chave?: string[] | null
           ultima_busca?: string | null
           updated_at?: string
@@ -160,7 +164,9 @@ export type Database = {
           estados_monitoramento?: string[] | null
           id?: string
           monitoramento_ativo?: boolean | null
+          nomes_escritorio?: string[] | null
           nomes_monitoramento?: string[]
+          numeros_oab?: string[] | null
           palavras_chave?: string[] | null
           ultima_busca?: string | null
           updated_at?: string
