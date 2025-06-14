@@ -125,27 +125,6 @@ const FeaturesSection = () => {
             </Card>
           ))}
         </div>
-
-        {/* CTA da seção */}
-        <div className="text-center mt-16">
-          <div className="inline-flex flex-col sm:flex-row gap-4">
-            <Link 
-              to="/cadastro" 
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105"
-            >
-              <Sparkles className="h-5 w-5" />
-              Experimente Gratuitamente
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-            <Link 
-              to="/demo" 
-              className="inline-flex items-center gap-3 bg-white text-gray-700 px-8 py-4 rounded-xl font-semibold border-2 border-gray-200 hover:border-blue-300 hover:text-blue-600 transition-all duration-300 hover:scale-105"
-            >
-              Ver Demonstração
-              <ArrowRight className="h-5 w-5" />
-            </Link>
-          </div>
-        </div>
       </div>
     </section>
   );

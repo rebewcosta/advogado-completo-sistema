@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowRight, DownloadCloud, X as CloseIcon, Share2, Shield, Zap, Users, Award } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -151,19 +150,11 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                 </div>
               </div>
 
-              {user ? (
+              {user && (
                 <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
                   <Link to="/dashboard" className="inline-flex items-center gap-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-2xl hover:shadow-green-500/25 transition-all duration-300 hover:scale-105 hover:from-green-500 hover:to-emerald-500">
                     <Zap className="h-5 w-5" />
                     Ir para o Dashboard 
-                    <ArrowRight className="h-5 w-5" />
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
-                  <Link to="/cadastro" className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-2xl hover:shadow-blue-500/25 transition-all duration-300 hover:scale-105 hover:from-blue-500 hover:to-purple-500">
-                    <Users className="h-5 w-5" />
-                    Começar Gratuitamente
                     <ArrowRight className="h-5 w-5" />
                   </Link>
                 </div>
