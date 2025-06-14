@@ -101,7 +101,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
   return (
     <TooltipProvider>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gray-100">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               Configurações de Monitoramento
@@ -133,7 +133,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
             
             {/* Aviso sobre Filtros */}
-            <div className="bg-blue-800 p-4 rounded-lg border border-blue-700">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
               <h3 className="font-semibold text-blue-100 mb-2">🎯 Filtros de Precisão</h3>
               <p className="text-sm text-blue-200">
                 Para evitar capturar publicações de outros advogados com o mesmo nome, 
@@ -195,7 +195,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Números da OAB */}
-            <div className="bg-blue-800 p-4 rounded-lg border border-blue-700">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
               <Label className="text-sm font-semibold text-blue-100 mb-2 flex items-center gap-2">
                 ⚖️ Números da OAB (Recomendado) 
                 <span className="bg-blue-700 text-blue-100 text-xs px-2 py-1 rounded">Máxima Precisão</span>
@@ -283,7 +283,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
             
             {/* Estados para Monitorar */}
-            <div className="bg-blue-800 p-4 rounded-lg border border-blue-700">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
               <Label className="text-sm font-semibold text-blue-100 mb-3 block">
                 🗺️ Estados para monitorar (não marque nada para pesquisar em todos os estados)
               </Label>
