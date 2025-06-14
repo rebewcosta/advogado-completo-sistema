@@ -46,10 +46,10 @@ const ClienteModalSimples: React.FC<ClienteModalSimplesProps> = ({
       return;
     }
     
-    // Preparar dados, convertendo email vazio para null
+    // Preparar dados, garantindo que email seja sempre uma string
     const dataToSave = {
       ...formData,
-      email: formData.email && formData.email.trim() ? formData.email.trim() : null
+      email: formData.email && formData.email.trim() ? formData.email.trim() : ''
     };
     
     onSaveCliente(dataToSave);

@@ -50,11 +50,11 @@ export const useClientesPage = () => {
 
     setIsSubmitting(true);
     try {
-      // Preparar dados para salvamento, convertendo campos vazios para valores apropriados
+      // Preparar dados para salvamento, garantindo que email sempre seja uma string
       const dataToSave = {
         ...clientData,
-        // Converter email vazio para null para evitar conflito de unique constraint
-        email: clientData.email && clientData.email.trim() ? clientData.email.trim() : null,
+        // Garantir que email seja sempre uma string válida (nunca null)
+        email: clientData.email && clientData.email.trim() ? clientData.email.trim() : '',
         telefone: clientData.telefone || '',
         endereco: clientData.endereco || '',
         cidade: clientData.cidade || '',
@@ -115,6 +115,8 @@ export const useClientesPage = () => {
         errorMessage = "Este email já está cadastrado para outro cliente.";
       } else if (error.message?.includes('duplicate key')) {
         errorMessage = "Já existe um cliente com essas informações.";
+      } else if (error.message?.includes('not-null constraint')) {
+        errorMessage = "Todos os campos obrigatórios devem ser preenchidos.";
       } else if (error.message) {
         errorMessage = error.message;
       }
