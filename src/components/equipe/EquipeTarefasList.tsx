@@ -38,16 +38,26 @@ const EquipeTarefasList: React.FC<EquipeTarefasListProps> = ({
 
   if (filteredTarefas.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <CheckCircle className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <p className="text-gray-500">
-            {searchTerm ? 'Nenhuma tarefa encontrada' : 'Nenhuma tarefa delegada ainda'}
+      <Card className="shadow-xl border-0 bg-gradient-to-br from-slate-50 to-white hover:shadow-2xl transition-all duration-300 animate-fade-in">
+        <CardContent className="py-12 text-center">
+          <div className="mb-6">
+            <div className="mx-auto w-20 h-20 bg-gradient-to-br from-green-100 to-emerald-100 rounded-full flex items-center justify-center">
+              <CheckCircle className="h-10 w-10 text-green-500" />
+            </div>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-700 mb-2">
+            {searchTerm ? 'Nenhuma tarefa encontrada' : 'Organize sua equipe'}
+          </h3>
+          <p className="text-gray-500 mb-6">
+            {searchTerm 
+              ? 'Tente ajustar os filtros de busca'
+              : 'Comece delegando tarefas para sua equipe'
+            }
           </p>
           {!searchTerm && membros.length > 0 && (
             <Button 
               onClick={onCreateNew}
-              className="mt-4 bg-lawyer-primary hover:bg-lawyer-primary/90"
+              className="bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               <Plus className="mr-2 h-4 w-4" />
               Criar Primeira Tarefa
@@ -59,15 +69,20 @@ const EquipeTarefasList: React.FC<EquipeTarefasListProps> = ({
   }
 
   return (
-    <div className="space-y-4">
-      {filteredTarefas.map((tarefa) => (
-        <EquipeTarefaCard
+    <div className="space-y-6 animate-fade-in">
+      {filteredTarefas.map((tarefa, index) => (
+        <div 
           key={tarefa.id}
-          tarefa={tarefa}
-          onEdit={onEdit}
-          onDelete={onDelete}
-          isSubmitting={isSubmitting}
-        />
+          className="animate-slide-in"
+          style={{ animationDelay: `${index * 100}ms` }}
+        >
+          <EquipeTarefaCard
+            tarefa={tarefa}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            isSubmitting={isSubmitting}
+          />
+        </div>
       ))}
     </div>
   );

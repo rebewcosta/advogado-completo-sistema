@@ -26,9 +26,11 @@ const EquipePage = () => {
   if (isLoading) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
-          <Spinner size="lg" />
-          <span className="text-gray-500 mt-3">Carregando equipe...</span>
+        <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full flex flex-col justify-center items-center">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-xl">
+            <Spinner size="lg" className="text-blue-500" />
+            <span className="text-gray-700 mt-4 block font-medium">Carregando equipe...</span>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -36,13 +38,15 @@ const EquipePage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <SharedPageHeader
-          title="Gestão de Equipe"
-          description="Gerencie membros, delegue tarefas e acompanhe a produtividade da sua equipe."
-          pageIcon={<Users />}
-          showActionButton={false}
-        />
+      <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full">
+        <div className="animate-fade-in">
+          <SharedPageHeader
+            title="Gestão de Equipe"
+            description="Gerencie membros, delegue tarefas e acompanhe a produtividade da sua equipe com ferramentas modernas."
+            pageIcon={<Users className="text-blue-500" />}
+            showActionButton={false}
+          />
+        </div>
 
         <EquipeSearchBar
           searchTerm={searchTerm}
