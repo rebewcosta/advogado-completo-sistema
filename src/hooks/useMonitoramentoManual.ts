@@ -50,7 +50,7 @@ export const useMonitoramentoManual = (
 
       // Chamar a edge function com tratamento de erro melhorado
       const { data, error } = await supabase.functions.invoke('monitorar-publicacoes', {
-        body: JSON.stringify(requestBody),
+        body: requestBody,
         headers: {
           'Content-Type': 'application/json'
         }
@@ -61,10 +61,16 @@ export const useMonitoramentoManual = (
       if (error) {
         console.error('Erro na função de busca real:', error);
         
-        // Tratar diferentes tipos de erro
+        // Tratar diferentes tipos de erro de forma mais específica
         let errorMessage = "Erro durante o monitoramento real";
         
-        if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
+        if (error.message?.includes('Body da requisição vazio')) {
+          errorMessage = "Erro na requisição. Tente novamente.";
+        } else if (error.message?.includes('JSON inválido')) {
+          errorMessage = "Erro de formato nos dados. Tente novamente.";
+        } else if (error.message?.includes('Dados de entrada inválidos')) {
+          errorMessage = "Configure corretamente os nomes antes de executar o monitoramento.";
+        } else if (error.message?.includes('429') || error.message?.includes('Too Many Requests')) {
           errorMessage = "Limite de execuções atingido. Aguarde alguns minutos antes de tentar novamente.";
         } else if (error.message?.includes('timeout')) {
           errorMessage = "Timeout na execução. Tente novamente em alguns minutos.";
@@ -72,8 +78,8 @@ export const useMonitoramentoManual = (
           errorMessage = "Erro de configuração do servidor. Tente novamente.";
         } else if (error.message?.includes('Failed to send a request')) {
           errorMessage = "Erro de conexão com o servidor. Verifique sua internet e tente novamente.";
-        } else if (error.message?.includes('non-2xx status code')) {
-          errorMessage = "Erro interno do servidor. Tente novamente em alguns minutos.";
+        } else if (error.message?.includes('non-2xx status code') || error.message?.includes('400')) {
+          errorMessage = "Erro na validação dos dados. Verifique sua configuração e tente novamente.";
         } else if (error.message) {
           errorMessage = error.message;
         }

@@ -5,6 +5,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
 }
 
 interface PublicacaoEncontrada {
@@ -68,23 +69,43 @@ class DiarioScraper {
 
 const validateUserInput = (body: any) => {
   const errors = [];
-  if (!body.user_id) errors.push('user_id é obrigatório');
-  if (!body.nomes || !Array.isArray(body.nomes) || body.nomes.length === 0) {
-    errors.push('nomes deve ser um array não vazio');
+  
+  if (!body || typeof body !== 'object') {
+    errors.push('Body da requisição inválido');
+    return errors;
   }
+  
+  if (!body.user_id || typeof body.user_id !== 'string') {
+    errors.push('user_id é obrigatório e deve ser uma string');
+  }
+  
+  if (!body.nomes || !Array.isArray(body.nomes)) {
+    errors.push('nomes deve ser um array');
+  } else if (body.nomes.length === 0) {
+    errors.push('pelo menos um nome deve ser fornecido');
+  }
+  
   return errors;
 };
 
 const sanitizeInputs = (body: any) => {
-  return {
-    sanitizedNomes: (body.nomes || []).filter((nome: string) => nome && nome.trim().length > 0),
-    sanitizedEstados: (body.estados || []).filter((estado: string) => estado && estado.trim().length > 0),
-    sanitizedPalavrasChave: (body.palavras_chave || []).filter((palavra: string) => palavra && palavra.trim().length > 0)
-  };
-};
+  const sanitizedNomes = Array.isArray(body.nomes) 
+    ? body.nomes.filter((nome: any) => typeof nome === 'string' && nome.trim().length > 0)
+    : [];
+    
+  const sanitizedEstados = Array.isArray(body.estados)
+    ? body.estados.filter((estado: any) => typeof estado === 'string' && estado.trim().length > 0)
+    : [];
+    
+  const sanitizedPalavrasChave = Array.isArray(body.palavras_chave)
+    ? body.palavras_chave.filter((palavra: any) => typeof palavra === 'string' && palavra.trim().length > 0)
+    : [];
 
-const checkRateLimit = async (userId: string, supabase: any) => {
-  return false; // Por enquanto, sem limite
+  return {
+    sanitizedNomes,
+    sanitizedEstados,
+    sanitizedPalavrasChave
+  };
 };
 
 const createMonitoringLog = async (userId: string, supabase: any) => {
@@ -157,64 +178,13 @@ const savePublicacoes = async (publicacoes: PublicacaoEncontrada[], userId: stri
   }
 };
 
-const getFontesConsultadas = (estados: string[]) => {
-  if (estados.length === 0) {
-    return ['SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO'];
-  }
-  return estados;
-};
-
-const createSuccessResponse = (
-  publicacoesEncontradas: number,
-  fontesConsultadas: string[],
-  tempoExecucao: number,
-  erros: string[],
-  sanitizedNomes: string[],
-  sanitizedEstados: string[],
-  sanitizedPalavrasChave: string[]
-) => {
-  const message = publicacoesEncontradas > 0 
-    ? `✅ BUSCA CONCLUÍDA: Encontradas ${publicacoesEncontradas} publicações nos diários oficiais consultados.`
-    : `ℹ️ BUSCA CONCLUÍDA: Nenhuma publicação foi encontrada nos diários oficiais consultados para os nomes e estados especificados.`;
-
-  return {
-    success: true,
-    publicacoes_encontradas: publicacoesEncontradas,
-    fontes_consultadas: fontesConsultadas.length,
-    tempo_execucao: tempoExecucao,
-    erros: erros.length > 0 ? erros.join('; ') : null,
-    message: message,
-    status_integracao: 'INTEGRADO',
-    detalhes_busca: {
-      nomes_buscados: sanitizedNomes,
-      estados_consultados: estadosEspecificos.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR'],
-      palavras_chave: sanitizedPalavrasChave
-    }
-  };
-};
-
-const createErrorResponse = (message: string, status: number = 500) => {
-  return new Response(
-    JSON.stringify({ 
-      error: 'Internal server error', 
-      message: message,
-      success: false,
-      status_integracao: 'ERRO'
-    }),
-    { 
-      status: status, 
-      headers: {
-        ...corsHeaders,
-        'Content-Type': 'application/json'
-      } 
-    }
-  );
-};
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { 
+      headers: corsHeaders,
+      status: 200 
+    });
   }
 
   const supabase = createClient(
@@ -225,18 +195,36 @@ serve(async (req) => {
   try {
     const startTime = Date.now();
     
-    // Parse and validate request body
+    // Parse request body with better error handling
     let body;
     try {
-      const bodyText = await req.text();
-      if (!bodyText) {
-        throw new Error('Request body is empty');
+      const requestText = await req.text();
+      console.log('Request body recebido:', requestText);
+      
+      if (!requestText || requestText.trim() === '') {
+        console.error('Body da requisição está vazio');
+        return new Response(
+          JSON.stringify({ 
+            error: 'Body da requisição vazio',
+            success: false 
+          }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
       }
-      body = JSON.parse(bodyText);
+      
+      body = JSON.parse(requestText);
+      console.log('Body parseado:', body);
+      
     } catch (parseError) {
-      console.error('Error parsing request body:', parseError);
+      console.error('Erro ao fazer parse do JSON:', parseError);
       return new Response(
-        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        JSON.stringify({ 
+          error: 'JSON inválido no body da requisição',
+          success: false 
+        }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -245,16 +233,20 @@ serve(async (req) => {
     }
 
     console.log('🔍 MONITORAMENTO REAL INICIADO');
-    console.log('👤 Usuário:', body.user_id);
-    console.log('📝 Nomes para buscar:', body.nomes);
-    console.log('🌍 Estados:', body.estados?.length > 0 ? body.estados : 'Todos os estados principais');
+    console.log('👤 Usuário:', body?.user_id);
+    console.log('📝 Nomes para buscar:', body?.nomes);
+    console.log('🌍 Estados:', body?.estados?.length > 0 ? body.estados : 'Todos os estados principais');
     
     // Input validation
     const validationErrors = validateUserInput(body);
     if (validationErrors.length > 0) {
       console.error('❌ Erros de validação:', validationErrors);
       return new Response(
-        JSON.stringify({ error: 'Invalid input', details: validationErrors }),
+        JSON.stringify({ 
+          error: 'Dados de entrada inválidos', 
+          details: validationErrors,
+          success: false 
+        }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -267,25 +259,12 @@ serve(async (req) => {
 
     if (sanitizedNomes.length === 0) {
       return new Response(
-        JSON.stringify({ error: 'Pelo menos um nome válido deve ser fornecido para monitoramento' }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-
-    // Check rate limiting
-    const isRateLimited = await checkRateLimit(body.user_id, supabase);
-    if (isRateLimited) {
-      console.warn('⚠️ Limite de execuções atingido para usuário:', body.user_id);
-      return new Response(
         JSON.stringify({ 
-          error: 'Limite de execuções atingido. Aguarde 5 minutos antes de tentar novamente.',
-          success: false
+          error: 'Pelo menos um nome válido deve ser fornecido para monitoramento',
+          success: false 
         }),
         { 
-          status: 429, 
+          status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
@@ -332,7 +311,7 @@ serve(async (req) => {
     }
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
-    const fontesConsultadas = getFontesConsultadas(sanitizedEstados);
+    const fontesConsultadas = sanitizedEstados.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO'];
 
     // Update log entry with results
     await updateMonitoringLog(
@@ -344,25 +323,48 @@ serve(async (req) => {
       supabase
     );
 
-    const response = createSuccessResponse(
-      publicacoesEncontradas,
-      fontesConsultadas,
-      tempoExecucao,
-      erros,
-      sanitizedNomes,
-      sanitizedEstados,
-      sanitizedPalavrasChave
-    );
+    const message = publicacoesEncontradas > 0 
+      ? `✅ BUSCA CONCLUÍDA: Encontradas ${publicacoesEncontradas} publicações nos diários oficiais consultados.`
+      : `ℹ️ BUSCA CONCLUÍDA: Nenhuma publicação foi encontrada nos diários oficiais consultados para os nomes e estados especificados.`;
+
+    const response = {
+      success: true,
+      publicacoes_encontradas: publicacoesEncontradas,
+      fontes_consultadas: fontesConsultadas.length,
+      tempo_execucao: tempoExecucao,
+      erros: erros.length > 0 ? erros.join('; ') : null,
+      message: message,
+      status_integracao: 'INTEGRADO',
+      detalhes_busca: {
+        nomes_buscados: sanitizedNomes,
+        estados_consultados: fontesConsultadas,
+        palavras_chave: sanitizedPalavrasChave
+      }
+    };
 
     console.log('✅ Resposta final:', response);
 
     return new Response(
       JSON.stringify(response),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200
+      }
     );
 
   } catch (error: any) {
     console.error('💥 Erro crítico no monitoramento:', error);
-    return createErrorResponse(error.message || 'Erro interno do servidor');
+    return new Response(
+      JSON.stringify({ 
+        error: 'Erro interno do servidor', 
+        message: error.message || 'Erro interno do servidor',
+        success: false,
+        status_integracao: 'ERRO'
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
 });
