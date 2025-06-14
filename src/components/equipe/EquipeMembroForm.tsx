@@ -38,7 +38,7 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
         email: membro.email || '',
         cargo: membro.cargo || '',
         telefone: membro.telefone || '',
-        status: membro.status || 'ativo'
+        status: membro.ativo ? 'ativo' : 'inativo'
       });
     } else {
       setFormData({
@@ -60,7 +60,14 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
       return;
     }
     
-    const success = await onSave(formData);
+    const dataToSave = {
+      ...formData,
+      id: membro?.id
+    };
+    
+    console.log('Dados sendo enviados:', dataToSave);
+    
+    const success = await onSave(dataToSave);
     if (success) {
       onClose();
     }

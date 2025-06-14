@@ -10,16 +10,6 @@ import type { Database } from '@/integrations/supabase/types';
 
 type EquipeMembro = Database['public']['Tables']['equipe_membros']['Row'];
 
-interface Membro {
-  id?: string;
-  nome: string;
-  email: string;
-  cargo: string;
-  telefone: string;
-  nivel_acesso: 'admin' | 'editor' | 'visualizador';
-  status: 'ativo' | 'inativo';
-}
-
 interface EquipeMembrosTabProps {
   membros: EquipeMembro[];
   searchTerm: string;
@@ -36,22 +26,8 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
   setIsSubmitting
 }) => {
   const [showForm, setShowForm] = useState(false);
-  const [editingMembro, setEditingMembro] = useState<Membro | null>(null);
+  const [editingMembro, setEditingMembro] = useState<EquipeMembro | null>(null);
   const { deleteMembro, saveMembro } = useEquipeMembros();
-
-  // Convert EquipeMembro to Membro format
-  const convertToMembroFormat = (equipeMembro: EquipeMembro): Membro => {
-    return {
-      id: equipeMembro.id,
-      nome: equipeMembro.nome,
-      email: equipeMembro.email || '',
-      cargo: equipeMembro.cargo || '',
-      telefone: equipeMembro.telefone || '',
-      nivel_acesso: equipeMembro.nivel_permissao === 'Administrador' ? 'admin' : 
-                   equipeMembro.nivel_permissao === 'Editor' ? 'editor' : 'visualizador',
-      status: equipeMembro.ativo ? 'ativo' : 'inativo'
-    };
-  };
 
   const filteredMembros = membros.filter(membro =>
     membro.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,7 +36,7 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
   );
 
   const handleEdit = (membro: EquipeMembro) => {
-    setEditingMembro(convertToMembroFormat(membro));
+    setEditingMembro(membro);
     setShowForm(true);
   };
 
@@ -74,6 +50,7 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
   };
 
   const handleFormSuccess = async (membroData: any): Promise<boolean> => {
+    console.log('Salvando membro:', membroData);
     const success = await saveMembro(membroData);
     if (success) {
       handleCloseForm();

@@ -17,15 +17,14 @@ export const useEquipeMembros = () => {
     
     setIsSubmitting(true);
     try {
-      // Prepara os dados para salvamento - removendo departamento que não existe na tabela
+      // Prepara os dados para salvamento
       const dataToSave = {
         user_id: user.id,
         nome: membroData.nome.trim(),
         email: membroData.email?.trim() || null,
         cargo: membroData.cargo?.trim() || null,
         telefone: membroData.telefone?.trim() || null,
-        nivel_permissao: membroData.nivel_acesso === 'admin' ? 'Administrador' : 
-                        membroData.nivel_acesso === 'editor' ? 'Editor' : 'Visualizador',
+        nivel_permissao: 'Colaborador',
         ativo: membroData.status === 'ativo'
       };
 
@@ -59,6 +58,7 @@ export const useEquipeMembros = () => {
       
       return true;
     } catch (error: any) {
+      console.error('Erro ao salvar membro:', error);
       toast({
         title: "Erro ao salvar membro",
         description: error.message,
@@ -90,6 +90,7 @@ export const useEquipeMembros = () => {
         });
         onRefresh();
       } catch (error: any) {
+        console.error('Erro ao excluir membro:', error);
         toast({
           title: "Erro ao excluir membro",
           description: error.message,

@@ -219,7 +219,7 @@ export type Database = {
           cargo: string | null
           created_at: string
           data_ingresso: string | null
-          email: string
+          email: string | null
           id: string
           nivel_permissao: string
           nome: string
@@ -233,7 +233,7 @@ export type Database = {
           cargo?: string | null
           created_at?: string
           data_ingresso?: string | null
-          email: string
+          email?: string | null
           id?: string
           nivel_permissao?: string
           nome: string
@@ -247,7 +247,7 @@ export type Database = {
           cargo?: string | null
           created_at?: string
           data_ingresso?: string | null
-          email?: string
+          email?: string | null
           id?: string
           nivel_permissao?: string
           nome?: string
