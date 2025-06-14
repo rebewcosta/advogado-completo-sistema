@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -117,16 +118,21 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
               </Tooltip>
             </DialogTitle>
           </DialogHeader>
+          
           <div className="space-y-6">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="monitoramento-ativo"
-                checked={monitoramentoAtivo}
-                onCheckedChange={setMonitoramentoAtivo}
-              />
-              <Label htmlFor="monitoramento-ativo">Monitoramento ativo</Label>
+            {/* Status do Monitoramento */}
+            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="monitoramento-ativo"
+                  checked={monitoramentoAtivo}
+                  onCheckedChange={setMonitoramentoAtivo}
+                />
+                <Label htmlFor="monitoramento-ativo" className="font-medium">Monitoramento ativo</Label>
+              </div>
             </div>
             
+            {/* Aviso sobre Filtros */}
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
               <h3 className="font-semibold text-blue-800 mb-2">🎯 Filtros de Precisão</h3>
               <p className="text-sm text-blue-700">
@@ -135,9 +141,12 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
               </p>
             </div>
 
-            <div>
-              <Label className="text-sm font-medium">Nomes para monitoramento *</Label>
-              <div className="space-y-2 mt-2">
+            {/* Nomes para Monitoramento */}
+            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+              <Label className="text-sm font-semibold text-red-800 mb-3 block">
+                📝 Nomes para monitoramento *
+              </Label>
+              <div className="space-y-2">
                 {nomesMonitoramento.map((nome, index) => (
                   <div key={index} className="flex gap-2 items-center">
                     <Input
@@ -148,7 +157,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                         setNomesMonitoramento(novosNomes);
                       }}
                       placeholder="Nome completo do advogado"
-                      className="flex-1"
+                      className="flex-1 bg-white"
                     />
                     <div className="flex items-center gap-1">
                       <Button
@@ -178,20 +187,20 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setNomesMonitoramento([...nomesMonitoramento, ''])}
+                  className="bg-white"
                 >
                   Adicionar Nome
                 </Button>
               </div>
             </div>
 
-            <Separator />
-
-            <div>
-              <Label className="text-sm font-medium flex items-center gap-2">
-                Números da OAB (Recomendado) 
+            {/* Números da OAB */}
+            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+              <Label className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
+                ⚖️ Números da OAB (Recomendado) 
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Máxima Precisão</span>
               </Label>
-              <p className="text-xs text-gray-600 mb-2">
+              <p className="text-xs text-green-700 mb-3">
                 Ex: "123.456/SP" ou "789.012/RJ" - Evita confusão com advogados de mesmo nome
               </p>
               <div className="space-y-2">
@@ -205,7 +214,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                         setNumerosOAB(novosNumeros);
                       }}
                       placeholder="Ex: 123.456/SP"
-                      className="flex-1"
+                      className="flex-1 bg-white"
                     />
                     <Button
                       type="button"
@@ -222,18 +231,20 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setNumerosOAB([...numerosOAB, ''])}
+                  className="bg-white"
                 >
                   Adicionar Número OAB
                 </Button>
               </div>
             </div>
 
-            <div>
-              <Label className="text-sm font-medium flex items-center gap-2">
-                Nomes de Escritórios
-                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Filtro Adicional</span>
+            {/* Nomes de Escritórios */}
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+              <Label className="text-sm font-semibold text-purple-800 mb-2 flex items-center gap-2">
+                🏢 Nomes de Escritórios
+                <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Filtro Adicional</span>
               </Label>
-              <p className="text-xs text-gray-600 mb-2">
+              <p className="text-xs text-purple-700 mb-3">
                 Ex: "Silva & Associados", "Costa Advocacia" - Ajuda a identificar o escritório
               </p>
               <div className="space-y-2">
@@ -247,7 +258,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                         setNomesEscritorio(novosNomes);
                       }}
                       placeholder="Nome do escritório ou sociedade"
-                      className="flex-1"
+                      className="flex-1 bg-white"
                     />
                     <Button
                       type="button"
@@ -264,17 +275,19 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setNomesEscritorio([...nomesEscritorio, ''])}
+                  className="bg-white"
                 >
                   Adicionar Escritório
                 </Button>
               </div>
             </div>
-
-            <Separator />
             
-            <div>
-              <Label className="text-sm font-medium">Estados para monitorar (não marque nada para pesquisar em todos os estados)</Label>
-              <div className="grid grid-cols-3 gap-2 mt-2 max-h-32 overflow-y-auto">
+            {/* Estados para Monitorar */}
+            <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+              <Label className="text-sm font-semibold text-orange-800 mb-3 block">
+                🗺️ Estados para monitorar (não marque nada para pesquisar em todos os estados)
+              </Label>
+              <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto bg-white p-3 rounded border">
                 {estados.map(estado => (
                   <div key={estado.uf} className="flex items-center space-x-2">
                     <input
@@ -295,9 +308,12 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
               </div>
             </div>
 
-            <div>
-              <Label className="text-sm font-medium">Palavras-chave adicionais</Label>
-              <div className="space-y-2 mt-2">
+            {/* Palavras-chave */}
+            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+              <Label className="text-sm font-semibold text-yellow-800 mb-3 block">
+                🔍 Palavras-chave adicionais
+              </Label>
+              <div className="space-y-2">
                 {palavrasChave.map((palavra, index) => (
                   <div key={index} className="flex gap-2 items-center">
                     <Input
@@ -308,7 +324,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                         setPalavrasChave(novasPalavras);
                       }}
                       placeholder="Palavra-chave"
-                      className="flex-1"
+                      className="flex-1 bg-white"
                     />
                     <div className="flex items-center gap-1">
                       <Button
@@ -338,13 +354,15 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                   variant="outline"
                   size="sm"
                   onClick={() => setPalavrasChave([...palavrasChave, ''])}
+                  className="bg-white"
                 >
                   Adicionar Palavra
                 </Button>
               </div>
             </div>
 
-            <div className="flex justify-end gap-2">
+            {/* Botões de Ação */}
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
                 Cancelar
               </Button>
