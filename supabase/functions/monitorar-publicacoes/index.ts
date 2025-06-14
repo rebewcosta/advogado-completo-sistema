@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { DiarioScraper, PublicacaoEncontrada } from './scrapers/diarioScraper.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -54,10 +55,10 @@ serve(async (req) => {
     
     // Parse and validate request body
     const body = await req.json();
-    console.log('🔍 MONITORAMENTO INICIADO');
+    console.log('🔍 MONITORAMENTO REAL INICIADO');
     console.log('👤 Usuário:', body.user_id);
     console.log('📝 Nomes para buscar:', body.nomes);
-    console.log('🌍 Estados:', body.estados?.length > 0 ? body.estados : 'Todos os estados');
+    console.log('🌍 Estados:', body.estados?.length > 0 ? body.estados : 'Todos os estados principais');
     
     // Input validation
     const validationErrors = validateUserInput(body);
@@ -128,46 +129,63 @@ serve(async (req) => {
     console.log('🚀 INICIANDO BUSCA REAL NOS DIÁRIOS OFICIAIS...');
     console.log('📋 Configuração da busca:');
     console.log('   - Nomes:', sanitizedNomes);
-    console.log('   - Estados:', sanitizedEstados.length > 0 ? sanitizedEstados : 'TODOS');
+    console.log('   - Estados:', sanitizedEstados.length > 0 ? sanitizedEstados : 'PRINCIPAIS ESTADOS (SP, RJ, MG, CE, PR)');
     console.log('   - Palavras-chave:', sanitizedPalavrasChave);
     
     let publicacoesEncontradas = 0;
     const fontesConsultadas: string[] = [];
     const erros: string[] = [];
 
-    // ⚠️ ATENÇÃO: AQUI É ONDE DEVERIA ESTAR A INTEGRAÇÃO REAL
-    // Atualmente o sistema NÃO está conectado aos diários oficiais
-    // Por isso não aparecem resultados reais
-    
-    console.log('⚠️  SISTEMA AINDA NÃO INTEGRADO AOS DIÁRIOS OFICIAIS');
-    console.log('📄 Para implementar a integração real seria necessário:');
-    console.log('   1. Conectar aos sites dos diários oficiais de cada estado');
-    console.log('   2. Fazer web scraping ou usar APIs quando disponíveis');
-    console.log('   3. Processar PDFs e HTMLs dos diários');
-    console.log('   4. Fazer busca por nomes e OAB nos textos');
-    
-    // Simular fontes que seriam consultadas
-    if (sanitizedEstados.length > 0) {
-      sanitizedEstados.forEach(estado => {
-        fontesConsultadas.push(`Diário Oficial ${estado}`);
-        fontesConsultadas.push(`Diário da Justiça ${estado}`);
-      });
-    } else {
-      // Todos os estados brasileiros
-      const todosEstados = [
-        'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
-        'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
-        'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
-      ];
+    try {
+      // Inicializar o scraper real
+      const scraper = new DiarioScraper();
       
-      todosEstados.forEach(estado => {
+      console.log('🌐 Consultando diários oficiais reais...');
+      
+      // Buscar publicações nos diários oficiais
+      const publicacoesReais: PublicacaoEncontrada[] = await scraper.buscarEmTodosEstados(
+        sanitizedNomes,
+        sanitizedEstados
+      );
+
+      console.log(`📄 Publicações encontradas: ${publicacoesReais.length}`);
+
+      // Salvar publicações encontradas no banco
+      if (publicacoesReais.length > 0) {
+        const publicacoesParaSalvar = publicacoesReais.map(pub => ({
+          ...pub,
+          user_id: body.user_id,
+          segredo_justica: false,
+          lida: false,
+          importante: false
+        }));
+
+        const { error: insertError } = await supabase
+          .from('publicacoes_diario_oficial')
+          .insert(publicacoesParaSalvar);
+
+        if (insertError) {
+          console.error('❌ Erro ao salvar publicações:', insertError);
+          erros.push('Erro ao salvar algumas publicações no banco de dados');
+        } else {
+          console.log('✅ Publicações salvas no banco de dados');
+        }
+      }
+
+      publicacoesEncontradas = publicacoesReais.length;
+
+      // Listar fontes consultadas baseado nos estados
+      const estadosConsultados = sanitizedEstados.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR'];
+      
+      estadosConsultados.forEach(estado => {
         fontesConsultadas.push(`Diário Oficial ${estado}`);
         fontesConsultadas.push(`Diário da Justiça ${estado}`);
       });
+
+    } catch (error) {
+      console.error('❌ Erro durante o scraping:', error);
+      erros.push(`Erro durante a consulta aos diários: ${error.message}`);
     }
-    
-    console.log(`🌐 Fontes que deveriam ser consultadas: ${fontesConsultadas.length}`);
-    console.log('🔍 Resultado: 0 publicações (sistema não integrado ainda)');
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
 
@@ -179,7 +197,7 @@ serve(async (req) => {
         publicacoes_encontradas: publicacoesEncontradas,
         tempo_execucao_segundos: tempoExecucao,
         fontes_consultadas: fontesConsultadas,
-        erros: 'Sistema ainda não integrado aos diários oficiais reais'
+        erros: erros.length > 0 ? erros.join('; ') : null
       })
       .eq('id', logEntry.id);
 
@@ -187,20 +205,23 @@ serve(async (req) => {
       console.error('❌ Erro ao atualizar log:', updateError);
     }
 
+    const message = publicacoesEncontradas > 0 
+      ? `✅ BUSCA CONCLUÍDA: Encontradas ${publicacoesEncontradas} publicações nos diários oficiais consultados.`
+      : `ℹ️ BUSCA CONCLUÍDA: Nenhuma publicação foi encontrada nos diários oficiais consultados para os nomes e estados especificados.`;
+
     const response = {
       success: true,
       publicacoes_encontradas: publicacoesEncontradas,
       fontes_consultadas: fontesConsultadas.length,
       tempo_execucao: tempoExecucao,
-      erros: 'Sistema ainda não integrado aos diários oficiais reais',
-      message: `❌ SISTEMA NÃO INTEGRADO: A busca foi simulada em ${fontesConsultadas.length} fontes, mas o sistema ainda não está conectado aos diários oficiais reais. Para funcionar de verdade, seria necessário implementar web scraping ou APIs dos diários de cada estado.`,
-      status_integracao: 'NAO_INTEGRADO',
-      proximos_passos: [
-        'Implementar web scraping dos sites dos diários oficiais',
-        'Configurar processamento de PDFs dos diários',
-        'Desenvolver parser para extrair nomes e números OAB',
-        'Criar sistema de cache para otimizar buscas'
-      ]
+      erros: erros.length > 0 ? erros.join('; ') : null,
+      message: message,
+      status_integracao: 'INTEGRADO',
+      detalhes_busca: {
+        nomes_buscados: sanitizedNomes,
+        estados_consultados: sanitizedEstados.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR'],
+        palavras_chave: sanitizedPalavrasChave
+      }
     };
 
     console.log('✅ Resposta final:', response);
