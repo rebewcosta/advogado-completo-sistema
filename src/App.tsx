@@ -37,7 +37,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 // Contexts
 import { PWAProvider } from './contexts/PWAContext';
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/theme-provider";
+import { AuthProvider } from '@/hooks/useAuth';
 
 const queryClient = new QueryClient();
 
@@ -48,52 +49,54 @@ function App() {
   
   return (
     <QueryClientProvider client={queryClient}>
-      <PWAProvider>
-        <ThemeProvider>
-          <Router>
-            <div className="App min-h-screen bg-gray-50">
-              <Toaster />
-              
-              <Routes>
-                {/* Rotas públicas */}
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/cadastro" element={<CadastroPage />} />
-                <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-                <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
-                <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
-                <Route path="/pagamento" element={<PagamentoPage />} />
-                <Route path="/payment-success" element={<PaymentSuccessPage />} />
+      <AuthProvider>
+        <PWAProvider>
+          <ThemeProvider>
+            <Router>
+              <div className="App min-h-screen bg-gray-50">
+                <Toaster />
+                
+                <Routes>
+                  {/* Rotas públicas */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/cadastro" element={<CadastroPage />} />
+                  <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+                  <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
+                  <Route path="/termos-privacidade" element={<TermosPrivacidadePage />} />
+                  <Route path="/pagamento" element={<PagamentoPage />} />
+                  <Route path="/payment-success" element={<PaymentSuccessPage />} />
 
-                {/* Rotas protegidas */}
-                <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
-                  <Route element={<Navbar />}>
-                    <Route path="/dashboard" element={<DashboardPage />} />
-                    <Route path="/meus-processos" element={<MeusProcessosPage />} />
-                    <Route path="/clientes" element={<ClientesPage />} />
-                    <Route path="/agenda" element={<AgendaPage />} />
-                    <Route path="/tarefas" element={<TarefasPage />} />
-                    <Route path="/publicacoes" element={<PublicacoesPage />} />
-                    <Route path="/financeiro" element={<FinanceiroPage />} />
-                    <Route path="/documentos" element={<DocumentosPage />} />
-                    <Route path="/relatorios" element={<RelatoriosPage />} />
-                    <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-                    <Route path="/perfil-usuario" element={<PerfilUsuarioPage />} />
-                    <Route path="/equipe" element={<EquipePage />} />
-                    <Route path="/suporte" element={<SuportePage />} />
-                    <Route path="/admin" element={<AdminPage />} />
-                    <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
-                    <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
+                  {/* Rotas protegidas */}
+                  <Route element={<ProtectedRoute><Outlet /></ProtectedRoute>}>
+                    <Route element={<Navbar />}>
+                      <Route path="/dashboard" element={<DashboardPage />} />
+                      <Route path="/meus-processos" element={<MeusProcessosPage />} />
+                      <Route path="/clientes" element={<ClientesPage />} />
+                      <Route path="/agenda" element={<AgendaPage />} />
+                      <Route path="/tarefas" element={<TarefasPage />} />
+                      <Route path="/publicacoes" element={<PublicacoesPage />} />
+                      <Route path="/financeiro" element={<FinanceiroPage />} />
+                      <Route path="/documentos" element={<DocumentosPage />} />
+                      <Route path="/relatorios" element={<RelatoriosPage />} />
+                      <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+                      <Route path="/perfil-usuario" element={<PerfilUsuarioPage />} />
+                      <Route path="/equipe" element={<EquipePage />} />
+                      <Route path="/suporte" element={<SuportePage />} />
+                      <Route path="/admin" element={<AdminPage />} />
+                      <Route path="/redefinir-pin-financeiro" element={<RedefinirPinFinanceiroPage />} />
+                      <Route path="/emails-transacionais" element={<EmailsTransacionaisPage />} />
+                    </Route>
                   </Route>
-                </Route>
 
-                {/* Rota 404 */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </div>
-          </Router>
-        </ThemeProvider>
-      </PWAProvider>
+                  {/* Rota 404 */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+            </Router>
+          </ThemeProvider>
+        </PWAProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
