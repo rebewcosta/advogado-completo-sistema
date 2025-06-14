@@ -4,6 +4,7 @@ import type { ClienteFormData } from './types';
 export const prepareClientDataForSave = (clientData: ClienteFormData): any => {
   const dataToSave: any = {
     nome: clientData.nome,
+    email: clientData.email || '', // Sempre enviar string, mesmo que vazia
     telefone: clientData.telefone || '',
     tipo_cliente: clientData.tipo_cliente,
     cpfCnpj: clientData.cpfCnpj,
@@ -14,11 +15,6 @@ export const prepareClientDataForSave = (clientData: ClienteFormData): any => {
     cep: clientData.cep || '',
     observacoes: clientData.observacoes || ''
   };
-
-  // Só incluir email se não estiver vazio para evitar conflito de unique constraint
-  if (clientData.email && clientData.email.trim()) {
-    dataToSave.email = clientData.email.trim();
-  }
 
   return dataToSave;
 };

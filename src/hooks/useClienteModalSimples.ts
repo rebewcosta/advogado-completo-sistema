@@ -31,9 +31,10 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
       return;
     }
     
-    // Preparar dados para salvar - não incluir email se estiver vazio
+    // Preparar dados para salvar - enviar string vazia em vez de omitir o email
     const dataToSave: any = {
       nome: formData.nome.trim(),
+      email: formData.email.trim() || '', // Sempre enviar string, mesmo que vazia
       telefone: formData.telefone.trim(),
       tipo_cliente: formData.tipo_cliente,
       cpfCnpj: formData.cpfCnpj.trim(),
@@ -45,11 +46,6 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
       cep: '',
       observacoes: ''
     };
-    
-    // Só incluir email se não estiver vazio
-    if (formData.email && formData.email.trim()) {
-      dataToSave.email = formData.email.trim();
-    }
     
     console.log('Dados preparados para salvar:', dataToSave);
     onSaveCliente(dataToSave);
