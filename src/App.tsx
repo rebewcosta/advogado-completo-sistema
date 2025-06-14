@@ -52,9 +52,9 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => {
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-gray-50">
         <AppSidebar />
-        <main className="flex-1">
+        <main className="flex-1 min-w-0">
           {children}
         </main>
       </div>

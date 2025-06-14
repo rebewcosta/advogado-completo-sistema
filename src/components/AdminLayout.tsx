@@ -11,9 +11,9 @@ type AdminLayoutProps = {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-gray-100">
+      <div className="flex h-screen w-full bg-gray-50">
         <AppSidebar />
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto min-w-0">
           {children}
         </div>
         <Toaster />
