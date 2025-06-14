@@ -96,10 +96,10 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-slate-900 to-slate-800">
-        <div className="h-full flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+        <div className="h-full flex flex-col rounded-xl overflow-hidden">
           {/* Header com gradiente azul */}
-          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-t-xl">
+          <div className="p-6">
             <TooltipProvider>
               <div className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -133,7 +133,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
 
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
             {/* Campos do formulário com fundo branco */}
-            <div className="bg-white p-6 flex-1 overflow-y-auto">
+            <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
@@ -279,7 +279,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
             </div>
 
             {/* Footer com gradiente azul e botões */}
-            <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-b-xl">
+            <div className="p-6">
               <div className="flex justify-end gap-3">
                 <Button 
                   type="button" 
