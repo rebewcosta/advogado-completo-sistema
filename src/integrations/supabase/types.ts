@@ -419,6 +419,36 @@ export type Database = {
         }
         Relationships: []
       }
+      historico_consultas: {
+        Row: {
+          consultado_em: string
+          id: string
+          resultados_encontrados: number | null
+          termo_busca: string
+          tipo_consulta: string
+          tribunal: string | null
+          user_id: string
+        }
+        Insert: {
+          consultado_em?: string
+          id?: string
+          resultados_encontrados?: number | null
+          termo_busca: string
+          tipo_consulta: string
+          tribunal?: string | null
+          user_id: string
+        }
+        Update: {
+          consultado_em?: string
+          id?: string
+          resultados_encontrados?: number | null
+          termo_busca?: string
+          tipo_consulta?: string
+          tribunal?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       logs_monitoramento: {
         Row: {
           created_at: string
@@ -507,6 +537,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      processos_cache: {
+        Row: {
+          dados_processo: Json
+          data_consulta: string
+          data_expiracao: string
+          id: string
+          numero_processo: string
+          tribunal: string | null
+        }
+        Insert: {
+          dados_processo: Json
+          data_consulta?: string
+          data_expiracao?: string
+          id?: string
+          numero_processo: string
+          tribunal?: string | null
+        }
+        Update: {
+          dados_processo?: Json
+          data_consulta?: string
+          data_expiracao?: string
+          id?: string
+          numero_processo?: string
+          tribunal?: string | null
+        }
+        Relationships: []
+      }
+      processos_favoritos: {
+        Row: {
+          data_ultima_movimentacao: string | null
+          favorito_em: string
+          id: string
+          nome_processo: string | null
+          numero_processo: string
+          status_processo: string | null
+          tribunal: string | null
+          user_id: string
+        }
+        Insert: {
+          data_ultima_movimentacao?: string | null
+          favorito_em?: string
+          id?: string
+          nome_processo?: string | null
+          numero_processo: string
+          status_processo?: string | null
+          tribunal?: string | null
+          user_id: string
+        }
+        Update: {
+          data_ultima_movimentacao?: string | null
+          favorito_em?: string
+          id?: string
+          nome_processo?: string | null
+          numero_processo?: string
+          status_processo?: string | null
+          tribunal?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
