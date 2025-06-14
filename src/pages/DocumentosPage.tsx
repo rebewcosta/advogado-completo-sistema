@@ -102,11 +102,10 @@ const DocumentosPage = () => {
           
           <DocumentSearchBar 
             searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filterType={filterType}
-            setFilterType={setFilterType}
-            handleRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
+            onSearchChange={setSearchTerm}
+            onUpload={() => setIsUploadDialogOpen(true)}
+            onRefresh={handleRefresh}
+            isLoading={isRefreshing}
           />
 
           <DocumentError error={error} /> 

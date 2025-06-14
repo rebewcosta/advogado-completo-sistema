@@ -133,7 +133,8 @@ const TarefasPage = () => {
           
           <TarefaSearchActionBar
             searchTerm={searchTerm}
-            onSearchChange={(e) => setSearchTerm(e.target.value)}
+            onSearchChange={setSearchTerm}
+            onAddTask={() => handleOpenForm()}
             onRefresh={handleManualRefresh}
             isLoading={isLoading}
           />

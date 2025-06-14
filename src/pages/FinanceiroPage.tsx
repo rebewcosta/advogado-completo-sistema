@@ -133,7 +133,6 @@ const FinanceiroPage = () => {
     (transaction.categoria || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Calculate stats
   const receitasConfirmadas = transactions
     .filter(t => t.tipo_transacao === "Receita" && (t.status_pagamento === "Recebido" || t.status_pagamento === "Pago"))
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
@@ -365,6 +364,7 @@ const FinanceiroPage = () => {
           <FinanceiroSearchBar
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            onAddTransaction={handleOpenModal}
             onRefresh={handleManualRefresh}
             isLoading={isLoadingCombined}
           />

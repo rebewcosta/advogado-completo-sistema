@@ -22,6 +22,7 @@ const AgendaPage = () => {
   } = useAgendaEvents();
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
   const [activeTab, setActiveTab] = useState("lista");
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
@@ -60,7 +61,9 @@ const AgendaPage = () => {
     const matchesSearch = event.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          event.descricao_evento?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesSearch;
+    const matchesStatus = statusFilter === "todos" || event.status_evento === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
 
   // Convert selectedEvent to the correct format for the form
@@ -120,8 +123,14 @@ const AgendaPage = () => {
           <AgendaFilters
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            onAddEvent={() => {
+              setSelectedEvent(null);
+              setIsFormOpen(true);
+            }}
             onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
+            isLoading={isRefreshing}
           />
 
           <AgendaEventTabs

@@ -92,8 +92,8 @@ const ProcessesPageContent = () => {
     process.tipo_processo?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
   };
 
   const handleOpenNewProcessForm = () => {
@@ -205,9 +205,9 @@ const ProcessesPageContent = () => {
           <ProcessSearchActionBar
             searchTerm={searchTerm}
             onSearchChange={handleSearchChange}
-            onNewProcess={handleOpenNewProcessForm}
+            onAddProcess={handleOpenNewProcessForm}
             onRefresh={handleManualRefresh}
-            isRefreshing={isRefreshingManually}
+            isLoading={isRefreshingManually}
           />
           
           {/* Renderização condicional: Tabela para Desktop, Cards para Mobile */}
