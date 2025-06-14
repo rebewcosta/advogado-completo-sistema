@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Search, RefreshCw } from 'lucide-react';
+import { Search, RefreshCw, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -20,6 +20,7 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({
   onSearchChange,
   statusFilter,
   onStatusFilterChange,
+  onAddEvent,
   onRefresh,
   isLoading = false
 }) => {
@@ -56,6 +57,13 @@ const AgendaFilters: React.FC<AgendaFiltersProps> = ({
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? 'Atualizando...' : 'Atualizar Lista'}
+          </Button>
+          <Button
+            onClick={onAddEvent}
+            className="w-full sm:w-auto h-12 px-6 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Evento
           </Button>
         </div>
       </div>

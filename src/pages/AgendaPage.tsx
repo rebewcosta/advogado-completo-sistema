@@ -112,11 +112,6 @@ const AgendaPage = () => {
             title="Agenda de Compromissos"
             description="Organize seus prazos, audiências e reuniões."
             pageIcon={<Calendar />}
-            actionButtonText="Novo Evento"
-            onActionButtonClick={() => {
-              setSelectedEvent(null);
-              setIsFormOpen(true);
-            }}
             isLoading={isLoading || isRefreshing}
           />
 
