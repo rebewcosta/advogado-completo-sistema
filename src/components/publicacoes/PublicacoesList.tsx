@@ -35,19 +35,21 @@ const PublicacoesList: React.FC<PublicacoesListProps> = ({
   onToggleImportante
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Publicações Encontradas ({publicacoes.length})</CardTitle>
+    <Card className="shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">
+          Publicações Encontradas ({publicacoes.length})
+        </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-3 md:p-6">
         {publicacoes.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p>Nenhuma publicação encontrada</p>
+          <div className="text-center py-12 text-gray-500">
+            <FileText className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">Nenhuma publicação encontrada</p>
             <p className="text-sm mt-2">Configure o monitoramento para começar a receber publicações</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3 md:space-y-4">
             {publicacoes.map((publicacao) => (
               <PublicacaoCard
                 key={publicacao.id}

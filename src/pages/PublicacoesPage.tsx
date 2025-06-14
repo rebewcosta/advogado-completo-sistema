@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -228,66 +227,70 @@ const PublicacoesPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 p-2 md:p-4 flex items-center justify-center">
         <Spinner size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
-      <SharedPageHeader
-        title="Monitoramento de Publicações"
-        description="Acompanhe suas publicações nos diários oficiais do Brasil"
-        pageIcon={<BookOpen />}
-        showActionButton={false}
-      />
+    <div className="min-h-screen bg-gray-50 p-2 md:p-4 lg:p-6">
+      <div className="max-w-7xl mx-auto">
+        <SharedPageHeader
+          title="Monitoramento de Publicações"
+          description="Acompanhe suas publicações nos diários oficiais do Brasil"
+          pageIcon={<BookOpen />}
+          showActionButton={false}
+        />
 
-      <PublicacoesStats publicacoes={publicacoes} configuracao={configuracao} />
+        <PublicacoesStats publicacoes={publicacoes} configuracao={configuracao} />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        <div className="lg:col-span-2">
-          <PublicacoesFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            filtroEstado={filtroEstado}
-            setFiltroEstado={setFiltroEstado}
-            filtroTipo={filtroTipo}
-            setFiltroTipo={setFiltroTipo}
-            filtroLida={filtroLida}
-            setFiltroLida={setFiltroLida}
-            onRefresh={fetchPublicacoes}
-            onOpenConfig={() => setShowConfigDialog(true)}
-          />
+        <div className="space-y-4 mb-4">
+          {/* Filtros sempre em coluna única no mobile */}
+          <div className="w-full">
+            <PublicacoesFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              filtroEstado={filtroEstado}
+              setFiltroEstado={setFiltroEstado}
+              filtroTipo={filtroTipo}
+              setFiltroTipo={setFiltroTipo}
+              filtroLida={filtroLida}
+              setFiltroLida={setFiltroLida}
+              onRefresh={fetchPublicacoes}
+              onOpenConfig={() => setShowConfigDialog(true)}
+            />
+          </div>
+          
+          {/* Monitoramento manual responsivo */}
+          <div className="w-full">
+            <MonitoramentoManual 
+              configuracao={configuracao}
+              onMonitoramentoCompleto={fetchPublicacoes}
+            />
+          </div>
         </div>
-        
-        <div className="lg:col-span-1">
-          <MonitoramentoManual 
-            configuracao={configuracao}
-            onMonitoramentoCompleto={fetchPublicacoes}
-          />
-        </div>
+
+        <ConfiguracaoDialog
+          open={showConfigDialog}
+          onOpenChange={setShowConfigDialog}
+          nomesMonitoramento={nomesMonitoramento}
+          setNomesMonitoramento={setNomesMonitoramento}
+          estadosMonitoramento={estadosMonitoramento}
+          setEstadosMonitoramento={setEstadosMonitoramento}
+          palavrasChave={palavrasChave}
+          setPalavrasChave={setPalavrasChave}
+          monitoramentoAtivo={monitoramentoAtivo}
+          setMonitoramentoAtivo={setMonitoramentoAtivo}
+          onSave={salvarConfiguracao}
+        />
+
+        <PublicacoesList
+          publicacoes={publicacoesFiltradas}
+          onToggleLida={toggleLida}
+          onToggleImportante={toggleImportante}
+        />
       </div>
-
-      <ConfiguracaoDialog
-        open={showConfigDialog}
-        onOpenChange={setShowConfigDialog}
-        nomesMonitoramento={nomesMonitoramento}
-        setNomesMonitoramento={setNomesMonitoramento}
-        estadosMonitoramento={estadosMonitoramento}
-        setEstadosMonitoramento={setEstadosMonitoramento}
-        palavrasChave={palavrasChave}
-        setPalavrasChave={setPalavrasChave}
-        monitoramentoAtivo={monitoramentoAtivo}
-        setMonitoramentoAtivo={setMonitoramentoAtivo}
-        onSave={salvarConfiguracao}
-      />
-
-      <PublicacoesList
-        publicacoes={publicacoesFiltradas}
-        onToggleLida={toggleLida}
-        onToggleImportante={toggleImportante}
-      />
     </div>
   );
 };

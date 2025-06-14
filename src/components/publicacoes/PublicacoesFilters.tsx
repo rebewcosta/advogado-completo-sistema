@@ -62,40 +62,42 @@ const PublicacoesFilters: React.FC<PublicacoesFiltersProps> = ({
   onOpenConfig
 }) => {
   return (
-    <Card className="mb-6">
-      <CardHeader>
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <CardTitle className="flex items-center gap-2">
-            <Filter className="h-5 w-5" />
+    <Card className="shadow-sm">
+      <CardHeader className="pb-3">
+        <div className="flex flex-col space-y-3 md:flex-row md:justify-between md:items-center md:space-y-0">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Filter className="h-4 w-4" />
             Filtros e Ações
           </CardTitle>
           <div className="flex gap-2">
-            <Button onClick={onRefresh} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Atualizar
+            <Button onClick={onRefresh} variant="outline" size="sm" className="flex-1 md:flex-initial">
+              <RefreshCw className="h-4 w-4 mr-1" />
+              <span className="md:inline">Atualizar</span>
             </Button>
-            <Button onClick={onOpenConfig} variant="outline" size="sm">
-              <Settings className="h-4 w-4 mr-2" />
-              Configurar
+            <Button onClick={onOpenConfig} variant="outline" size="sm" className="flex-1 md:flex-initial">
+              <Settings className="h-4 w-4 mr-1" />
+              <span className="md:inline">Configurar</span>
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Buscar publicações..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          
+      <CardContent className="space-y-3">
+        {/* Campo de busca sempre primeiro e em largura total */}
+        <div className="relative">
+          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Buscar publicações..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        {/* Filtros em grid responsivo */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <Select value={filtroEstado} onValueChange={setFiltroEstado}>
             <SelectTrigger>
-              <SelectValue placeholder="Filtrar por estado" />
+              <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os estados</SelectItem>
@@ -109,7 +111,7 @@ const PublicacoesFilters: React.FC<PublicacoesFiltersProps> = ({
           
           <Select value={filtroTipo} onValueChange={setFiltroTipo}>
             <SelectTrigger>
-              <SelectValue placeholder="Tipo de publicação" />
+              <SelectValue placeholder="Tipo" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todos">Todos os tipos</SelectItem>
@@ -124,7 +126,7 @@ const PublicacoesFilters: React.FC<PublicacoesFiltersProps> = ({
           
           <Select value={filtroLida} onValueChange={setFiltroLida}>
             <SelectTrigger>
-              <SelectValue placeholder="Status de leitura" />
+              <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="todas">Todas</SelectItem>
