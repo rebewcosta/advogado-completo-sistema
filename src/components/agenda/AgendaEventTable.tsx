@@ -17,12 +17,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { cn } from "@/lib/utils";
 import { format, parseISO, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { EventoAgenda } from '@/pages/AgendaPage';
+import type { AgendaEvent } from '@/types/agenda'; // Updated import
 
 interface AgendaEventTableProps {
-  events: EventoAgenda[];
-  onEdit: (event: EventoAgenda) => void;
-  onView: (event: EventoAgenda) => void;
+  events: AgendaEvent[]; // Updated type
+  onEdit: (event: AgendaEvent) => void; // Updated type
+  onView: (event: AgendaEvent) => void; // Updated type
   onDelete: (eventId: string) => void;
   isLoading: boolean;
   selectedDate?: Date;

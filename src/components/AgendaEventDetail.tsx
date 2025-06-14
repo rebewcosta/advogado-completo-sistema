@@ -16,13 +16,13 @@ import { CalendarDays, Clock, MapPin, User, FileText, Activity, AlertTriangle, I
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils'; // Added the cn import
-import type { EventoAgenda } from '@/pages/AgendaPage'; // Importando o tipo da AgendaPage
+import type { AgendaEvent } from '@/types/agenda'; // Updated import
 
 type AgendaEventDetailProps = {
-  event: EventoAgenda;
+  event: AgendaEvent; // Updated type
   onClose: () => void;
   onDelete: (id: string) => void;
-  onEdit: (event: EventoAgenda) => void; // Modificado para passar o evento
+  onEdit: (event: AgendaEvent) => void; // Updated type
 };
 
 export const AgendaEventDetail = ({ event, onClose, onDelete, onEdit }: AgendaEventDetailProps) => {
