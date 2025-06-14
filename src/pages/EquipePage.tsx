@@ -13,7 +13,8 @@ import { Spinner } from '@/components/ui/spinner';
 import EquipeMembrosTab from '@/components/equipe/EquipeMembrosTab';
 import EquipeTarefasTab from '@/components/equipe/EquipeTarefasTab';
 import EquipeProdutividadeTab from '@/components/equipe/EquipeProdutividadeTab';
-import { Search, UserPlus, ClipboardList, BarChart3 } from 'lucide-react';
+import { Search, UserPlus, ClipboardList, BarChart3, RotateCcw } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { Database } from '@/integrations/supabase/types';
 
 type EquipeMembro = Database['public']['Tables']['equipe_membros']['Row'];
@@ -134,22 +135,29 @@ const EquipePage = () => {
           showActionButton={false}
         />
 
-        {/* Barra de Pesquisa */}
-        <Card className="mb-6 shadow-sm">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                <Input
-                  placeholder="Pesquisar membros, tarefas..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
+        {/* Barra de Pesquisa - Atualizada para usar o mesmo estilo da AgendaPage */}
+        <div className="bg-lawyer-dark text-white p-4 rounded-lg shadow-md mb-6">
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-300 h-4 w-4" />
+              <Input
+                placeholder="Pesquisar membros, tarefas..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-300 focus:bg-white/20 focus:border-white/40"
+              />
             </div>
-          </CardContent>
-        </Card>
+            <Button
+              variant="outline"
+              onClick={fetchData}
+              disabled={isLoading}
+              className="border-white/20 text-white hover:bg-white/10 hover:text-white"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Atualizar Eventos
+            </Button>
+          </div>
+        </div>
 
         {/* Tabs de Conteúdo */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
