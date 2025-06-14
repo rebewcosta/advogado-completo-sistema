@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { format, parse, isValid } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
@@ -24,7 +23,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus, X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from "@/lib/utils";
-import ClienteModalSimples from '@/components/processos/ClienteModalSimples';
+import ClienteFormDialog from '@/components/clientes/ClienteFormDialog';
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -121,7 +120,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   };
 
   const handleSaveCliente = async (clienteData: any) => {
-    if (!user || isSavingCliente) return;
+    if (!user || isSavingCliente) return false;
     
     setIsSavingCliente(true);
     try {
@@ -146,12 +145,14 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
       }
       setClienteIdSelecionado(data.id);
       setShowClienteModal(false);
+      return true;
     } catch (error: any) {
       toast({
         title: "Erro ao cadastrar cliente",
         description: error.message || "Não foi possível cadastrar o cliente.",
         variant: "destructive",
       });
+      return false;
     } finally {
       setIsSavingCliente(false);
     }
@@ -342,11 +343,11 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
         </div>
       </DialogContent>
 
-      <ClienteModalSimples
-        open={showClienteModal}
-        onOpenChange={setShowClienteModal}
-        onSaveCliente={handleSaveCliente}
-        isSaving={isSavingCliente}
+      <ClienteFormDialog
+        isOpen={showClienteModal}
+        onClose={() => setShowClienteModal(false)}
+        onSave={handleSaveCliente}
+        cliente={null}
       />
     </>
   );
