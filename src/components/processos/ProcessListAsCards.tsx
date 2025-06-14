@@ -1,3 +1,4 @@
+
 // src/components/processos/ProcessListAsCards.tsx
 import React from 'react';
 import { Button } from "@/components/ui/button";
@@ -60,7 +61,7 @@ const ProcessListAsCards: React.FC<ProcessListAsCardsProps> = ({
   if (isLoading && processes.length === 0) {
     return (
       <div className="text-center py-16 flex flex-col justify-center items-center h-64">
-        <Spinner size="lg" />
+        <Spinner size="lg" className="text-blue-500" />
         <p className="text-gray-500 mt-3">Carregando processos...</p>
       </div>
     );
@@ -84,7 +85,7 @@ const ProcessListAsCards: React.FC<ProcessListAsCardsProps> = ({
       {/* Cabeçalhos de Coluna */}
       {processes.length > 0 && (
         <div className={cn(
-            "hidden md:flex bg-lawyer-dark text-white py-3 rounded-t-lg mb-1 shadow-md sticky top-0 z-10 items-center"
+            "hidden md:flex bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white py-3 rounded-t-2xl mb-1 shadow-lg sticky top-0 z-10 items-center backdrop-blur-sm"
         )}>
           {columnConfig.map(col => (
             <div key={col.id} className={cn(col.headerClass, "text-xs font-bold uppercase tracking-wider")}>
@@ -99,73 +100,73 @@ const ProcessListAsCards: React.FC<ProcessListAsCardsProps> = ({
           {processes.map((processo) => {
             const statusStyle = getStatusStyles(processo.status_processo);
             return (
-              <Card key={processo.id} className="bg-white shadow-md hover:shadow-lg transition-shadow rounded-lg border border-gray-200/80 overflow-hidden">
+              <Card key={processo.id} className="bg-white/70 backdrop-blur-lg shadow-lg hover:shadow-xl transition-all duration-300 rounded-2xl border border-white/20 overflow-hidden hover:scale-[1.02] animate-fade-in">
                 {/* Layout do Card: Empilhado no mobile, Flex no desktop */}
-                <div className={cn("p-3 md:py-2 md:flex md:flex-row md:items-start")}> {/* Ajustado padding e items-start */}
+                <div className={cn("p-4 md:py-3 md:flex md:flex-row md:items-start")}> 
                   
                   {/* Processo / Vara */}
-                  <div className={cn(columnConfig[0].itemClass, "mb-2 md:mb-0 md:py-2")}>
-                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[0].label}</div>
-                    <div className="text-sm font-medium text-lawyer-primary hover:underline cursor-pointer break-words" onClick={() => onView(processo)}>
+                  <div className={cn(columnConfig[0].itemClass, "mb-3 md:mb-0 md:py-2")}>
+                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-1">{columnConfig[0].label}</div>
+                    <div className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer break-words transition-colors duration-200" onClick={() => onView(processo)}>
                         {processo.numero_processo}
                     </div>
                     <div className="text-xs text-gray-500 mt-0.5 break-words">{processo.vara_tribunal || '-'}</div>
                   </div>
 
                   {/* Cliente */}
-                  <div className={cn(columnConfig[1].itemClass, "mb-2 md:mb-0 md:py-2")}>
-                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[1].label}</div>
-                    <div className="text-xs text-gray-700 break-words">{processo.clientes?.nome || processo.nome_cliente_text || <span className="text-gray-400">-</span>}</div>
+                  <div className={cn(columnConfig[1].itemClass, "mb-3 md:mb-0 md:py-2")}>
+                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-1">{columnConfig[1].label}</div>
+                    <div className="text-sm text-gray-700 break-words">{processo.clientes?.nome || processo.nome_cliente_text || <span className="text-gray-400">-</span>}</div>
                   </div>
 
                   {/* Tipo */}
-                  <div className={cn(columnConfig[2].itemClass, "mb-2 md:mb-0 md:py-2")}>
-                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[2].label}</div>
+                  <div className={cn(columnConfig[2].itemClass, "mb-3 md:mb-0 md:py-2")}>
+                    <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-1">{columnConfig[2].label}</div>
                     <div className="text-sm text-gray-600 break-words">{processo.tipo_processo}</div>
                   </div>
                   
                   {/* Status */}
-                  <div className={cn(columnConfig[3].itemClass, "mb-2 md:mb-0 md:py-2")}>
-                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[3].label}</div>
+                  <div className={cn(columnConfig[3].itemClass, "mb-3 md:mb-0 md:py-2")}>
+                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-1">{columnConfig[3].label}</div>
                     <Badge
                       variant="outline"
-                      className={cn("text-xs py-0.5 px-2 font-medium rounded-full cursor-pointer w-max", statusStyle.bgColor, statusStyle.textColor, `border-transparent`)}
+                      className={cn("text-xs py-1 px-2.5 font-medium rounded-full cursor-pointer w-max backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-200", statusStyle.bgColor, statusStyle.textColor, `border-transparent`)}
                       onClick={() => onToggleStatus(processo)}
                       title="Clique para alterar status"
                     >
-                      <Circle className={cn("mr-1 h-1.5 w-1.5 fill-current", statusStyle.dotColor, `text-[${statusStyle.dotColor}]`)} />
+                      <Circle className={cn("mr-1.5 h-1.5 w-1.5 fill-current", statusStyle.dotColor, `text-[${statusStyle.dotColor}]`)} />
                       {statusStyle.label}
                     </Badge>
                   </div>
 
                   {/* Próximo Prazo */}
-                  <div className={cn(columnConfig[4].itemClass, "text-sm md:py-2 mb-2 md:mb-0", 
+                  <div className={cn(columnConfig[4].itemClass, "text-sm md:py-2 mb-3 md:mb-0", 
                       processo.proximo_prazo && isPast(parseISO(processo.proximo_prazo + 'T00:00:00Z')) && !isToday(parseISO(processo.proximo_prazo + 'T00:00:00Z')) && processo.status_processo !== 'Concluído' && "font-bold",
                       processo.proximo_prazo && isToday(parseISO(processo.proximo_prazo + 'T00:00:00Z')) && processo.status_processo !== 'Concluído' && "font-bold"
                     )}>
-                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-0.5">{columnConfig[4].label}</div>
+                     <div className="md:hidden text-[10px] font-bold text-gray-400 uppercase mb-1">{columnConfig[4].label}</div>
                     {formatDateString(processo.proximo_prazo, true)}
                   </div>
 
                   {/* Ações */}
-                  <div className={cn(columnConfig[5].itemClass, "mt-3 md:mt-0 md:py-1")}> {/* md:py-1 para alinhar com o conteúdo */}
+                  <div className={cn(columnConfig[5].itemClass, "mt-2 md:mt-0 md:py-1")}> 
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all duration-200">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 shadow-lg">
-                        <DropdownMenuItem onClick={() => onView(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
-                          <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Ver Detalhes
+                      <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl">
+                        <DropdownMenuItem onClick={() => onView(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-all duration-200">
+                          <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-blue-600" /> Ver Detalhes
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
-                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Editar
+                        <DropdownMenuItem onClick={() => onEdit(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-all duration-200">
+                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-blue-600" /> Editar
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-gray-200"/>
+                        <DropdownMenuSeparator className="bg-gray-200/60"/>
                         <DropdownMenuItem
                           onClick={() => onDelete(processo.id)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2"
+                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 rounded-lg transition-all duration-200"
                         >
                           <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
                         </DropdownMenuItem>
@@ -178,7 +179,7 @@ const ProcessListAsCards: React.FC<ProcessListAsCardsProps> = ({
           })}
         </div>
       ) : (
-        <div className="px-6 py-16 text-center text-gray-500">
+        <div className="px-6 py-16 text-center text-gray-500 bg-white/50 backdrop-blur-sm rounded-2xl border border-white/20">
           <ProcessIcon className="mx-auto h-12 w-12 text-gray-300 mb-3" />
           <p className="font-medium mb-1">Nenhum processo encontrado.</p>
           <p className="text-sm">

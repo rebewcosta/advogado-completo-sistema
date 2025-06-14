@@ -1,3 +1,4 @@
+
 // src/components/processos/ProcessTable.tsx
 import React from 'react';
 import {
@@ -69,7 +70,7 @@ const ProcessTable: React.FC<ProcessTableProps> = ({
   if (isLoading && processes.length === 0) {
     return (
       <div className="text-center py-16 flex flex-col justify-center items-center h-64">
-        <Spinner size="lg" />
+        <Spinner size="lg" className="text-blue-500" />
         <p className="text-gray-500 mt-3">Carregando processos...</p>
       </div>
     );
@@ -79,22 +80,21 @@ const ProcessTable: React.FC<ProcessTableProps> = ({
     <div className="overflow-x-auto">
       <Table className="min-w-full">
         <TableHeader>
-          <TableRow className="border-b-gray-200 bg-gray-50 hover:bg-gray-100">
-            {/* AJUSTE: Títulos das Colunas com !font-bold e text-gray-700 */}
-            <TableHead className="px-4 py-3 text-left text-xs !font-bold text-gray-700 uppercase tracking-wider w-[30%] whitespace-nowrap">Processo / Vara</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs !font-bold text-gray-700 uppercase tracking-wider w-[25%] whitespace-nowrap">Cliente</TableHead>
-            <TableHead className="hidden md:table-cell px-4 py-3 text-left text-xs !font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Tipo</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs !font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Status</TableHead>
-            <TableHead className="hidden sm:table-cell px-4 py-3 text-left text-xs !font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Próximo Prazo</TableHead>
-            <TableHead className="px-4 py-3 text-right text-xs !font-bold text-gray-700 uppercase tracking-wider w-[80px] whitespace-nowrap">Ações</TableHead>
+          <TableRow className="border-b-gray-200/50 bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all duration-200">
+            <TableHead className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-[30%] whitespace-nowrap">Processo / Vara</TableHead>
+            <TableHead className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider w-[25%] whitespace-nowrap">Cliente</TableHead>
+            <TableHead className="hidden md:table-cell px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Tipo</TableHead>
+            <TableHead className="px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Status</TableHead>
+            <TableHead className="hidden sm:table-cell px-4 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider whitespace-nowrap">Próximo Prazo</TableHead>
+            <TableHead className="px-4 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider w-[80px] whitespace-nowrap">Ações</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody className="bg-white divide-y divide-gray-200/70">
+        <TableBody className="bg-white/50 backdrop-blur-sm divide-y divide-gray-200/50">
           {processes.length > 0 ? (
             processes.map((processo) => {
               const statusStyle = getStatusStyles(processo.status_processo);
               return (
-                <TableRow key={processo.id} className="hover:bg-gray-50/60 transition-colors">
+                <TableRow key={processo.id} className="hover:bg-white/80 hover:shadow-sm transition-all duration-200 backdrop-blur-sm">
                   <TableCell className="px-4 py-4 whitespace-nowrap align-top">
                     <div className="text-sm font-medium text-gray-800">{processo.numero_processo}</div>
                     <div className="text-xs text-gray-500 mt-0.5">{processo.vara_tribunal || '-'}</div>
@@ -108,7 +108,7 @@ const ProcessTable: React.FC<ProcessTableProps> = ({
                   <TableCell className="px-4 py-4 whitespace-nowrap align-top">
                     <Badge
                       variant="outline"
-                      className={cn("text-xs py-1 px-2.5 font-medium rounded-full cursor-pointer", statusStyle.bgColor, statusStyle.textColor, `border-transparent`)}
+                      className={cn("text-xs py-1 px-2.5 font-medium rounded-full cursor-pointer backdrop-blur-sm shadow-sm hover:shadow-md transition-all duration-200", statusStyle.bgColor, statusStyle.textColor, `border-transparent`)}
                       onClick={() => onToggleStatus(processo)}
                       title="Clique para alterar status"
                     >
@@ -126,22 +126,22 @@ const ProcessTable: React.FC<ProcessTableProps> = ({
                   <TableCell className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium align-top">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all duration-200">
                           <MoreVertical className="h-4 w-4" />
                           <span className="sr-only">Ações</span>
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 shadow-lg">
-                        <DropdownMenuItem onClick={() => onView(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
-                          <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Ver Detalhes
+                      <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl">
+                        <DropdownMenuItem onClick={() => onView(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-all duration-200">
+                          <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-blue-600" /> Ver Detalhes
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100">
-                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Editar Processo
+                        <DropdownMenuItem onClick={() => onEdit(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-all duration-200">
+                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-blue-600" /> Editar Processo
                         </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-gray-200"/>
+                        <DropdownMenuSeparator className="bg-gray-200/60"/>
                         <DropdownMenuItem
                           onClick={() => onDelete(processo.id)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2"
+                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 rounded-lg transition-all duration-200"
                         >
                           <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir Processo
                         </DropdownMenuItem>
