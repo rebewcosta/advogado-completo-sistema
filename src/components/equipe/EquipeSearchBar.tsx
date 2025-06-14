@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Search, RotateCcw } from 'lucide-react';
+import { Search, RefreshCw } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
@@ -30,13 +30,14 @@ const EquipeSearchBar: React.FC<EquipeSearchBarProps> = ({
           />
         </div>
         <Button
-          variant="outline"
           onClick={onRefresh}
+          variant="outline"
+          size="sm"
           disabled={isLoading}
-          className="border-white/20 text-white hover:bg-white/10 hover:text-white"
+          className="w-full sm:w-auto text-xs h-10 bg-transparent border-slate-600 text-white hover:bg-slate-700 hover:text-white rounded-lg"
         >
-          <RotateCcw className="h-4 w-4 mr-2" />
-          Atualizar Eventos
+          <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoading ? 'animate-spin' : ''} text-white`} />
+          {isLoading ? 'Atualizando...' : 'Atualizar Eventos'}
         </Button>
       </div>
     </div>
