@@ -2,22 +2,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import PinLock from '@/components/PinLock';
-import {
-  Search, Plus, Filter, DollarSign, TrendingUp, TrendingDown,
-  FileText as FileTextIcon, X, Loader2, KeyRound, AlertCircle,
-  ShieldAlert, BadgePercent, RefreshCw, Clock
-} from 'lucide-react';
+import { BadgePercent, Loader2, ShieldAlert } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import TransacaoListAsCards from '@/components/financeiro/TransacaoListAsCards';
 import TransacaoTable from '@/components/financeiro/TransacaoTable';
-import TransacaoFormFields from '@/components/financeiro/TransacaoFormFields';
+import TransacaoModal from '@/components/financeiro/TransacaoModal';
+import FinanceiroStatsCards from '@/components/financeiro/FinanceiroStatsCards';
+import FinanceiroSearchBar from '@/components/financeiro/FinanceiroSearchBar';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -139,7 +133,7 @@ const FinanceiroPage = () => {
     (transaction.categoria || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // Ajustar cálculo do saldo para não incluir transações pendentes
+  // Calculate stats
   const receitasConfirmadas = transactions
     .filter(t => t.tipo_transacao === "Receita" && (t.status_pagamento === "Recebido" || t.status_pagamento === "Pago"))
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
@@ -150,7 +144,6 @@ const FinanceiroPage = () => {
 
   const saldoAtual = receitasConfirmadas - despesasConfirmadas;
 
-  // Calcular totais de transações pendentes
   const receitasPendentes = transactions
     .filter(t => t.tipo_transacao === "Receita" && t.status_pagamento === "Pendente")
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
@@ -159,15 +152,13 @@ const FinanceiroPage = () => {
     .filter(t => t.tipo_transacao === "Despesa" && t.status_pagamento === "Pendente")
     .reduce((sum, t) => sum + Number(t.valor || 0), 0);
 
-  const receitas = transactions
-    .filter(t => t.tipo_transacao === "Receita")
-    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
-
-  const despesas = transactions
-    .filter(t => t.tipo_transacao === "Despesa")
-    .reduce((sum, t) => sum + Number(t.valor || 0), 0);
-
-  const saldo = receitas - despesas;
+  const stats = {
+    receitasConfirmadas,
+    despesasConfirmadas,
+    saldoAtual,
+    receitasPendentes,
+    despesasPendentes
+  };
 
   const handleEditTransaction = (transaction: TransacaoSupabase) => {
     setCurrentTransaction(transaction);
@@ -263,16 +254,7 @@ const FinanceiroPage = () => {
         toast({ title: "Transação adicionada", description: "A nova transação foi registrada." });
       }
       fetchTransactions(false);
-      setIsModalOpen(false);
-      setCurrentTransaction(null);
-      setFormData({
-        tipo: 'Receita',
-        descricao: '',
-        valor: '',
-        categoria: 'Honorários',
-        data: new Date().toISOString().split('T')[0],
-        status: 'Pendente'
-      });
+      handleCloseModal();
     } catch (error: any) {
       toast({
         title: "Erro ao salvar transação",
@@ -286,6 +268,24 @@ const FinanceiroPage = () => {
   
   const handleManualRefresh = () => {
     fetchTransactions(true);
+  };
+
+  const handleOpenModal = () => {
+    setCurrentTransaction(null);
+    setFormData({
+      tipo: 'Receita',
+      descricao: '',
+      valor: '',
+      categoria: 'Honorários',
+      data: new Date().toISOString().split('T')[0],
+      status: 'Pendente'
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setCurrentTransaction(null);
   };
 
   const isLoadingCombined = isLoadingAccess || isLoadingTransactions || isRefreshingManually;
@@ -333,18 +333,7 @@ const FinanceiroPage = () => {
             description="Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório."
             pageIcon={<BadgePercent />}
             actionButtonText="Nova Transação"
-            onActionButtonClick={() => { 
-              setCurrentTransaction(null); 
-              setFormData({
-                tipo: 'Receita',
-                descricao: '',
-                valor: '',
-                categoria: 'Honorários',
-                data: new Date().toISOString().split('T')[0],
-                status: 'Pendente'
-              });
-              setIsModalOpen(true); 
-            }}
+            onActionButtonClick={handleOpenModal}
             isLoading={isLoadingCombined}
         />
 
@@ -358,100 +347,14 @@ const FinanceiroPage = () => {
             </Alert>
         )}
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 md:gap-6 mb-6 md:mb-8">
-            <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Receitas Confirmadas</CardTitle>
-                <TrendingUp className="h-4 w-4 text-green-500" />
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="text-base font-bold text-green-600 leading-none h-8 flex items-center">
-                  R$ {receitasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Despesas Confirmadas</CardTitle>
-                <TrendingDown className="h-4 w-4 text-red-500" />
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="text-base font-bold text-red-600 leading-none h-8 flex items-center">
-                  R$ {despesasConfirmadas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Saldo Atual</CardTitle>
-                <DollarSign className={`h-4 w-4 ${saldoAtual >= 0 ? 'text-blue-500' : 'text-red-500'}`} />
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className={`text-base font-bold leading-none h-8 flex items-center ${saldoAtual >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-                  R$ {saldoAtual.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Receitas Pendentes</CardTitle>
-                <Clock className="h-4 w-4 text-yellow-500" />
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="text-base font-bold text-yellow-600 leading-none h-8 flex items-center">
-                  R$ {receitasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="shadow-sm border border-gray-200">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600">Despesas Pendentes</CardTitle>
-                <Clock className="h-4 w-4 text-orange-500" />
-              </CardHeader>
-              <CardContent className="pb-4">
-                <div className="text-base font-bold text-orange-600 leading-none h-8 flex items-center">
-                  R$ {despesasPendentes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+        <FinanceiroStatsCards stats={stats} />
 
-        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
-            <CardContent className="p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                    <div className="relative flex-grow sm:max-w-xs md:max-w-sm">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
-                        <Input
-                        type="text"
-                        placeholder="Buscar por descrição, categoria..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 text-sm h-10 w-full bg-white border-gray-300 rounded-lg focus:ring-2 focus:ring-lawyer-primary focus:border-lawyer-primary"
-                        />
-                    </div>
-                    <div className="flex items-center gap-2 w-full sm:w-auto">
-                        <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg">
-                            <Filter className="mr-1.5 h-3.5 w-3.5" />
-                            Filtrar
-                        </Button>
-                         <Button 
-                            onClick={handleManualRefresh} 
-                            variant="outline" 
-                            size="sm" 
-                            disabled={isLoadingCombined} 
-                            className="w-full sm:w-auto text-xs h-10 border-gray-300 text-gray-600 hover:bg-gray-100 rounded-lg"
-                        >
-                            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isLoadingCombined ? 'animate-spin' : ''}`} />
-                            {isLoadingCombined ? 'Atualizando...' : 'Atualizar Transações'}
-                        </Button>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+        <FinanceiroSearchBar
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          onRefresh={handleManualRefresh}
+          isLoading={isLoadingCombined}
+        />
           
         <div className="hidden md:block">
             <TransacaoTable
@@ -472,54 +375,16 @@ const FinanceiroPage = () => {
             />
         </div>
 
-          {isModalOpen && (
-             <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <Card className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
-                <CardHeader className="p-4 border-b sticky top-0 bg-white z-10">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-lg font-semibold text-gray-800">{currentTransaction ? 'Editar Transação' : 'Nova Transação'}</CardTitle>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => {
-                        setIsModalOpen(false);
-                        setCurrentTransaction(null);
-                        }}
-                        className="h-7 w-7 text-gray-500 hover:text-gray-700 -mr-1 -mt-1"
-                    >
-                        <X className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <form onSubmit={handleAddOrUpdateTransaction} className="flex-grow overflow-y-auto">
-                  <CardContent className="p-4">
-                    <TransacaoFormFields
-                      formData={formData}
-                      handleChange={handleChange}
-                      handleSelectChange={handleSelectChange}
-                    />
-                  </CardContent>
-                   <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-gray-50 z-10">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setIsModalOpen(false);
-                        setCurrentTransaction(null);
-                      }}
-                      className="text-gray-700 hover:bg-gray-100 border-gray-300"
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white" disabled={isLoadingTransactions}>
-                      {isLoadingTransactions ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      {currentTransaction ? 'Atualizar' : 'Adicionar'}
-                    </Button>
-                  </div>
-                </form>
-              </Card>
-            </div>
-          )}
+        <TransacaoModal
+          isOpen={isModalOpen}
+          currentTransaction={currentTransaction}
+          formData={formData}
+          isLoading={isLoadingTransactions}
+          onClose={handleCloseModal}
+          onSubmit={handleAddOrUpdateTransaction}
+          handleChange={handleChange}
+          handleSelectChange={handleSelectChange}
+        />
         </main>
     </AdminLayout>
   );
