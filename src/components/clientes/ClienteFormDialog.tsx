@@ -35,8 +35,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
     estado: '',
     cep: '',
     status_cliente: 'Ativo',
-    observacoes: '',
-    tipo: 'Pessoa Física'
+    observacoes: ''
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -53,8 +52,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
         estado: cliente.estado || '',
         cep: cliente.cep || '',
         status_cliente: cliente.status_cliente || 'Ativo',
-        observacoes: cliente.observacoes || '',
-        tipo: cliente.tipo_cliente || 'Pessoa Física'
+        observacoes: cliente.observacoes || ''
       });
     } else {
       setFormData({
@@ -68,8 +66,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
         estado: '',
         cep: '',
         status_cliente: 'Ativo',
-        observacoes: '',
-        tipo: 'Pessoa Física'
+        observacoes: ''
       });
     }
   }, [cliente, isOpen]);
@@ -77,8 +74,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
   const handleFieldChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
-      [field]: value,
-      ...(field === 'tipo_cliente' && { tipo: value })
+      [field]: value
     }));
   };
 

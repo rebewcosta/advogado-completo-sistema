@@ -14,7 +14,6 @@ interface ClienteFormData {
   nome: string;
   email: string;
   telefone: string;
-  tipo: string;
   tipo_cliente: string;
   cpfCnpj: string;
   endereco: string;

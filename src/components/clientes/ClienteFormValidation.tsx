@@ -5,7 +5,7 @@ interface ClienteFormData {
   nome: string;
   email: string;
   telefone: string;
-  tipo: string;
+  tipo_cliente: string;
   cpfCnpj: string;
   endereco: string;
   cidade: string;
@@ -43,7 +43,7 @@ export const useClienteFormValidation = () => {
     if (!formData.cpfCnpj.trim()) {
       toast({
         title: "Campo obrigatório",
-        description: `O ${formData.tipo === "Pessoa Física" ? "CPF" : "CNPJ"} é obrigatório.`,
+        description: `O ${formData.tipo_cliente === "Pessoa Física" ? "CPF" : "CNPJ"} é obrigatório.`,
         variant: "destructive"
       });
       return false;
