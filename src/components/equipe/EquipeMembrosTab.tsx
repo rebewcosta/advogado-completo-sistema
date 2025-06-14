@@ -96,7 +96,7 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
         </div>
         <Button 
           onClick={() => setShowForm(true)}
-          className="mt-4 sm:mt-0 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl"
+          className="mt-4 sm:mt-0 bg-green-600 hover:bg-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl"
         >
           <Plus className="mr-2 h-4 w-4" />
           Adicionar Membro
@@ -123,7 +123,7 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
             {!searchTerm && (
               <Button 
                 onClick={() => setShowForm(true)}
-                className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl"
+                className="bg-green-600 hover:bg-green-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 rounded-xl"
               >
                 <UserPlus className="mr-2 h-4 w-4" />
                 Adicionar Primeiro Membro
