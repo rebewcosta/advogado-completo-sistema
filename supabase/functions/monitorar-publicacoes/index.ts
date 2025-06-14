@@ -67,125 +67,6 @@ class DiarioScraper {
   }
 }
 
-const validateUserInput = (body: any) => {
-  console.log('🔍 Validando entrada do usuário:', body);
-  
-  if (!body || typeof body !== 'object') {
-    return ['Body da requisição inválido ou ausente'];
-  }
-  
-  if (!body.user_id || typeof body.user_id !== 'string' || body.user_id.trim() === '') {
-    return ['user_id é obrigatório e deve ser uma string válida'];
-  }
-  
-  if (!body.nomes || !Array.isArray(body.nomes)) {
-    return ['nomes deve ser um array'];
-  }
-  
-  const nomesValidos = body.nomes.filter((nome: any) => 
-    typeof nome === 'string' && nome.trim().length > 0
-  );
-  
-  if (nomesValidos.length === 0) {
-    return ['Pelo menos um nome válido deve ser fornecido'];
-  }
-  
-  console.log('✅ Validação concluída com sucesso');
-  return [];
-};
-
-const sanitizeInputs = (body: any) => {
-  const sanitizedNomes = Array.isArray(body.nomes) 
-    ? body.nomes.filter((nome: any) => typeof nome === 'string' && nome.trim().length > 0)
-    : [];
-    
-  const sanitizedEstados = Array.isArray(body.estados)
-    ? body.estados.filter((estado: any) => typeof estado === 'string' && estado.trim().length > 0)
-    : [];
-    
-  const sanitizedPalavrasChave = Array.isArray(body.palavras_chave)
-    ? body.palavras_chave.filter((palavra: any) => typeof palavra === 'string' && palavra.trim().length > 0)
-    : [];
-
-  return {
-    sanitizedNomes,
-    sanitizedEstados,
-    sanitizedPalavrasChave
-  };
-};
-
-const createMonitoringLog = async (userId: string, supabase: any) => {
-  try {
-    const { data, error } = await supabase
-      .from('logs_monitoramento')
-      .insert({
-        user_id: userId,
-        status: 'iniciado',
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Erro ao criar log:', error);
-      return { id: 'temp-id' };
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Erro ao criar log:', error);
-    return { id: 'temp-id' };
-  }
-};
-
-const updateMonitoringLog = async (logId: string, publicacoesEncontradas: number, tempoExecucao: number, fontesConsultadas: string[], erros: string[], supabase: any) => {
-  if (logId === 'temp-id') return;
-  
-  try {
-    await supabase
-      .from('logs_monitoramento')
-      .update({
-        publicacoes_encontradas: publicacoesEncontradas,
-        tempo_execucao: tempoExecucao,
-        fontes_consultadas: fontesConsultadas.length,
-        erros: erros.join('; '),
-        status: 'concluido',
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', logId);
-  } catch (error) {
-    console.error('Erro ao atualizar log:', error);
-  }
-};
-
-const savePublicacoes = async (publicacoes: PublicacaoEncontrada[], userId: string, supabase: any) => {
-  if (publicacoes.length === 0) return;
-
-  const publicacoesParaSalvar = publicacoes.map(pub => ({
-    ...pub,
-    user_id: userId,
-    segredo_justica: false,
-    lida: false,
-    importante: false
-  }));
-
-  try {
-    const { error } = await supabase
-      .from('publicacoes_diario_oficial')
-      .insert(publicacoesParaSalvar);
-
-    if (error) {
-      console.error('Erro ao salvar publicações:', error);
-      throw new Error('Erro ao salvar publicações no banco de dados');
-    }
-    
-    console.log(`✅ ${publicacoes.length} publicações salvas com sucesso`);
-  } catch (error) {
-    console.error('Erro ao salvar publicações:', error);
-    throw error;
-  }
-};
-
 serve(async (req) => {
   console.log(`📝 Nova requisição: ${req.method} ${req.url}`);
   
@@ -205,24 +86,14 @@ serve(async (req) => {
 
     const startTime = Date.now();
     
-    // Parse request body com tratamento robusto de erro
+    // Parse request body
     let body;
     try {
       const requestText = await req.text();
       console.log('📦 Request body recebido:', requestText);
       
       if (!requestText || requestText.trim() === '') {
-        console.error('❌ Body da requisição está vazio');
-        return new Response(
-          JSON.stringify({ 
-            error: 'Body da requisição é obrigatório',
-            success: false 
-          }),
-          { 
-            status: 400, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
+        throw new Error('Body da requisição está vazio');
       }
       
       body = JSON.parse(requestText);
@@ -236,7 +107,7 @@ serve(async (req) => {
           success: false 
         }),
         { 
-          status: 400, 
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
@@ -246,48 +117,60 @@ serve(async (req) => {
     console.log('👤 Usuário:', body?.user_id);
     console.log('📝 Nomes para buscar:', body?.nomes);
     
-    // Validação robusta dos dados de entrada
-    const validationErrors = validateUserInput(body);
-    if (validationErrors.length > 0) {
-      console.error('❌ Erros de validação:', validationErrors);
+    // Validação básica
+    if (!body?.user_id) {
       return new Response(
         JSON.stringify({ 
-          error: `Erro de validação: ${validationErrors.join(', ')}`,
+          error: 'user_id é obrigatório',
           success: false 
         }),
         { 
-          status: 400, 
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
 
-    // Sanitizar e preparar dados
-    const { sanitizedNomes, sanitizedEstados, sanitizedPalavrasChave } = sanitizeInputs(body);
-
-    if (sanitizedNomes.length === 0) {
-      console.error('❌ Nenhum nome válido encontrado');
+    if (!body?.nomes || !Array.isArray(body.nomes) || body.nomes.length === 0) {
       return new Response(
         JSON.stringify({ 
           error: 'Configure pelo menos um nome válido para monitoramento',
           success: false 
         }),
         { 
-          status: 400, 
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
     }
 
-    // Criar log inicial
-    const logEntry = await createMonitoringLog(body.user_id, supabase);
+    // Sanitizar dados
+    const nomesValidos = body.nomes.filter((nome: any) => 
+      typeof nome === 'string' && nome.trim().length > 0
+    );
+
+    if (nomesValidos.length === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Configure pelo menos um nome válido para monitoramento',
+          success: false 
+        }),
+        { 
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const estadosValidos = Array.isArray(body.estados)
+      ? body.estados.filter((estado: any) => typeof estado === 'string' && estado.trim().length > 0)
+      : [];
 
     console.log('🚀 INICIANDO BUSCA...');
-    console.log('📋 Nomes:', sanitizedNomes);
-    console.log('🌍 Estados:', sanitizedEstados.length > 0 ? sanitizedEstados : 'PRINCIPAIS');
+    console.log('📋 Nomes:', nomesValidos);
+    console.log('🌍 Estados:', estadosValidos.length > 0 ? estadosValidos : 'PRINCIPAIS');
     
     let publicacoesEncontradas = 0;
-    const erros: string[] = [];
 
     try {
       // Executar busca
@@ -296,40 +179,41 @@ serve(async (req) => {
       console.log('🌐 Consultando diários oficiais...');
       
       const publicacoesReais: PublicacaoEncontrada[] = await scraper.buscarEmTodosEstados(
-        sanitizedNomes,
-        sanitizedEstados
+        nomesValidos,
+        estadosValidos
       );
 
       console.log(`📄 Encontradas: ${publicacoesReais.length} publicações`);
 
       // Salvar no banco
-      try {
-        await savePublicacoes(publicacoesReais, body.user_id, supabase);
-        console.log('✅ Publicações salvas com sucesso');
-      } catch (error: any) {
-        console.error('❌ Erro ao salvar:', error);
-        erros.push(`Erro ao salvar: ${error.message}`);
+      if (publicacoesReais.length > 0) {
+        const publicacoesParaSalvar = publicacoesReais.map(pub => ({
+          ...pub,
+          user_id: body.user_id,
+          segredo_justica: false,
+          lida: false,
+          importante: false
+        }));
+
+        const { error } = await supabase
+          .from('publicacoes_diario_oficial')
+          .insert(publicacoesParaSalvar);
+
+        if (error) {
+          console.error('Erro ao salvar publicações:', error);
+        } else {
+          console.log(`✅ ${publicacoesReais.length} publicações salvas com sucesso`);
+        }
       }
 
       publicacoesEncontradas = publicacoesReais.length;
 
     } catch (error: any) {
       console.error('❌ Erro durante busca:', error);
-      erros.push(`Erro na busca: ${error.message}`);
     }
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
-    const fontesConsultadas = sanitizedEstados.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR'];
-
-    // Atualizar log
-    await updateMonitoringLog(
-      logEntry.id, 
-      publicacoesEncontradas, 
-      tempoExecucao, 
-      fontesConsultadas, 
-      erros, 
-      supabase
-    );
+    const fontesConsultadas = estadosValidos.length > 0 ? estadosValidos : ['SP', 'RJ', 'MG', 'CE', 'PR'];
 
     const message = publicacoesEncontradas > 0 
       ? `✅ Busca concluída: ${publicacoesEncontradas} publicações encontradas`
@@ -340,13 +224,11 @@ serve(async (req) => {
       publicacoes_encontradas: publicacoesEncontradas,
       fontes_consultadas: fontesConsultadas.length,
       tempo_execucao: tempoExecucao,
-      erros: erros.length > 0 ? erros.join('; ') : null,
       message: message,
       status_integracao: 'INTEGRADO',
       detalhes_busca: {
-        nomes_buscados: sanitizedNomes,
-        estados_consultados: fontesConsultadas,
-        palavras_chave: sanitizedPalavrasChave
+        nomes_buscados: nomesValidos,
+        estados_consultados: fontesConsultadas
       }
     };
 
@@ -370,7 +252,7 @@ serve(async (req) => {
         status_integracao: 'ERRO'
       }),
       { 
-        status: 500, 
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

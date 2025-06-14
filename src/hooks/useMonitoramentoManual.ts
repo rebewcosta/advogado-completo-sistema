@@ -46,8 +46,7 @@ export const useMonitoramentoManual = (
       const requestBody = {
         user_id: user.id,
         nomes: nomesValidos,
-        estados: configuracao.estados_monitoramento || [],
-        palavras_chave: configuracao.palavras_chave?.filter((palavra: string) => palavra?.trim()) || []
+        estados: configuracao.estados_monitoramento || []
       };
 
       console.log('📤 Enviando requisição para Edge Function:', requestBody);
@@ -63,21 +62,7 @@ export const useMonitoramentoManual = (
 
       if (error) {
         console.error('❌ Erro na Edge Function:', error);
-        
-        // Tratamento específico para diferentes tipos de erro
-        let errorMessage = "Erro durante o monitoramento";
-        
-        if (error.message?.includes('FunctionsHttpError')) {
-          errorMessage = "Erro de comunicação com o servidor. Tente novamente.";
-        } else if (error.message?.includes('400')) {
-          errorMessage = "Erro na validação dos dados. Verifique sua configuração.";
-        } else if (error.message?.includes('timeout')) {
-          errorMessage = "Timeout na execução. Tente novamente.";
-        } else if (error.message) {
-          errorMessage = error.message;
-        }
-        
-        throw new Error(errorMessage);
+        throw new Error(error.message || 'Erro de comunicação com o servidor');
       }
 
       if (!data) {
@@ -102,25 +87,9 @@ export const useMonitoramentoManual = (
     } catch (error: any) {
       console.error('❌ Erro no monitoramento:', error);
       
-      let errorMessage = "Erro durante o monitoramento";
-      
-      if (error.message?.includes('validação')) {
-        errorMessage = "Dados inválidos. Verifique sua configuração.";
-      } else if (error.message?.includes('timeout')) {
-        errorMessage = "Timeout na execução. Tente novamente.";
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = "Erro de conexão. Verifique sua internet.";
-      } else if (error.message?.includes('Body da requisição')) {
-        errorMessage = "Erro na configuração. Verifique os dados e tente novamente.";
-      } else if (error.message?.includes('nomes')) {
-        errorMessage = "Configure pelo menos um nome válido para monitoramento.";
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
       toast({
         title: "Erro no Monitoramento",
-        description: errorMessage,
+        description: error.message || "Erro durante o monitoramento. Tente novamente.",
         variant: "destructive"
       });
     } finally {
