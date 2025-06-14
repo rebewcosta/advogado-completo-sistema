@@ -28,16 +28,8 @@ export const useClienteFormValidation = () => {
       return false;
     }
 
-    if (!formData.email.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "O email do cliente é obrigatório.",
-        variant: "destructive"
-      });
-      return false;
-    }
-    
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    // Email validation only if provided
+    if (formData.email.trim() && !/\S+@\S+\.\S+/.test(formData.email)) {
       toast({
         title: "Email inválido",
         description: "Por favor, insira um endereço de email válido.",

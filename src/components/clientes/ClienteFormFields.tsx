@@ -96,7 +96,7 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
           </div>
           <div className="space-y-1">
             <Label htmlFor="email_cliente_form" className="text-gray-100">
-              Email <span className="text-red-400">*</span>
+              Email
             </Label>
             <Input 
               id="email_cliente_form" 
