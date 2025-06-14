@@ -56,6 +56,25 @@ const TarefasPage = () => {
     setIsFormDialogOpen(true);
   };
 
+  // Wrapper functions to match component prop signatures
+  const handleEditTarefa = (tarefa: TarefaComRelacoes) => {
+    // For now, just log the tarefa - this would open an edit dialog
+    console.log('Edit tarefa:', tarefa);
+  };
+
+  const handleDeleteTarefa = (tarefaId: string) => {
+    return deleteTarefa(tarefaId);
+  };
+
+  const handleToggleStatus = (tarefa: TarefaComRelacoes) => {
+    // Toggle status logic - cycle through statuses
+    const statusOrder: StatusTarefa[] = ['Pendente', 'Em Andamento', 'Concluída', 'Cancelada'];
+    const currentIndex = statusOrder.indexOf(tarefa.status);
+    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+    
+    updateTarefa(tarefa.id, { status: nextStatus });
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -83,9 +102,9 @@ const TarefasPage = () => {
         <div className="hidden md:block">
           <TarefaTable
             tarefas={filteredTarefas}
-            onEdit={updateTarefa}
-            onDelete={deleteTarefa}
-            onToggleStatus={updateTarefa}
+            onEdit={handleEditTarefa}
+            onDelete={handleDeleteTarefa}
+            onToggleStatus={handleToggleStatus}
             isLoading={isLoading}
             searchTerm={searchTerm}
           />
@@ -93,9 +112,9 @@ const TarefasPage = () => {
         <div className="md:hidden">
           <TarefaListAsCards
             tarefas={filteredTarefas}
-            onEdit={updateTarefa}
-            onDelete={deleteTarefa}
-            onToggleStatus={updateTarefa}
+            onEdit={handleEditTarefa}
+            onDelete={handleDeleteTarefa}
+            onToggleStatus={handleToggleStatus}
             isLoading={isLoading}
           />
         </div>
