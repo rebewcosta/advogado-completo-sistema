@@ -38,7 +38,7 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
               <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg z-50">
                 <SelectItem value="Receita">Receita</SelectItem>
                 <SelectItem value="Despesa">Despesa</SelectItem>
               </SelectContent>
@@ -51,7 +51,7 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
               <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                 <SelectValue placeholder="Selecione a categoria" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg z-50">
                 <SelectItem value="honorarios">Honorários</SelectItem>
                 <SelectItem value="despesas_operacionais">Despesas Operacionais</SelectItem>
                 <SelectItem value="investimentos">Investimentos</SelectItem>
@@ -82,7 +82,7 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
               <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
+              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg z-50">
                 <SelectItem value="Pendente">Pendente</SelectItem>
                 <SelectItem value="Pago">Pago</SelectItem>
                 <SelectItem value="Recebido">Recebido</SelectItem>
