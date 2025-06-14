@@ -11,7 +11,7 @@ interface ProcessFormHeaderProps {
 const ProcessFormHeader: React.FC<ProcessFormHeaderProps> = ({ isEdit, onCancel }) => {
   return (
     <div className="flex justify-between items-center">
-      <h2 className="text-xl md:text-2xl font-bold text-white">
+      <h2 className="text-lg font-semibold text-white">
         {isEdit ? "Editar Processo" : "Novo Processo"}
       </h2>
       <Button

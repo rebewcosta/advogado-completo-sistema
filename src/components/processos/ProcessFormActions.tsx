@@ -9,19 +9,11 @@ interface ProcessFormActionsProps {
 
 const ProcessFormActions: React.FC<ProcessFormActionsProps> = ({ isEdit, onCancel }) => {
   return (
-    <div className="flex justify-end space-x-3">
-      <Button
-        variant="outline"
-        type="button"
-        onClick={onCancel}
-        className="bg-white text-gray-800 border-gray-300 hover:bg-gray-100"
-      >
+    <div className="flex justify-end gap-2 pt-4 border-t border-blue-600">
+      <Button variant="outline" onClick={onCancel}>
         Cancelar
       </Button>
-      <Button 
-        type="submit"
-        className="bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
-      >
+      <Button type="submit">
         {isEdit ? "Salvar Alterações" : "Cadastrar Processo"}
       </Button>
     </div>
