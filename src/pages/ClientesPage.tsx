@@ -184,9 +184,11 @@ const ClientesPage = () => {
   if (isLoading && clients.length === 0) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
-          <Spinner size="lg" />
-          <span className="text-gray-500 mt-3">Carregando clientes...</span>
+        <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full flex flex-col justify-center items-center">
+          <div className="bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-xl">
+            <Spinner size="lg" className="text-blue-500" />
+            <span className="text-gray-700 mt-4 block font-medium">Carregando clientes...</span>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -194,47 +196,46 @@ const ClientesPage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <SharedPageHeader
-          title="Gestão de Clientes"
-          description="Cadastre, visualize e gerencie todos os seus clientes."
-          pageIcon={<Users />}
-          actionButtonText="Novo Cliente"
-          onActionButtonClick={() => {
-            setClienteParaEdicao(null);
-            setIsFormDialogOpen(true);
-          }}
-          isLoading={isLoading || isRefreshing}
-        />
+      <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-slate-50 to-blue-50 min-h-full">
+        <div className="animate-fade-in">
+          <SharedPageHeader
+            title="Gestão de Clientes"
+            description="Cadastre, visualize e gerencie todos os seus clientes com ferramentas modernas e eficientes."
+            pageIcon={<Users className="text-blue-500" />}
+            actionButtonText="Novo Cliente"
+            onActionButtonClick={() => {
+              setClienteParaEdicao(null);
+              setIsFormDialogOpen(true);
+            }}
+            isLoading={isLoading || isRefreshing}
+          />
+        </div>
 
-        <Card className="mb-6 shadow-md rounded-lg border border-slate-700 bg-slate-800">
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="relative flex-grow sm:max-w-xs md:max-w-sm">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-                <Input
-                  type="text"
-                  placeholder="Buscar por nome, email, CPF/CNPJ..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 text-sm h-10 w-full bg-slate-700 border-slate-600 text-white placeholder:text-slate-400 focus:border-slate-500 focus:ring-slate-500"
-                />
-              </div>
-              <Button 
-                onClick={handleRefresh} 
-                variant="outline" 
-                size="sm" 
-                disabled={isRefreshing} 
-                className="w-full sm:w-auto text-xs h-10 bg-transparent border-slate-600 text-white hover:bg-slate-700 hover:text-white rounded-lg"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isRefreshing ? 'animate-spin' : ''} text-white`} />
-                {isRefreshing ? 'Atualizando...' : 'Atualizar Lista'}
-              </Button>
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 rounded-xl shadow-xl mb-8 animate-fade-in">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-5 w-5" />
+              <Input
+                type="text"
+                placeholder="Buscar por nome, email, CPF/CNPJ..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20 focus:border-white/40 h-12 text-base backdrop-blur-sm"
+              />
             </div>
-          </CardContent>
-        </Card>
+            <Button 
+              onClick={handleRefresh} 
+              variant="outline" 
+              disabled={isRefreshing} 
+              className="w-full sm:w-auto h-12 px-6 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Atualizando...' : 'Atualizar Lista'}
+            </Button>
+          </div>
+        </div>
         
-        <div className="hidden md:block">
+        <div className="hidden md:block animate-fade-in">
           <ClienteTable
             clients={filteredClients}
             onEdit={handleEditClient}
@@ -245,7 +246,7 @@ const ClientesPage = () => {
             searchTerm={searchTerm}
           />
         </div>
-        <div className="md:hidden">
+        <div className="md:hidden animate-fade-in">
           <ClienteListAsCards
             clients={filteredClients}
             onEdit={handleEditClient}
