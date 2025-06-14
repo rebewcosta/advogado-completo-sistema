@@ -134,34 +134,47 @@
   @apply flex items-center gap-2 text-gray-700 mb-2;
 }
 
-/* REMOVENDO COMPLETAMENTE ESPAÇOS ENTRE SIDEBAR E CONTEÚDO */
+/* FORÇAR REMOÇÃO TOTAL DO ESPAÇO ENTRE SIDEBAR E CONTEÚDO */
+[data-sidebar] {
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
 [data-sidebar="sidebar"] {
   flex-shrink: 0 !important;
-  margin-right: 0 !important;
-  border-right: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
 }
 
 [data-sidebar="content"] {
-  margin-left: 0 !important;
-  padding-left: 0 !important;
-  margin-right: 0 !important;
-  padding-right: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
 }
 
 .group\/sidebar-wrapper {
   gap: 0 !important;
-}
-
-/* Remove qualquer padding ou margin do SidebarProvider */
-.group\/sidebar-wrapper > * {
   margin: 0 !important;
   padding: 0 !important;
 }
 
-/* Garante que o conteúdo principal grude na sidebar */
+.group\/sidebar-wrapper * {
+  margin: 0 !important;
+  gap: 0 !important;
+}
+
+/* Força o main element a grudar na sidebar */
 main {
-  margin-left: 0 !important;
-  padding-left: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+/* Remove qualquer espaçamento do SidebarProvider */
+div[style*="display: flex"] {
+  gap: 0 !important;
 }
 
 /* ADIÇÃO PARA REMOVER MARCADOR DE LISTA DO SIDEBAR */
