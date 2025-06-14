@@ -21,75 +21,92 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 interface AgendaEvent {
   id?: string;
   titulo: string;
-  descricao: string;
-  data_inicio: string;
-  data_fim: string;
-  tipo: string;
-  status: string;
-  cliente_id?: string;
-  processo_id?: string;
+  descricao_evento: string;
+  data_hora_inicio: Date;
+  duracao_minutos: number;
+  local_evento: string;
+  cliente_associado_id?: string;
+  processo_associado_id?: string;
+  prioridade: 'baixa' | 'média' | 'alta';
+  tipo_evento: string;
+  status_evento: string;
 }
 
 interface AgendaEventFormProps {
   isOpen: boolean;
-  onClose: () => void;
-  onSave: (eventData: Omit<AgendaEvent, 'id'>) => Promise<boolean>;
-  event?: AgendaEvent | null;
+  onOpenChange: (open: boolean) => void;
+  onSave: (eventData: any) => Promise<boolean>;
+  initialEventData?: AgendaEvent | null;
+  clientes: any[];
+  processos: any[];
 }
 
 const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
   isOpen,
-  onClose,
+  onOpenChange,
   onSave,
-  event
+  initialEventData,
+  clientes,
+  processos
 }) => {
   const [formData, setFormData] = useState({
     titulo: '',
-    descricao: '',
-    data_inicio: '',
-    data_fim: '',
-    tipo: 'audiencia',
-    status: 'agendado',
-    cliente_id: '',
-    processo_id: ''
+    descricao_evento: '',
+    data_hora_inicio: '',
+    duracao_minutos: 60,
+    local_evento: '',
+    cliente_associado_id: '',
+    processo_associado_id: '',
+    prioridade: 'média' as 'baixa' | 'média' | 'alta',
+    tipo_evento: 'audiencia',
+    status_evento: 'agendado'
   });
 
   useEffect(() => {
-    if (event) {
+    if (initialEventData) {
       setFormData({
-        titulo: event.titulo || '',
-        descricao: event.descricao || '',
-        data_inicio: event.data_inicio || '',
-        data_fim: event.data_fim || '',
-        tipo: event.tipo || 'audiencia',
-        status: event.status || 'agendado',
-        cliente_id: event.cliente_id || '',
-        processo_id: event.processo_id || ''
+        titulo: initialEventData.titulo || '',
+        descricao_evento: initialEventData.descricao_evento || '',
+        data_hora_inicio: initialEventData.data_hora_inicio 
+          ? new Date(initialEventData.data_hora_inicio).toISOString().slice(0, 16)
+          : '',
+        duracao_minutos: initialEventData.duracao_minutos || 60,
+        local_evento: initialEventData.local_evento || '',
+        cliente_associado_id: initialEventData.cliente_associado_id || '',
+        processo_associado_id: initialEventData.processo_associado_id || '',
+        prioridade: initialEventData.prioridade || 'média',
+        tipo_evento: initialEventData.tipo_evento || 'audiencia',
+        status_evento: initialEventData.status_evento || 'agendado'
       });
     } else {
       setFormData({
         titulo: '',
-        descricao: '',
-        data_inicio: '',
-        data_fim: '',
-        tipo: 'audiencia',
-        status: 'agendado',
-        cliente_id: '',
-        processo_id: ''
+        descricao_evento: '',
+        data_hora_inicio: '',
+        duracao_minutos: 60,
+        local_evento: '',
+        cliente_associado_id: '',
+        processo_associado_id: '',
+        prioridade: 'média',
+        tipo_evento: 'audiencia',
+        status_evento: 'agendado'
       });
     }
-  }, [event, isOpen]);
+  }, [initialEventData, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await onSave(formData);
+    const success = await onSave({
+      ...formData,
+      data_hora_inicio: new Date(formData.data_hora_inicio)
+    });
     if (success) {
-      onClose();
+      onOpenChange(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
         <div className="h-full flex flex-col rounded-xl overflow-hidden">
           {/* Header com gradiente azul */}
@@ -98,7 +115,7 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
               <div className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h2 className="text-white text-xl font-semibold">
-                    {event ? 'Editar Evento' : 'Novo Evento'}
+                    {initialEventData ? 'Editar Evento' : 'Novo Evento'}
                   </h2>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -106,7 +123,7 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>
-                        {event 
+                        {initialEventData 
                           ? "Atualize as informações do evento. Campos com * são obrigatórios."
                           : "Cadastre um novo evento preenchendo todos os campos obrigatórios."}
                       </p>
@@ -116,7 +133,7 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onClose}
+                  onClick={() => onOpenChange(false)}
                   className="text-white hover:bg-white/20 -mr-2 -mt-2"
                 >
                   <X className="h-5 w-5" />
@@ -143,8 +160,8 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="tipo" className="text-gray-700 font-medium">Tipo *</Label>
-                    <Select value={formData.tipo} onValueChange={(value) => setFormData({...formData, tipo: value})}>
+                    <Label htmlFor="tipo_evento" className="text-gray-700 font-medium">Tipo *</Label>
+                    <Select value={formData.tipo_evento} onValueChange={(value) => setFormData({...formData, tipo_evento: value})}>
                       <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
@@ -157,8 +174,8 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="status" className="text-gray-700 font-medium">Status *</Label>
-                    <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                    <Label htmlFor="status_evento" className="text-gray-700 font-medium">Status *</Label>
+                    <Select value={formData.status_evento} onValueChange={(value) => setFormData({...formData, status_evento: value})}>
                       <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                         <SelectValue placeholder="Selecione o status" />
                       </SelectTrigger>
@@ -174,34 +191,45 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="data_inicio" className="text-gray-700 font-medium">Data/Hora de Início *</Label>
+                    <Label htmlFor="data_hora_inicio" className="text-gray-700 font-medium">Data/Hora de Início *</Label>
                     <Input
-                      id="data_inicio"
+                      id="data_hora_inicio"
                       type="datetime-local"
-                      value={formData.data_inicio}
-                      onChange={(e) => setFormData({...formData, data_inicio: e.target.value})}
+                      value={formData.data_hora_inicio}
+                      onChange={(e) => setFormData({...formData, data_hora_inicio: e.target.value})}
                       className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="data_fim" className="text-gray-700 font-medium">Data/Hora de Fim</Label>
+                    <Label htmlFor="duracao_minutos" className="text-gray-700 font-medium">Duração (minutos)</Label>
                     <Input
-                      id="data_fim"
-                      type="datetime-local"
-                      value={formData.data_fim}
-                      onChange={(e) => setFormData({...formData, data_fim: e.target.value})}
+                      id="duracao_minutos"
+                      type="number"
+                      value={formData.duracao_minutos}
+                      onChange={(e) => setFormData({...formData, duracao_minutos: parseInt(e.target.value) || 60})}
                       className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="descricao" className="text-gray-700 font-medium">Descrição</Label>
+                  <Label htmlFor="local_evento" className="text-gray-700 font-medium">Local do Evento</Label>
+                  <Input
+                    id="local_evento"
+                    value={formData.local_evento}
+                    onChange={(e) => setFormData({...formData, local_evento: e.target.value})}
+                    placeholder="Local onde ocorrerá o evento"
+                    className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="descricao_evento" className="text-gray-700 font-medium">Descrição</Label>
                   <Textarea
-                    id="descricao"
-                    value={formData.descricao}
-                    onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                    id="descricao_evento"
+                    value={formData.descricao_evento}
+                    onChange={(e) => setFormData({...formData, descricao_evento: e.target.value})}
                     placeholder="Descrição detalhada do evento"
                     rows={4}
                     className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
@@ -216,7 +244,7 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                 <Button 
                   type="button" 
                   variant="outline" 
-                  onClick={onClose}
+                  onClick={() => onOpenChange(false)}
                   className="px-6 py-3 h-12 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
                 >
                   Cancelar
@@ -225,7 +253,7 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                   type="submit"
                   className="px-6 py-3 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
                 >
-                  {event ? 'Salvar Alterações' : 'Cadastrar Evento'}
+                  {initialEventData ? 'Salvar Alterações' : 'Cadastrar Evento'}
                 </Button>
               </div>
             </div>

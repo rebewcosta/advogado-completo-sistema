@@ -17,59 +17,62 @@ import {
 } from "@/components/ui/select";
 import { X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import type { Database } from '@/integrations/supabase/types';
-
-type Tarefa = Database['public']['Tables']['tarefas']['Row'];
+import type { TarefaFormData } from '@/hooks/useTarefas';
 
 interface TarefaFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (tarefaData: Omit<Tarefa, 'id' | 'user_id' | 'created_at' | 'updated_at'>) => Promise<boolean>;
-  tarefa: Tarefa | null;
+  onSave: (formData: any) => Promise<boolean>;
+  tarefaParaForm: (Partial<TarefaFormData> & { id?: string }) | null;
+  processos: any[];
+  clientes: any[];
+  isLoadingDropdownData: boolean;
+  isSubmitting: boolean;
 }
 
 const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
   isOpen,
   onClose,
   onSave,
-  tarefa
+  tarefaParaForm,
+  processos,
+  clientes,
+  isLoadingDropdownData,
+  isSubmitting
 }) => {
   const [formData, setFormData] = useState({
     titulo: '',
-    descricao_detalhada: '',
-    status: 'pendente',
-    prioridade: 'media',
-    data_vencimento: '',
+    descricao: '',
     data_conclusao: '',
-    cliente_id: '',
-    processo_id: ''
+    prioridade: 'Média' as TarefaFormData['prioridade'],
+    status: 'Pendente' as TarefaFormData['status'],
+    processo_id: '',
+    cliente_id: ''
   });
 
   useEffect(() => {
-    if (tarefa) {
+    if (tarefaParaForm) {
       setFormData({
-        titulo: tarefa.titulo || '',
-        descricao_detalhada: tarefa.descricao_detalhada || '',
-        status: tarefa.status || 'pendente',
-        prioridade: tarefa.prioridade || 'media',
-        data_vencimento: tarefa.data_vencimento || '',
-        data_conclusao: tarefa.data_conclusao || '',
-        cliente_id: tarefa.cliente_id || '',
-        processo_id: tarefa.processo_id || ''
+        titulo: tarefaParaForm.titulo || '',
+        descricao: tarefaParaForm.descricao || '',
+        data_conclusao: tarefaParaForm.data_conclusao || '',
+        prioridade: tarefaParaForm.prioridade || 'Média',
+        status: tarefaParaForm.status || 'Pendente',
+        processo_id: tarefaParaForm.processo_id || '',
+        cliente_id: tarefaParaForm.cliente_id || ''
       });
     } else {
       setFormData({
         titulo: '',
-        descricao_detalhada: '',
-        status: 'pendente',
-        prioridade: 'media',
-        data_vencimento: '',
+        descricao: '',
         data_conclusao: '',
-        cliente_id: '',
-        processo_id: ''
+        prioridade: 'Média',
+        status: 'Pendente',
+        processo_id: '',
+        cliente_id: ''
       });
     }
-  }, [tarefa, isOpen]);
+  }, [tarefaParaForm, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +92,7 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
               <div className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h2 className="text-white text-xl font-semibold">
-                    {tarefa ? 'Editar Tarefa' : 'Nova Tarefa'}
+                    {tarefaParaForm?.id ? 'Editar Tarefa' : 'Nova Tarefa'}
                   </h2>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -97,7 +100,7 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>
-                        {tarefa 
+                        {tarefaParaForm?.id 
                           ? "Atualize as informações da tarefa. Campos com * são obrigatórios."
                           : "Cadastre uma nova tarefa preenchendo todos os campos obrigatórios."}
                       </p>
@@ -135,63 +138,51 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="status" className="text-gray-700 font-medium">Status *</Label>
-                    <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
+                    <Select value={formData.status} onValueChange={(value: TarefaFormData['status']) => setFormData({...formData, status: value})}>
                       <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                         <SelectValue placeholder="Selecione o status" />
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
-                        <SelectItem value="pendente">Pendente</SelectItem>
-                        <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                        <SelectItem value="concluida">Concluída</SelectItem>
-                        <SelectItem value="cancelada">Cancelada</SelectItem>
+                        <SelectItem value="Pendente">Pendente</SelectItem>
+                        <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                        <SelectItem value="Concluída">Concluída</SelectItem>
+                        <SelectItem value="Cancelada">Cancelada</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label htmlFor="prioridade" className="text-gray-700 font-medium">Prioridade *</Label>
-                    <Select value={formData.prioridade} onValueChange={(value) => setFormData({...formData, prioridade: value})}>
+                    <Select value={formData.prioridade} onValueChange={(value: TarefaFormData['prioridade']) => setFormData({...formData, prioridade: value})}>
                       <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
                         <SelectValue placeholder="Selecione a prioridade" />
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
-                        <SelectItem value="baixa">Baixa</SelectItem>
-                        <SelectItem value="media">Média</SelectItem>
-                        <SelectItem value="alta">Alta</SelectItem>
-                        <SelectItem value="urgente">Urgente</SelectItem>
+                        <SelectItem value="Baixa">Baixa</SelectItem>
+                        <SelectItem value="Média">Média</SelectItem>
+                        <SelectItem value="Alta">Alta</SelectItem>
+                        <SelectItem value="Crítica">Crítica</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <Label htmlFor="data_vencimento" className="text-gray-700 font-medium">Data de Vencimento</Label>
-                    <Input
-                      id="data_vencimento"
-                      type="date"
-                      value={formData.data_vencimento}
-                      onChange={(e) => setFormData({...formData, data_vencimento: e.target.value})}
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="data_conclusao" className="text-gray-700 font-medium">Data de Conclusão</Label>
-                    <Input
-                      id="data_conclusao"
-                      type="date"
-                      value={formData.data_conclusao}
-                      onChange={(e) => setFormData({...formData, data_conclusao: e.target.value})}
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    />
-                  </div>
+                <div>
+                  <Label htmlFor="data_conclusao" className="text-gray-700 font-medium">Data de Conclusão</Label>
+                  <Input
+                    id="data_conclusao"
+                    type="date"
+                    value={formData.data_conclusao}
+                    onChange={(e) => setFormData({...formData, data_conclusao: e.target.value})}
+                    className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                  />
                 </div>
 
                 <div>
-                  <Label htmlFor="descricao_detalhada" className="text-gray-700 font-medium">Descrição</Label>
+                  <Label htmlFor="descricao" className="text-gray-700 font-medium">Descrição</Label>
                   <Textarea
-                    id="descricao_detalhada"
-                    value={formData.descricao_detalhada}
-                    onChange={(e) => setFormData({...formData, descricao_detalhada: e.target.value})}
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({...formData, descricao: e.target.value})}
                     placeholder="Descrição detalhada da tarefa"
                     rows={4}
                     className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
@@ -213,9 +204,10 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
                 </Button>
                 <Button 
                   type="submit"
+                  disabled={isSubmitting}
                   className="px-6 py-3 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
                 >
-                  {tarefa ? 'Salvar Alterações' : 'Cadastrar Tarefa'}
+                  {tarefaParaForm?.id ? 'Salvar Alterações' : 'Cadastrar Tarefa'}
                 </Button>
               </div>
             </div>
