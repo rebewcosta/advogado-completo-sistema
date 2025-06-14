@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -121,7 +120,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
           
           <div className="space-y-6">
             {/* Status do Monitoramento */}
-            <div className="bg-blue-800 p-4 rounded-lg border border-blue-600">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
               <div className="flex items-center space-x-2">
                 <Switch
                   id="monitoramento-ativo"
@@ -133,7 +132,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
             
             {/* Aviso sobre Filtros */}
-            <div className="bg-blue-700 p-4 rounded-lg border border-blue-600">
+            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
               <h3 className="font-semibold text-blue-100 mb-2">🎯 Filtros de Precisão</h3>
               <p className="text-sm text-blue-200">
                 Para evitar capturar publicações de outros advogados com o mesmo nome, 
@@ -142,7 +141,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Nomes para Monitoramento */}
-            <div className="bg-blue-800 p-4 rounded-lg border border-blue-600">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
               <Label className="text-sm font-semibold text-gray-100 mb-3 block">
                 📝 Nomes para monitoramento *
               </Label>
@@ -195,7 +194,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Números da OAB */}
-            <div className="bg-blue-700 p-4 rounded-lg border border-blue-600">
+            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
               <Label className="text-sm font-semibold text-blue-100 mb-2 flex items-center gap-2">
                 ⚖️ Números da OAB (Recomendado) 
                 <span className="bg-blue-600 text-blue-100 text-xs px-2 py-1 rounded">Máxima Precisão</span>
@@ -239,7 +238,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Nomes de Escritórios */}
-            <div className="bg-blue-800 p-4 rounded-lg border border-blue-600">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
               <Label className="text-sm font-semibold text-gray-100 mb-2 flex items-center gap-2">
                 🏢 Nomes de Escritórios
                 <span className="bg-gray-600 text-gray-100 text-xs px-2 py-1 rounded">Filtro Adicional</span>
@@ -283,7 +282,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
             
             {/* Estados para Monitorar */}
-            <div className="bg-blue-700 p-4 rounded-lg border border-blue-600">
+            <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
               <Label className="text-sm font-semibold text-blue-100 mb-3 block">
                 🗺️ Estados para monitorar (não marque nada para pesquisar em todos os estados)
               </Label>
@@ -309,7 +308,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Palavras-chave */}
-            <div className="bg-blue-800 p-4 rounded-lg border border-blue-600">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
               <Label className="text-sm font-semibold text-gray-100 mb-3 block">
                 🔍 Palavras-chave adicionais
               </Label>
