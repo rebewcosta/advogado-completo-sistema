@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -245,6 +244,9 @@ const PublicacoesPage: React.FC = () => {
     return matchesSearch && matchesEstado && matchesTipo && matchesLida;
   });
 
+  // Só mostra publicações se o monitoramento estiver ativo
+  const publicacoesParaExibir = configuracao?.monitoramento_ativo ? publicacoesFiltradas : [];
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 p-2 md:p-4 flex items-center justify-center">
@@ -263,7 +265,7 @@ const PublicacoesPage: React.FC = () => {
           showActionButton={false}
         />
 
-        <PublicacoesStats publicacoes={publicacoes} configuracao={configuracao} />
+        <PublicacoesStats publicacoes={publicacoesParaExibir} configuracao={configuracao} />
 
         <div className="space-y-4 mb-4">
           <div className="w-full">
@@ -308,7 +310,7 @@ const PublicacoesPage: React.FC = () => {
         />
 
         <PublicacoesList
-          publicacoes={publicacoesFiltradas}
+          publicacoes={publicacoesParaExibir}
           onToggleLida={toggleLida}
           onToggleImportante={toggleImportante}
         />
