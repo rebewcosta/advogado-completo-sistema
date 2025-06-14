@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -57,7 +56,7 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
             />
           </div>
           <div>
-            <Label htmlFor="email" className="text-gray-700 font-medium">Email *</Label>
+            <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
             <Input
               id="email"
               type="email"
@@ -65,21 +64,19 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
               onChange={(e) => onChange('email', e.target.value)}
               placeholder="cliente@exemplo.com"
               className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-              required
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone *</Label>
+            <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone</Label>
             <Input
               id="telefone"
               value={formData.telefone}
               onChange={(e) => onChange('telefone', e.target.value)}
               placeholder="(00) 00000-0000"
               className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-              required
             />
           </div>
           <div>

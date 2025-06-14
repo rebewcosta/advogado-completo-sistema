@@ -37,15 +37,6 @@ export const useClienteFormValidation = () => {
       });
       return false;
     }
-
-    if (!formData.telefone.trim()) {
-      toast({
-        title: "Campo obrigatório",
-        description: "O telefone do cliente é obrigatório.",
-        variant: "destructive"
-      });
-      return false;
-    }
     
     if (!formData.cpfCnpj.trim()) {
       toast({
