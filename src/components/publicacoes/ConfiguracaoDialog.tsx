@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { HelpCircle, Info, X } from 'lucide-react';
 
 const estados = [
@@ -134,255 +135,257 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
               </div>
             </div>
 
-            {/* Campos do formulário */}
-            <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
-              <div className="space-y-6">
-                {/* Status do Monitoramento */}
-                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="monitoramento-ativo"
-                      checked={monitoramentoAtivo}
-                      onCheckedChange={setMonitoramentoAtivo}
-                    />
-                    <Label htmlFor="monitoramento-ativo" className="font-medium text-gray-700">Monitoramento ativo</Label>
+            {/* Campos do formulário com ScrollArea */}
+            <div className="bg-white mx-6 rounded-xl flex-1 overflow-hidden">
+              <ScrollArea className="h-full p-6">
+                <div className="space-y-6 pr-4">
+                  {/* Status do Monitoramento */}
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="monitoramento-ativo"
+                        checked={monitoramentoAtivo}
+                        onCheckedChange={setMonitoramentoAtivo}
+                      />
+                      <Label htmlFor="monitoramento-ativo" className="font-medium text-gray-700">Monitoramento ativo</Label>
+                    </div>
                   </div>
-                </div>
-                
-                {/* Aviso sobre Filtros */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h3 className="font-semibold text-gray-800 mb-2">🎯 Filtros de Precisão</h3>
-                  <p className="text-sm text-gray-600">
-                    Para evitar capturar publicações de outros advogados com o mesmo nome, 
-                    configure os filtros abaixo. O número da OAB é o mais eficaz.
-                  </p>
-                </div>
+                  
+                  {/* Aviso sobre Filtros */}
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 className="font-semibold text-gray-800 mb-2">🎯 Filtros de Precisão</h3>
+                    <p className="text-sm text-gray-600">
+                      Para evitar capturar publicações de outros advogados com o mesmo nome, 
+                      configure os filtros abaixo. O número da OAB é o mais eficaz.
+                    </p>
+                  </div>
 
-                {/* Nomes para Monitoramento */}
-                <div>
-                  <Label className="text-gray-700 font-medium mb-3 block">
-                    📝 Nomes para monitoramento *
-                  </Label>
-                  <div className="space-y-2">
-                    {nomesMonitoramento.map((nome, index) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <Input
-                          value={nome}
-                          onChange={(e) => {
-                            const novosNomes = [...nomesMonitoramento];
-                            novosNomes[index] = e.target.value;
-                            setNomesMonitoramento(novosNomes);
-                          }}
-                          placeholder="Nome completo do advogado"
-                          className="flex-1 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                        />
-                        <div className="flex items-center gap-1">
+                  {/* Nomes para Monitoramento */}
+                  <div>
+                    <Label className="text-gray-700 font-medium mb-3 block">
+                      📝 Nomes para monitoramento *
+                    </Label>
+                    <div className="space-y-2">
+                      {nomesMonitoramento.map((nome, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <Input
+                            value={nome}
+                            onChange={(e) => {
+                              const novosNomes = [...nomesMonitoramento];
+                              novosNomes[index] = e.target.value;
+                              setNomesMonitoramento(novosNomes);
+                            }}
+                            placeholder="Nome completo do advogado"
+                            className="flex-1 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                          />
+                          <div className="flex items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRemoveNome(index)}
+                              disabled={nomesMonitoramento.length <= 1}
+                              className="h-12 px-4"
+                            >
+                              Remover
+                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  Pelo menos um nome é obrigatório para o monitoramento funcionar.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNomesMonitoramento([...nomesMonitoramento, ''])}
+                        className="bg-blue-600 hover:bg-blue-700 text-white h-12"
+                      >
+                        Adicionar Nome
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Números da OAB */}
+                  <div>
+                    <Label className="text-gray-700 font-medium mb-2 flex items-center gap-2">
+                      ⚖️ Números da OAB (Recomendado) 
+                      <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">Máxima Precisão</span>
+                    </Label>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Ex: "123.456/SP" ou "789.012/RJ" - Evita confusão com advogados de mesmo nome
+                    </p>
+                    <div className="space-y-2">
+                      {numerosOAB.map((numero, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <Input
+                            value={numero}
+                            onChange={(e) => {
+                              const novosNumeros = [...numerosOAB];
+                              novosNumeros[index] = e.target.value;
+                              setNumerosOAB(novosNumeros);
+                            }}
+                            placeholder="Ex: 123.456/SP"
+                            className="flex-1 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                          />
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => handleRemoveNome(index)}
-                            disabled={nomesMonitoramento.length <= 1}
+                            onClick={() => handleRemoveOAB(index)}
                             className="h-12 px-4"
                           >
                             Remover
                           </Button>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs">
-                                Pelo menos um nome é obrigatório para o monitoramento funcionar.
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
                         </div>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setNomesMonitoramento([...nomesMonitoramento, ''])}
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-12"
-                    >
-                      Adicionar Nome
-                    </Button>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNumerosOAB([...numerosOAB, ''])}
+                        className="bg-blue-600 hover:bg-blue-700 text-white h-12"
+                      >
+                        Adicionar Número OAB
+                      </Button>
+                    </div>
                   </div>
-                </div>
 
-                {/* Números da OAB */}
-                <div>
-                  <Label className="text-gray-700 font-medium mb-2 flex items-center gap-2">
-                    ⚖️ Números da OAB (Recomendado) 
-                    <span className="bg-blue-600 text-white text-xs px-2 py-1 rounded">Máxima Precisão</span>
-                  </Label>
-                  <p className="text-xs text-gray-600 mb-3">
-                    Ex: "123.456/SP" ou "789.012/RJ" - Evita confusão com advogados de mesmo nome
-                  </p>
-                  <div className="space-y-2">
-                    {numerosOAB.map((numero, index) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <Input
-                          value={numero}
-                          onChange={(e) => {
-                            const novosNumeros = [...numerosOAB];
-                            novosNumeros[index] = e.target.value;
-                            setNumerosOAB(novosNumeros);
-                          }}
-                          placeholder="Ex: 123.456/SP"
-                          className="flex-1 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveOAB(index)}
-                          className="h-12 px-4"
-                        >
-                          Remover
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setNumerosOAB([...numerosOAB, ''])}
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-12"
-                    >
-                      Adicionar Número OAB
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Nomes de Escritórios */}
-                <div>
-                  <Label className="text-gray-700 font-medium mb-2 flex items-center gap-2">
-                    🏢 Nomes de Escritórios
-                    <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">Filtro Adicional</span>
-                  </Label>
-                  <p className="text-xs text-gray-600 mb-3">
-                    Ex: "Silva & Associados", "Costa Advocacia" - Ajuda a identificar o escritório
-                  </p>
-                  <div className="space-y-2">
-                    {nomesEscritorio.map((nome, index) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <Input
-                          value={nome}
-                          onChange={(e) => {
-                            const novosNomes = [...nomesEscritorio];
-                            novosNomes[index] = e.target.value;
-                            setNomesEscritorio(novosNomes);
-                          }}
-                          placeholder="Nome do escritório ou sociedade"
-                          className="flex-1 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRemoveEscritorio(index)}
-                          className="h-12 px-4"
-                        >
-                          Remover
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setNomesEscritorio([...nomesEscritorio, ''])}
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-12"
-                    >
-                      Adicionar Escritório
-                    </Button>
-                  </div>
-                </div>
-                
-                {/* Estados para Monitorar */}
-                <div>
-                  <Label className="text-gray-700 font-medium mb-3 block">
-                    🗺️ Estados para monitorar (não marque nada para pesquisar em todos os estados)
-                  </Label>
-                  <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto bg-gray-50 p-3 rounded-lg border border-gray-200">
-                    {estados.map(estado => (
-                      <div key={estado.uf} className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={estado.uf}
-                          checked={estadosMonitoramento.includes(estado.uf)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setEstadosMonitoramento([...estadosMonitoramento, estado.uf]);
-                            } else {
-                              setEstadosMonitoramento(estadosMonitoramento.filter(uf => uf !== estado.uf));
-                            }
-                          }}
-                          className="rounded border-gray-300"
-                        />
-                        <Label htmlFor={estado.uf} className="text-sm text-gray-700">{estado.uf}</Label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Palavras-chave */}
-                <div>
-                  <Label className="text-gray-700 font-medium mb-3 block">
-                    🔍 Palavras-chave adicionais
-                  </Label>
-                  <div className="space-y-2">
-                    {palavrasChave.map((palavra, index) => (
-                      <div key={index} className="flex gap-2 items-center">
-                        <Input
-                          value={palavra}
-                          onChange={(e) => {
-                            const novasPalavras = [...palavrasChave];
-                            novasPalavras[index] = e.target.value;
-                            setPalavrasChave(novasPalavras);
-                          }}
-                          placeholder="Palavra-chave"
-                          className="flex-1 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                        />
-                        <div className="flex items-center gap-1">
+                  {/* Nomes de Escritórios */}
+                  <div>
+                    <Label className="text-gray-700 font-medium mb-2 flex items-center gap-2">
+                      🏢 Nomes de Escritórios
+                      <span className="bg-gray-600 text-white text-xs px-2 py-1 rounded">Filtro Adicional</span>
+                    </Label>
+                    <p className="text-xs text-gray-600 mb-3">
+                      Ex: "Silva & Associados", "Costa Advocacia" - Ajuda a identificar o escritório
+                    </p>
+                    <div className="space-y-2">
+                      {nomesEscritorio.map((nome, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <Input
+                            value={nome}
+                            onChange={(e) => {
+                              const novosNomes = [...nomesEscritorio];
+                              novosNomes[index] = e.target.value;
+                              setNomesEscritorio(novosNomes);
+                            }}
+                            placeholder="Nome do escritório ou sociedade"
+                            className="flex-1 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                          />
                           <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => handleRemovePalavra(index)}
-                            disabled={palavrasChave.length <= 1}
+                            onClick={() => handleRemoveEscritorio(index)}
                             className="h-12 px-4"
                           >
                             Remover
                           </Button>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p className="max-w-xs">
-                                Para remover uma palavra-chave, você precisa ter pelo menos duas palavras cadastradas.
-                              </p>
-                            </TooltipContent>
-                          </Tooltip>
                         </div>
-                      </div>
-                    ))}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPalavrasChave([...palavrasChave, ''])}
-                      className="bg-blue-600 hover:bg-blue-700 text-white h-12"
-                    >
-                      Adicionar Palavra
-                    </Button>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setNomesEscritorio([...nomesEscritorio, ''])}
+                        className="bg-blue-600 hover:bg-blue-700 text-white h-12"
+                      >
+                        Adicionar Escritório
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Estados para Monitorar */}
+                  <div>
+                    <Label className="text-gray-700 font-medium mb-3 block">
+                      🗺️ Estados para monitorar (não marque nada para pesquisar em todos os estados)
+                    </Label>
+                    <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto bg-gray-50 p-3 rounded-lg border border-gray-200">
+                      {estados.map(estado => (
+                        <div key={estado.uf} className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={estado.uf}
+                            checked={estadosMonitoramento.includes(estado.uf)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setEstadosMonitoramento([...estadosMonitoramento, estado.uf]);
+                              } else {
+                                setEstadosMonitoramento(estadosMonitoramento.filter(uf => uf !== estado.uf));
+                              }
+                            }}
+                            className="rounded border-gray-300"
+                          />
+                          <Label htmlFor={estado.uf} className="text-sm text-gray-700">{estado.uf}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Palavras-chave */}
+                  <div>
+                    <Label className="text-gray-700 font-medium mb-3 block">
+                      🔍 Palavras-chave adicionais
+                    </Label>
+                    <div className="space-y-2">
+                      {palavrasChave.map((palavra, index) => (
+                        <div key={index} className="flex gap-2 items-center">
+                          <Input
+                            value={palavra}
+                            onChange={(e) => {
+                              const novasPalavras = [...palavrasChave];
+                              novasPalavras[index] = e.target.value;
+                              setPalavrasChave(novasPalavras);
+                            }}
+                            placeholder="Palavra-chave"
+                            className="flex-1 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                          />
+                          <div className="flex items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRemovePalavra(index)}
+                              disabled={palavrasChave.length <= 1}
+                              className="h-12 px-4"
+                            >
+                              Remover
+                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-xs">
+                                  Para remover uma palavra-chave, você precisa ter pelo menos duas palavras cadastradas.
+                                </p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPalavrasChave([...palavrasChave, ''])}
+                        className="bg-blue-600 hover:bg-blue-700 text-white h-12"
+                      >
+                        Adicionar Palavra
+                      </Button>
+                    </div>
                   </div>
                 </div>
-              </div>
+              </ScrollArea>
             </div>
 
             {/* Footer */}
