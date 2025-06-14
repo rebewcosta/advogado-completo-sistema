@@ -60,7 +60,7 @@ const PublicacoesFilters: React.FC<PublicacoesFiltersProps> = ({
           </Button>
           <Button
             onClick={onOpenConfig}
-            className="w-full sm:w-auto h-12 px-6 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+            className="w-full sm:w-auto h-12 px-6 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
           >
             <Settings className="h-4 w-4 mr-2" />
             Configurar
