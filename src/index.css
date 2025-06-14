@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -135,7 +136,7 @@
 
 /* ADIÇÃO PARA REMOVER MARCADOR DE LISTA DO SIDEBAR */
 [data-sidebar="menu-item"]::marker,
-.group\/menu-item::marker { /* Usando a classe que você identificou no inspetor */
+.group\/menu-item::marker {
   content: "" !important;
   font-size: 0 !important;
   display: none !important;
@@ -158,4 +159,17 @@
   padding-left: 0 !important;
   margin-left: 0 !important;
 }
-/* FIM DA ADIÇÃO PARA REMOVER MARCADOR */
+
+/* Ajustes para remover espaços vazios entre sidebar e conteúdo */
+.peer {
+  margin-left: 0 !important;
+}
+
+.peer-data-[collapsible=offcanvas]:ml-2 {
+  margin-left: 0 !important;
+}
+
+/* Remove gaps desnecessários no layout */
+.group\/sidebar-wrapper {
+  gap: 0 !important;
+}
