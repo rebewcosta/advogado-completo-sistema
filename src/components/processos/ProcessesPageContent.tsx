@@ -177,7 +177,7 @@ const ProcessesPageContent = () => {
   if (isLoadingCombined && !processes.length && !isRefreshingManually) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+        <div className="p-4 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
           <Spinner size="lg" />
           <span className="text-gray-500 mt-3">Carregando processos...</span>
         </div>
@@ -187,7 +187,7 @@ const ProcessesPageContent = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+      <div className="p-4 bg-lawyer-background min-h-full">
         <SharedPageHeader
             title="Meus Processos"
             description="Gerencie e acompanhe todos os seus processos jurídicos."

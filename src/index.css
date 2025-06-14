@@ -134,6 +134,20 @@
   @apply flex items-center gap-2 text-gray-700 mb-2;
 }
 
+/* REMOVENDO ESPAÇOS ENTRE SIDEBAR E CONTEÚDO */
+[data-sidebar="sidebar"] {
+  flex-shrink: 0 !important;
+}
+
+[data-sidebar="content"] {
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+.group\/sidebar-wrapper {
+  gap: 0 !important;
+}
+
 /* ADIÇÃO PARA REMOVER MARCADOR DE LISTA DO SIDEBAR */
 [data-sidebar="menu-item"]::marker,
 .group\/menu-item::marker {
@@ -158,18 +172,4 @@
   list-style-type: none !important;
   padding-left: 0 !important;
   margin-left: 0 !important;
-}
-
-/* Ajustes para remover espaços vazios entre sidebar e conteúdo */
-.peer {
-  margin-left: 0 !important;
-}
-
-.peer-data-[collapsible=offcanvas]:ml-2 {
-  margin-left: 0 !important;
-}
-
-/* Remove gaps desnecessários no layout */
-.group\/sidebar-wrapper {
-  gap: 0 !important;
 }
