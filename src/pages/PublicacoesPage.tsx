@@ -269,9 +269,9 @@ const PublicacoesPage: React.FC = () => {
                          pub.conteudo_publicacao.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          pub.nome_advogado.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesEstado = !filtroEstado || pub.estado === filtroEstado;
-    const matchesTipo = !filtroTipo || pub.tipo_publicacao === filtroTipo;
-    const matchesLida = !filtroLida || 
+    const matchesEstado = !filtroEstado || filtroEstado === 'todos' || pub.estado === filtroEstado;
+    const matchesTipo = !filtroTipo || filtroTipo === 'todos' || pub.tipo_publicacao === filtroTipo;
+    const matchesLida = !filtroLida || filtroLida === 'todas' ||
                        (filtroLida === 'lida' && pub.lida) ||
                        (filtroLida === 'nao-lida' && !pub.lida);
     
@@ -513,7 +513,7 @@ const PublicacoesPage: React.FC = () => {
                 <SelectValue placeholder="Filtrar por estado" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os estados</SelectItem>
+                <SelectItem value="todos">Todos os estados</SelectItem>
                 {estados.map(estado => (
                   <SelectItem key={estado.uf} value={estado.uf}>
                     {estado.uf} - {estado.nome}
@@ -527,7 +527,7 @@ const PublicacoesPage: React.FC = () => {
                 <SelectValue placeholder="Tipo de publicação" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os tipos</SelectItem>
+                <SelectItem value="todos">Todos os tipos</SelectItem>
                 <SelectItem value="Citação">Citação</SelectItem>
                 <SelectItem value="Intimação">Intimação</SelectItem>
                 <SelectItem value="Sentença">Sentença</SelectItem>
@@ -542,7 +542,7 @@ const PublicacoesPage: React.FC = () => {
                 <SelectValue placeholder="Status de leitura" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas</SelectItem>
+                <SelectItem value="todas">Todas</SelectItem>
                 <SelectItem value="lida">Lidas</SelectItem>
                 <SelectItem value="nao-lida">Não lidas</SelectItem>
               </SelectContent>
