@@ -34,7 +34,6 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
     nome: '',
     email: '',
     cargo: '',
-    departamento: '',
     telefone: '',
     status: 'ativo'
   });
@@ -45,7 +44,6 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
         nome: membro.nome || '',
         email: membro.email || '',
         cargo: membro.cargo || '',
-        departamento: membro.departamento || '',
         telefone: membro.telefone || '',
         status: membro.status || 'ativo'
       });
@@ -54,7 +52,6 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
         nome: '',
         email: '',
         cargo: '',
-        departamento: '',
         telefone: '',
         status: 'ativo'
       });
@@ -154,19 +151,6 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
                     />
                   </div>
                   <div>
-                    <Label htmlFor="departamento" className="text-gray-700 font-medium">Departamento</Label>
-                    <Input
-                      id="departamento"
-                      value={formData.departamento}
-                      onChange={(e) => setFormData({...formData, departamento: e.target.value})}
-                      placeholder="Departamento"
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
                     <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone</Label>
                     <Input
                       id="telefone"
@@ -176,6 +160,9 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
                       className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
                     />
                   </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="status" className="text-gray-700 font-medium">Status</Label>
                     <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>

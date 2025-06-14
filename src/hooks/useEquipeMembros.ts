@@ -17,13 +17,12 @@ export const useEquipeMembros = () => {
     
     setIsSubmitting(true);
     try {
-      // Prepara os dados para salvamento
+      // Prepara os dados para salvamento - removendo departamento que não existe na tabela
       const dataToSave = {
         user_id: user.id,
         nome: membroData.nome.trim(),
         email: membroData.email?.trim() || null,
         cargo: membroData.cargo?.trim() || null,
-        departamento: membroData.departamento?.trim() || null,
         telefone: membroData.telefone?.trim() || null,
         nivel_permissao: membroData.nivel_acesso === 'admin' ? 'Administrador' : 
                         membroData.nivel_acesso === 'editor' ? 'Editor' : 'Visualizador',
