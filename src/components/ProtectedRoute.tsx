@@ -3,6 +3,7 @@ import { useEffect, useState, ReactNode } from 'react';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Spinner } from '@/components/ui/spinner';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ProtectedRouteProps {
   children?: ReactNode;
@@ -20,7 +21,7 @@ const ProtectedRoute = ({
   const location = useLocation();
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { role, loading: roleLoading, isAdmin } = useUserRole();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -30,18 +31,9 @@ const ProtectedRoute = ({
         const { data } = await supabase.auth.getSession();
         const authenticated = !!data.session;
         setIsAuthenticated(authenticated);
-        
-        if (authenticated && requireAdmin) {
-          // Check if user is admin - only webercostag@gmail.com OR has special_access
-          const user = data.session.user;
-          const isAdminUser = user.email === "webercostag@gmail.com" || 
-                             user.user_metadata?.special_access === true;
-          setIsAdmin(isAdminUser);
-        }
       } catch (error) {
-        // On error, assume not authenticated/admin
+        console.error('Auth check error:', error);
         setIsAuthenticated(false);
-        setIsAdmin(false);
       } finally {
         setIsLoading(false);
       }
@@ -49,15 +41,6 @@ const ProtectedRoute = ({
 
     const authListener = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session);
-      if (!session) {
-        setIsAdmin(false);
-      } else if (requireAdmin) {
-        // Re-check admin status when session changes
-        const user = session.user;
-        const isAdminUser = user.email === "webercostag@gmail.com" || 
-                           user.user_metadata?.special_access === true;
-        setIsAdmin(isAdminUser);
-      }
       setIsLoading(false);
     });
 
@@ -66,9 +49,10 @@ const ProtectedRoute = ({
     return () => {
       authListener.data.subscription.unsubscribe();
     };
-  }, [requireAdmin]);
+  }, []);
 
-  if (isLoading) {
+  // Show loading while checking auth or role
+  if (isLoading || (isAuthenticated && roleLoading)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" />
@@ -76,14 +60,17 @@ const ProtectedRoute = ({
     );
   }
 
+  // Check authentication requirement
   if (requireAuth && !isAuthenticated) {
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  if (requireAdmin && !isAdmin) {
+  // Check admin requirement using new role system
+  if (requireAdmin && !isAdmin()) {
     return <Navigate to="/dashboard" replace />;
   }
 
+  // If no auth required but user is authenticated, redirect to dashboard
   if (!requireAuth && isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }

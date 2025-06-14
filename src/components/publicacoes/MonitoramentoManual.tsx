@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Play, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Play, Clock, CheckCircle, AlertCircle, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,18 +36,30 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
     try {
       console.log('Iniciando monitoramento manual...');
       
+      // Input validation before sending to edge function
+      const requestBody = {
+        user_id: user.id,
+        nomes: configuracao.nomes_monitoramento || [],
+        estados: configuracao.estados_monitoramento || [],
+        palavras_chave: configuracao.palavras_chave || []
+      };
+
+      // Validate input locally first
+      if (!requestBody.nomes.length) {
+        throw new Error('Pelo menos um nome deve ser configurado para monitoramento');
+      }
+
+      if (requestBody.nomes.some((nome: string) => nome.length > 100)) {
+        throw new Error('Nome muito longo. Máximo de 100 caracteres por nome.');
+      }
+
       const { data, error } = await supabase.functions.invoke('monitorar-publicacoes', {
-        body: {
-          user_id: user.id,
-          nomes: configuracao.nomes_monitoramento || [],
-          estados: configuracao.estados_monitoramento || [],
-          palavras_chave: configuracao.palavras_chave || []
-        }
+        body: requestBody
       });
 
       if (error) {
         console.error('Erro na função:', error);
-        throw error;
+        throw new Error(error.message || 'Erro interno do servidor');
       }
 
       console.log('Resultado do monitoramento:', data);
@@ -55,16 +67,27 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
       
       toast({
         title: "Monitoramento Concluído",
-        description: `Encontradas ${data.publicacoes_encontradas} publicações em ${data.fontes_consultadas} fontes`
+        description: `Encontradas ${data.publicacoes_encontradas || 0} publicações em ${data.fontes_consultadas || 0} fontes`
       });
 
       onMonitoramentoCompleto();
       
     } catch (error: any) {
       console.error('Erro no monitoramento:', error);
+      
+      let errorMessage = "Ocorreu um erro durante o monitoramento";
+      
+      if (error.message?.includes('Rate limit exceeded')) {
+        errorMessage = "Limite de execuções atingido. Aguarde alguns minutos antes de tentar novamente.";
+      } else if (error.message?.includes('Invalid input')) {
+        errorMessage = "Dados de configuração inválidos. Verifique suas configurações.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro no Monitoramento",
-        description: error.message || "Ocorreu um erro durante o monitoramento",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -76,13 +99,13 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Play className="h-5 w-5" />
-          Monitoramento Manual
+          <Shield className="h-5 w-5 text-blue-600" />
+          Monitoramento Seguro
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-sm text-gray-600">
-          Execute uma busca manual nas fontes de diários oficiais configuradas.
+          Execute uma busca segura nas fontes de diários oficiais configuradas.
         </div>
         
         <Button 
@@ -114,9 +137,9 @@ const MonitoramentoManual: React.FC<MonitoramentoManualProps> = ({
               <span className="font-medium text-sm">Último resultado:</span>
             </div>
             <div className="space-y-1 text-xs text-gray-600">
-              <div>📄 {lastResult.publicacoes_encontradas} publicações encontradas</div>
-              <div>🔍 {lastResult.fontes_consultadas} fontes consultadas</div>
-              <div>⏱️ {lastResult.tempo_execucao}s de execução</div>
+              <div>📄 {lastResult.publicacoes_encontradas || 0} publicações encontradas</div>
+              <div>🔍 {lastResult.fontes_consultadas || 0} fontes consultadas</div>
+              <div>⏱️ {lastResult.tempo_execucao || 0}s de execução</div>
               {lastResult.erros && (
                 <div className="text-red-600">⚠️ Erros: {lastResult.erros}</div>
               )}
