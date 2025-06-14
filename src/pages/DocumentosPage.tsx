@@ -110,8 +110,9 @@ const DocumentosPage = () => {
             isLoading={isLoading}
             searchTerm={searchTerm}
             filterType={filterType}
-            onView={handleView}
-            onDelete={handleDelete}
+            onRefresh={handleRefresh}
+            onUploadClick={handleUploadClick}
+            error={error}
           />
         </div>
       </div>

@@ -21,8 +21,8 @@ const TarefasPage = () => {
   const {
     tarefas,
     isLoading,
-    criarTarefa,
-    editarTarefa,
+    createTarefa,
+    updateTarefa,
     deleteTarefa,
     handleManualRefresh
   } = useTarefas();
@@ -83,18 +83,19 @@ const TarefasPage = () => {
         <div className="hidden md:block">
           <TarefaTable
             tarefas={filteredTarefas}
-            onEdit={editarTarefa}
+            onEdit={updateTarefa}
             onDelete={deleteTarefa}
-            onToggleStatus={editarTarefa}
+            onToggleStatus={updateTarefa}
             isLoading={isLoading}
+            searchTerm={searchTerm}
           />
         </div>
         <div className="md:hidden">
           <TarefaListAsCards
             tarefas={filteredTarefas}
-            onEdit={editarTarefa}
+            onEdit={updateTarefa}
             onDelete={deleteTarefa}
-            onToggleStatus={editarTarefa}
+            onToggleStatus={updateTarefa}
             isLoading={isLoading}
           />
         </div>
@@ -102,7 +103,7 @@ const TarefasPage = () => {
         <TarefaFormDialog
           isOpen={isFormDialogOpen}
           onClose={() => setIsFormDialogOpen(false)}
-          onSave={criarTarefa}
+          onSave={createTarefa}
           tarefaParaForm={null}
           processos={[]}
           clientes={[]}
