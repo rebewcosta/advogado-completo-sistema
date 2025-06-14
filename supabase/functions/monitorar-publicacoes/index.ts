@@ -89,19 +89,35 @@ serve(async (req) => {
     
     // Parse request body com tratamento robusto de erros
     let body;
-    let requestText = '';
     
     try {
       console.log('📦 Lendo corpo da requisição...');
-      requestText = await req.text();
-      console.log('📄 Texto bruto recebido:', requestText);
+      
+      // Verificar se o request tem body
+      if (!req.body) {
+        console.error('❌ Request não possui body');
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Request body é obrigatório',
+            message: 'Dados de monitoramento não foram enviados'
+          }),
+          { 
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      const requestText = await req.text();
+      console.log('📄 Texto bruto recebido (primeiros 200 chars):', requestText.substring(0, 200));
       
       if (!requestText || requestText.trim() === '') {
         console.error('❌ Corpo da requisição está vazio');
         return new Response(
           JSON.stringify({ 
             success: false,
-            error: 'Corpo da requisição está vazio. Dados necessários: user_id, nomes',
+            error: 'Corpo da requisição está vazio',
             message: 'Configure os dados de monitoramento'
           }),
           { 
@@ -113,21 +129,17 @@ serve(async (req) => {
       
       console.log('🔍 Fazendo parse do JSON...');
       body = JSON.parse(requestText);
-      console.log('✅ JSON parseado com sucesso:', body);
+      console.log('✅ JSON parseado com sucesso:', JSON.stringify(body, null, 2));
       
     } catch (parseError) {
-      console.error('❌ Erro crítico no parse do JSON:', {
-        error: parseError.message,
-        requestText: requestText.substring(0, 200) + '...',
-        textLength: requestText.length
-      });
+      console.error('❌ Erro crítico no parse do JSON:', parseError);
       
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Formato JSON inválido. Verifique os dados enviados.',
+          error: 'Formato JSON inválido',
           message: 'Erro no formato dos dados. Tente configurar novamente.',
-          details: `Erro: ${parseError.message}`
+          details: parseError.message
         }),
         { 
           status: 200,
@@ -147,7 +159,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'ID do usuário é obrigatório e deve ser uma string válida',
+          error: 'ID do usuário é obrigatório',
           message: 'Erro de autenticação. Faça login novamente.'
         }),
         { 
@@ -162,7 +174,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: false,
-          error: 'Lista de nomes é obrigatória e deve conter pelo menos um nome',
+          error: 'Lista de nomes é obrigatória',
           message: 'Configure pelo menos um nome para monitoramento'
         }),
         { 
@@ -278,11 +290,7 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('💥 Erro crítico não tratado:', {
-      message: error.message,
-      stack: error.stack,
-      error: error
-    });
+    console.error('💥 Erro crítico não tratado:', error);
     
     return new Response(
       JSON.stringify({ 

@@ -43,26 +43,24 @@ export const useMonitoramentoManual = (
         estados: configuracao.estados_monitoramento || []
       });
       
-      // Garantir que os dados sejam strings válidas
-      const requestBody = {
+      // Preparar dados com validação rigorosa
+      const requestData = {
         user_id: user.id,
         nomes: nomesValidos.map(nome => String(nome).trim()).filter(nome => nome.length > 0),
         estados: (configuracao.estados_monitoramento || []).map((estado: any) => String(estado).trim()).filter((estado: string) => estado.length > 0)
       };
 
-      console.log('📤 Enviando dados para Edge Function:', JSON.stringify(requestBody, null, 2));
+      console.log('📤 Enviando para Edge Function:', requestData);
 
+      // Usar supabase.functions.invoke em vez de chamada HTTP direta
       const { data, error } = await supabase.functions.invoke('monitorar-publicacoes', {
-        body: JSON.stringify(requestBody),
-        headers: {
-          'Content-Type': 'application/json'
-        }
+        body: requestData
       });
 
-      console.log('📥 Resposta completa da Edge Function:', { data, error });
+      console.log('📥 Resposta da Edge Function:', { data, error });
 
       if (error) {
-        console.error('❌ Erro retornado pela Edge Function:', error);
+        console.error('❌ Erro na Edge Function:', error);
         throw new Error(error.message || 'Erro de comunicação com o servidor');
       }
 
