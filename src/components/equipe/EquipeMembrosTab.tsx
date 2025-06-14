@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, UserPlus, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -149,7 +148,6 @@ const EquipeMembrosTab: React.FC<EquipeMembrosTabProps> = ({
           onClose={handleCloseForm}
           onSave={handleFormSuccess}
           membro={editingMembro}
-          setIsSubmitting={setIsSubmitting}
         />
       )}
     </>
