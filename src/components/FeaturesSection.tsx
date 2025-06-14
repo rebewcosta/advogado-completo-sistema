@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Users, FileText, Calendar, DollarSign, BarChart2, Archive } from 'lucide-react';
+import { Users, FileText, Calendar, DollarSign, BarChart2, Archive, CheckSquare, BookOpen, Settings } from 'lucide-react';
 import FeatureCard from './FeatureCard';
 
 const FeaturesSection = () => {
@@ -40,6 +40,24 @@ const FeaturesSection = () => {
       title: "Documentos",
       description: "Armazene e organize documentos importantes.",
       link: "/documentos"
+    },
+    {
+      icon: <CheckSquare className="feature-icon" />,
+      title: "Tarefas",
+      description: "Organize e acompanhe todas as suas tarefas e atividades.",
+      link: "/tarefas"
+    },
+    {
+      icon: <BookOpen className="feature-icon" />,
+      title: "Publicações",
+      description: "Monitore automaticamente publicações nos diários oficiais.",
+      link: "/publicacoes"
+    },
+    {
+      icon: <Settings className="feature-icon" />,
+      title: "Configurações",
+      description: "Personalize o sistema conforme suas necessidades.",
+      link: "/configuracoes"
     }
   ];
 
