@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -274,7 +273,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             <Separator />
             
             <div>
-              <Label className="text-sm font-medium">Estados para monitorar (vazio = todos)</Label>
+              <Label className="text-sm font-medium">Estados para monitorar (não marque nada para pesquisar em todos os estados)</Label>
               <div className="grid grid-cols-3 gap-2 mt-2 max-h-32 overflow-y-auto">
                 {estados.map(estado => (
                   <div key={estado.uf} className="flex items-center space-x-2">
