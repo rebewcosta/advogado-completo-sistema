@@ -58,7 +58,7 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
     cliente_associado_id: '',
     processo_associado_id: '',
     prioridade: 'média' as 'baixa' | 'média' | 'alta',
-    tipo_evento: 'audiencia',
+    tipo_evento: 'reuniao',
     status_evento: 'agendado'
   });
 
@@ -75,7 +75,7 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
         cliente_associado_id: initialEventData.cliente_associado_id || '',
         processo_associado_id: initialEventData.processo_associado_id || '',
         prioridade: initialEventData.prioridade || 'média',
-        tipo_evento: initialEventData.tipo_evento || 'audiencia',
+        tipo_evento: initialEventData.tipo_evento || 'reuniao',
         status_evento: initialEventData.status_evento || 'agendado'
       });
     } else {
@@ -88,7 +88,7 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
         cliente_associado_id: '',
         processo_associado_id: '',
         prioridade: 'média',
-        tipo_evento: 'audiencia',
+        tipo_evento: 'reuniao',
         status_evento: 'agendado'
       });
     }
@@ -96,10 +96,33 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const success = await onSave({
-      ...formData,
-      data_hora_inicio: new Date(formData.data_hora_inicio)
-    });
+    
+    // Validação básica
+    if (!formData.titulo.trim()) {
+      alert('Por favor, preencha o título do evento.');
+      return;
+    }
+    
+    if (!formData.data_hora_inicio) {
+      alert('Por favor, selecione a data e hora do evento.');
+      return;
+    }
+
+    // Prepara os dados para envio, garantindo que campos vazios sejam null
+    const eventDataToSave = {
+      titulo: formData.titulo.trim(),
+      descricao_evento: formData.descricao_evento.trim() || '',
+      data_hora_inicio: new Date(formData.data_hora_inicio),
+      duracao_minutos: formData.duracao_minutos,
+      local_evento: formData.local_evento.trim() || '',
+      cliente_associado_id: formData.cliente_associado_id || null,
+      processo_associado_id: formData.processo_associado_id || null,
+      prioridade: formData.prioridade,
+      tipo_evento: formData.tipo_evento,
+      status_evento: formData.status_evento
+    };
+
+    const success = await onSave(eventDataToSave);
     if (success) {
       onOpenChange(false);
     }

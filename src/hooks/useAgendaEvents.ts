@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { addDays } from "date-fns";
 import { DateRange } from "react-day-picker";
@@ -66,12 +65,26 @@ export const useAgendaEvents = () => {
     if (!user) return false;
 
     try {
+      // Prepara os dados garantindo que todos os campos obrigatórios estejam presentes
+      const dataToSave = {
+        user_id: user.id,
+        titulo: eventData.titulo || '',
+        descricao_evento: eventData.descricao_evento || '',
+        data_hora_inicio: eventData.data_hora_inicio instanceof Date 
+          ? eventData.data_hora_inicio.toISOString() 
+          : new Date(eventData.data_hora_inicio).toISOString(),
+        duracao_minutos: eventData.duracao_minutos || 60,
+        local_evento: eventData.local_evento || '',
+        prioridade: eventData.prioridade || 'média',
+        tipo_evento: eventData.tipo_evento || 'reuniao',
+        status_evento: eventData.status_evento || 'agendado',
+        cliente_associado_id: eventData.cliente_associado_id || null,
+        processo_associado_id: eventData.processo_associado_id || null
+      };
+
       const { error } = await supabase
         .from('agenda_eventos')
-        .insert({
-          ...eventData,
-          user_id: user.id
-        });
+        .insert(dataToSave);
       
       if (error) throw error;
       
@@ -94,12 +107,26 @@ export const useAgendaEvents = () => {
 
   const handleUpdateEvent = async (eventId: string, eventData: any) => {
     try {
+      // Prepara os dados para atualização
+      const dataToUpdate = {
+        titulo: eventData.titulo || '',
+        descricao_evento: eventData.descricao_evento || '',
+        data_hora_inicio: eventData.data_hora_inicio instanceof Date 
+          ? eventData.data_hora_inicio.toISOString() 
+          : new Date(eventData.data_hora_inicio).toISOString(),
+        duracao_minutos: eventData.duracao_minutos || 60,
+        local_evento: eventData.local_evento || '',
+        prioridade: eventData.prioridade || 'média',
+        tipo_evento: eventData.tipo_evento || 'reuniao',
+        status_evento: eventData.status_evento || 'agendado',
+        cliente_associado_id: eventData.cliente_associado_id || null,
+        processo_associado_id: eventData.processo_associado_id || null,
+        updated_at: new Date().toISOString()
+      };
+
       const { error } = await supabase
         .from('agenda_eventos')
-        .update({
-          ...eventData,
-          updated_at: new Date().toISOString()
-        })
+        .update(dataToUpdate)
         .eq('id', eventId);
       
       if (error) throw error;
