@@ -54,13 +54,15 @@ serve(async (req) => {
     
     // Parse and validate request body
     const body = await req.json();
-    console.log('Monitoramento iniciado para user:', body.user_id);
-    console.log('Estados solicitados:', body.estados);
+    console.log('🔍 MONITORAMENTO INICIADO');
+    console.log('👤 Usuário:', body.user_id);
+    console.log('📝 Nomes para buscar:', body.nomes);
+    console.log('🌍 Estados:', body.estados?.length > 0 ? body.estados : 'Todos os estados');
     
     // Input validation
     const validationErrors = validateUserInput(body);
     if (validationErrors.length > 0) {
-      console.error('Validation errors:', validationErrors);
+      console.error('❌ Erros de validação:', validationErrors);
       return new Response(
         JSON.stringify({ error: 'Invalid input', details: validationErrors }),
         { 
@@ -90,11 +92,11 @@ serve(async (req) => {
       .from('logs_monitoramento')
       .select('id')
       .eq('user_id', body.user_id)
-      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString()) // Últimos 5 minutos
+      .gte('created_at', new Date(Date.now() - 5 * 60 * 1000).toISOString())
       .limit(5);
 
     if (recentLogs && recentLogs.length >= 5) {
-      console.warn('Rate limit exceeded for user:', body.user_id);
+      console.warn('⚠️ Limite de execuções atingido para usuário:', body.user_id);
       return new Response(
         JSON.stringify({ 
           error: 'Limite de execuções atingido. Aguarde 5 minutos antes de tentar novamente.',
@@ -119,39 +121,53 @@ serve(async (req) => {
       .single();
 
     if (logError) {
-      console.error('Error creating log entry:', logError);
+      console.error('❌ Erro ao criar log:', logError);
       throw new Error('Failed to create monitoring log');
     }
 
-    // Buscar publicações reais nos diários oficiais
-    console.log(`Buscando publicações para nomes: ${sanitizedNomes.join(', ')}`);
-    console.log(`Estados especificados: ${sanitizedEstados.join(', ') || 'Todos'}`);
+    console.log('🚀 INICIANDO BUSCA REAL NOS DIÁRIOS OFICIAIS...');
+    console.log('📋 Configuração da busca:');
+    console.log('   - Nomes:', sanitizedNomes);
+    console.log('   - Estados:', sanitizedEstados.length > 0 ? sanitizedEstados : 'TODOS');
+    console.log('   - Palavras-chave:', sanitizedPalavrasChave);
     
     let publicacoesEncontradas = 0;
     const fontesConsultadas: string[] = [];
     const erros: string[] = [];
 
-    try {
-      // AQUI SERIA A INTEGRAÇÃO REAL COM OS DIÁRIOS OFICIAIS
-      // Por enquanto, como não há integração real implementada, 
-      // retornamos que não foram encontradas publicações
+    // ⚠️ ATENÇÃO: AQUI É ONDE DEVERIA ESTAR A INTEGRAÇÃO REAL
+    // Atualmente o sistema NÃO está conectado aos diários oficiais
+    // Por isso não aparecem resultados reais
+    
+    console.log('⚠️  SISTEMA AINDA NÃO INTEGRADO AOS DIÁRIOS OFICIAIS');
+    console.log('📄 Para implementar a integração real seria necessário:');
+    console.log('   1. Conectar aos sites dos diários oficiais de cada estado');
+    console.log('   2. Fazer web scraping ou usar APIs quando disponíveis');
+    console.log('   3. Processar PDFs e HTMLs dos diários');
+    console.log('   4. Fazer busca por nomes e OAB nos textos');
+    
+    // Simular fontes que seriam consultadas
+    if (sanitizedEstados.length > 0) {
+      sanitizedEstados.forEach(estado => {
+        fontesConsultadas.push(`Diário Oficial ${estado}`);
+        fontesConsultadas.push(`Diário da Justiça ${estado}`);
+      });
+    } else {
+      // Todos os estados brasileiros
+      const todosEstados = [
+        'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 
+        'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 
+        'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+      ];
       
-      // Determinar fontes que seriam consultadas
-      if (sanitizedEstados.length > 0) {
-        sanitizedEstados.forEach(estado => {
-          fontesConsultadas.push(`Diário Oficial ${estado}`);
-        });
-      } else {
-        fontesConsultadas.push('Diários Oficiais Nacionais');
-      }
-      
-      console.log(`Consulta realizada em ${fontesConsultadas.length} fontes`);
-      console.log('Nenhuma publicação encontrada nos diários oficiais');
-      
-    } catch (error) {
-      console.error('Erro durante busca:', error);
-      erros.push(`Erro de busca: ${error.message}`);
+      todosEstados.forEach(estado => {
+        fontesConsultadas.push(`Diário Oficial ${estado}`);
+        fontesConsultadas.push(`Diário da Justiça ${estado}`);
+      });
     }
+    
+    console.log(`🌐 Fontes que deveriam ser consultadas: ${fontesConsultadas.length}`);
+    console.log('🔍 Resultado: 0 publicações (sistema não integrado ainda)');
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
 
@@ -163,12 +179,12 @@ serve(async (req) => {
         publicacoes_encontradas: publicacoesEncontradas,
         tempo_execucao_segundos: tempoExecucao,
         fontes_consultadas: fontesConsultadas,
-        erros: erros.length > 0 ? erros.join('; ') : null
+        erros: 'Sistema ainda não integrado aos diários oficiais reais'
       })
       .eq('id', logEntry.id);
 
     if (updateError) {
-      console.error('Error updating log:', updateError);
+      console.error('❌ Erro ao atualizar log:', updateError);
     }
 
     const response = {
@@ -176,13 +192,18 @@ serve(async (req) => {
       publicacoes_encontradas: publicacoesEncontradas,
       fontes_consultadas: fontesConsultadas.length,
       tempo_execucao: tempoExecucao,
-      erros: erros.length > 0 ? erros.join('; ') : null,
-      message: publicacoesEncontradas > 0 
-        ? `Encontradas ${publicacoesEncontradas} publicações relevantes`
-        : 'Nenhuma publicação foi encontrada nos diários oficiais consultados para os nomes e estados especificados'
+      erros: 'Sistema ainda não integrado aos diários oficiais reais',
+      message: `❌ SISTEMA NÃO INTEGRADO: A busca foi simulada em ${fontesConsultadas.length} fontes, mas o sistema ainda não está conectado aos diários oficiais reais. Para funcionar de verdade, seria necessário implementar web scraping ou APIs dos diários de cada estado.`,
+      status_integracao: 'NAO_INTEGRADO',
+      proximos_passos: [
+        'Implementar web scraping dos sites dos diários oficiais',
+        'Configurar processamento de PDFs dos diários',
+        'Desenvolver parser para extrair nomes e números OAB',
+        'Criar sistema de cache para otimizar buscas'
+      ]
     };
 
-    console.log('Monitoramento concluído:', response);
+    console.log('✅ Resposta final:', response);
 
     return new Response(
       JSON.stringify(response),
@@ -190,13 +211,14 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in monitorar-publicacoes:', error);
+    console.error('💥 Erro crítico no monitoramento:', error);
     
     return new Response(
       JSON.stringify({ 
         error: 'Internal server error', 
         message: error.message,
-        success: false
+        success: false,
+        status_integracao: 'ERRO'
       }),
       { 
         status: 500, 
