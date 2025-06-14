@@ -176,15 +176,18 @@ const ProcessesPageContent = () => {
 
   if (isLoadingCombined && !processes.length && !isRefreshingManually) {
     return (
-      <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
-        <Spinner size="lg" />
-      </div>
+      <AdminLayout>
+        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+          <Spinner size="lg" />
+          <span className="text-gray-500 mt-3">Carregando processos...</span>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
+    <AdminLayout>
+      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
         <SharedPageHeader
             title="Meus Processos"
             description="Gerencie e acompanhe todos os seus processos jurídicos."
@@ -250,7 +253,7 @@ const ProcessesPageContent = () => {
           isLoadingClientes={isLoadingClients}
         />
       </div>
-    </div>
+    </AdminLayout>
   );
 };
 
