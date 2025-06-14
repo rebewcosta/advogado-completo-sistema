@@ -48,8 +48,12 @@ export const useMonitoramentoManual = (
 
       console.log('Dados da requisição para busca real:', requestBody);
 
+      // Chamar a edge function com tratamento de erro melhorado
       const { data, error } = await supabase.functions.invoke('monitorar-publicacoes', {
-        body: requestBody
+        body: requestBody,
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       console.log('Resposta da busca real:', { data, error });
@@ -64,6 +68,10 @@ export const useMonitoramentoManual = (
           errorMessage = "Limite de execuções atingido. Aguarde alguns minutos antes de tentar novamente.";
         } else if (error.message?.includes('timeout')) {
           errorMessage = "Timeout na execução. Tente novamente em alguns minutos.";
+        } else if (error.message?.includes('CORS')) {
+          errorMessage = "Erro de configuração do servidor. Tente novamente.";
+        } else if (error.message?.includes('Failed to send a request')) {
+          errorMessage = "Erro de conexão com o servidor. Verifique sua internet e tente novamente.";
         } else if (error.message) {
           errorMessage = error.message;
         }
