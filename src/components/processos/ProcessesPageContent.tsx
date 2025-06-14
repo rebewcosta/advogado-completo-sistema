@@ -204,6 +204,8 @@ const ProcessesPageContent = () => {
                 searchTerm={searchTerm}
                 onSearchChange={handleSearchChange}
                 onNewProcess={handleOpenNewProcessForm}
+                onRefresh={handleManualRefresh}
+                isRefreshing={isRefreshingManually}
                 />
             </CardContent>
         </Card>
