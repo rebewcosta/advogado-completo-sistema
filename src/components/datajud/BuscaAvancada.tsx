@@ -13,13 +13,13 @@ import ResultadosLista from './ResultadosLista';
 const BuscaAvancada: React.FC = () => {
   const [tipoBusca, setTipoBusca] = useState('nome');
   const [termoBusca, setTermoBusca] = useState('');
-  const [tribunal, setTribunal] = useState('');
+  const [tribunal, setTribunal] = useState('todos');
   const [isLoading, setIsLoading] = useState(false);
   const [resultados, setResultados] = useState<any[]>([]);
   const { toast } = useToast();
 
   const tribunais = [
-    { value: '', label: 'Todos os tribunais' },
+    { value: 'todos', label: 'Todos os tribunais' },
     { value: 'TJSP', label: 'TJ-SP - São Paulo' },
     { value: 'TJRJ', label: 'TJ-RJ - Rio de Janeiro' },
     { value: 'TJMG', label: 'TJ-MG - Minas Gerais' },
@@ -44,7 +44,7 @@ const BuscaAvancada: React.FC = () => {
         body: {
           tipo: tipoBusca,
           termo: termoBusca.trim(),
-          tribunal: tribunal || undefined
+          tribunal: tribunal === 'todos' ? undefined : tribunal
         }
       });
 

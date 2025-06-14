@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Search, Clock, Star, StarOff, FileDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import ProcessoDetalhes from './ProcessoDetalhes';
 
 const ConsultaProcessual: React.FC = () => {
@@ -15,6 +16,7 @@ const ConsultaProcessual: React.FC = () => {
   const [resultado, setResultado] = useState<any>(null);
   const [isFavorito, setIsFavorito] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleConsulta = async () => {
     if (!numeroProcesso.trim()) {
@@ -41,13 +43,16 @@ const ConsultaProcessual: React.FC = () => {
         setResultado(data.data);
         
         // Verificar se já é favorito
-        const { data: favorito } = await supabase
-          .from('processos_favoritos')
-          .select('id')
-          .eq('numero_processo', numeroProcesso.trim())
-          .single();
-        
-        setIsFavorito(!!favorito);
+        if (user) {
+          const { data: favorito } = await supabase
+            .from('processos_favoritos')
+            .select('id')
+            .eq('numero_processo', numeroProcesso.trim())
+            .eq('user_id', user.id)
+            .single();
+          
+          setIsFavorito(!!favorito);
+        }
 
         toast({
           title: "Consulta realizada",
@@ -69,14 +74,15 @@ const ConsultaProcessual: React.FC = () => {
   };
 
   const toggleFavorito = async () => {
-    if (!resultado) return;
+    if (!resultado || !user) return;
 
     try {
       if (isFavorito) {
         await supabase
           .from('processos_favoritos')
           .delete()
-          .eq('numero_processo', resultado.numero_processo);
+          .eq('numero_processo', resultado.numero_processo)
+          .eq('user_id', user.id);
         
         setIsFavorito(false);
         toast({
@@ -87,6 +93,7 @@ const ConsultaProcessual: React.FC = () => {
         await supabase
           .from('processos_favoritos')
           .insert({
+            user_id: user.id,
             numero_processo: resultado.numero_processo,
             nome_processo: `${resultado.classe} - ${resultado.assunto}`,
             tribunal: resultado.tribunal,
@@ -177,6 +184,7 @@ const ConsultaProcessual: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={toggleFavorito}
+                  disabled={!user}
                 >
                   {isFavorito ? (
                     <>
