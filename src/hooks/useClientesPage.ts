@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
@@ -50,11 +51,11 @@ export const useClientesPage = () => {
 
     setIsSubmitting(true);
     try {
-      // Preparar dados para salvamento, garantindo que email sempre seja uma string
+      // Preparar dados para salvamento, garantindo que email tenha um valor válido ou seja removido
       const dataToSave = {
         ...clientData,
-        // Garantir que email seja sempre uma string válida (nunca null)
-        email: clientData.email && clientData.email.trim() ? clientData.email.trim() : '',
+        // Se email estiver vazio, não enviar o campo para evitar conflito de unique constraint
+        ...(clientData.email && clientData.email.trim() ? { email: clientData.email.trim() } : {}),
         telefone: clientData.telefone || '',
         endereco: clientData.endereco || '',
         cidade: clientData.cidade || '',
