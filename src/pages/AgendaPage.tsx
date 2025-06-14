@@ -93,7 +93,7 @@ const AgendaPage = () => {
   if (isLoading && events.length === 0) {
     return (
       <AdminLayout>
-        <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full flex flex-col justify-center items-center">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center items-center">
           <Spinner size="lg" />
           <span className="text-gray-500 mt-3">Carregando agenda...</span>
         </div>
@@ -103,47 +103,49 @@ const AgendaPage = () => {
 
   return (
     <AdminLayout>
-      <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-        <SharedPageHeader
-          title="Agenda de Compromissos"
-          description="Organize seus prazos, audiências e reuniões."
-          pageIcon={<Calendar />}
-          actionButtonText="Novo Evento"
-          onActionButtonClick={() => {
-            setSelectedEvent(null);
-            setIsFormOpen(true);
-          }}
-          isLoading={isLoading || isRefreshing}
-        />
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="p-4 md:p-6 lg:p-8">
+          <SharedPageHeader
+            title="Agenda de Compromissos"
+            description="Organize seus prazos, audiências e reuniões."
+            pageIcon={<Calendar />}
+            actionButtonText="Novo Evento"
+            onActionButtonClick={() => {
+              setSelectedEvent(null);
+              setIsFormOpen(true);
+            }}
+            isLoading={isLoading || isRefreshing}
+          />
 
-        <AgendaFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          onRefresh={handleRefresh}
-          isRefreshing={isRefreshing}
-        />
+          <AgendaFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            onRefresh={handleRefresh}
+            isRefreshing={isRefreshing}
+          />
 
-        <AgendaEventTabs
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          filteredEvents={filteredEvents}
-          selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
-          onEditEvent={handleEditEvent}
-          onViewEvent={handleViewEvent}
-          onDeleteEvent={handleDeleteEvent}
-          isLoading={isLoading}
-          isRefreshing={isRefreshing}
-        />
+          <AgendaEventTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            filteredEvents={filteredEvents}
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            onEditEvent={handleEditEvent}
+            onViewEvent={handleViewEvent}
+            onDeleteEvent={handleDeleteEvent}
+            isLoading={isLoading}
+            isRefreshing={isRefreshing}
+          />
 
-        <AgendaEventForm
-          isOpen={isFormOpen}
-          onOpenChange={setIsFormOpen}
-          onSave={handleSaveEventWrapper}
-          initialEventData={convertEventForForm(selectedEvent)}
-          clientes={[]}
-          processos={[]}
-        />
+          <AgendaEventForm
+            isOpen={isFormOpen}
+            onOpenChange={setIsFormOpen}
+            onSave={handleSaveEventWrapper}
+            initialEventData={convertEventForForm(selectedEvent)}
+            clientes={[]}
+            processos={[]}
+          />
+        </div>
       </div>
     </AdminLayout>
   );

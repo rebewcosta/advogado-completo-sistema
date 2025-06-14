@@ -17,12 +17,12 @@ import { Spinner } from '@/components/ui/spinner';
 import { cn } from "@/lib/utils";
 import { format, parseISO, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { AgendaEvent } from '@/types/agenda'; // Updated import
+import type { AgendaEvent } from '@/types/agenda';
 
 interface AgendaEventTableProps {
-  events: AgendaEvent[]; // Updated type
-  onEdit: (event: AgendaEvent) => void; // Updated type
-  onView: (event: AgendaEvent) => void; // Updated type
+  events: AgendaEvent[];
+  onEdit: (event: AgendaEvent) => void;
+  onView: (event: AgendaEvent) => void;
   onDelete: (eventId: string) => void;
   isLoading: boolean;
   selectedDate?: Date;
@@ -92,21 +92,21 @@ const AgendaEventTable: React.FC<AgendaEventTableProps> = ({
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg border border-gray-200/80 shadow-md bg-white">
+    <div className="overflow-x-auto rounded-xl border-0 shadow-2xl bg-white/80 backdrop-blur-sm">
       <Table className="min-w-full">
-        <TableHeader className="bg-lawyer-dark">
-          <TableRow className="hover:bg-lawyer-dark/90">
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-[90px]">Data</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider w-[80px]">Hora</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Título</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell">Tipo</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">Associado a</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Prioridade</TableHead>
-            <TableHead className="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Status</TableHead>
-            <TableHead className="px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wider w-[80px]">Ações</TableHead>
+        <TableHeader className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600">
+          <TableRow className="hover:bg-gradient-to-r hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-300">
+            <TableHead className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-[90px]">Data</TableHead>
+            <TableHead className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider w-[80px]">Hora</TableHead>
+            <TableHead className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Título</TableHead>
+            <TableHead className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell">Tipo</TableHead>
+            <TableHead className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">Associado a</TableHead>
+            <TableHead className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Prioridade</TableHead>
+            <TableHead className="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">Status</TableHead>
+            <TableHead className="px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider w-[80px]">Ações</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody className="divide-y divide-gray-200/70">
+        <TableBody className="divide-y divide-gray-200/70 bg-white/50 backdrop-blur-sm">
           {events.length > 0 ? (
             events.map((event) => {
               const statusStyle = getStatusBadgeClass(event.status_evento);
@@ -115,30 +115,30 @@ const AgendaEventTable: React.FC<AgendaEventTableProps> = ({
                 <TableRow 
                   key={event.id} 
                   className={cn(
-                    "transition-colors text-left",
+                    "transition-all duration-300 text-left hover:bg-blue-50/80",
                     isTodayEvent 
-                      ? "bg-blue-50/80 hover:bg-blue-100/60 border-l-4 border-l-blue-500" 
+                      ? "bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-l-blue-500" 
                       : "hover:bg-gray-50/60"
                   )}
                 >
                   <TableCell className={cn(
-                    "px-4 py-3 whitespace-nowrap text-sm font-medium",
+                    "px-6 py-4 whitespace-nowrap text-sm font-medium",
                     isTodayEvent ? "text-blue-800 font-bold" : "text-gray-800"
                   )}>
                     {formatDate(event.data_hora_inicio)}
                     {isTodayEvent && <div className="text-xs text-blue-600 font-normal mt-0.5">Hoje</div>}
                   </TableCell>
                   <TableCell className={cn(
-                    "px-4 py-3 whitespace-nowrap text-sm font-medium",
+                    "px-6 py-4 whitespace-nowrap text-sm font-medium",
                     isTodayEvent ? "text-blue-800" : "text-gray-800"
                   )}>
                     {formatTime(event.data_hora_inicio)}
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap">
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
                     <div 
                       className={cn(
-                        "text-sm font-medium hover:underline cursor-pointer",
-                        isTodayEvent ? "text-blue-700" : "text-lawyer-primary"
+                        "text-sm font-medium hover:underline cursor-pointer transition-all duration-200",
+                        isTodayEvent ? "text-blue-700" : "text-indigo-600 hover:text-indigo-800"
                       )}
                       onClick={() => onView(event)}
                     >
@@ -146,40 +146,40 @@ const AgendaEventTable: React.FC<AgendaEventTableProps> = ({
                     </div>
                     {event.local_evento && <div className="text-xs text-gray-500 mt-0.5 flex items-center"><MapPin size={10} className="mr-1 flex-shrink-0" />{event.local_evento}</div>}
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell">{event.tipo_evento || '-'}</TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-xs text-gray-600 hidden lg:table-cell">
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 hidden md:table-cell">{event.tipo_evento || '-'}</TableCell>
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-xs text-gray-600 hidden lg:table-cell">
                     {event.clientes?.nome ? <span className="flex items-center"><User size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {event.clientes.nome}</span> : 
                      event.processos?.numero_processo ? <span className="flex items-center"><FileText size={12} className="mr-1 text-gray-400 flex-shrink-0"/> {event.processos.numero_processo}</span> : '-'}
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap">
-                     <Badge variant="outline" className={cn("text-xs py-0.5 px-2 font-medium rounded-full w-max capitalize", getPriorityBadgeClass(event.prioridade))}>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
+                     <Badge variant="outline" className={cn("text-xs py-1 px-3 font-medium rounded-full w-max capitalize shadow-sm", getPriorityBadgeClass(event.prioridade))}>
                       {event.prioridade || 'N/D'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap">
-                    <Badge variant="outline" className={cn("text-xs py-0.5 px-2 font-medium rounded-full w-max", statusStyle.bgColor, statusStyle.textColor, `border-transparent`)}>
+                  <TableCell className="px-6 py-4 whitespace-nowrap">
+                    <Badge variant="outline" className={cn("text-xs py-1 px-3 font-medium rounded-full w-max shadow-sm", statusStyle.bgColor, statusStyle.textColor, `border-transparent`)}>
                         <Circle className={cn("mr-1 h-1.5 w-1.5 fill-current", statusStyle.dotColor, `text-[${statusStyle.dotColor}]`)} />
                         {statusStyle.label}
                     </Badge>
                   </TableCell>
-                  <TableCell className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
+                  <TableCell className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md">
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-blue-100/50 rounded-md transition-all duration-200">
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40 shadow-lg">
-                        <DropdownMenuItem onClick={() => onView(event)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100 text-left">
-                          <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Detalhes
+                      <DropdownMenuContent align="end" className="w-40 shadow-lg bg-white/95 backdrop-blur-sm border-0">
+                        <DropdownMenuItem onClick={() => onView(event)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 text-left transition-all duration-200">
+                          <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-indigo-600" /> Detalhes
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(event)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-gray-100 text-left">
-                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-lawyer-primary" /> Editar
+                        <DropdownMenuItem onClick={() => onEdit(event)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 text-left transition-all duration-200">
+                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-indigo-600" /> Editar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator className="bg-gray-200"/>
                         <DropdownMenuItem
                           onClick={() => onDelete(event.id)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 text-left"
+                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 text-left transition-all duration-200"
                         >
                           <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
                         </DropdownMenuItem>

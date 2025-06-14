@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AgendaCalendarView from '@/components/agenda/AgendaCalendarView';
+import ModernCalendarView from '@/components/agenda/ModernCalendarView';
 import AgendaEventTable from '@/components/agenda/AgendaEventTable';
 import AgendaEventListAsCards from '@/components/agenda/AgendaEventListAsCards';
 import type { AgendaEvent } from '@/types/agenda';
@@ -32,13 +32,23 @@ const AgendaEventTabs: React.FC<AgendaEventTabsProps> = ({
   isRefreshing
 }) => {
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-6">
-      <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="lista">Lista</TabsTrigger>
-        <TabsTrigger value="calendario">Calendário</TabsTrigger>
+    <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-8">
+      <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+        <TabsTrigger 
+          value="lista" 
+          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300"
+        >
+          Lista
+        </TabsTrigger>
+        <TabsTrigger 
+          value="calendario"
+          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300"
+        >
+          Calendário
+        </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="lista">
+      <TabsContent value="lista" className="animate-fade-in">
         <div className="hidden md:block">
           <AgendaEventTable
             events={filteredEvents}
@@ -59,8 +69,8 @@ const AgendaEventTabs: React.FC<AgendaEventTabsProps> = ({
         </div>
       </TabsContent>
 
-      <TabsContent value="calendario">
-        <AgendaCalendarView
+      <TabsContent value="calendario" className="animate-fade-in">
+        <ModernCalendarView
           events={filteredEvents}
           selectedDate={selectedDate}
           onDateSelect={onDateSelect}
