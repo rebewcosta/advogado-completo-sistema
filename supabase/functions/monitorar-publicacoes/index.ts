@@ -68,10 +68,11 @@ class DiarioScraper {
 }
 
 serve(async (req) => {
-  console.log(`📝 Nova requisição: ${req.method} ${req.url}`);
+  console.log(`📝 Nova requisição recebida: ${req.method} ${req.url}`);
   
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('🔄 Processando requisição OPTIONS (CORS preflight)');
     return new Response(null, { 
       headers: corsHeaders,
       status: 200 
@@ -86,25 +87,47 @@ serve(async (req) => {
 
     const startTime = Date.now();
     
-    // Parse request body
+    // Parse request body com tratamento robusto de erros
     let body;
+    let requestText = '';
+    
     try {
-      const requestText = await req.text();
-      console.log('📦 Request body recebido:', requestText);
+      console.log('📦 Lendo corpo da requisição...');
+      requestText = await req.text();
+      console.log('📄 Texto bruto recebido:', requestText);
       
       if (!requestText || requestText.trim() === '') {
-        throw new Error('Body da requisição está vazio');
+        console.error('❌ Corpo da requisição está vazio');
+        return new Response(
+          JSON.stringify({ 
+            success: false,
+            error: 'Corpo da requisição está vazio. Dados necessários: user_id, nomes',
+            message: 'Configure os dados de monitoramento'
+          }),
+          { 
+            status: 200,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
       }
       
+      console.log('🔍 Fazendo parse do JSON...');
       body = JSON.parse(requestText);
-      console.log('✅ Body parseado com sucesso:', body);
+      console.log('✅ JSON parseado com sucesso:', body);
       
     } catch (parseError) {
-      console.error('❌ Erro ao fazer parse do JSON:', parseError);
+      console.error('❌ Erro crítico no parse do JSON:', {
+        error: parseError.message,
+        requestText: requestText.substring(0, 200) + '...',
+        textLength: requestText.length
+      });
+      
       return new Response(
         JSON.stringify({ 
-          error: 'Formato JSON inválido no body da requisição',
-          success: false 
+          success: false,
+          error: 'Formato JSON inválido. Verifique os dados enviados.',
+          message: 'Erro no formato dos dados. Tente configurar novamente.',
+          details: `Erro: ${parseError.message}`
         }),
         { 
           status: 200,
@@ -116,13 +139,16 @@ serve(async (req) => {
     console.log('🔍 MONITORAMENTO INICIADO');
     console.log('👤 Usuário:', body?.user_id);
     console.log('📝 Nomes para buscar:', body?.nomes);
+    console.log('🌍 Estados específicos:', body?.estados);
     
-    // Validação básica
-    if (!body?.user_id) {
+    // Validação rigorosa dos dados
+    if (!body?.user_id || typeof body.user_id !== 'string') {
+      console.error('❌ user_id inválido:', body?.user_id);
       return new Response(
         JSON.stringify({ 
-          error: 'user_id é obrigatório',
-          success: false 
+          success: false,
+          error: 'ID do usuário é obrigatório e deve ser uma string válida',
+          message: 'Erro de autenticação. Faça login novamente.'
         }),
         { 
           status: 200,
@@ -131,11 +157,13 @@ serve(async (req) => {
       );
     }
 
-    if (!body?.nomes || !Array.isArray(body.nomes) || body.nomes.length === 0) {
+    if (!Array.isArray(body?.nomes) || body.nomes.length === 0) {
+      console.error('❌ Array de nomes inválido:', body?.nomes);
       return new Response(
         JSON.stringify({ 
-          error: 'Configure pelo menos um nome válido para monitoramento',
-          success: false 
+          success: false,
+          error: 'Lista de nomes é obrigatória e deve conter pelo menos um nome',
+          message: 'Configure pelo menos um nome para monitoramento'
         }),
         { 
           status: 200,
@@ -144,16 +172,18 @@ serve(async (req) => {
       );
     }
 
-    // Sanitizar dados
-    const nomesValidos = body.nomes.filter((nome: any) => 
-      typeof nome === 'string' && nome.trim().length > 0
-    );
+    // Sanitizar e validar nomes
+    const nomesValidos = body.nomes
+      .filter((nome: any) => typeof nome === 'string' && nome.trim().length > 0)
+      .map((nome: string) => nome.trim());
 
     if (nomesValidos.length === 0) {
+      console.error('❌ Nenhum nome válido encontrado após sanitização');
       return new Response(
         JSON.stringify({ 
-          error: 'Configure pelo menos um nome válido para monitoramento',
-          success: false 
+          success: false,
+          error: 'Nenhum nome válido encontrado',
+          message: 'Configure pelo menos um nome válido para monitoramento'
         }),
         { 
           status: 200,
@@ -162,13 +192,16 @@ serve(async (req) => {
       );
     }
 
+    // Sanitizar estados (opcional)
     const estadosValidos = Array.isArray(body.estados)
-      ? body.estados.filter((estado: any) => typeof estado === 'string' && estado.trim().length > 0)
+      ? body.estados
+          .filter((estado: any) => typeof estado === 'string' && estado.trim().length > 0)
+          .map((estado: string) => estado.trim().toUpperCase())
       : [];
 
-    console.log('🚀 INICIANDO BUSCA...');
-    console.log('📋 Nomes:', nomesValidos);
-    console.log('🌍 Estados:', estadosValidos.length > 0 ? estadosValidos : 'PRINCIPAIS');
+    console.log('🚀 DADOS VALIDADOS - INICIANDO BUSCA...');
+    console.log('📋 Nomes válidos:', nomesValidos);
+    console.log('🌍 Estados válidos:', estadosValidos.length > 0 ? estadosValidos : 'PRINCIPAIS ESTADOS');
     
     let publicacoesEncontradas = 0;
 
@@ -183,9 +216,9 @@ serve(async (req) => {
         estadosValidos
       );
 
-      console.log(`📄 Encontradas: ${publicacoesReais.length} publicações`);
+      console.log(`📄 Publicações encontradas: ${publicacoesReais.length}`);
 
-      // Salvar no banco
+      // Salvar no banco se houver publicações
       if (publicacoesReais.length > 0) {
         const publicacoesParaSalvar = publicacoesReais.map(pub => ({
           ...pub,
@@ -195,12 +228,13 @@ serve(async (req) => {
           importante: false
         }));
 
-        const { error } = await supabase
+        console.log('💾 Salvando publicações no banco...');
+        const { error: saveError } = await supabase
           .from('publicacoes_diario_oficial')
           .insert(publicacoesParaSalvar);
 
-        if (error) {
-          console.error('Erro ao salvar publicações:', error);
+        if (saveError) {
+          console.error('❌ Erro ao salvar publicações:', saveError);
         } else {
           console.log(`✅ ${publicacoesReais.length} publicações salvas com sucesso`);
         }
@@ -208,16 +242,17 @@ serve(async (req) => {
 
       publicacoesEncontradas = publicacoesReais.length;
 
-    } catch (error: any) {
-      console.error('❌ Erro durante busca:', error);
+    } catch (searchError: any) {
+      console.error('❌ Erro durante busca:', searchError);
+      // Continuar execução mesmo com erro na busca
     }
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
     const fontesConsultadas = estadosValidos.length > 0 ? estadosValidos : ['SP', 'RJ', 'MG', 'CE', 'PR'];
 
     const message = publicacoesEncontradas > 0 
-      ? `✅ Busca concluída: ${publicacoesEncontradas} publicações encontradas`
-      : `ℹ️ Nenhuma publicação encontrada para os critérios especificados`;
+      ? `✅ Busca concluída com sucesso: ${publicacoesEncontradas} publicações encontradas`
+      : `ℹ️ Busca concluída: Nenhuma publicação encontrada para os critérios especificados`;
 
     const response = {
       success: true,
@@ -232,7 +267,7 @@ serve(async (req) => {
       }
     };
 
-    console.log('✅ Resposta final:', response);
+    console.log('✅ Resposta de sucesso preparada:', response);
 
     return new Response(
       JSON.stringify(response),
@@ -243,13 +278,19 @@ serve(async (req) => {
     );
 
   } catch (error: any) {
-    console.error('💥 Erro crítico:', error);
+    console.error('💥 Erro crítico não tratado:', {
+      message: error.message,
+      stack: error.stack,
+      error: error
+    });
+    
     return new Response(
       JSON.stringify({ 
-        error: 'Erro interno do sistema', 
-        message: 'Tente novamente em alguns minutos',
         success: false,
-        status_integracao: 'ERRO'
+        error: 'Erro interno do sistema', 
+        message: 'Ocorreu um erro inesperado. Tente novamente em alguns minutos.',
+        status_integracao: 'ERRO',
+        details: error.message
       }),
       { 
         status: 200,
