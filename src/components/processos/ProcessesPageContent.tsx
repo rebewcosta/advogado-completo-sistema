@@ -1,3 +1,4 @@
+
 // src/components/processos/ProcessesPageContent.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
@@ -197,7 +198,7 @@ const ProcessesPageContent = () => {
             isLoading={isLoadingCombined}
         />
 
-        <Card className="mb-6 shadow-md rounded-lg border border-gray-200/80">
+        <Card className="mb-6 shadow-md rounded-lg border border-slate-700 bg-slate-800">
             <CardContent className="p-4"> 
                 <ProcessSearchActionBar
                 searchTerm={searchTerm}
