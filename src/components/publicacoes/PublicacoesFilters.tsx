@@ -25,49 +25,46 @@ const PublicacoesFilters: React.FC<PublicacoesFiltersProps> = ({
   isLoading = false
 }) => {
   return (
-    <div className="mb-8 animate-slide-in">
-      <div className="bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 rounded-2xl p-1 shadow-2xl">
-        <div className="bg-white/95 backdrop-blur-lg rounded-xl p-4">
-          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-            <div className="relative flex-grow">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input
-                type="text"
-                placeholder="Buscar por nome do advogado, número do processo..."
-                value={searchTerm}
-                onChange={(e) => onSearchChange(e.target.value)}
-                className="pl-12 pr-4 py-3 text-base h-12 w-full bg-transparent border-0 text-gray-700 placeholder:text-gray-400 focus:outline-none focus:ring-0 rounded-lg"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-                <SelectTrigger className="w-48 h-12 border-0 bg-white/80 rounded-xl">
-                  <SelectValue placeholder="Filtrar por status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todas">Todas</SelectItem>
-                  <SelectItem value="nao_lidas">Não lidas</SelectItem>
-                  <SelectItem value="importantes">Importantes</SelectItem>
-                  <SelectItem value="lidas">Lidas</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button
-                onClick={onRefresh}
-                disabled={isLoading}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 h-12 px-6"
-              >
-                <RefreshCw className={`h-5 w-5 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                Atualizar Lista
-              </Button>
-              <Button
-                onClick={onOpenConfig}
-                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0 rounded-xl shadow-md transition-all duration-200 hover:shadow-lg hover:scale-105 h-12 px-6"
-              >
-                <Settings className="h-5 w-5 mr-2" />
-                Configurar
-              </Button>
-            </div>
-          </div>
+    <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white p-6 rounded-xl shadow-xl mb-8 animate-fade-in">
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white/70 h-5 w-5" />
+          <Input
+            type="text"
+            placeholder="Buscar por nome do advogado, número do processo..."
+            value={searchTerm}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-12 bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20 focus:border-white/40 h-12 text-base backdrop-blur-sm"
+          />
+        </div>
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+            <SelectTrigger className="w-48 h-12 bg-white/10 border-white/20 text-white hover:bg-white/20 rounded-lg backdrop-blur-sm">
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas</SelectItem>
+              <SelectItem value="nao_lidas">Não lidas</SelectItem>
+              <SelectItem value="importantes">Importantes</SelectItem>
+              <SelectItem value="lidas">Lidas</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            onClick={onRefresh}
+            variant="outline"
+            disabled={isLoading}
+            className="w-full sm:w-auto h-12 px-6 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            {isLoading ? 'Atualizando...' : 'Atualizar Lista'}
+          </Button>
+          <Button
+            onClick={onOpenConfig}
+            className="w-full sm:w-auto h-12 px-6 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+          >
+            <Settings className="h-4 w-4 mr-2" />
+            Configurar
+          </Button>
         </div>
       </div>
     </div>
