@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HelpCircle } from 'lucide-react';
 
 const estados = [
   { uf: 'AC', nome: 'Acre' },
@@ -80,129 +82,157 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Configurações de Monitoramento</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-6">
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="monitoramento-ativo"
-              checked={monitoramentoAtivo}
-              onCheckedChange={setMonitoramentoAtivo}
-            />
-            <Label htmlFor="monitoramento-ativo">Monitoramento ativo</Label>
-          </div>
-          
-          <div>
-            <Label className="text-sm font-medium">Nomes para monitoramento</Label>
-            <div className="space-y-2 mt-2">
-              {nomesMonitoramento.map((nome, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    value={nome}
-                    onChange={(e) => {
-                      const novosNomes = [...nomesMonitoramento];
-                      novosNomes[index] = e.target.value;
-                      setNomesMonitoramento(novosNomes);
-                    }}
-                    placeholder="Nome do advogado"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRemoveNome(index)}
-                    disabled={nomesMonitoramento.length <= 1}
-                  >
-                    Remover
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setNomesMonitoramento([...nomesMonitoramento, ''])}
-              >
-                Adicionar Nome
+    <TooltipProvider>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Configurações de Monitoramento</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="monitoramento-ativo"
+                checked={monitoramentoAtivo}
+                onCheckedChange={setMonitoramentoAtivo}
+              />
+              <Label htmlFor="monitoramento-ativo">Monitoramento ativo</Label>
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium">Nomes para monitoramento</Label>
+              <div className="space-y-2 mt-2">
+                {nomesMonitoramento.map((nome, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      value={nome}
+                      onChange={(e) => {
+                        const novosNomes = [...nomesMonitoramento];
+                        novosNomes[index] = e.target.value;
+                        setNomesMonitoramento(novosNomes);
+                      }}
+                      placeholder="Nome do advogado"
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemoveNome(index)}
+                        disabled={nomesMonitoramento.length <= 1}
+                      >
+                        Remover
+                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Para remover um nome, você precisa ter pelo menos dois nomes cadastrados. 
+                            Adicione outro nome primeiro para poder remover este.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setNomesMonitoramento([...nomesMonitoramento, ''])}
+                >
+                  Adicionar Nome
+                </Button>
+              </div>
+            </div>
+            
+            <div>
+              <Label className="text-sm font-medium">Estados para monitorar (vazio = todos)</Label>
+              <div className="grid grid-cols-3 gap-2 mt-2 max-h-32 overflow-y-auto">
+                {estados.map(estado => (
+                  <div key={estado.uf} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id={estado.uf}
+                      checked={estadosMonitoramento.includes(estado.uf)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setEstadosMonitoramento([...estadosMonitoramento, estado.uf]);
+                        } else {
+                          setEstadosMonitoramento(estadosMonitoramento.filter(uf => uf !== estado.uf));
+                        }
+                      }}
+                    />
+                    <Label htmlFor={estado.uf} className="text-sm">{estado.uf}</Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium">Palavras-chave adicionais</Label>
+              <div className="space-y-2 mt-2">
+                {palavrasChave.map((palavra, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      value={palavra}
+                      onChange={(e) => {
+                        const novasPalavras = [...palavrasChave];
+                        novasPalavras[index] = e.target.value;
+                        setPalavrasChave(novasPalavras);
+                      }}
+                      placeholder="Palavra-chave"
+                      className="flex-1"
+                    />
+                    <div className="flex items-center gap-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleRemovePalavra(index)}
+                        disabled={palavrasChave.length <= 1}
+                      >
+                        Remover
+                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            Para remover uma palavra-chave, você precisa ter pelo menos duas palavras cadastradas. 
+                            Adicione outra palavra primeiro para poder remover esta.
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPalavrasChave([...palavrasChave, ''])}
+                >
+                  Adicionar Palavra
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={onSave}>
+                Salvar Configurações
               </Button>
             </div>
           </div>
-          
-          <div>
-            <Label className="text-sm font-medium">Estados para monitorar (vazio = todos)</Label>
-            <div className="grid grid-cols-3 gap-2 mt-2 max-h-32 overflow-y-auto">
-              {estados.map(estado => (
-                <div key={estado.uf} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={estado.uf}
-                    checked={estadosMonitoramento.includes(estado.uf)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setEstadosMonitoramento([...estadosMonitoramento, estado.uf]);
-                      } else {
-                        setEstadosMonitoramento(estadosMonitoramento.filter(uf => uf !== estado.uf));
-                      }
-                    }}
-                  />
-                  <Label htmlFor={estado.uf} className="text-sm">{estado.uf}</Label>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label className="text-sm font-medium">Palavras-chave adicionais</Label>
-            <div className="space-y-2 mt-2">
-              {palavrasChave.map((palavra, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    value={palavra}
-                    onChange={(e) => {
-                      const novasPalavras = [...palavrasChave];
-                      novasPalavras[index] = e.target.value;
-                      setPalavrasChave(novasPalavras);
-                    }}
-                    placeholder="Palavra-chave"
-                    className="flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleRemovePalavra(index)}
-                    disabled={palavrasChave.length <= 1}
-                  >
-                    Remover
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPalavrasChave([...palavrasChave, ''])}
-              >
-                Adicionar Palavra
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={onSave}>
-              Salvar Configurações
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 };
 

@@ -189,11 +189,21 @@ const PublicacoesPage: React.FC = () => {
         monitoramento_ativo: monitoramentoAtivo
       };
 
-      const { error } = await supabase
-        .from('configuracoes_monitoramento')
-        .upsert(configData);
+      // Se já existe configuração, faz update. Senão, faz insert
+      if (configuracao) {
+        const { error } = await supabase
+          .from('configuracoes_monitoramento')
+          .update(configData)
+          .eq('id', configuracao.id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('configuracoes_monitoramento')
+          .insert(configData);
+
+        if (error) throw error;
+      }
       
       toast({
         title: "Configurações salvas",
