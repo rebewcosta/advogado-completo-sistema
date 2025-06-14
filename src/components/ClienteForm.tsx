@@ -1,9 +1,5 @@
 
 import React, { useState, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
 import ClienteFormHeader from '@/components/clientes/ClienteFormHeader';
 import ClienteFormFields from '@/components/clientes/ClienteFormFields';
 import ClienteFormActions from '@/components/clientes/ClienteFormActions';
@@ -88,19 +84,27 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
   };
 
   return (
-    <Card className="w-full max-w-4xl mx-auto border-0 shadow-none rounded-none md:rounded-lg md:shadow-md bg-lawyer-dark">
-      <ClienteFormHeader isEdit={isEdit} onCancel={onCancel} />
-      <form onSubmit={handleSubmit}>
-        <CardContent className="p-4 md:p-6 max-h-[calc(90vh-200px)] overflow-y-auto bg-lawyer-dark">
-          <ClienteFormFields
-            formData={formData}
-            handleChange={handleChange}
-            handleSelectChange={handleSelectChange}
-          />
-        </CardContent>
-        <ClienteFormActions isEdit={isEdit} onCancel={onCancel} />
-      </form>
-    </Card>
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
+      <div className="p-6">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl mb-6">
+          <ClienteFormHeader isEdit={isEdit} onCancel={onCancel} />
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+            <ClienteFormFields
+              formData={formData}
+              handleChange={handleChange}
+              handleSelectChange={handleSelectChange}
+            />
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl">
+            <ClienteFormActions isEdit={isEdit} onCancel={onCancel} />
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 
