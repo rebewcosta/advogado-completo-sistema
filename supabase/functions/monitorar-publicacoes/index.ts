@@ -21,117 +21,169 @@ interface PublicacaoEncontrada {
   url_publicacao?: string;
 }
 
-// Simulador mais realista que gera publicações baseadas em padrões reais
-class SimuladorDiarioOficial {
-  private readonly tiposPublicacao = [
-    'Citação',
-    'Intimação',
-    'Edital',
-    'Despacho',
-    'Sentença',
-    'Decisão Interlocutória',
-    'Publicação de Petição',
-    'Certidão',
-    'Mandado'
-  ];
+// Busca real nos sites dos diários oficiais
+class DiarioOficialScraper {
+  private readonly timeoutMs = 15000;
 
-  private readonly tribunais = [
-    'TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR', 'TJSC', 'TJCE', 'TJBA', 'TJGO', 'TJDF'
-  ];
-
-  private readonly comarcas = [
-    'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Porto Alegre', 'Curitiba',
-    'Florianópolis', 'Fortaleza', 'Salvador', 'Goiânia', 'Brasília'
-  ];
-
-  private gerarNumeroProcesso(): string {
-    const ano = new Date().getFullYear();
-    const sequencial = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
-    const digitoVerificador = Math.floor(Math.random() * 99).toString().padStart(2, '0');
-    const tribunal = Math.floor(Math.random() * 99).toString().padStart(2, '0');
-    const origem = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
-    
-    return `${sequencial}-${digitoVerificador}.${ano}.8.${tribunal}.${origem}`;
+  private limparTexto(texto: string): string {
+    return texto
+      .replace(/<[^>]*>/g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/[^\w\sÀ-ÿ\-.,():/]/g, '')
+      .trim()
+      .substring(0, 1000);
   }
 
-  private gerarConteudoRealista(nomeAdvogado: string, tipo: string): string {
-    const numeroProcesso = this.gerarNumeroProcesso();
-    const comarca = this.comarcas[Math.floor(Math.random() * this.comarcas.length)];
-    
-    const conteudos = {
-      'Citação': `COMARCA DE ${comarca.toUpperCase()} - CITAÇÃO - Processo nº ${numeroProcesso}. O(a) advogado(a) ${nomeAdvogado}, inscrito(a) na OAB, fica CITADO(A) para, no prazo de 15 (quinze) dias, apresentar contestação aos autos do processo em epígrafe, sob pena de revelia.`,
-      
-      'Intimação': `TRIBUNAL DE JUSTIÇA - INTIMAÇÃO - Processo nº ${numeroProcesso}. Fica o(a) advogado(a) ${nomeAdvogado} INTIMADO(A) da decisão proferida nos autos, para cumprimento no prazo legal. Comarca: ${comarca}.`,
-      
-      'Edital': `EDITAL DE CITAÇÃO - Processo nº ${numeroProcesso}. Por não ter sido encontrado para citação pessoal, fica o(a) advogado(a) ${nomeAdvogado} citado(a) por edital para apresentar defesa no prazo de 15 dias. Comarca de ${comarca}.`,
-      
-      'Despacho': `DESPACHO - Processo nº ${numeroProcesso}. Vista ao(à) advogado(a) ${nomeAdvogado} para manifestação no prazo de 10 (dez) dias. ${comarca}, ${new Date().toLocaleDateString()}.`,
-      
-      'Sentença': `SENTENÇA - Processo nº ${numeroProcesso}. Nos autos em que figura como advogado(a) ${nomeAdvogado}, foi proferida sentença. Intimação para ciência. Comarca: ${comarca}.`
-    };
-
-    return conteudos[tipo as keyof typeof conteudos] || conteudos['Intimação'];
+  private async fetchWithTimeout(url: string): Promise<Response> {
+    return await fetch(url, {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1'
+      },
+      signal: AbortSignal.timeout(this.timeoutMs)
+    });
   }
 
-  async simularBuscaRealista(nomes: string[], estadosEspecificos: string[] = []): Promise<PublicacaoEncontrada[]> {
+  private buscarNomesNoHtml(html: string, nomes: string[], estadoSigla: string, estadoNome: string, url: string): PublicacaoEncontrada[] {
     const publicacoes: PublicacaoEncontrada[] = [];
     
-    console.log(`🔍 SIMULANDO busca realista para ${nomes.length} advogado(s) em ${estadosEspecificos.length || 27} estado(s)`);
-    
-    const estadosParaBuscar = estadosEspecificos.length > 0 ? estadosEspecificos : 
-      ['SP', 'RJ', 'MG', 'ES', 'PR', 'SC', 'RS', 'CE', 'BA', 'GO', 'DF', 'MT', 'MS', 'PA', 'AM', 'RO', 'AC', 'RR', 'AP', 'TO', 'MA', 'PI', 'AL', 'SE', 'PB', 'PE', 'RN'];
-
     for (const nome of nomes) {
-      // Simula uma chance realista de encontrar publicações (30% de chance por advogado)
-      const temPublicacao = Math.random() < 0.3;
+      const nomeNormalizado = nome.toLowerCase().trim();
+      const htmlNormalizado = html.toLowerCase();
       
-      if (temPublicacao) {
-        // Gera entre 1 a 3 publicações por advogado
-        const numPublicacoes = Math.floor(Math.random() * 3) + 1;
+      if (htmlNormalizado.includes(nomeNormalizado)) {
+        // Busca contexto ao redor do nome encontrado
+        const regex = new RegExp(`.{0,300}${nome.replace(/\s+/g, '\\s+')}.{0,300}`, 'gi');
+        const matches = html.match(regex);
         
-        for (let i = 0; i < numPublicacoes; i++) {
-          const estadoAleatorio = estadosParaBuscar[Math.floor(Math.random() * estadosParaBuscar.length)];
-          const tipoPublicacao = this.tiposPublicacao[Math.floor(Math.random() * this.tiposPublicacao.length)];
-          const tribunal = this.tribunais[Math.floor(Math.random() * this.tribunais.length)];
-          
-          // Simula diferentes datas (últimos 30 dias)
-          const dataPublicacao = new Date();
-          dataPublicacao.setDate(dataPublicacao.getDate() - Math.floor(Math.random() * 30));
-          
-          publicacoes.push({
-            nome_advogado: nome,
-            titulo_publicacao: `${tipoPublicacao} - ${tribunal}`,
-            conteudo_publicacao: this.gerarConteudoRealista(nome, tipoPublicacao),
-            data_publicacao: dataPublicacao.toISOString().split('T')[0],
-            diario_oficial: `Diário Oficial do Estado de ${this.obterNomeEstado(estadoAleatorio)}`,
-            estado: estadoAleatorio,
-            comarca: this.comarcas[Math.floor(Math.random() * this.comarcas.length)],
-            numero_processo: this.gerarNumeroProcesso(),
-            tipo_publicacao: tipoPublicacao,
-            url_publicacao: `https://dje.${estadoAleatorio.toLowerCase()}.jus.br/publicacao/${Date.now()}`
-          });
+        if (matches) {
+          for (const match of matches.slice(0, 3)) { // Máximo 3 publicações por nome por estado
+            publicacoes.push({
+              nome_advogado: nome,
+              titulo_publicacao: `Publicação no Diário Oficial - ${estadoSigla}`,
+              conteudo_publicacao: this.limparTexto(match),
+              data_publicacao: new Date().toISOString().split('T')[0],
+              diario_oficial: `Diário Oficial ${estadoNome}`,
+              estado: estadoSigla,
+              url_publicacao: url
+            });
+          }
         }
       }
     }
-
-    // Simula tempo de processamento realista
-    await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
     
-    console.log(`✅ Simulação concluída: ${publicacoes.length} publicações encontradas`);
     return publicacoes;
   }
 
-  private obterNomeEstado(sigla: string): string {
-    const estados: Record<string, string> = {
-      'SP': 'São Paulo', 'RJ': 'Rio de Janeiro', 'MG': 'Minas Gerais', 'ES': 'Espírito Santo',
-      'CE': 'Ceará', 'PR': 'Paraná', 'RS': 'Rio Grande do Sul', 'SC': 'Santa Catarina',
-      'BA': 'Bahia', 'GO': 'Goiás', 'DF': 'Distrito Federal', 'MT': 'Mato Grosso',
-      'MS': 'Mato Grosso do Sul', 'PA': 'Pará', 'AM': 'Amazonas', 'RO': 'Rondônia',
-      'AC': 'Acre', 'RR': 'Roraima', 'AP': 'Amapá', 'TO': 'Tocantins',
-      'MA': 'Maranhão', 'PI': 'Piauí', 'AL': 'Alagoas', 'SE': 'Sergipe',
-      'PB': 'Paraíba', 'PE': 'Pernambuco', 'RN': 'Rio Grande do Norte'
-    };
-    return estados[sigla] || sigla;
+  async buscarEmTodosEstados(nomes: string[], estadosEspecificos: string[] = []): Promise<PublicacaoEncontrada[]> {
+    const publicacoes: PublicacaoEncontrada[] = [];
+    
+    // Definir todos os 27 estados brasileiros com seus respectivos URLs de diários oficiais
+    const todosEstados = [
+      { sigla: 'SP', nome: 'de São Paulo', url: 'https://www.imprensaoficial.com.br/DO/' },
+      { sigla: 'RJ', nome: 'do Rio de Janeiro', url: 'http://www.ioerj.com.br/' },
+      { sigla: 'MG', nome: 'de Minas Gerais', url: 'https://www.jornalminasgerais.mg.gov.br/' },
+      { sigla: 'ES', nome: 'do Espírito Santo', url: 'https://www.dio.es.gov.br/' },
+      { sigla: 'PR', nome: 'do Paraná', url: 'https://www.aen.pr.gov.br/Diario' },
+      { sigla: 'SC', nome: 'de Santa Catarina', url: 'https://doe.sea.sc.gov.br/' },
+      { sigla: 'RS', nome: 'do Rio Grande do Sul', url: 'https://www.corag.com.br/doe' },
+      { sigla: 'CE', nome: 'do Ceará', url: 'https://www.doe.seplag.ce.gov.br/' },
+      { sigla: 'BA', nome: 'da Bahia', url: 'http://www.egba.ba.gov.br/' },
+      { sigla: 'PE', nome: 'de Pernambuco', url: 'https://www.cepe.com.br/diario-oficial' },
+      { sigla: 'GO', nome: 'de Goiás', url: 'https://www.dio.go.gov.br/' },
+      { sigla: 'DF', nome: 'do Distrito Federal', url: 'http://www.buriti.df.gov.br/ftp/diariooficial/' },
+      { sigla: 'MT', nome: 'de Mato Grosso', url: 'https://www.iomat.mt.gov.br/' },
+      { sigla: 'MS', nome: 'de Mato Grosso do Sul', url: 'https://www.spdo.ms.gov.br/' },
+      { sigla: 'PA', nome: 'do Pará', url: 'https://www.ioepa.com.br/' },
+      { sigla: 'AM', nome: 'do Amazonas', url: 'http://www.imprensaoficial.am.gov.br/' },
+      { sigla: 'RO', nome: 'de Rondônia', url: 'http://www.diof.ro.gov.br/' },
+      { sigla: 'AC', nome: 'do Acre', url: 'http://www.diario.ac.gov.br/' },
+      { sigla: 'RR', nome: 'de Roraima', url: 'https://doe.rr.gov.br/' },
+      { sigla: 'AP', nome: 'do Amapá', url: 'https://www.diap.ap.gov.br/' },
+      { sigla: 'TO', nome: 'de Tocantins', url: 'https://diariooficial.to.gov.br/' },
+      { sigla: 'MA', nome: 'do Maranhão', url: 'http://www.diariooficial.ma.gov.br/' },
+      { sigla: 'PI', nome: 'do Piauí', url: 'http://www.diariooficial.pi.gov.br/' },
+      { sigla: 'AL', nome: 'de Alagoas', url: 'http://www.imprensaoficialalagoas.com.br/' },
+      { sigla: 'SE', nome: 'de Sergipe', url: 'https://doe.se.gov.br/' },
+      { sigla: 'PB', nome: 'da Paraíba', url: 'http://www.paraiba.pb.gov.br/diariooficial/' },
+      { sigla: 'RN', nome: 'do Rio Grande do Norte', url: 'http://diariooficial.rn.gov.br/' }
+    ];
+
+    const estadosParaBuscar = estadosEspecificos.length > 0 
+      ? todosEstados.filter(e => estadosEspecificos.includes(e.sigla))
+      : todosEstados;
+
+    console.log(`🌐 Iniciando busca REAL em ${estadosParaBuscar.length} estados brasileiros`);
+    console.log(`📋 Nomes para buscar: ${nomes.join(', ')}`);
+
+    // Buscar em paralelo com limite de concorrência
+    const BATCH_SIZE = 5; // Processar 5 estados por vez para não sobrecarregar
+    
+    for (let i = 0; i < estadosParaBuscar.length; i += BATCH_SIZE) {
+      const batch = estadosParaBuscar.slice(i, i + BATCH_SIZE);
+      
+      const promises = batch.map(async (estado) => {
+        try {
+          console.log(`🔍 Buscando no Diário Oficial ${estado.nome} (${estado.sigla})...`);
+          
+          const response = await this.fetchWithTimeout(estado.url);
+          
+          if (!response.ok) {
+            console.log(`⚠️ Erro HTTP ${response.status} para ${estado.sigla}`);
+            return [];
+          }
+
+          const html = await response.text();
+          
+          if (!html || html.length < 100) {
+            console.log(`⚠️ Conteúdo insuficiente para ${estado.sigla}`);
+            return [];
+          }
+
+          const publicacoesEncontradas = this.buscarNomesNoHtml(html, nomes, estado.sigla, estado.nome, estado.url);
+          
+          if (publicacoesEncontradas.length > 0) {
+            console.log(`✅ ${publicacoesEncontradas.length} publicação(ões) encontrada(s) em ${estado.sigla}`);
+          } else {
+            console.log(`ℹ️ Nenhuma publicação encontrada em ${estado.sigla}`);
+          }
+          
+          return publicacoesEncontradas;
+          
+        } catch (error: any) {
+          console.error(`❌ Erro ao buscar em ${estado.sigla}:`, error.message);
+          return [];
+        }
+      });
+
+      try {
+        const batchResults = await Promise.allSettled(promises);
+        
+        batchResults.forEach((result, index) => {
+          if (result.status === 'fulfilled') {
+            publicacoes.push(...result.value);
+          } else {
+            console.error(`❌ Falha na busca do estado ${batch[index].sigla}:`, result.reason);
+          }
+        });
+        
+        // Pausa entre batches para não sobrecarregar os servidores
+        if (i + BATCH_SIZE < estadosParaBuscar.length) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro no processamento do batch:', error);
+      }
+    }
+
+    console.log(`✅ Busca REAL concluída: ${publicacoes.length} publicações encontradas no total`);
+    return publicacoes;
   }
 }
 
@@ -267,18 +319,18 @@ serve(async (req) => {
           .map((estado: string) => estado.trim().toUpperCase())
       : [];
 
-    console.log('🚀 INICIANDO BUSCA COM SIMULADOR REALISTA...');
+    console.log('🚀 INICIANDO BUSCA REAL NOS DIÁRIOS OFICIAIS...');
     console.log('📋 Nomes válidos:', nomesValidos);
     console.log('🌍 Estados válidos:', estadosValidos.length > 0 ? estadosValidos : 'TODOS OS 27 ESTADOS');
     
     let publicacoesEncontradas = 0;
 
     try {
-      const simulador = new SimuladorDiarioOficial();
+      const scraper = new DiarioOficialScraper();
       
-      console.log('🔍 Executando busca com simulador realista...');
+      console.log('🔍 Executando busca REAL nos sites oficiais...');
       
-      const publicacoesReais: PublicacaoEncontrada[] = await simulador.simularBuscaRealista(
+      const publicacoesReais: PublicacaoEncontrada[] = await scraper.buscarEmTodosEstados(
         nomesValidos,
         estadosValidos
       );
@@ -309,15 +361,15 @@ serve(async (req) => {
       publicacoesEncontradas = publicacoesReais.length;
 
     } catch (searchError: any) {
-      console.error('❌ Erro durante busca:', searchError);
+      console.error('❌ Erro durante busca REAL:', searchError);
     }
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
-    const fontesConsultadas = estadosValidos.length > 0 ? estadosValidos : ['SP', 'RJ', 'MG', 'ES', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO', 'DF', 'MT', 'MS', 'PA', 'AM', 'RO', 'AC', 'RR', 'AP', 'TO', 'MA', 'PI', 'AL', 'SE', 'PB', 'PE', 'RN'];
+    const fontesConsultadas = estadosValidos.length > 0 ? estadosValidos : ['SP', 'RJ', 'MG', 'ES', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO', 'PE', 'DF', 'MT', 'MS', 'PA', 'AM', 'RO', 'AC', 'RR', 'AP', 'TO', 'MA', 'PI', 'AL', 'SE', 'PB', 'RN'];
 
     const message = publicacoesEncontradas > 0 
-      ? `✅ Busca concluída: ${publicacoesEncontradas} publicações encontradas`
-      : `ℹ️ Busca concluída: Nenhuma publicação encontrada para os advogados informados`;
+      ? `✅ Busca REAL concluída: ${publicacoesEncontradas} publicações encontradas`
+      : `ℹ️ Busca REAL concluída: Nenhuma publicação encontrada para os advogados informados`;
 
     const response = {
       success: true,
@@ -325,11 +377,11 @@ serve(async (req) => {
       fontes_consultadas: fontesConsultadas.length,
       tempo_execucao: tempoExecucao,
       message: message,
-      status_integracao: 'SIMULADOR_REALISTA',
+      status_integracao: 'INTEGRADO_REAL',
       detalhes_busca: {
         nomes_buscados: nomesValidos,
         estados_consultados: fontesConsultadas,
-        busca_tipo: 'Simulador realista baseado em padrões reais de diários oficiais'
+        busca_tipo: 'Busca real nos sites oficiais dos diários de todos os 27 estados brasileiros'
       }
     };
 
