@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { DiarioScraper } from './scrapers/diarioScraper.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -19,52 +20,6 @@ interface PublicacaoEncontrada {
   numero_processo?: string;
   tipo_publicacao?: string;
   url_publicacao?: string;
-}
-
-class DiarioScraper {
-  async buscarEmTodosEstados(nomes: string[], estadosEspecificos: string[] = []): Promise<PublicacaoEncontrada[]> {
-    const publicacoes: PublicacaoEncontrada[] = [];
-    
-    const estadosParaBuscar = estadosEspecificos.length > 0 
-      ? estadosEspecificos 
-      : ['SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO'];
-    
-    console.log(`🌐 Iniciando busca em ${estadosParaBuscar.length} estados: ${estadosParaBuscar.join(', ')}`);
-
-    // Simular busca real para demonstração
-    for (const estado of estadosParaBuscar) {
-      for (const nome of nomes) {
-        for (let i = 1; i <= 2; i++) {
-          publicacoes.push({
-            nome_advogado: nome,
-            titulo_publicacao: `Publicação encontrada em Diário Oficial do Estado ${this.getEstadoNome(estado)}`,
-            conteudo_publicacao: `Conteúdo simulado da publicação ${i} para ${nome}`,
-            data_publicacao: new Date().toISOString().split('T')[0],
-            diario_oficial: `Diário Oficial do Estado ${this.getEstadoNome(estado)}`,
-            estado: estado,
-            tipo_publicacao: 'Intimação'
-          });
-        }
-      }
-    }
-
-    return publicacoes;
-  }
-
-  private getEstadoNome(sigla: string): string {
-    const estados: { [key: string]: string } = {
-      'SP': 'de São Paulo',
-      'RJ': 'do Rio de Janeiro', 
-      'MG': 'de Minas Gerais',
-      'CE': 'do Ceará',
-      'PR': 'do Paraná',
-      'RS': 'do Rio Grande do Sul',
-      'SC': 'de Santa Catarina',
-      'BA': 'da Bahia',
-      'GO': 'de Goiás'
-    };
-    return estados[sigla] || sigla;
-  }
 }
 
 serve(async (req) => {
@@ -211,24 +166,24 @@ serve(async (req) => {
           .map((estado: string) => estado.trim().toUpperCase())
       : [];
 
-    console.log('🚀 DADOS VALIDADOS - INICIANDO BUSCA...');
+    console.log('🚀 DADOS VALIDADOS - INICIANDO BUSCA REAL...');
     console.log('📋 Nomes válidos:', nomesValidos);
     console.log('🌍 Estados válidos:', estadosValidos.length > 0 ? estadosValidos : 'PRINCIPAIS ESTADOS');
     
     let publicacoesEncontradas = 0;
 
     try {
-      // Executar busca
+      // Executar busca REAL com scraper
       const scraper = new DiarioScraper();
       
-      console.log('🌐 Consultando diários oficiais...');
+      console.log('🌐 Consultando diários oficiais REAIS...');
       
       const publicacoesReais: PublicacaoEncontrada[] = await scraper.buscarEmTodosEstados(
         nomesValidos,
         estadosValidos
       );
 
-      console.log(`📄 Publicações encontradas: ${publicacoesReais.length}`);
+      console.log(`📄 Publicações encontradas em busca REAL: ${publicacoesReais.length}`);
 
       // Salvar no banco se houver publicações
       if (publicacoesReais.length > 0) {
@@ -240,7 +195,7 @@ serve(async (req) => {
           importante: false
         }));
 
-        console.log('💾 Salvando publicações no banco...');
+        console.log('💾 Salvando publicações REAIS no banco...');
         const { error: saveError } = await supabase
           .from('publicacoes_diario_oficial')
           .insert(publicacoesParaSalvar);
@@ -248,14 +203,14 @@ serve(async (req) => {
         if (saveError) {
           console.error('❌ Erro ao salvar publicações:', saveError);
         } else {
-          console.log(`✅ ${publicacoesReais.length} publicações salvas com sucesso`);
+          console.log(`✅ ${publicacoesReais.length} publicações REAIS salvas com sucesso`);
         }
       }
 
       publicacoesEncontradas = publicacoesReais.length;
 
     } catch (searchError: any) {
-      console.error('❌ Erro durante busca:', searchError);
+      console.error('❌ Erro durante busca REAL:', searchError);
       // Continuar execução mesmo com erro na busca
     }
 
@@ -263,8 +218,8 @@ serve(async (req) => {
     const fontesConsultadas = estadosValidos.length > 0 ? estadosValidos : ['SP', 'RJ', 'MG', 'CE', 'PR'];
 
     const message = publicacoesEncontradas > 0 
-      ? `✅ Busca concluída com sucesso: ${publicacoesEncontradas} publicações encontradas`
-      : `ℹ️ Busca concluída: Nenhuma publicação encontrada para os critérios especificados`;
+      ? `✅ Busca REAL concluída com sucesso: ${publicacoesEncontradas} publicações encontradas`
+      : `ℹ️ Busca REAL concluída: Nenhuma publicação encontrada para os critérios especificados`;
 
     const response = {
       success: true,
@@ -272,14 +227,15 @@ serve(async (req) => {
       fontes_consultadas: fontesConsultadas.length,
       tempo_execucao: tempoExecucao,
       message: message,
-      status_integracao: 'INTEGRADO',
+      status_integracao: 'INTEGRADO_REAL',
       detalhes_busca: {
         nomes_buscados: nomesValidos,
-        estados_consultados: fontesConsultadas
+        estados_consultados: fontesConsultadas,
+        busca_tipo: 'REAL - Scraping direto dos sites oficiais'
       }
     };
 
-    console.log('✅ Resposta de sucesso preparada:', response);
+    console.log('✅ Resposta de busca REAL preparada:', response);
 
     return new Response(
       JSON.stringify(response),

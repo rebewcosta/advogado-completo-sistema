@@ -21,7 +21,7 @@ export class DiarioScraper {
       ? estadosEspecificos 
       : ['SP', 'RJ', 'MG', 'CE', 'PR', 'RS', 'SC', 'BA', 'GO'];
     
-    console.log(`🌐 Iniciando busca em ${estadosParaBuscar.length} estados: ${estadosParaBuscar.join(', ')}`);
+    console.log(`🌐 Iniciando busca REAL em ${estadosParaBuscar.length} estados: ${estadosParaBuscar.join(', ')}`);
 
     // Buscar em paralelo para melhor performance
     const promises: Promise<PublicacaoEncontrada[]>[] = [];
@@ -118,21 +118,23 @@ export class DiarioScraper {
     }
 
     try {
+      console.log(`🔍 Executando ${promises.length} buscas REAIS em paralelo...`);
       const resultados = await Promise.allSettled(promises);
       
       resultados.forEach((resultado, index) => {
         if (resultado.status === 'fulfilled') {
+          console.log(`✅ Busca ${index + 1} concluída: ${resultado.value.length} publicações`);
           publicacoes.push(...resultado.value);
         } else {
-          console.error(`❌ Erro na busca ${index}:`, resultado.reason);
+          console.error(`❌ Erro na busca ${index + 1}:`, resultado.reason);
         }
       });
 
-      console.log(`✅ Busca concluída: ${publicacoes.length} publicações encontradas`);
+      console.log(`✅ Busca REAL concluída: ${publicacoes.length} publicações encontradas no total`);
       return publicacoes;
 
     } catch (error) {
-      console.error('❌ Erro geral na busca:', error);
+      console.error('❌ Erro geral na busca REAL:', error);
       return publicacoes;
     }
   }
