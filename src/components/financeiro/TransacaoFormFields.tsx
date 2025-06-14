@@ -31,7 +31,7 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
   handleSelectChange
 }) => {
   return (
-    <div className="space-y-6 bg-blue-900 p-6 rounded-lg">
+    <div className="space-y-6 p-6">
       {/* Dados da Transação */}
       <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
         <Label className="text-sm font-semibold text-gray-100 mb-3 block">
@@ -102,13 +102,13 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
       </div>
 
       {/* Categorização */}
-      <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-        <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+      <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
+        <Label className="text-sm font-semibold text-gray-100 mb-3 block">
           🏷️ Categorização
         </Label>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <Label htmlFor="categoria_transacao_form" className="text-blue-100">
+            <Label htmlFor="categoria_transacao_form" className="text-gray-100">
               Categoria <span className="text-red-400">*</span>
             </Label>
             <Select 
@@ -133,7 +133,7 @@ const TransacaoFormFields: React.FC<TransacaoFormFieldsProps> = ({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label htmlFor="status_transacao_form" className="text-blue-100">
+            <Label htmlFor="status_transacao_form" className="text-gray-100">
               Status <span className="text-red-400">*</span>
             </Label>
             <Select 
