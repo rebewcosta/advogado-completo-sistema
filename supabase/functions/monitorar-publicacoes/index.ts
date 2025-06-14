@@ -88,22 +88,25 @@ const extractProcessNumber = (content: string): string | null => {
 };
 
 // Function to create mock publications for testing
-const createMockPublications = (nomes: string[], quantidade: number = 2): any[] => {
+const createMockPublications = (nomes: string[], estados: string[], quantidade: number = 2): any[] => {
   const publications = [];
   const tipos = ['Intimação', 'Citação', 'Sentença', 'Despacho'];
-  const estados = ['SP', 'RJ', 'MG', 'RS', 'PR'];
+  
+  // Se não há estados especificados, usar alguns padrão
+  const estadosParaUsar = estados.length > 0 ? estados : ['SP', 'RJ', 'MG', 'RS', 'PR'];
   
   for (let i = 0; i < quantidade; i++) {
     const nomeIndex = i % nomes.length;
-    const estadoIndex = i % estados.length;
+    const estadoIndex = i % estadosParaUsar.length;
+    const estadoSelecionado = estadosParaUsar[estadoIndex];
     
     publications.push({
       nome_advogado: nomes[nomeIndex],
-      titulo_publicacao: `Publicação encontrada em Diário Oficial - ${tipos[i % tipos.length]}`,
-      conteudo_publicacao: `Conteúdo da publicação ${i + 1} referente ao advogado ${nomes[nomeIndex]}. Esta é uma publicação de teste do sistema de monitoramento.`,
+      titulo_publicacao: `Publicação encontrada em Diário Oficial ${estadoSelecionado} - ${tipos[i % tipos.length]}`,
+      conteudo_publicacao: `Conteúdo da publicação ${i + 1} referente ao advogado ${nomes[nomeIndex]} no estado ${estadoSelecionado}. Esta é uma publicação de teste do sistema de monitoramento.`,
       data_publicacao: new Date().toISOString().split('T')[0],
-      diario_oficial: `Diário Oficial do Estado de ${estados[estadoIndex]}`,
-      estado: estados[estadoIndex],
+      diario_oficial: `Diário Oficial do Estado ${estadoSelecionado}`,
+      estado: estadoSelecionado,
       tipo_publicacao: tipos[i % tipos.length],
       numero_processo: null,
       url_publicacao: null,
@@ -133,6 +136,7 @@ serve(async (req) => {
     // Parse and validate request body
     const body = await req.json();
     console.log('Monitoramento iniciado para user:', body.user_id);
+    console.log('Estados solicitados:', body.estados);
     
     // Input validation
     const validationErrors = validateUserInput(body);
@@ -149,6 +153,7 @@ serve(async (req) => {
 
     // Sanitize inputs
     const sanitizedNomes = body.nomes.map((nome: string) => sanitizeInput(nome)).filter((n: string) => n.length > 0);
+    const sanitizedEstados = body.estados?.map((estado: string) => sanitizeInput(estado)).filter((e: string) => e.length > 0) || [];
     const sanitizedPalavrasChave = body.palavras_chave?.map((palavra: string) => sanitizeInput(palavra)).filter((p: string) => p.length > 0) || [];
 
     if (sanitizedNomes.length === 0) {
@@ -201,14 +206,15 @@ serve(async (req) => {
 
     // Simular busca em diários (substituindo scraping real por dados mock)
     console.log(`Simulando busca para nomes: ${sanitizedNomes.join(', ')}`);
+    console.log(`Estados especificados: ${sanitizedEstados.join(', ') || 'Todos'}`);
     
     let publicacoesEncontradas = 0;
     const fontesConsultadas: string[] = [];
     const erros: string[] = [];
 
     try {
-      // Criar publicações mock para teste
-      const publicacoesMock = createMockPublications(sanitizedNomes, 2);
+      // Criar publicações mock para teste respeitando os estados especificados
+      const publicacoesMock = createMockPublications(sanitizedNomes, sanitizedEstados, 2);
       
       // Inserir publicações no banco
       for (const pub of publicacoesMock) {
@@ -225,7 +231,7 @@ serve(async (req) => {
             erros.push(`Erro ao salvar publicação: ${pubError.message}`);
           } else {
             publicacoesEncontradas++;
-            console.log('Publicação inserida com sucesso');
+            console.log(`Publicação inserida com sucesso para ${pub.estado}`);
           }
         } catch (insertError) {
           console.error('Insert error:', insertError);
@@ -233,7 +239,14 @@ serve(async (req) => {
         }
       }
 
-      fontesConsultadas.push('Diário Oficial - Simulação');
+      // Determinar fontes consultadas baseado nos estados
+      if (sanitizedEstados.length > 0) {
+        sanitizedEstados.forEach(estado => {
+          fontesConsultadas.push(`Diário Oficial ${estado} - Simulação`);
+        });
+      } else {
+        fontesConsultadas.push('Diários Oficiais Nacionais - Simulação');
+      }
       
     } catch (error) {
       console.error('Erro durante simulação:', error);
@@ -265,7 +278,7 @@ serve(async (req) => {
       tempo_execucao: tempoExecucao,
       erros: erros.length > 0 ? erros.join('; ') : null,
       message: publicacoesEncontradas > 0 
-        ? `Encontradas ${publicacoesEncontradas} publicações relevantes`
+        ? `Encontradas ${publicacoesEncontradas} publicações relevantes nos estados solicitados`
         : 'Nenhuma publicação relevante encontrada na busca'
     };
 
