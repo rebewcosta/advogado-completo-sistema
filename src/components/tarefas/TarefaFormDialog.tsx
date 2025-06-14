@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +86,9 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+        <DialogTitle className="sr-only">
+          {tarefaParaForm?.id ? 'Editar Tarefa' : 'Nova Tarefa'}
+        </DialogTitle>
         <div className="h-full flex flex-col rounded-xl overflow-hidden">
           {/* Header com gradiente azul */}
           <div className="p-6">

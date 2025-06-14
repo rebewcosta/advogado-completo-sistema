@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { BarChart3, AlertCircle, RefreshCw, FileText, CheckSquare } from 'lucide-react';
@@ -79,12 +80,31 @@ const RelatoriosPage = () => {
         let receitas = 0;
         let despesas = 0;
         (res.data || []).forEach(t => {
-          if (t.tipo_transacao === 'Receita' && (t.status_pagamento === 'Recebido' || t.status_pagamento === 'Pago')) {
-            receitas += Number(t.valor || 0);
-          } else if (t.tipo_transacao === 'Despesa' && t.status_pagamento === 'Pago') {
-            despesas += Number(t.valor || 0);
+          // Normalizar tipo_transacao para lidar com dados inconsistentes
+          const tipoTransacao = t.tipo_transacao || '';
+          const statusPagamento = t.status_pagamento || '';
+          const valor = Number(t.valor || 0);
+          
+          console.log('Processando transação:', { tipoTransacao, statusPagamento, valor });
+          
+          // Se o tipo está vazio mas tem valor positivo e status de pagamento, tentar inferir o tipo
+          if (!tipoTransacao && valor > 0 && (statusPagamento === 'Recebido' || statusPagamento === 'Pago')) {
+            // Assumir que valores "Recebidos" são receitas e "Pagos" são despesas
+            if (statusPagamento === 'Recebido') {
+              receitas += valor;
+            } else if (statusPagamento === 'Pago') {
+              despesas += valor;
+            }
+          } else {
+            // Lógica normal
+            if ((tipoTransacao === 'Receita' || tipoTransacao === 'receita') && (statusPagamento === 'Recebido' || statusPagamento === 'Pago')) {
+              receitas += valor;
+            } else if ((tipoTransacao === 'Despesa' || tipoTransacao === 'despesa') && statusPagamento === 'Pago') {
+              despesas += valor;
+            }
           }
         });
+        console.log(`Mês ${res.month}: Receitas=${receitas}, Despesas=${despesas}`);
         return { month: res.month, receitas, despesas, lucro: receitas - despesas };
       });
       setMonthlyFinancialData(monthlyData);
