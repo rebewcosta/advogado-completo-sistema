@@ -11,6 +11,7 @@ interface MobileMenuProps {
   isActive: (path: string) => string;
   handleSignOut: () => Promise<void>;
   setIsMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isAdmin?: () => boolean;
 }
 
 const MobileMenu: React.FC<MobileMenuProps> = ({
@@ -20,6 +21,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   isActive,
   handleSignOut,
   setIsMenuOpen,
+  isAdmin,
 }) => {
   if (!isMenuOpen) return null;
 
@@ -39,13 +41,12 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
               />
             ))}
             
-            {/* Admin link for authorized users in mobile menu - show only icon */}
-            {user?.email === 'webercostag@gmail.com' && (
+            {/* Admin link for authorized users in mobile menu */}
+            {isAdmin && isAdmin() && (
               <Link 
                 to="/admin" 
                 className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}
                 onClick={() => setIsMenuOpen(false)}
-                title="Admin"
               >
                 <Shield className="h-5 w-5" />
                 <span className="ml-2">Admin</span>

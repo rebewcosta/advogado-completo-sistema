@@ -10,9 +10,10 @@ interface DesktopNavProps {
   navItems: Array<{ path: string; label: string; icon: React.ReactNode }>;
   isActive: (path: string) => string;
   handleSignOut: () => Promise<void>;
+  isAdmin?: () => boolean;
 }
 
-const DesktopNav: React.FC<DesktopNavProps> = ({ user, navItems, isActive, handleSignOut }) => {
+const DesktopNav: React.FC<DesktopNavProps> = ({ user, navItems, isActive, handleSignOut, isAdmin }) => {
   return (
     <div className="hidden md:flex items-center space-x-3">
       {user ? (
@@ -29,7 +30,7 @@ const DesktopNav: React.FC<DesktopNavProps> = ({ user, navItems, isActive, handl
           ))}
           
           {/* Admin link for authorized users - icon only in header */}
-          {user?.email === 'webercostag@gmail.com' && (
+          {isAdmin && isAdmin() && (
             <Link 
               to="/admin" 
               className={`flex items-center px-2 py-2 rounded-md text-sm font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}
@@ -48,6 +49,7 @@ const DesktopNav: React.FC<DesktopNavProps> = ({ user, navItems, isActive, handl
               title="Sair"
             >
               <LogOut className="h-4 w-4" />
+              <span className="ml-1">Sair</span>
             </Button>
           </div>
         </>

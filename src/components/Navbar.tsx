@@ -9,11 +9,13 @@ import {
 import Logo from './navbar/Logo';
 import DesktopNav from './navbar/DesktopNav';
 import MobileMenu from './navbar/MobileMenu';
+import { useUserRole } from '@/hooks/useUserRole';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useUserRole();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -27,8 +29,15 @@ const Navbar: React.FC = () => {
     return location.pathname === path ? 'bg-lawyer-primary/10 text-lawyer-primary' : '';
   };
 
-  // Definindo navItems apenas para páginas públicas
-  const navItems = [
+  // Define different navigation items based on authentication status
+  const navItems = user ? [
+    // For authenticated users, show dashboard navigation
+    { path: '/dashboard', label: 'Dashboard', icon: null },
+    { path: '/meus-processos', label: 'Processos', icon: null },
+    { path: '/clientes', label: 'Clientes', icon: null },
+    { path: '/agenda', label: 'Agenda', icon: null },
+  ] : [
+    // For non-authenticated users, show login/register
     { path: '/login', label: 'Login', icon: null },
     { path: '/cadastro', label: 'Cadastro', icon: null },
   ];
@@ -46,6 +55,7 @@ const Navbar: React.FC = () => {
             navItems={navItems}
             isActive={isActive}
             handleSignOut={handleSignOut}
+            isAdmin={isAdmin}
           />
 
           {/* Mobile menu button */}
@@ -72,6 +82,7 @@ const Navbar: React.FC = () => {
         isActive={isActive}
         handleSignOut={handleSignOut}
         setIsMenuOpen={setIsMenuOpen}
+        isAdmin={isAdmin}
       />
     </nav>
   );
