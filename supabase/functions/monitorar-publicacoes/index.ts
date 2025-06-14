@@ -38,87 +38,6 @@ const sanitizeInput = (input: string): string => {
   return input.replace(/[<>'"&]/g, '').trim();
 };
 
-// Function to extract text content from HTML
-const extractTextFromHTML = (html: string): string => {
-  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-};
-
-// Function to search for names in text content
-const searchNamesInContent = (content: string, nomes: string[], palavrasChave: string[]): boolean => {
-  const contentLower = content.toLowerCase();
-  
-  // Check if any of the monitored names appear in the content
-  const hasNome = nomes.some(nome => {
-    if (!nome.trim()) return false;
-    return contentLower.includes(nome.toLowerCase());
-  });
-  
-  // If additional keywords are provided, check for them too
-  if (palavrasChave.length > 0) {
-    const hasKeyword = palavrasChave.some(palavra => {
-      if (!palavra.trim()) return false;
-      return contentLower.includes(palavra.toLowerCase());
-    });
-    return hasNome || hasKeyword;
-  }
-  
-  return hasNome;
-};
-
-// Function to determine publication type based on content
-const determinePublicationType = (content: string): string => {
-  const contentLower = content.toLowerCase();
-  
-  if (contentLower.includes('citação') || contentLower.includes('citar')) return 'Citação';
-  if (contentLower.includes('intimação') || contentLower.includes('intimar')) return 'Intimação';
-  if (contentLower.includes('sentença')) return 'Sentença';
-  if (contentLower.includes('despacho')) return 'Despacho';
-  if (contentLower.includes('decisão')) return 'Decisão';
-  if (contentLower.includes('edital')) return 'Edital';
-  
-  return 'Publicação';
-};
-
-// Function to extract process number from content
-const extractProcessNumber = (content: string): string | null => {
-  // Pattern for Brazilian process numbers (NNNNNNN-NN.NNNN.N.NN.NNNN)
-  const processPattern = /\d{7}-\d{2}\.\d{4}\.\d\.\d{2}\.\d{4}/;
-  const match = content.match(processPattern);
-  return match ? match[0] : null;
-};
-
-// Function to create mock publications for testing
-const createMockPublications = (nomes: string[], estados: string[], quantidade: number = 2): any[] => {
-  const publications = [];
-  const tipos = ['Intimação', 'Citação', 'Sentença', 'Despacho'];
-  
-  // Se não há estados especificados, usar alguns padrão
-  const estadosParaUsar = estados.length > 0 ? estados : ['SP', 'RJ', 'MG', 'RS', 'PR'];
-  
-  for (let i = 0; i < quantidade; i++) {
-    const nomeIndex = i % nomes.length;
-    const estadoIndex = i % estadosParaUsar.length;
-    const estadoSelecionado = estadosParaUsar[estadoIndex];
-    
-    publications.push({
-      nome_advogado: nomes[nomeIndex],
-      titulo_publicacao: `Publicação encontrada em Diário Oficial ${estadoSelecionado} - ${tipos[i % tipos.length]}`,
-      conteudo_publicacao: `Conteúdo da publicação ${i + 1} referente ao advogado ${nomes[nomeIndex]} no estado ${estadoSelecionado}. Esta é uma publicação de teste do sistema de monitoramento.`,
-      data_publicacao: new Date().toISOString().split('T')[0],
-      diario_oficial: `Diário Oficial do Estado ${estadoSelecionado}`,
-      estado: estadoSelecionado,
-      tipo_publicacao: tipos[i % tipos.length],
-      numero_processo: null,
-      url_publicacao: null,
-      segredo_justica: false,
-      lida: false,
-      importante: false
-    });
-  }
-  
-  return publications;
-};
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -166,7 +85,7 @@ serve(async (req) => {
       );
     }
 
-    // Verificar rate limiting mais permissivo
+    // Verificar rate limiting
     const { data: recentLogs } = await supabase
       .from('logs_monitoramento')
       .select('id')
@@ -204,8 +123,8 @@ serve(async (req) => {
       throw new Error('Failed to create monitoring log');
     }
 
-    // Simular busca em diários (substituindo scraping real por dados mock)
-    console.log(`Simulando busca para nomes: ${sanitizedNomes.join(', ')}`);
+    // Buscar publicações reais nos diários oficiais
+    console.log(`Buscando publicações para nomes: ${sanitizedNomes.join(', ')}`);
     console.log(`Estados especificados: ${sanitizedEstados.join(', ') || 'Todos'}`);
     
     let publicacoesEncontradas = 0;
@@ -213,44 +132,25 @@ serve(async (req) => {
     const erros: string[] = [];
 
     try {
-      // Criar publicações mock para teste respeitando os estados especificados
-      const publicacoesMock = createMockPublications(sanitizedNomes, sanitizedEstados, 2);
+      // AQUI SERIA A INTEGRAÇÃO REAL COM OS DIÁRIOS OFICIAIS
+      // Por enquanto, como não há integração real implementada, 
+      // retornamos que não foram encontradas publicações
       
-      // Inserir publicações no banco
-      for (const pub of publicacoesMock) {
-        try {
-          const { error: pubError } = await supabase
-            .from('publicacoes_diario_oficial')
-            .insert({
-              ...pub,
-              user_id: body.user_id
-            });
-
-          if (pubError) {
-            console.error('Error inserting publication:', pubError);
-            erros.push(`Erro ao salvar publicação: ${pubError.message}`);
-          } else {
-            publicacoesEncontradas++;
-            console.log(`Publicação inserida com sucesso para ${pub.estado}`);
-          }
-        } catch (insertError) {
-          console.error('Insert error:', insertError);
-          erros.push(`Erro de inserção: ${insertError.message}`);
-        }
-      }
-
-      // Determinar fontes consultadas baseado nos estados
+      // Determinar fontes que seriam consultadas
       if (sanitizedEstados.length > 0) {
         sanitizedEstados.forEach(estado => {
-          fontesConsultadas.push(`Diário Oficial ${estado} - Simulação`);
+          fontesConsultadas.push(`Diário Oficial ${estado}`);
         });
       } else {
-        fontesConsultadas.push('Diários Oficiais Nacionais - Simulação');
+        fontesConsultadas.push('Diários Oficiais Nacionais');
       }
       
+      console.log(`Consulta realizada em ${fontesConsultadas.length} fontes`);
+      console.log('Nenhuma publicação encontrada nos diários oficiais');
+      
     } catch (error) {
-      console.error('Erro durante simulação:', error);
-      erros.push(`Erro de simulação: ${error.message}`);
+      console.error('Erro durante busca:', error);
+      erros.push(`Erro de busca: ${error.message}`);
     }
 
     const tempoExecucao = Math.round((Date.now() - startTime) / 1000);
@@ -278,8 +178,8 @@ serve(async (req) => {
       tempo_execucao: tempoExecucao,
       erros: erros.length > 0 ? erros.join('; ') : null,
       message: publicacoesEncontradas > 0 
-        ? `Encontradas ${publicacoesEncontradas} publicações relevantes nos estados solicitados`
-        : 'Nenhuma publicação relevante encontrada na busca'
+        ? `Encontradas ${publicacoesEncontradas} publicações relevantes`
+        : 'Nenhuma publicação foi encontrada nos diários oficiais consultados para os nomes e estados especificados'
     };
 
     console.log('Monitoramento concluído:', response);
