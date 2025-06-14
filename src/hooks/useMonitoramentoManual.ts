@@ -50,7 +50,7 @@ export const useMonitoramentoManual = (
 
       // Chamar a edge function com tratamento de erro melhorado
       const { data, error } = await supabase.functions.invoke('monitorar-publicacoes', {
-        body: requestBody,
+        body: JSON.stringify(requestBody),
         headers: {
           'Content-Type': 'application/json'
         }
@@ -72,6 +72,8 @@ export const useMonitoramentoManual = (
           errorMessage = "Erro de configuração do servidor. Tente novamente.";
         } else if (error.message?.includes('Failed to send a request')) {
           errorMessage = "Erro de conexão com o servidor. Verifique sua internet e tente novamente.";
+        } else if (error.message?.includes('non-2xx status code')) {
+          errorMessage = "Erro interno do servidor. Tente novamente em alguns minutos.";
         } else if (error.message) {
           errorMessage = error.message;
         }

@@ -37,7 +37,7 @@ class DiarioScraper {
           publicacoes.push({
             nome_advogado: nome,
             titulo_publicacao: `Publicação encontrada em Diário Oficial do Estado ${this.getEstadoNome(estado)}`,
-            conteudo_publicacao: `Conteúdo simulado da publicação ${i}`,
+            conteudo_publicacao: `Conteúdo simulado da publicação ${i} para ${nome}`,
             data_publicacao: new Date().toISOString().split('T')[0],
             diario_oficial: `Diário Oficial do Estado ${this.getEstadoNome(estado)}`,
             estado: estado,
@@ -84,43 +84,51 @@ const sanitizeInputs = (body: any) => {
 };
 
 const checkRateLimit = async (userId: string, supabase: any) => {
-  // Implementação simples de rate limiting
   return false; // Por enquanto, sem limite
 };
 
 const createMonitoringLog = async (userId: string, supabase: any) => {
-  const { data, error } = await supabase
-    .from('logs_monitoramento')
-    .insert({
-      user_id: userId,
-      status: 'iniciado',
-      created_at: new Date().toISOString()
-    })
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('logs_monitoramento')
+      .insert({
+        user_id: userId,
+        status: 'iniciado',
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
 
-  if (error) {
+    if (error) {
+      console.error('Erro ao criar log:', error);
+      return { id: 'temp-id' };
+    }
+    
+    return data;
+  } catch (error) {
     console.error('Erro ao criar log:', error);
     return { id: 'temp-id' };
   }
-  
-  return data;
 };
 
 const updateMonitoringLog = async (logId: string, publicacoesEncontradas: number, tempoExecucao: number, fontesConsultadas: string[], erros: string[], supabase: any) => {
   if (logId === 'temp-id') return;
   
-  await supabase
-    .from('logs_monitoramento')
-    .update({
-      publicacoes_encontradas: publicacoesEncontradas,
-      tempo_execucao: tempoExecucao,
-      fontes_consultadas: fontesConsultadas.length,
-      erros: erros.join('; '),
-      status: 'concluido',
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', logId);
+  try {
+    await supabase
+      .from('logs_monitoramento')
+      .update({
+        publicacoes_encontradas: publicacoesEncontradas,
+        tempo_execucao: tempoExecucao,
+        fontes_consultadas: fontesConsultadas.length,
+        erros: erros.join('; '),
+        status: 'concluido',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', logId);
+  } catch (error) {
+    console.error('Erro ao atualizar log:', error);
+  }
 };
 
 const savePublicacoes = async (publicacoes: PublicacaoEncontrada[], userId: string, supabase: any) => {
@@ -134,13 +142,18 @@ const savePublicacoes = async (publicacoes: PublicacaoEncontrada[], userId: stri
     importante: false
   }));
 
-  const { error } = await supabase
-    .from('publicacoes_diario_oficial')
-    .insert(publicacoesParaSalvar);
+  try {
+    const { error } = await supabase
+      .from('publicacoes_diario_oficial')
+      .insert(publicacoesParaSalvar);
 
-  if (error) {
+    if (error) {
+      console.error('Erro ao salvar publicações:', error);
+      throw new Error('Erro ao salvar publicações no banco de dados');
+    }
+  } catch (error) {
     console.error('Erro ao salvar publicações:', error);
-    throw new Error('Erro ao salvar publicações no banco de dados');
+    throw error;
   }
 };
 
@@ -174,7 +187,7 @@ const createSuccessResponse = (
     status_integracao: 'INTEGRADO',
     detalhes_busca: {
       nomes_buscados: sanitizedNomes,
-      estados_consultados: sanitizedEstados.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR'],
+      estados_consultados: estadosEspecificos.length > 0 ? sanitizedEstados : ['SP', 'RJ', 'MG', 'CE', 'PR'],
       palavras_chave: sanitizedPalavrasChave
     }
   };
@@ -213,7 +226,24 @@ serve(async (req) => {
     const startTime = Date.now();
     
     // Parse and validate request body
-    const body = await req.json();
+    let body;
+    try {
+      const bodyText = await req.text();
+      if (!bodyText) {
+        throw new Error('Request body is empty');
+      }
+      body = JSON.parse(bodyText);
+    } catch (parseError) {
+      console.error('Error parsing request body:', parseError);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
     console.log('🔍 MONITORAMENTO REAL INICIADO');
     console.log('👤 Usuário:', body.user_id);
     console.log('📝 Nomes para buscar:', body.nomes);
@@ -290,13 +320,13 @@ serve(async (req) => {
       // Save found publications to database
       try {
         await savePublicacoes(publicacoesReais, body.user_id, supabase);
-      } catch (error) {
+      } catch (error: any) {
         erros.push(error.message);
       }
 
       publicacoesEncontradas = publicacoesReais.length;
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Erro durante o scraping:', error);
       erros.push(`Erro durante a consulta aos diários: ${error.message}`);
     }
@@ -331,8 +361,8 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('💥 Erro crítico no monitoramento:', error);
-    return createErrorResponse(error.message);
+    return createErrorResponse(error.message || 'Erro interno do servidor');
   }
 });
