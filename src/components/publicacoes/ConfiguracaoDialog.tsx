@@ -121,29 +121,29 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
           
           <div className="space-y-6">
             {/* Status do Monitoramento */}
-            <div className="bg-slate-50 p-4 rounded-lg border border-slate-200">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-800">
               <div className="flex items-center space-x-2">
                 <Switch
                   id="monitoramento-ativo"
                   checked={monitoramentoAtivo}
                   onCheckedChange={setMonitoramentoAtivo}
                 />
-                <Label htmlFor="monitoramento-ativo" className="font-medium">Monitoramento ativo</Label>
+                <Label htmlFor="monitoramento-ativo" className="font-medium text-white">Monitoramento ativo</Label>
               </div>
             </div>
             
             {/* Aviso sobre Filtros */}
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h3 className="font-semibold text-blue-800 mb-2">🎯 Filtros de Precisão</h3>
-              <p className="text-sm text-blue-700">
+            <div className="bg-blue-800 p-4 rounded-lg border border-blue-700">
+              <h3 className="font-semibold text-blue-100 mb-2">🎯 Filtros de Precisão</h3>
+              <p className="text-sm text-blue-200">
                 Para evitar capturar publicações de outros advogados com o mesmo nome, 
                 configure os filtros abaixo. O número da OAB é o mais eficaz.
               </p>
             </div>
 
             {/* Nomes para Monitoramento */}
-            <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-              <Label className="text-sm font-semibold text-red-800 mb-3 block">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-800">
+              <Label className="text-sm font-semibold text-blue-100 mb-3 block">
                 📝 Nomes para monitoramento *
               </Label>
               <div className="space-y-2">
@@ -171,7 +171,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                       </Button>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                          <HelpCircle className="h-4 w-4 text-blue-300 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
@@ -195,12 +195,12 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Números da OAB */}
-            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <Label className="text-sm font-semibold text-green-800 mb-2 flex items-center gap-2">
+            <div className="bg-blue-800 p-4 rounded-lg border border-blue-700">
+              <Label className="text-sm font-semibold text-blue-100 mb-2 flex items-center gap-2">
                 ⚖️ Números da OAB (Recomendado) 
-                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Máxima Precisão</span>
+                <span className="bg-blue-700 text-blue-100 text-xs px-2 py-1 rounded">Máxima Precisão</span>
               </Label>
-              <p className="text-xs text-green-700 mb-3">
+              <p className="text-xs text-blue-200 mb-3">
                 Ex: "123.456/SP" ou "789.012/RJ" - Evita confusão com advogados de mesmo nome
               </p>
               <div className="space-y-2">
@@ -239,12 +239,12 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Nomes de Escritórios */}
-            <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-              <Label className="text-sm font-semibold text-purple-800 mb-2 flex items-center gap-2">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-800">
+              <Label className="text-sm font-semibold text-blue-100 mb-2 flex items-center gap-2">
                 🏢 Nomes de Escritórios
-                <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">Filtro Adicional</span>
+                <span className="bg-blue-800 text-blue-100 text-xs px-2 py-1 rounded">Filtro Adicional</span>
               </Label>
-              <p className="text-xs text-purple-700 mb-3">
+              <p className="text-xs text-blue-200 mb-3">
                 Ex: "Silva & Associados", "Costa Advocacia" - Ajuda a identificar o escritório
               </p>
               <div className="space-y-2">
@@ -283,8 +283,8 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
             
             {/* Estados para Monitorar */}
-            <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-              <Label className="text-sm font-semibold text-orange-800 mb-3 block">
+            <div className="bg-blue-800 p-4 rounded-lg border border-blue-700">
+              <Label className="text-sm font-semibold text-blue-100 mb-3 block">
                 🗺️ Estados para monitorar (não marque nada para pesquisar em todos os estados)
               </Label>
               <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto bg-white p-3 rounded border">
@@ -309,8 +309,8 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Palavras-chave */}
-            <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-              <Label className="text-sm font-semibold text-yellow-800 mb-3 block">
+            <div className="bg-blue-900 p-4 rounded-lg border border-blue-800">
+              <Label className="text-sm font-semibold text-blue-100 mb-3 block">
                 🔍 Palavras-chave adicionais
               </Label>
               <div className="space-y-2">
@@ -338,7 +338,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                       </Button>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                          <HelpCircle className="h-4 w-4 text-blue-300 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
