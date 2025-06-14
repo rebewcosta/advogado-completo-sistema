@@ -1,7 +1,8 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { DiarioScraper, PublicacaoEncontrada } from './scrapers/diarioScraper.ts'
+import { DiarioScraper } from './scrapers/diarioScraper.ts'
+import { PublicacaoEncontrada } from './scrapers/types.ts'
 import { validateUserInput, sanitizeInputs } from './utils/validation.ts'
 import { checkRateLimit } from './utils/rateLimit.ts'
 import { createMonitoringLog, updateMonitoringLog } from './utils/logging.ts'
