@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -230,7 +229,31 @@ const PublicacoesPage: React.FC = () => {
     }
   };
 
+  // Função para verificar se um advogado está na configuração atual
+  const isAdvogadoAtivo = useCallback((nomeAdvogado: string): boolean => {
+    if (!configuracao || !configuracao.monitoramento_ativo) {
+      return false;
+    }
+
+    // Verifica se o nome do advogado está nos nomes monitorados
+    const nomesAtivos = configuracao.nomes_monitoramento
+      .filter(nome => nome.trim() !== '')
+      .map(nome => nome.toLowerCase().trim());
+
+    return nomesAtivos.some(nomeConfig => 
+      nomeAdvogado.toLowerCase().includes(nomeConfig) || 
+      nomeConfig.includes(nomeAdvogado.toLowerCase())
+    );
+  }, [configuracao]);
+
+  // Filtragem de publicações com base na configuração ativa
   const publicacoesFiltradas = publicacoes.filter(pub => {
+    // Primeiro filtro: apenas publicações de advogados ativos na configuração
+    if (!isAdvogadoAtivo(pub.nome_advogado)) {
+      return false;
+    }
+
+    // Filtros de busca
     const matchesSearch = pub.titulo_publicacao.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          pub.conteudo_publicacao.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          pub.nome_advogado.toLowerCase().includes(searchTerm.toLowerCase());
