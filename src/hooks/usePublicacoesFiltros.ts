@@ -1,14 +1,6 @@
 
 import { useCallback, useMemo } from 'react';
-
-interface Publicacao {
-  id: string;
-  nome_advogado: string;
-  titulo_publicacao: string;
-  conteudo_publicacao: string;
-  lida: boolean;
-  importante: boolean;
-}
+import { Publicacao } from '@/types/publicacoes';
 
 interface ConfiguracaoMonitoramento {
   nomes_monitoramento: string[];
