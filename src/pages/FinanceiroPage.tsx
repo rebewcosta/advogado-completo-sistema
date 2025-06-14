@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import TransacaoListAsCards from '@/components/financeiro/TransacaoListAsCards';
 import TransacaoTable from '@/components/financeiro/TransacaoTable';
+import TransacaoFormFields from '@/components/financeiro/TransacaoFormFields';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import type { Database } from '@/integrations/supabase/types';
 
@@ -39,6 +40,14 @@ const FinanceiroPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentTransaction, setCurrentTransaction] = useState<TransacaoSupabase | null>(null);
+  const [formData, setFormData] = useState({
+    tipo: 'Receita',
+    descricao: '',
+    valor: '',
+    categoria: 'Honorários',
+    data: new Date().toISOString().split('T')[0],
+    status: 'Pendente'
+  });
   const { toast } = useToast();
 
   useEffect(() => {
@@ -162,6 +171,14 @@ const FinanceiroPage = () => {
 
   const handleEditTransaction = (transaction: TransacaoSupabase) => {
     setCurrentTransaction(transaction);
+    setFormData({
+      tipo: transaction.tipo_transacao || 'Receita',
+      descricao: transaction.descricao || '',
+      valor: String(transaction.valor || ''),
+      categoria: transaction.categoria || 'Honorários',
+      data: transaction.data_transacao || new Date().toISOString().split('T')[0],
+      status: transaction.status_pagamento || 'Pendente'
+    });
     setIsModalOpen(true);
   };
 
@@ -196,6 +213,15 @@ const FinanceiroPage = () => {
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleAddOrUpdateTransaction = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user || isLoadingTransactions) {
@@ -203,17 +229,15 @@ const FinanceiroPage = () => {
         return;
     }
     setIsLoadingTransactions(true);
-    const formData = new FormData(e.target as HTMLFormElement);
-    const formValues = Object.fromEntries(formData.entries()) as { [key: string]: string };
 
     const transactionDataForSupabase = {
       user_id: user.id,
-      tipo_transacao: formValues.tipo as 'Receita' | 'Despesa',
-      descricao: formValues.descricao,
-      valor: parseFloat(formValues.valor),
-      categoria: formValues.categoria,
-      data_transacao: formValues.data,
-      status_pagamento: formValues.status as TransacaoSupabase['status_pagamento'],
+      tipo_transacao: formData.tipo as 'Receita' | 'Despesa',
+      descricao: formData.descricao,
+      valor: parseFloat(formData.valor),
+      categoria: formData.categoria,
+      data_transacao: formData.data,
+      status_pagamento: formData.status as TransacaoSupabase['status_pagamento'],
     };
 
     try {
@@ -241,7 +265,14 @@ const FinanceiroPage = () => {
       fetchTransactions(false);
       setIsModalOpen(false);
       setCurrentTransaction(null);
-      (e.target as HTMLFormElement).reset();
+      setFormData({
+        tipo: 'Receita',
+        descricao: '',
+        valor: '',
+        categoria: 'Honorários',
+        data: new Date().toISOString().split('T')[0],
+        status: 'Pendente'
+      });
     } catch (error: any) {
       toast({
         title: "Erro ao salvar transação",
@@ -302,7 +333,18 @@ const FinanceiroPage = () => {
             description="Gerencie suas receitas, despesas e o fluxo de caixa do seu escritório."
             pageIcon={<BadgePercent />}
             actionButtonText="Nova Transação"
-            onActionButtonClick={() => { setCurrentTransaction(null); setIsModalOpen(true); }}
+            onActionButtonClick={() => { 
+              setCurrentTransaction(null); 
+              setFormData({
+                tipo: 'Receita',
+                descricao: '',
+                valor: '',
+                categoria: 'Honorários',
+                data: new Date().toISOString().split('T')[0],
+                status: 'Pendente'
+              });
+              setIsModalOpen(true); 
+            }}
             isLoading={isLoadingCombined}
         />
 
@@ -432,7 +474,7 @@ const FinanceiroPage = () => {
 
           {isModalOpen && (
              <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-              <Card className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col">
+              <Card className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
                 <CardHeader className="p-4 border-b sticky top-0 bg-white z-10">
                   <div className="flex justify-between items-center">
                     <CardTitle className="text-lg font-semibold text-gray-800">{currentTransaction ? 'Editar Transação' : 'Nova Transação'}</CardTitle>
@@ -450,105 +492,12 @@ const FinanceiroPage = () => {
                   </div>
                 </CardHeader>
                 <form onSubmit={handleAddOrUpdateTransaction} className="flex-grow overflow-y-auto">
-                  <CardContent className="p-4 space-y-4">
-                    <div>
-                      <Label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Transação</Label>
-                      <div className="flex">
-                        <label className="inline-flex items-center mr-6">
-                          <input
-                            type="radio"
-                            name="tipo"
-                            value="Receita"
-                            defaultChecked={currentTransaction?.tipo_transacao === "Receita" || !currentTransaction}
-                            className="mr-2 form-radio h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
-                          />
-                          <span className="text-sm text-gray-700">Receita</span>
-                        </label>
-                        <label className="inline-flex items-center">
-                          <input
-                            type="radio"
-                            name="tipo"
-                            value="Despesa"
-                            defaultChecked={currentTransaction?.tipo_transacao === "Despesa"}
-                            className="mr-2 form-radio h-4 w-4 text-lawyer-primary focus:ring-lawyer-primary"
-                          />
-                          <span className="text-sm text-gray-700">Despesa</span>
-                        </label>
-                      </div>
-                    </div>
-                    <div>
-                      <Label htmlFor="descricao_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Descrição</Label>
-                      <Input
-                        type="text"
-                        id="descricao_modal_fin"
-                        name="descricao"
-                        defaultValue={currentTransaction?.descricao || ''}
-                        required
-                        className="w-full px-3 py-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="valor_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Valor (R$)</Label>
-                      <Input
-                        type="number"
-                        id="valor_modal_fin"
-                        name="valor"
-                        min="0"
-                        step="0.01"
-                        defaultValue={currentTransaction?.valor ? String(currentTransaction.valor) : ''}
-                        required
-                        className="w-full px-3 py-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="categoria_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Categoria</Label>
-                        <select
-                          id="categoria_modal_fin"
-                          name="categoria"
-                          defaultValue={currentTransaction?.categoria || 'Honorários'}
-                          className="w-full px-3 py-2.5 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white text-sm"
-                        >
-                          <option value="Honorários">Honorários</option>
-                          <option value="Consultas">Consultas</option>
-                          <option value="Custas Processuais">Custas Processuais</option>
-                          <option value="Infraestrutura">Infraestrutura</option>
-                          <option value="Software">Software</option>
-                          <option value="Salários">Salários</option>
-                          <option value="Impostos">Impostos</option>
-                          <option value="Suprimentos">Suprimentos</option>
-                          <option value="Marketing">Marketing</option>
-                          <option value="Outros">Outros</option>
-                        </select>
-                      </div>
-                      <div>
-                        <Label htmlFor="data_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Data</Label>
-                        <Input
-                          type="date"
-                          id="data_modal_fin"
-                          name="data"
-                          defaultValue={currentTransaction?.data_transacao || new Date().toISOString().split('T')[0]}
-                          required
-                          className="w-full px-3 py-2 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4">
-                      <div>
-                        <Label htmlFor="status_modal_fin" className="block text-sm font-medium text-gray-700 mb-1">Status</Label>
-                        <select
-                          id="status_modal_fin"
-                          name="status"
-                          defaultValue={currentTransaction?.status_pagamento || 'Pendente'}
-                          className="w-full px-3 py-2.5 border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-lawyer-primary bg-white text-sm"
-                        >
-                          <option value="Pendente">Pendente</option>
-                          <option value="Pago">Pago</option>
-                          <option value="Recebido">Recebido</option>
-                          <option value="Atrasado">Atrasado</option>
-                        </select>
-                      </div>
-                    </div>
+                  <CardContent className="p-4">
+                    <TransacaoFormFields
+                      formData={formData}
+                      handleChange={handleChange}
+                      handleSelectChange={handleSelectChange}
+                    />
                   </CardContent>
                    <div className="p-4 border-t flex justify-end gap-2 sticky bottom-0 bg-gray-50 z-10">
                     <Button
