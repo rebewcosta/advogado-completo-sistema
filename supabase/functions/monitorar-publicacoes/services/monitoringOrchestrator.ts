@@ -1,7 +1,7 @@
 
-import { DJeService } from './djeService.ts';
+import { TribunalApiService } from './tribunalApiService.ts';
+import { CNJApiService } from './cnjApiService.ts';
 import { JusbrassilService } from './jusbrasil.ts';
-import { RealScraperService } from './realScraper.ts';
 import { removerDuplicatas, salvarPublicacoes } from '../utils/dataProcessor.ts';
 
 interface PublicacaoEncontrada {
@@ -18,9 +18,9 @@ interface PublicacaoEncontrada {
 }
 
 export class MonitoringOrchestrator {
-  private djeService = new DJeService();
+  private tribunalApiService = new TribunalApiService();
+  private cnjApiService = new CNJApiService();
   private jusbrassilService = new JusbrassilService();
-  private realScraperService = new RealScraperService();
 
   async executarBuscaCompleta(
     nomes: string[], 
@@ -28,30 +28,30 @@ export class MonitoringOrchestrator {
     userId: string, 
     supabase: any
   ): Promise<{ publicacoes: number; fontes: string[] }> {
-    console.log('🚀 INICIANDO BUSCA REAL MULTI-FONTE...');
+    console.log('🚀 INICIANDO BUSCA OFICIAL COM APIs DOS TRIBUNAIS...');
     console.log('📋 Nomes válidos:', nomes);
     console.log('🌍 Estados válidos:', estados.length > 0 ? estados : 'PRINCIPAIS ESTADOS');
     
     const todasPublicacoes: PublicacaoEncontrada[] = [];
-    const fontesConsultadas = ['DJe', 'Jusbrasil', 'Sites Oficiais'];
+    const fontesConsultadas = ['CNJ API', 'APIs Tribunais', 'Jusbrasil'];
 
     try {
-      // 1. Buscar no DJe (Diário da Justiça Eletrônico)
-      console.log('🏛️ Iniciando busca no DJe...');
-      const publicacoesDJe = await this.djeService.buscarPublicacoesDJe(nomes, estados);
-      todasPublicacoes.push(...publicacoesDJe);
+      // 1. Buscar na API oficial do CNJ (prioritária)
+      console.log('⚖️ Consultando API oficial do CNJ...');
+      const publicacoesCNJ = await this.cnjApiService.buscarPublicacoesCNJ(nomes, estados);
+      todasPublicacoes.push(...publicacoesCNJ);
       
-      // 2. Buscar no Jusbrasil (fonte complementar)
-      console.log('⚖️ Iniciando busca no Jusbrasil...');
+      // 2. Buscar nas APIs oficiais dos tribunais estaduais
+      console.log('🏛️ Consultando APIs oficiais dos Tribunais...');
+      const publicacoesTribunais = await this.tribunalApiService.buscarPublicacoes(nomes, estados);
+      todasPublicacoes.push(...publicacoesTribunais);
+      
+      // 3. Complementar com Jusbrasil (fonte adicional)
+      console.log('📚 Consultando Jusbrasil como fonte complementar...');
       const publicacoesJusbrasil = await this.jusbrassilService.buscarPublicacoes(nomes, estados);
       todasPublicacoes.push(...publicacoesJusbrasil);
-      
-      // 3. Scraping real dos sites oficiais
-      console.log('🌐 Iniciando scraping dos sites oficiais...');
-      const publicacoesScraping = await this.realScraperService.buscarPublicacoes(nomes, estados);
-      todasPublicacoes.push(...publicacoesScraping);
 
-      console.log(`📄 Total de publicações encontradas: ${todasPublicacoes.length}`);
+      console.log(`📄 Total de publicações coletadas: ${todasPublicacoes.length}`);
 
       // Remover duplicatas baseado no conteúdo
       const publicacoesUnicas = removerDuplicatas(todasPublicacoes);
@@ -68,7 +68,7 @@ export class MonitoringOrchestrator {
       };
 
     } catch (searchError: any) {
-      console.error('❌ Erro durante busca REAL:', searchError);
+      console.error('❌ Erro durante busca oficial:', searchError);
       throw searchError;
     }
   }

@@ -39,8 +39,8 @@ export const createSuccessResponse = (
   estados: string[]
 ) => {
   const message = publicacoesEncontradas > 0 
-    ? `✅ Busca REAL concluída: ${publicacoesEncontradas} publicações encontradas`
-    : `ℹ️ Busca REAL concluída: Nenhuma publicação encontrada para os advogados informados`;
+    ? `✅ Busca OFICIAL concluída: ${publicacoesEncontradas} publicações encontradas via APIs oficiais`
+    : `ℹ️ Busca OFICIAL concluída: Nenhuma publicação encontrada nas fontes oficiais`;
 
   return createCorsResponse({
     success: true,
@@ -48,12 +48,12 @@ export const createSuccessResponse = (
     fontes_consultadas: fontesConsultadas.length,
     tempo_execucao: tempoExecucao,
     message: message,
-    status_integracao: 'INTEGRADO_REAL_MULTI_FONTE',
+    status_integracao: 'INTEGRADO_APIS_OFICIAIS',
     detalhes_busca: {
       nomes_buscados: nomes,
       estados_consultados: estados.length > 0 ? estados : ['SP', 'RJ', 'MG', 'RS', 'PR'],
       fontes_utilizadas: fontesConsultadas,
-      busca_tipo: 'Busca real em múltiplas fontes: DJe, Jusbrasil e Sites Oficiais'
+      busca_tipo: 'Busca oficial via APIs dos Tribunais: CNJ, TJ-SP, TJ-RJ, TJ-MG, TJ-RS, TJ-PR'
     }
   });
 };
