@@ -121,7 +121,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
           
           <div className="space-y-6">
             {/* Status do Monitoramento */}
-            <div className="bg-blue-900 p-4 rounded-lg border border-blue-800">
+            <div className="bg-lawyer-dark p-4 rounded-lg border border-gray-600">
               <div className="flex items-center space-x-2">
                 <Switch
                   id="monitoramento-ativo"
@@ -142,8 +142,8 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Nomes para Monitoramento */}
-            <div className="bg-blue-900 p-4 rounded-lg border border-blue-800">
-              <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+            <div className="bg-lawyer-dark p-4 rounded-lg border border-gray-600">
+              <Label className="text-sm font-semibold text-gray-100 mb-3 block">
                 📝 Nomes para monitoramento *
               </Label>
               <div className="space-y-2">
@@ -171,7 +171,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                       </Button>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 text-blue-300 cursor-help" />
+                          <HelpCircle className="h-4 w-4 text-gray-300 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
@@ -239,12 +239,12 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Nomes de Escritórios */}
-            <div className="bg-blue-900 p-4 rounded-lg border border-blue-800">
-              <Label className="text-sm font-semibold text-blue-100 mb-2 flex items-center gap-2">
+            <div className="bg-lawyer-dark p-4 rounded-lg border border-gray-600">
+              <Label className="text-sm font-semibold text-gray-100 mb-2 flex items-center gap-2">
                 🏢 Nomes de Escritórios
-                <span className="bg-blue-800 text-blue-100 text-xs px-2 py-1 rounded">Filtro Adicional</span>
+                <span className="bg-gray-600 text-gray-100 text-xs px-2 py-1 rounded">Filtro Adicional</span>
               </Label>
-              <p className="text-xs text-blue-200 mb-3">
+              <p className="text-xs text-gray-200 mb-3">
                 Ex: "Silva & Associados", "Costa Advocacia" - Ajuda a identificar o escritório
               </p>
               <div className="space-y-2">
@@ -309,8 +309,8 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
             </div>
 
             {/* Palavras-chave */}
-            <div className="bg-blue-900 p-4 rounded-lg border border-blue-800">
-              <Label className="text-sm font-semibold text-blue-100 mb-3 block">
+            <div className="bg-lawyer-dark p-4 rounded-lg border border-gray-600">
+              <Label className="text-sm font-semibold text-gray-100 mb-3 block">
                 🔍 Palavras-chave adicionais
               </Label>
               <div className="space-y-2">
@@ -338,7 +338,7 @@ const ConfiguracaoDialog: React.FC<ConfiguracaoDialogProps> = ({
                       </Button>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <HelpCircle className="h-4 w-4 text-blue-300 cursor-help" />
+                          <HelpCircle className="h-4 w-4 text-gray-300 cursor-help" />
                         </TooltipTrigger>
                         <TooltipContent>
                           <p className="max-w-xs">
