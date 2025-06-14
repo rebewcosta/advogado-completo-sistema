@@ -83,7 +83,7 @@ function App() {
                   <Route path="/pagamento" element={<PublicLayout><PagamentoPage /></PublicLayout>} />
                   <Route path="/payment-success" element={<PublicLayout><PaymentSuccessPage /></PublicLayout>} />
 
-                  {/* Rotas protegidas com sidebar */}
+                  {/* Rotas protegidas apenas com sidebar */}
                   <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><DashboardPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/meus-processos" element={<ProtectedRoute><ProtectedLayout><MeusProcessosPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/clientes" element={<ProtectedRoute><ProtectedLayout><ClientesPage /></ProtectedLayout></ProtectedRoute>} />

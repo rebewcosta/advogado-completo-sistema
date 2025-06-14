@@ -16,12 +16,7 @@ import { CalendarDays, Clock, MapPin, User, FileText, Activity, AlertTriangle, I
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils'; // Added the cn import
-import type { Database } from '@/integrations/supabase/types';
-
-type EventoAgenda = Database['public']['Tables']['agenda_eventos']['Row'] & {
-  clientes?: { id: string; nome: string } | null;
-  processos?: { id: string; numero_processo: string } | null;
-};
+import type { EventoAgenda } from '@/pages/AgendaPage'; // Importando o tipo da AgendaPage
 
 type AgendaEventDetailProps = {
   event: EventoAgenda;
