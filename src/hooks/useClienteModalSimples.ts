@@ -31,13 +31,27 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
       return;
     }
     
-    // Preparar dados, removendo email se estiver vazio para evitar conflito
-    const dataToSave = {
-      ...formData,
-      // Só incluir email se não estiver vazio
-      ...(formData.email && formData.email.trim() ? { email: formData.email.trim() } : {})
+    // Preparar dados para salvar - não incluir email se estiver vazio
+    const dataToSave: any = {
+      nome: formData.nome.trim(),
+      telefone: formData.telefone.trim(),
+      tipo_cliente: formData.tipo_cliente,
+      cpfCnpj: formData.cpfCnpj.trim(),
+      status_cliente: formData.status_cliente,
+      // Campos obrigatórios mas que podem estar vazios no modal simples
+      endereco: '',
+      cidade: '',
+      estado: '',
+      cep: '',
+      observacoes: ''
     };
     
+    // Só incluir email se não estiver vazio
+    if (formData.email && formData.email.trim()) {
+      dataToSave.email = formData.email.trim();
+    }
+    
+    console.log('Dados preparados para salvar:', dataToSave);
     onSaveCliente(dataToSave);
   };
 

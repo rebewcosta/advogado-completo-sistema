@@ -2,17 +2,25 @@
 import type { ClienteFormData } from './types';
 
 export const prepareClientDataForSave = (clientData: ClienteFormData): any => {
-  return {
-    ...clientData,
-    // Se email estiver vazio, não enviar o campo para evitar conflito de unique constraint
-    ...(clientData.email && clientData.email.trim() ? { email: clientData.email.trim() } : {}),
+  const dataToSave: any = {
+    nome: clientData.nome,
     telefone: clientData.telefone || '',
+    tipo_cliente: clientData.tipo_cliente,
+    cpfCnpj: clientData.cpfCnpj,
+    status_cliente: clientData.status_cliente,
     endereco: clientData.endereco || '',
     cidade: clientData.cidade || '',
     estado: clientData.estado || '',
     cep: clientData.cep || '',
     observacoes: clientData.observacoes || ''
   };
+
+  // Só incluir email se não estiver vazio para evitar conflito de unique constraint
+  if (clientData.email && clientData.email.trim()) {
+    dataToSave.email = clientData.email.trim();
+  }
+
+  return dataToSave;
 };
 
 export const getErrorMessage = (error: any): string => {
