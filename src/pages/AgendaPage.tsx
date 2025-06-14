@@ -204,9 +204,26 @@ const AgendaPage = () => {
   const convertEventForForm = (event: AgendaEvent | null) => {
     if (!event) return null;
     
+    // Ensure prioridade is one of the expected values
+    const validPrioridade = (prio: string): 'baixa' | 'média' | 'alta' => {
+      if (prio === 'baixa' || prio === 'média' || prio === 'alta') {
+        return prio;
+      }
+      return 'média'; // default fallback
+    };
+    
     return {
-      ...event,
+      titulo: event.titulo,
+      descricao_evento: event.descricao_evento,
       data_hora_inicio: new Date(event.data_hora_inicio),
+      duracao_minutos: event.duracao_minutos,
+      local_evento: event.local_evento,
+      cliente_associado_id: event.cliente_associado_id,
+      processo_associado_id: event.processo_associado_id,
+      prioridade: validPrioridade(event.prioridade),
+      tipo_evento: event.tipo_evento,
+      status_evento: event.status_evento,
+      id: event.id
     };
   };
 
