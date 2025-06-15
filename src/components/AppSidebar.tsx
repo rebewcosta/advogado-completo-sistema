@@ -1,4 +1,3 @@
-
 // src/components/AppSidebar.tsx
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -27,7 +26,6 @@ import {
   Shield,
   ListChecks,
   UserCheck,
-  BookOpen,
   Search
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
@@ -58,7 +56,6 @@ export const AppSidebar = () => {
     { path: "/equipe", icon: UserCheck, label: "Equipe" },
     { path: "/agenda", icon: Calendar, label: "Agenda" },
     { path: "/tarefas", icon: ListChecks, label: "Tarefas" },
-    { path: "/publicacoes", icon: BookOpen, label: "Publicações" },
     { path: "/datajud", icon: Search, label: "DataJud CNJ" },
     { path: "/financeiro", icon: DollarSign, label: "Financeiro" },
     { path: "/documentos", icon: FileArchive, label: "Documentos" },
