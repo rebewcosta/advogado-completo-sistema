@@ -16,19 +16,121 @@ interface ConsultaRequest {
   useCache?: boolean;
 }
 
-// Mapeamento dos tribunais mais importantes primeiro
+// Mapeamento COMPLETO de todos os tribunais conforme manual CNJ
 const TRIBUNAL_INDICES = {
-  'TJSP': 'api_publica_tjsp',
-  'TJRJ': 'api_publica_tjrj', 
-  'TJMG': 'api_publica_tjmg',
-  'TJRS': 'api_publica_tjrs',
-  'TJPR': 'api_publica_tjpr',
-  'TJSC': 'api_publica_tjsc',
+  // Tribunais de Justiça Estaduais
+  'TJAC': 'api_publica_tjac',
+  'TJAL': 'api_publica_tjal',
+  'TJAP': 'api_publica_tjap',
+  'TJAM': 'api_publica_tjam',
   'TJBA': 'api_publica_tjba',
-  'TJGO': 'api_publica_tjgo',
+  'TJCE': 'api_publica_tjce',
   'TJDF': 'api_publica_tjdft',
+  'TJES': 'api_publica_tjes',
+  'TJGO': 'api_publica_tjgo',
+  'TJMA': 'api_publica_tjma',
+  'TJMT': 'api_publica_tjmt',
+  'TJMS': 'api_publica_tjms',
+  'TJMG': 'api_publica_tjmg',
+  'TJPA': 'api_publica_tjpa',
+  'TJPB': 'api_publica_tjpb',
+  'TJPR': 'api_publica_tjpr',
+  'TJPE': 'api_publica_tjpe',
+  'TJPI': 'api_publica_tjpi',
+  'TJRJ': 'api_publica_tjrj',
+  'TJRN': 'api_publica_tjrn',
+  'TJRS': 'api_publica_tjrs',
+  'TJRO': 'api_publica_tjro',
+  'TJRR': 'api_publica_tjrr',
+  'TJSC': 'api_publica_tjsc',
+  'TJSP': 'api_publica_tjsp',
+  'TJSE': 'api_publica_tjse',
+  'TJTO': 'api_publica_tjto',
+  
+  // Tribunais Regionais do Trabalho
+  'TRT1': 'api_publica_trt1',
+  'TRT2': 'api_publica_trt2',
+  'TRT3': 'api_publica_trt3',
+  'TRT4': 'api_publica_trt4',
+  'TRT5': 'api_publica_trt5',
+  'TRT6': 'api_publica_trt6',
+  'TRT7': 'api_publica_trt7',
+  'TRT8': 'api_publica_trt8',
+  'TRT9': 'api_publica_trt9',
+  'TRT10': 'api_publica_trt10',
+  'TRT11': 'api_publica_trt11',
+  'TRT12': 'api_publica_trt12',
+  'TRT13': 'api_publica_trt13',
+  'TRT14': 'api_publica_trt14',
+  'TRT15': 'api_publica_trt15',
+  'TRT16': 'api_publica_trt16',
+  'TRT17': 'api_publica_trt17',
+  'TRT18': 'api_publica_trt18',
+  'TRT19': 'api_publica_trt19',
+  'TRT20': 'api_publica_trt20',
+  'TRT21': 'api_publica_trt21',
+  'TRT22': 'api_publica_trt22',
+  'TRT23': 'api_publica_trt23',
+  'TRT24': 'api_publica_trt24',
+  
+  // Tribunais Regionais Federais
+  'TRF1': 'api_publica_trf1',
+  'TRF2': 'api_publica_trf2',
+  'TRF3': 'api_publica_trf3',
+  'TRF4': 'api_publica_trf4',
+  'TRF5': 'api_publica_trf5',
+  'TRF6': 'api_publica_trf6',
+  
+  // Tribunais Superiores
   'TST': 'api_publica_tst',
-  'STJ': 'api_publica_stj'
+  'STJ': 'api_publica_stj',
+  'STF': 'api_publica_stf',
+  'TSE': 'api_publica_tse',
+  'STM': 'api_publica_stm',
+  
+  // Tribunais Regionais Eleitorais
+  'TREAC': 'api_publica_treac',
+  'TREAL': 'api_publica_treal',
+  'TREAP': 'api_publica_treap',
+  'TREAM': 'api_publica_tream',
+  'TREBA': 'api_publica_treba',
+  'TRECE': 'api_publica_trece',
+  'TREDF': 'api_publica_tredf',
+  'TREES': 'api_publica_trees',
+  'TREGO': 'api_publica_trego',
+  'TREMA': 'api_publica_trema',
+  'TREMT': 'api_publica_tremt',
+  'TREMS': 'api_publica_trems',
+  'TREMG': 'api_publica_tremg',
+  'TREPA': 'api_publica_trepa',
+  'TREPB': 'api_publica_trepb',
+  'TREPR': 'api_publica_trepr',
+  'TREPE': 'api_publica_trepe',
+  'TREPI': 'api_publica_trepi',
+  'TRERJ': 'api_publica_trerj',
+  'TRERN': 'api_publica_trern',
+  'TRERS': 'api_publica_trers',
+  'TRERO': 'api_publica_trero',
+  'TRERR': 'api_publica_trerr',
+  'TRESC': 'api_publica_tresc',
+  'TRESP': 'api_publica_tresp',
+  'TRESE': 'api_publica_trese',
+  'TRETO': 'api_publica_treto',
+  
+  // Tribunais de Justiça Militar
+  'TJMSP': 'api_publica_tjmsp',
+  'TJMRJ': 'api_publica_tjmrj',
+  'TJMRS': 'api_publica_tjmrs',
+  'TJMMG': 'api_publica_tjmmg',
+  
+  // Tribunal Superior do Trabalho Militar
+  'TSTM': 'api_publica_tstm',
+  
+  // Conselho Superior da Justiça do Trabalho
+  'CSJT': 'api_publica_csjt',
+  
+  // Conselho Nacional de Justiça
+  'CNJ': 'api_publica_cnj'
 };
 
 serve(async (req) => {
@@ -44,10 +146,17 @@ serve(async (req) => {
     console.log('Termo:', termo);
     console.log('Tribunal:', tribunal);
 
-    // Determinar tribunais para buscar - focando nos principais
-    const tribunaisParaBuscar = tribunal && TRIBUNAL_INDICES[tribunal as keyof typeof TRIBUNAL_INDICES] 
-      ? [tribunal] 
-      : ['TJSP', 'TJRJ', 'TJMG']; // Os 3 maiores tribunais do Brasil
+    // Determinar tribunais para buscar
+    let tribunaisParaBuscar: string[];
+    
+    if (tribunal && tribunal !== 'todos' && TRIBUNAL_INDICES[tribunal as keyof typeof TRIBUNAL_INDICES]) {
+      tribunaisParaBuscar = [tribunal];
+    } else {
+      // Se não especificou tribunal, buscar nos principais
+      tribunaisParaBuscar = ['TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR'];
+    }
+
+    console.log('Tribunais para buscar:', tribunaisParaBuscar);
 
     const resultados: any[] = [];
     
@@ -71,7 +180,6 @@ serve(async (req) => {
         
         console.log(`✅ ${tribunalCode}: ${resultado ? (Array.isArray(resultado) ? resultado.length : 1) : 0} resultado(s)`);
         
-        // Se encontrou resultados, pode continuar buscando em outros tribunais para comparar
       } catch (error) {
         console.error(`❌ Erro no tribunal ${tribunalCode}:`, error.message);
         // Continua para próximo tribunal
@@ -85,7 +193,7 @@ serve(async (req) => {
           data: null,
           message: `Nenhum processo encontrado na base oficial do CNJ DataJud para "${termo}".`,
           tribunais_consultados: tribunaisParaBuscar,
-          detalhes: 'Busca realizada nos principais tribunais brasileiros'
+          detalhes: 'Busca realizada conforme solicitado'
         }),
         { 
           status: 200,
@@ -155,66 +263,20 @@ async function buscarNoTribunal(tipo: string, termo: string, indiceApi: string, 
       size: 20
     };
   } else if (tipo === 'nome') {
-    // Busca por nome - usando a estratégia mais próxima do site oficial da CNJ
-    const termosNome = termo.trim().split(' ').filter(t => t.length > 2);
-    
+    // Busca por nome - estratégia simplificada e direta
     query = {
       query: {
-        bool: {
-          should: [
-            // Busca exata por frase
-            {
-              multi_match: {
-                query: termo,
-                fields: [
-                  "partes.pessoa.nome^3",
-                  "partes.advogados.nome^2",
-                  "movimentos.nome",
-                  "assuntos.nome"
-                ],
-                type: "phrase",
-                boost: 3
-              }
-            },
-            // Busca por palavras individuais (deve conter todas)
-            {
-              bool: {
-                must: termosNome.map(palavra => ({
-                  multi_match: {
-                    query: palavra,
-                    fields: [
-                      "partes.pessoa.nome^2",
-                      "partes.advogados.nome^1.5"
-                    ],
-                    type: "best_fields",
-                    fuzziness: "AUTO"
-                  }
-                }))
-              }
-            },
-            // Busca menos restritiva (deve conter pelo menos metade das palavras)
-            {
-              bool: {
-                should: termosNome.map(palavra => ({
-                  multi_match: {
-                    query: palavra,
-                    fields: [
-                      "partes.pessoa.nome",
-                      "partes.advogados.nome"
-                    ],
-                    type: "best_fields"
-                  }
-                })),
-                minimum_should_match: Math.max(1, Math.floor(termosNome.length / 2))
-              }
-            }
-          ]
+        multi_match: {
+          query: termo,
+          fields: [
+            "partes.pessoa.nome",
+            "partes.advogados.nome"
+          ],
+          type: "phrase_prefix",
+          fuzziness: "AUTO"
         }
       },
-      size: 20,
-      sort: [
-        "_score"
-      ]
+      size: 20
     };
   }
 
