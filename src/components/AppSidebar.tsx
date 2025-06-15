@@ -25,7 +25,8 @@ import {
   LogOut,
   Shield,
   ListChecks,
-  UserCheck
+  UserCheck,
+  AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import {

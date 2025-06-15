@@ -12,6 +12,7 @@ import DashboardPage from './pages/DashboardPage';
 import MeusProcessosPage from './pages/MeusProcessosPage';
 import ClientesPage from './pages/ClientesPage';
 import AgendaPage from './pages/AgendaPage';
+import PrazosPage from './pages/PrazosPage';
 import TarefasPage from './pages/TarefasPage';
 import FinanceiroPage from './pages/FinanceiroPage';
 import DocumentosPage from './pages/DocumentosPage';
@@ -90,6 +91,7 @@ function App() {
                   <Route path="/clientes" element={<ProtectedRoute><ProtectedLayout><ClientesPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/equipe" element={<ProtectedRoute><ProtectedLayout><EquipePage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/agenda" element={<ProtectedRoute><ProtectedLayout><AgendaPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/prazos" element={<ProtectedRoute><ProtectedLayout><PrazosPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/tarefas" element={<ProtectedRoute><ProtectedLayout><TarefasPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/publicacoes" element={<ProtectedRoute><ProtectedLayout><PublicacoesPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/datajud" element={<ProtectedRoute><ProtectedLayout><DataJudPage /></ProtectedLayout></ProtectedRoute>} />
@@ -98,7 +100,7 @@ function App() {
                   <Route path="/relatorios" element={<ProtectedRoute><ProtectedLayout><RelatoriosPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/configuracoes" element={<ProtectedRoute><ProtectedLayout><ConfiguracoesPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/perfil-usuario" element={<ProtectedRoute><ProtectedLayout><PerfilUsuarioPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/suporte" element={<ProtectedRoute><ProtectedLayout><SuportePage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/suporte" element={<ProtectedRoute><ProtectedLayout><SuportePage /></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute><ProtectedLayout><AdminPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/redefinir-pin-financeiro" element={<ProtectedRoute><ProtectedLayout><RedefinirPinFinanceiroPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/emails-transacionais" element={<ProtectedRoute><ProtectedLayout><EmailsTransacionaisPage /></ProtectedLayout></ProtectedRoute>} />

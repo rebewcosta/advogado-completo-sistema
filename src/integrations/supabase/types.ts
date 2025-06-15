@@ -485,6 +485,147 @@ export type Database = {
         }
         Relationships: []
       }
+      prazo_alertas: {
+        Row: {
+          alerta_enviado: boolean
+          created_at: string
+          data_envio: string | null
+          data_prazo: string
+          descricao: string | null
+          dias_restantes: number
+          evento_agenda_id: string | null
+          id: string
+          processo_id: string | null
+          tipo_alerta: string
+          tipo_prazo: string
+          titulo: string
+          user_id: string
+        }
+        Insert: {
+          alerta_enviado?: boolean
+          created_at?: string
+          data_envio?: string | null
+          data_prazo: string
+          descricao?: string | null
+          dias_restantes: number
+          evento_agenda_id?: string | null
+          id?: string
+          processo_id?: string | null
+          tipo_alerta: string
+          tipo_prazo: string
+          titulo: string
+          user_id: string
+        }
+        Update: {
+          alerta_enviado?: boolean
+          created_at?: string
+          data_envio?: string | null
+          data_prazo?: string
+          descricao?: string | null
+          dias_restantes?: number
+          evento_agenda_id?: string | null
+          id?: string
+          processo_id?: string | null
+          tipo_alerta?: string
+          tipo_prazo?: string
+          titulo?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prazo_alertas_evento_agenda_id_fkey"
+            columns: ["evento_agenda_id"]
+            isOneToOne: false
+            referencedRelation: "agenda_eventos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prazo_alertas_processo_id_fkey"
+            columns: ["processo_id"]
+            isOneToOne: false
+            referencedRelation: "processos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prazo_calculos: {
+        Row: {
+          ativo: boolean
+          considera_feriados: boolean
+          considera_fins_semana: boolean
+          created_at: string
+          dias_prazo: number
+          id: string
+          nome_calculo: string
+          observacoes: string | null
+          tipo_prazo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ativo?: boolean
+          considera_feriados?: boolean
+          considera_fins_semana?: boolean
+          created_at?: string
+          dias_prazo: number
+          id?: string
+          nome_calculo: string
+          observacoes?: string | null
+          tipo_prazo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ativo?: boolean
+          considera_feriados?: boolean
+          considera_fins_semana?: boolean
+          created_at?: string
+          dias_prazo?: number
+          id?: string
+          nome_calculo?: string
+          observacoes?: string | null
+          tipo_prazo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      prazo_configuracoes: {
+        Row: {
+          created_at: string
+          dias_alerta_critico: number
+          dias_alerta_medio: number
+          dias_alerta_urgente: number
+          id: string
+          notificacoes_email: boolean
+          notificacoes_sistema: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dias_alerta_critico?: number
+          dias_alerta_medio?: number
+          dias_alerta_urgente?: number
+          id?: string
+          notificacoes_email?: boolean
+          notificacoes_sistema?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dias_alerta_critico?: number
+          dias_alerta_medio?: number
+          dias_alerta_urgente?: number
+          id?: string
+          notificacoes_email?: boolean
+          notificacoes_sistema?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       processos: {
         Row: {
           cliente_id: string | null
@@ -842,9 +983,25 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      gerar_alertas_prazos: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      get_prazos_criticos: {
+        Args: { p_user_id: string; p_dias_limite?: number }
+        Returns: {
+          id: string
+          tipo: string
+          titulo: string
+          data_prazo: string
+          dias_restantes: number
+          nivel_criticidade: string
+          detalhes: Json
+        }[]
       }
       get_user_by_email: {
         Args: { email_to_check: string }
