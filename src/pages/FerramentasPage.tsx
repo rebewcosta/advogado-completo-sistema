@@ -5,7 +5,6 @@ import { Wrench } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PrazosCalculadora } from '@/components/prazos/PrazosCalculadora';
 import { ConsultaCep } from '@/components/correios/ConsultaCep';
-import { ConsultaCnpjCpf } from '@/components/ferramentas/ConsultaCnpjCpf';
 import { CalculadoraCorrecao } from '@/components/ferramentas/CalculadoraCorrecao';
 import { ConsultaFeriados } from '@/components/ferramentas/ConsultaFeriados';
 import { ValidadorCpfCnpj } from '@/components/ferramentas/ValidadorCpfCnpj';
@@ -22,13 +21,12 @@ const FerramentasPage: React.FC = () => {
         />
         
         <Tabs defaultValue="prazos" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="prazos">Prazos</TabsTrigger>
             <TabsTrigger value="cep">CEP</TabsTrigger>
-            <TabsTrigger value="cnpj-cpf">CNPJ/CPF</TabsTrigger>
             <TabsTrigger value="correcao">Correção</TabsTrigger>
             <TabsTrigger value="feriados">Feriados</TabsTrigger>
-            <TabsTrigger value="validador">Validador</TabsTrigger>
+            <TabsTrigger value="validador">Validador CPF</TabsTrigger>
             <TabsTrigger value="peticoes">Petições</TabsTrigger>
           </TabsList>
           
@@ -38,10 +36,6 @@ const FerramentasPage: React.FC = () => {
           
           <TabsContent value="cep" className="mt-6">
             <ConsultaCep />
-          </TabsContent>
-          
-          <TabsContent value="cnpj-cpf" className="mt-6">
-            <ConsultaCnpjCpf />
           </TabsContent>
           
           <TabsContent value="correcao" className="mt-6">
