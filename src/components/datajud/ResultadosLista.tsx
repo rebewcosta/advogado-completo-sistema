@@ -59,6 +59,13 @@ const ResultadosLista: React.FC<ResultadosListaProps> = ({ resultados }) => {
     );
   }
 
+  // Filter out null/undefined results and ensure they have required properties
+  const validResultados = resultados.filter(processo => 
+    processo && 
+    processo.numero_processo && 
+    typeof processo.numero_processo === 'string'
+  );
+
   return (
     <Card>
       <CardHeader>
@@ -67,31 +74,37 @@ const ResultadosLista: React.FC<ResultadosListaProps> = ({ resultados }) => {
           Resultados da Busca
         </CardTitle>
         <CardDescription>
-          {resultados.length} processo(s) encontrado(s)
+          {validResultados.length} processo(s) encontrado(s)
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {resultados.map((processo, index) => (
+          {validResultados.map((processo, index) => (
             <div key={index} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h3 className="font-semibold text-lg">{processo.numero_processo}</h3>
-                  <p className="text-gray-600">{processo.classe}</p>
+                  <p className="text-gray-600">{processo.classe || 'Classe não informada'}</p>
                 </div>
                 <Badge variant={processo.status === 'Em andamento' ? 'default' : 'secondary'}>
-                  {processo.status}
+                  {processo.status || 'Status não informado'}
                 </Badge>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 <div className="flex items-center gap-2 text-sm">
                   <MapPin className="h-4 w-4 text-gray-500" />
-                  <span>{processo.tribunal}</span>
+                  <span>{processo.tribunal || 'Tribunal não informado'}</span>
                 </div>
                 <div className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4 text-gray-500" />
-                  <span>Ajuizado em {new Date(processo.data_ajuizamento).toLocaleDateString('pt-BR')}</span>
+                  <span>
+                    Ajuizado em {
+                      processo.data_ajuizamento 
+                        ? new Date(processo.data_ajuizamento).toLocaleDateString('pt-BR')
+                        : 'Data não informada'
+                    }
+                  </span>
                 </div>
               </div>
 
@@ -107,6 +120,12 @@ const ResultadosLista: React.FC<ResultadosListaProps> = ({ resultados }) => {
               </div>
             </div>
           ))}
+          
+          {validResultados.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-gray-600">Nenhum processo válido encontrado nos resultados.</p>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
