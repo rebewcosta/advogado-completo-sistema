@@ -1,5 +1,4 @@
 
-
 import { ConversionType } from './types';
 
 // Imports ES6 para as bibliotecas
@@ -82,70 +81,77 @@ export const createPDFFromHTML = async (htmlContent: string): Promise<Uint8Array
   return await pdfDoc.save();
 };
 
+const extractTextFromWordFile = async (file: File): Promise<string> => {
+  try {
+    // Tentativa básica de extração de texto
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
+    
+    // Procurar por texto legível no arquivo
+    let extractedText = '';
+    let currentWord = '';
+    
+    for (let i = 0; i < uint8Array.length; i++) {
+      const byte = uint8Array[i];
+      
+      // Caracteres ASCII imprimíveis
+      if (byte >= 32 && byte <= 126) {
+        currentWord += String.fromCharCode(byte);
+      } else if (byte === 0 || byte === 10 || byte === 13) {
+        // Fim de palavra ou quebra de linha
+        if (currentWord.length > 2) {
+          // Filtrar palavras que parecem ser texto real
+          if (!/^[A-Za-z0-9\s\.,!?;:()'"%-]+$/.test(currentWord)) {
+            currentWord = '';
+            continue;
+          }
+          extractedText += currentWord + ' ';
+        }
+        currentWord = '';
+        if (byte === 10 || byte === 13) {
+          extractedText += '\n';
+        }
+      } else {
+        // Bytes não ASCII - resetar palavra atual
+        if (currentWord.length > 2) {
+          extractedText += currentWord + ' ';
+        }
+        currentWord = '';
+      }
+    }
+    
+    // Adicionar última palavra se existir
+    if (currentWord.length > 2) {
+      extractedText += currentWord;
+    }
+    
+    // Limpar texto extraído
+    extractedText = extractedText
+      .replace(/\s+/g, ' ')
+      .replace(/\n\s+/g, '\n')
+      .trim();
+    
+    // Se não conseguiu extrair texto suficiente, usar texto padrão
+    if (extractedText.length < 50) {
+      return `Conteúdo extraído do arquivo: ${file.name}\n\nO texto original do documento Word não pôde ser completamente extraído devido às limitações da conversão no navegador.\n\nInformações do arquivo:\n- Nome: ${file.name}\n- Tamanho: ${(file.size / 1024).toFixed(2)} KB\n- Data de modificação: ${new Date(file.lastModified).toLocaleDateString('pt-BR')}\n\nPara conversão completa com formatação preservada, recomendamos:\n• Usar Microsoft Word (Salvar como PDF)\n• Usar Google Docs (Arquivo > Download > PDF)\n• Usar LibreOffice Writer (Exportar como PDF)`;
+    }
+    
+    return `Texto extraído do arquivo: ${file.name}\n\n${extractedText}`;
+    
+  } catch (error) {
+    console.error('Erro ao extrair texto:', error);
+    return `Conteúdo do arquivo: ${file.name}\n\nNão foi possível extrair o texto do documento Word automaticamente.\n\nInformações do arquivo:\n- Tamanho: ${(file.size / 1024).toFixed(2)} KB\n- Data: ${new Date(file.lastModified).toLocaleDateString('pt-BR')}`;
+  }
+};
+
 export const convertWordToPDF = async (file: File): Promise<Uint8Array> => {
   if (!PDFDocument) throw new Error('PDF-lib não disponível');
   
-  const pdfDoc = await PDFDocument.create();
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const page = pdfDoc.addPage();
-  const { width, height } = page.getSize();
+  // Extrair texto do arquivo Word
+  const extractedText = await extractTextFromWordFile(file);
   
-  // Título do documento
-  page.drawText(`Documento: ${file.name.replace(/\.[^/.]+$/, "")}`, {
-    x: 50,
-    y: height - 50,
-    size: 18,
-    font: font,
-    color: rgb(0, 0, 0),
-  });
-  
-  // Informações do arquivo
-  page.drawText(`Tamanho: ${(file.size / 1024).toFixed(2)} KB`, {
-    x: 50,
-    y: height - 100,
-    size: 12,
-    font: font,
-    color: rgb(0.3, 0.3, 0.3),
-  });
-  
-  page.drawText(`Data de modificação: ${new Date(file.lastModified).toLocaleDateString('pt-BR')}`, {
-    x: 50,
-    y: height - 130,
-    size: 12,
-    font: font,
-    color: rgb(0.3, 0.3, 0.3),
-  });
-  
-  // Conteúdo principal
-  const mainContent = [
-    '',
-    'Este PDF foi gerado a partir do seu documento Word.',
-    '',
-    'Para preservar a formatação completa do documento original,',
-    'recomendamos utilizar ferramentas especializadas como:',
-    '',
-    '• Microsoft Word (Salvar como PDF)',
-    '• LibreOffice Writer (Exportar como PDF)',
-    '• Ferramentas online especializadas',
-    '',
-    'Este conversor básico é útil para conversões simples',
-    'e demonstração da funcionalidade.'
-  ];
-  
-  let yPos = height - 200;
-  for (const line of mainContent) {
-    if (yPos < 50) break;
-    page.drawText(line, {
-      x: 50,
-      y: yPos,
-      size: 12,
-      font: font,
-      color: rgb(0, 0, 0),
-    });
-    yPos -= 20;
-  }
-  
-  return await pdfDoc.save();
+  // Criar PDF com o texto extraído
+  return await createPDFFromText(extractedText);
 };
 
 export const convertPDFToWord = async (file: File): Promise<Uint8Array> => {
@@ -390,4 +396,3 @@ export const downloadFiles = (result: Uint8Array | Uint8Array[], conversionType:
     return 'Seu arquivo foi convertido e baixado com sucesso.';
   }
 };
-
