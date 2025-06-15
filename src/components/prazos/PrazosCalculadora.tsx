@@ -23,6 +23,17 @@ interface PrazoCalculo {
   observacoes: string;
 }
 
+// Tipos de prazo padrão
+const TIPOS_PRAZO_PADRAO = [
+  { id: 'contestacao-15', nome: 'Contestação - 15 dias', dias: 15, consideraFinsSemana: true },
+  { id: 'contestacao-30', nome: 'Contestação - 30 dias', dias: 30, consideraFinsSemana: true },
+  { id: 'recurso-15', nome: 'Recurso - 15 dias', dias: 15, consideraFinsSemana: true },
+  { id: 'recurso-8', nome: 'Recurso - 8 dias', dias: 8, consideraFinsSemana: true },
+  { id: 'embargos-5', nome: 'Embargos de Declaração - 5 dias', dias: 5, consideraFinsSemana: true },
+  { id: 'peticionamento-5', nome: 'Peticionamento Geral - 5 dias', dias: 5, consideraFinsSemana: true },
+  { id: 'cumprimento-15', nome: 'Cumprimento de Sentença - 15 dias', dias: 15, consideraFinsSemana: true },
+];
+
 export const PrazosCalculadora: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -39,6 +50,7 @@ export const PrazosCalculadora: React.FC = () => {
     observacoes: ''
   });
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [usandoPadrao, setUsandoPadrao] = useState(true);
 
   useEffect(() => {
     if (user) {
@@ -56,38 +68,68 @@ export const PrazosCalculadora: React.FC = () => {
         .order('nome_calculo');
 
       if (error) throw error;
-      setCalculos(data || []);
+      
+      // Se não há cálculos personalizados, usar os padrão
+      if (!data || data.length === 0) {
+        setUsandoPadrao(true);
+        setCalculos([]);
+      } else {
+        setUsandoPadrao(false);
+        setCalculos(data);
+      }
     } catch (error: any) {
-      toast({
-        title: "Erro ao carregar cálculos",
-        description: error.message,
-        variant: "destructive",
-      });
+      console.log("Erro ao carregar cálculos personalizados, usando padrão:", error.message);
+      setUsandoPadrao(true);
+      setCalculos([]);
     }
   };
 
   const calcularPrazo = () => {
     if (!calculoSelecionado || !dataInicio) return;
 
-    const calculo = calculos.find(c => c.id === calculoSelecionado);
-    if (!calculo) return;
+    let diasPrazo: number;
+    let consideraFinsSemana: boolean;
+
+    if (usandoPadrao) {
+      const tipoPadrao = TIPOS_PRAZO_PADRAO.find(t => t.id === calculoSelecionado);
+      if (!tipoPadrao) return;
+      diasPrazo = tipoPadrao.dias;
+      consideraFinsSemana = tipoPadrao.consideraFinsSemana;
+    } else {
+      const calculo = calculos.find(c => c.id === calculoSelecionado);
+      if (!calculo) return;
+      diasPrazo = calculo.dias_prazo;
+      consideraFinsSemana = calculo.considera_fins_semana;
+    }
 
     const dataBase = new Date(dataInicio);
     let dataFinal: Date;
 
-    if (calculo.considera_fins_semana) {
+    if (consideraFinsSemana) {
       // Usando addBusinessDays para pular fins de semana
-      dataFinal = addBusinessDays(dataBase, calculo.dias_prazo);
+      dataFinal = addBusinessDays(dataBase, diasPrazo);
     } else {
       // Adicionando dias corridos
-      dataFinal = addDays(dataBase, calculo.dias_prazo);
+      dataFinal = addDays(dataBase, diasPrazo);
     }
 
     setResultado(dataFinal);
+    
+    toast({
+      title: "Prazo calculado",
+      description: `Data final: ${format(dataFinal, "dd/MM/yyyy")}`,
+    });
   };
 
   const salvarNovoCalculo = async () => {
-    if (!novoCalculo.nome || !novoCalculo.tipo || !user) return;
+    if (!novoCalculo.nome || !novoCalculo.tipo || !user) {
+      toast({
+        title: "Dados incompletos",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       const { error } = await supabase
@@ -128,6 +170,8 @@ export const PrazosCalculadora: React.FC = () => {
     }
   };
 
+  const tiposDisponiveis = usandoPadrao ? TIPOS_PRAZO_PADRAO : calculos;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -150,26 +194,39 @@ export const PrazosCalculadora: React.FC = () => {
                 type="date"
                 value={dataInicio}
                 onChange={(e) => setDataInicio(e.target.value)}
+                className="mt-1"
               />
             </div>
 
             <div>
               <Label htmlFor="tipo-calculo">Tipo de Prazo</Label>
               <Select value={calculoSelecionado} onValueChange={setCalculoSelecionado}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecione o tipo de prazo" />
                 </SelectTrigger>
                 <SelectContent>
-                  {calculos.map((calculo) => (
-                    <SelectItem key={calculo.id} value={calculo.id}>
-                      {calculo.nome_calculo} ({calculo.dias_prazo} dias)
+                  {tiposDisponiveis.map((item) => (
+                    <SelectItem 
+                      key={usandoPadrao ? item.id : item.id} 
+                      value={usandoPadrao ? item.id : item.id}
+                    >
+                      {usandoPadrao ? `${item.nome} (${item.dias} dias)` : `${item.nome_calculo} (${item.dias_prazo} dias)`}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {usandoPadrao && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Usando tipos de prazo padrão. Crie tipos personalizados ao lado.
+                </p>
+              )}
             </div>
 
-            <Button onClick={calcularPrazo} className="w-full" disabled={!calculoSelecionado || !dataInicio}>
+            <Button 
+              onClick={calcularPrazo} 
+              className="w-full" 
+              disabled={!calculoSelecionado || !dataInicio}
+            >
               <Calculator className="h-4 w-4 mr-2" />
               Calcular Prazo
             </Button>
@@ -196,9 +253,9 @@ export const PrazosCalculadora: React.FC = () => {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Tipos de Prazo</CardTitle>
+                <CardTitle>Tipos de Prazo Personalizados</CardTitle>
                 <CardDescription>
-                  Gerencie seus cálculos personalizados
+                  Crie seus próprios cálculos de prazo
                 </CardDescription>
               </div>
               <Button 
@@ -221,6 +278,7 @@ export const PrazosCalculadora: React.FC = () => {
                     value={novoCalculo.nome}
                     onChange={(e) => setNovoCalculo(prev => ({ ...prev, nome: e.target.value }))}
                     placeholder="Ex: Contestação Trabalhista"
+                    className="mt-1"
                   />
                 </div>
 
@@ -231,6 +289,7 @@ export const PrazosCalculadora: React.FC = () => {
                     value={novoCalculo.tipo}
                     onChange={(e) => setNovoCalculo(prev => ({ ...prev, tipo: e.target.value }))}
                     placeholder="Ex: contestacao"
+                    className="mt-1"
                   />
                 </div>
 
@@ -241,6 +300,7 @@ export const PrazosCalculadora: React.FC = () => {
                     type="number"
                     value={novoCalculo.dias}
                     onChange={(e) => setNovoCalculo(prev => ({ ...prev, dias: parseInt(e.target.value) || 15 }))}
+                    className="mt-1"
                   />
                 </div>
 
@@ -281,17 +341,24 @@ export const PrazosCalculadora: React.FC = () => {
             )}
 
             <div className="space-y-2">
-              {calculos.map((calculo) => (
-                <div key={calculo.id} className="flex items-center justify-between p-2 border rounded">
-                  <div>
-                    <div className="font-medium">{calculo.nome_calculo}</div>
-                    <div className="text-sm text-gray-500">{calculo.dias_prazo} dias</div>
-                  </div>
-                  <div className="text-xs text-gray-400">
-                    {calculo.considera_fins_semana ? 'Úteis' : 'Corridos'}
-                  </div>
+              {usandoPadrao ? (
+                <div className="text-center py-4 text-gray-500">
+                  <p className="text-sm">Nenhum tipo personalizado criado ainda.</p>
+                  <p className="text-xs">Clique em "Novo" para criar seu primeiro tipo de prazo.</p>
                 </div>
-              ))}
+              ) : (
+                calculos.map((calculo) => (
+                  <div key={calculo.id} className="flex items-center justify-between p-2 border rounded">
+                    <div>
+                      <div className="font-medium">{calculo.nome_calculo}</div>
+                      <div className="text-sm text-gray-500">{calculo.dias_prazo} dias</div>
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {calculo.considera_fins_semana ? 'Úteis' : 'Corridos'}
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
