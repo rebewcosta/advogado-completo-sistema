@@ -1,10 +1,10 @@
 
 import React from 'react';
 import StatsCards from './StatsCards';
+import { PrazosCalculadoraWidget } from './PrazosCalculadoraWidget';
 import ProcessosContent from './ProcessosContent';
-import AgendaContent from './AgendaContent';
-import FinanceiroContent from './FinanceiroContent';
 import PrazosContent from './PrazosContent';
+import AgendaContent from './AgendaContent';
 
 const VisaoGeralContent: React.FC = () => {
   return (
@@ -12,14 +12,17 @@ const VisaoGeralContent: React.FC = () => {
       <StatsCards />
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ProcessosContent />
-        <PrazosContent />
+        <div className="space-y-6">
+          <PrazosContent />
+          <PrazosCalculadoraWidget />
+        </div>
+        
+        <div className="space-y-6">
+          <AgendaContent />
+        </div>
       </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <AgendaContent />
-        <FinanceiroContent />
-      </div>
+
+      <ProcessosContent />
     </div>
   );
 };
