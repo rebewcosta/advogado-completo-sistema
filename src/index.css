@@ -105,6 +105,13 @@
   .compact .p-6 {
     @apply p-3;
   }
+
+  /* Breakpoint extra small para telas muito pequenas */
+  @screen xs {
+    .xs\:inline {
+      display: inline;
+    }
+  }
 }
 
 /* Modern feature cards */

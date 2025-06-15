@@ -37,38 +37,34 @@ const DashboardPage = () => {
       />
 
       <Tabs defaultValue="visao-geral" className="mt-8">
-        <TabsList className="grid w-full grid-cols-4 gap-3 bg-white/80 backdrop-blur-sm p-3 rounded-xl mb-8 shadow-lg border border-white/50 h-auto">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-xl mb-8 shadow-lg border border-white/50 h-auto">
           <TabsTrigger
             value="visao-geral"
-            className="flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
-            <BarChartHorizontalBig className="h-4 w-4" /> 
-            <span className="hidden sm:inline">Visão Geral</span>
-            <span className="sm:hidden">Visão</span>
+            <BarChartHorizontalBig className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
+            <span className="truncate">Visão</span>
           </TabsTrigger>
           <TabsTrigger
             value="financeiro"
-            className="flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
-            <DollarSignIcon className="h-4 w-4" /> 
-            <span className="hidden sm:inline">Financeiro</span>
-            <span className="sm:hidden">Fin.</span>
+            <DollarSignIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
+            <span className="truncate">Financ.</span>
           </TabsTrigger>
           <TabsTrigger
             value="processos"
-            className="flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
-            <Briefcase className="h-4 w-4" /> 
-            <span className="hidden sm:inline">Processos</span>
-            <span className="sm:hidden">Proc.</span>
+            <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
+            <span className="truncate">Process.</span>
           </TabsTrigger>
           <TabsTrigger
             value="agenda"
-            className="flex items-center justify-center gap-2 px-6 py-4 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
-            <CalendarIcon className="h-4 w-4" /> 
-            <span className="hidden sm:inline">Agenda</span>
-            <span className="sm:hidden">Age.</span>
+            <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
+            <span className="truncate">Agenda</span>
           </TabsTrigger>
         </TabsList>
 
