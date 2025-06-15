@@ -8,6 +8,10 @@ export const FeaturesInfo: React.FC = () => {
       <ul className="text-sm text-gray-600 space-y-1">
         <li>• Converter texto para PDF</li>
         <li>• Converter HTML para PDF</li>
+        <li>• Converter Word para PDF</li>
+        <li>• Converter PDF para Word</li>
+        <li>• Converter PDF para JPG</li>
+        <li>• Converter JPG para PDF</li>
         <li>• Unir múltiplos PDFs em um arquivo</li>
         <li>• Dividir PDF em páginas separadas</li>
         <li>• Download automático dos arquivos convertidos</li>

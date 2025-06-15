@@ -10,6 +10,10 @@ import {
   checkLibrariesAvailable,
   createPDFFromText,
   createPDFFromHTML,
+  convertWordToPDF,
+  convertPDFToWord,
+  convertPDFToJPG,
+  convertJPGToPDF,
   mergePDFs,
   splitPDF,
   downloadFiles
@@ -75,6 +79,39 @@ export const ConversorDocumentos: React.FC = () => {
             throw new Error('Nenhum arquivo HTML selecionado');
           }
           break;
+
+        case 'word-to-pdf':
+          if (selectedFiles && selectedFiles[0]) {
+            result = await convertWordToPDF(selectedFiles[0]);
+          } else {
+            throw new Error('Nenhum arquivo Word selecionado');
+          }
+          break;
+
+        case 'pdf-to-word':
+          if (selectedFiles && selectedFiles[0]) {
+            result = await convertPDFToWord(selectedFiles[0]);
+          } else {
+            throw new Error('Nenhum arquivo PDF selecionado');
+          }
+          break;
+
+        case 'pdf-to-jpg':
+          if (selectedFiles && selectedFiles[0]) {
+            result = await convertPDFToJPG(selectedFiles[0]);
+          } else {
+            throw new Error('Nenhum arquivo PDF selecionado');
+          }
+          break;
+
+        case 'jpg-to-pdf':
+          if (selectedFiles && selectedFiles.length > 0) {
+            const filesArray = Array.from(selectedFiles);
+            result = await convertJPGToPDF(filesArray);
+          } else {
+            throw new Error('Nenhuma imagem selecionada');
+          }
+          break;
           
         case 'pdf-merge':
           if (selectedFiles && selectedFiles.length > 1) {
@@ -124,7 +161,7 @@ export const ConversorDocumentos: React.FC = () => {
           Conversor de Documentos
         </CardTitle>
         <CardDescription>
-          Converta e manipule seus documentos (PDF, TXT, HTML)
+          Converta e manipule seus documentos (PDF, TXT, HTML, Word, JPG)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
