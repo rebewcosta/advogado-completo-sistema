@@ -1,17 +1,15 @@
 
-// src/pages/DashboardPage.tsx
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import VisaoGeralContent from '@/components/dashboard/VisaoGeralContent';
-import FinanceiroContent from '@/components/dashboard/FinanceiroContent';
-import ProcessosContent from '@/components/dashboard/ProcessosContent';
-import AgendaContent from '@/components/dashboard/AgendaContent';
-import { Briefcase, Calendar as CalendarIcon, DollarSign as DollarSignIcon, BarChartHorizontalBig } from 'lucide-react';
+import { DollarSign, Users, FileText, TrendingUp, CheckSquare, AlertTriangle } from 'lucide-react';
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
+import MetricCard from '@/components/dashboard/MetricCard';
+import DashboardChart from '@/components/dashboard/DashboardChart';
+import StatusPieChart from '@/components/dashboard/StatusPieChart';
+import ExecutiveSummary from '@/components/dashboard/ExecutiveSummary';
 
 const DashboardPage = () => {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   const getUserFirstName = () => {
     if (user?.user_metadata?.nome) {
@@ -21,66 +19,121 @@ const DashboardPage = () => {
     return user?.email?.split('@')[0] || 'Usuário';
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-    }
+  // Dados mockados para demonstração
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(value);
   };
 
+  const totalRevenue = 4000;
+  const totalExpenses = 450;
+  const activeClientsCount = 6;
+  const totalProcesses = 5;
+
+  const monthlyFinancialData = [
+    { month: 'jan/25', receitas: 0, despesas: 0, lucro: 0 },
+    { month: 'fev/25', receitas: 0, despesas: 0, lucro: 0 },
+    { month: 'mar/25', receitas: 0, despesas: 0, lucro: 0 },
+    { month: 'abr/25', receitas: 0, despesas: 0, lucro: 0 },
+    { month: 'mai/25', receitas: 3500, despesas: 300, lucro: 3200 },
+    { month: 'jun/25', receitas: 4000, despesas: 450, lucro: 3550 }
+  ];
+
+  const processStatusData = [
+    { name: 'Em andamento', value: 2, fill: '#6366f1' },
+    { name: 'Concluído', value: 3, fill: '#10b981' }
+  ];
+
+  const taskStatusData = [
+    { name: 'Pendente', value: 4, fill: '#f59e0b' },
+    { name: 'Em andamento', value: 2, fill: '#6366f1' },
+    { name: 'Concluída', value: 8, fill: '#10b981' }
+  ];
+
   return (
-    <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
-      <DashboardHeader
-        user={user}
-        getUserFirstName={getUserFirstName}
-        handleSignOut={handleSignOut}
-      />
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
+        <SharedPageHeader 
+          title="Dashboard" 
+          description={`Bem-vindo, ${getUserFirstName()}! Visualize o desempenho e as métricas chave do seu escritório.`}
+          pageIcon={<TrendingUp />}
+        />
+        
+        {/* Cards de Métricas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mt-8 mb-8">
+          <MetricCard
+            title="Receita Total (6 meses)"
+            value={totalRevenue}
+            icon={<DollarSign className="h-6 w-6" />}
+            formatValue={formatCurrency}
+            gradient="bg-gradient-to-r from-emerald-500 to-emerald-600"
+            trend={8}
+          />
+          <MetricCard
+            title="Clientes Ativos"
+            value={activeClientsCount}
+            icon={<Users className="h-6 w-6" />}
+            gradient="bg-gradient-to-r from-blue-500 to-blue-600"
+            trend={12}
+          />
+          <MetricCard
+            title="Total de Processos"
+            value={totalProcesses}
+            icon={<FileText className="h-6 w-6" />}
+            gradient="bg-gradient-to-r from-indigo-500 to-indigo-600"
+            trend={5}
+          />
+          <MetricCard
+            title="Lucro Líquido (6 meses)"
+            value={totalRevenue - totalExpenses}
+            icon={<TrendingUp className="h-6 w-6" />}
+            formatValue={formatCurrency}
+            gradient="bg-gradient-to-r from-purple-500 to-purple-600"
+            trend={15}
+          />
+        </div>
 
-      <Tabs defaultValue="visao-geral" className="mt-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 bg-gray-200 p-1.5 rounded-lg mb-6 h-auto">
-          <TabsTrigger
-            value="visao-geral"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
-          >
-            <BarChartHorizontalBig className="h-4 w-4" /> Visão Geral
-          </TabsTrigger>
-          <TabsTrigger
-            value="financeiro"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
-          >
-            <DollarSignIcon className="h-4 w-4" /> Financeiro
-          </TabsTrigger>
-          <TabsTrigger
-            value="processos"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
-          >
-            <Briefcase className="h-4 w-4" /> Processos
-          </TabsTrigger>
-          <TabsTrigger
-            value="agenda"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
-          >
-            <CalendarIcon className="h-4 w-4" /> Agenda
-          </TabsTrigger>
-        </TabsList>
+        {/* Gráficos e Cards */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+          <DashboardChart
+            title="Visão Financeira"
+            description="Receitas vs. Despesas nos últimos 6 meses"
+            data={monthlyFinancialData}
+            formatCurrency={formatCurrency}
+            gradient="bg-gradient-to-r from-slate-600 to-slate-700"
+          />
+          
+          <StatusPieChart
+            title="Status dos Processos"
+            description="Distribuição atual dos seus processos"
+            data={processStatusData}
+            icon={<FileText className="mr-2 h-5 w-5" />}
+            gradient="bg-gradient-to-r from-indigo-600 to-purple-600"
+            emptyMessage="Nenhum processo cadastrado ainda."
+          />
+        </div>
 
-        <TabsContent value="visao-geral">
-          <VisaoGeralContent />
-        </TabsContent>
-
-        <TabsContent value="financeiro">
-          <FinanceiroContent />
-        </TabsContent>
-
-        <TabsContent value="processos">
-          <ProcessosContent />
-        </TabsContent>
-
-        <TabsContent value="agenda">
-          <AgendaContent />
-        </TabsContent>
-      </Tabs>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <StatusPieChart
+            title="Status das Tarefas"
+            description="Distribuição atual das suas tarefas"
+            data={taskStatusData}
+            icon={<CheckSquare className="mr-2 h-5 w-5" />}
+            gradient="bg-gradient-to-r from-purple-600 to-pink-600"
+            emptyMessage="Nenhuma tarefa cadastrada ainda."
+          />
+          
+          <ExecutiveSummary
+            totalRevenue={totalRevenue}
+            totalExpenses={totalExpenses}
+            activeClientsCount={activeClientsCount}
+            totalProcesses={totalProcesses}
+            formatCurrency={formatCurrency}
+          />
+        </div>
+      </div>
     </div>
   );
 };
