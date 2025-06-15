@@ -55,13 +55,13 @@ export const AppSidebar = () => {
 
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
+    { path: "/ferramentas", icon: Wrench, label: "Ferramentas", isSpecial: true }, // Movido para 2ª posição com destaque
     { path: "/meus-processos", icon: FileText, label: "Meus Processos" },
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/equipe", icon: UserCheck, label: "Equipe" },
     { path: "/agenda", icon: Calendar, label: "Agenda" },
     { path: "/prazos", icon: AlertTriangle, label: "Prazos" },
     { path: "/tarefas", icon: ListChecks, label: "Tarefas" },
-    { path: "/ferramentas", icon: Wrench, label: "Ferramentas" },
     { path: "/financeiro", icon: DollarSign, label: "Financeiro" },
     { path: "/documentos", icon: FileArchive, label: "Documentos" },
     { path: "/relatorios", icon: BarChart2, label: "Relatórios" },
@@ -128,17 +128,25 @@ export const AppSidebar = () => {
                     isActive={isActive(item.path)}
                     className={`
                       w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
-                      hover:bg-lawyer-primary/10 hover:text-lawyer-primary
+                      ${item.isSpecial 
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white shadow-lg hover:shadow-xl transform hover:scale-105 relative overflow-hidden'
+                        : 'hover:bg-lawyer-primary/10 hover:text-lawyer-primary'
+                      }
                       ${isActive(item.path) 
                         ? 'bg-lawyer-primary/20 text-lawyer-primary border-r-2 border-lawyer-primary' 
-                        : 'text-gray-300'
+                        : item.isSpecial ? 'text-white' : 'text-gray-300'
                       }
                       ${isMobile ? 'text-sm' : 'text-base'}
                     `}
                   >
-                    <Link to={item.path} className="flex items-center gap-3 w-full">
-                      <item.icon className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} flex-shrink-0`} />
-                      <span className="truncate">{item.label}</span>
+                    <Link to={item.path} className="flex items-center gap-3 w-full relative z-10">
+                      <div className={`${item.isSpecial ? 'bg-white/20 p-1 rounded-md' : ''}`}>
+                        <item.icon className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} flex-shrink-0 ${item.isSpecial ? 'text-white' : ''}`} />
+                      </div>
+                      <span className={`truncate ${item.isSpecial ? 'font-semibold' : ''}`}>{item.label}</span>
+                      {item.isSpecial && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse opacity-30"></div>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
