@@ -1,19 +1,63 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Search, Calendar, MapPin } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import ProcessoDetalhes from './ProcessoDetalhes';
 
 interface ResultadosListaProps {
   resultados: any[];
 }
 
 const ResultadosLista: React.FC<ResultadosListaProps> = ({ resultados }) => {
-  const handleVerDetalhes = (numeroProcesso: string) => {
-    // Implementar navegação para consulta detalhada
-    console.log('Ver detalhes do processo:', numeroProcesso);
+  const [processoDetalhado, setProcessoDetalhado] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleVerDetalhes = async (numeroProcesso: string) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('consultar-datajud', {
+        body: {
+          tipo: 'numero',
+          termo: numeroProcesso
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setProcessoDetalhado(data.data);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar detalhes:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  if (processoDetalhado) {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          onClick={() => setProcessoDetalhado(null)}
+        >
+          ← Voltar aos resultados
+        </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Detalhes do Processo</CardTitle>
+            <CardDescription>Processo: {processoDetalhado.numero_processo}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProcessoDetalhes processo={processoDetalhado} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -56,8 +100,9 @@ const ResultadosLista: React.FC<ResultadosListaProps> = ({ resultados }) => {
                   variant="outline" 
                   size="sm"
                   onClick={() => handleVerDetalhes(processo.numero_processo)}
+                  disabled={isLoading}
                 >
-                  Ver Detalhes
+                  {isLoading ? 'Carregando...' : 'Ver Detalhes'}
                 </Button>
               </div>
             </div>

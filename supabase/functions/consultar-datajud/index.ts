@@ -54,8 +54,13 @@ serve(async (req) => {
     // Simular consulta à API DataJud (em produção, usar API real do CNJ)
     const dadosSimulados = await simularConsultaDatajud(tipo, termo, tribunal);
 
+    let resultadosCount = 0;
+    if (dadosSimulados) {
+      resultadosCount = Array.isArray(dadosSimulados) ? dadosSimulados.length : 1;
+    }
+
     // Salvar no cache se for consulta por número
-    if (tipo === 'numero' && dadosSimulados) {
+    if (tipo === 'numero' && dadosSimulados && !Array.isArray(dadosSimulados)) {
       await supabase
         .from('processos_cache')
         .upsert({
@@ -81,7 +86,7 @@ serve(async (req) => {
             tipo_consulta: tipo,
             termo_busca: termo,
             tribunal: tribunal,
-            resultados_encontrados: dadosSimulados ? 1 : 0
+            resultados_encontrados: resultadosCount
           });
       }
     }

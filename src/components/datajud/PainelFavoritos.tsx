@@ -6,11 +6,14 @@ import { Badge } from '@/components/ui/badge';
 import { Star, Trash2, Search, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import ProcessoDetalhes from './ProcessoDetalhes';
 
 const PainelFavoritos: React.FC = () => {
   const [favoritos, setFavoritos] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [processoDetalhado, setProcessoDetalhado] = useState<any>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const { toast } = useToast();
 
   const carregarFavoritos = async () => {
@@ -60,25 +63,66 @@ const PainelFavoritos: React.FC = () => {
 
   const atualizarFavoritos = async () => {
     setIsRefreshing(true);
-    // Aqui poderia implementar uma atualização automática dos dados
-    // consultando novamente cada processo favorito
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast({
-        title: "Atualizado",
-        description: "Lista de favoritos atualizada"
-      });
-    }, 2000);
+    await carregarFavoritos();
+    setIsRefreshing(false);
+    toast({
+      title: "Atualizado",
+      description: "Lista de favoritos atualizada"
+    });
   };
 
-  const consultarDetalhes = (numeroProcesso: string) => {
-    // Implementar navegação para consulta detalhada
-    console.log('Consultar detalhes:', numeroProcesso);
+  const consultarDetalhes = async (numeroProcesso: string) => {
+    setIsLoadingDetails(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('consultar-datajud', {
+        body: {
+          tipo: 'numero',
+          termo: numeroProcesso
+        }
+      });
+
+      if (error) throw error;
+
+      if (data.success) {
+        setProcessoDetalhado(data.data);
+      }
+    } catch (error) {
+      console.error('Erro ao consultar detalhes:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível consultar os detalhes",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingDetails(false);
+    }
   };
 
   useEffect(() => {
     carregarFavoritos();
   }, []);
+
+  if (processoDetalhado) {
+    return (
+      <div className="space-y-4">
+        <Button
+          variant="outline"
+          onClick={() => setProcessoDetalhado(null)}
+        >
+          ← Voltar aos favoritos
+        </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle>Detalhes do Processo</CardTitle>
+            <CardDescription>Processo: {processoDetalhado.numero_processo}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ProcessoDetalhes processo={processoDetalhado} />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -147,6 +191,7 @@ const PainelFavoritos: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => consultarDetalhes(favorito.numero_processo)}
+                      disabled={isLoadingDetails}
                     >
                       <Search className="h-4 w-4" />
                     </Button>
