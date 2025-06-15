@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -143,22 +142,24 @@ serve(async (req) => {
     console.log('Termo:', termo);
     console.log('Tribunal:', tribunal);
 
-    // REMOVIDO TODO CACHE E DADOS FICTÍCIOS
-    console.log('🔍 Consultando SOMENTE a API oficial do CNJ DataJud...');
+    console.log('🔍 Consultando API oficial do CNJ DataJud...');
 
     // Consultar SOMENTE a API oficial do DataJud CNJ
     const dadosReais = await consultarApiDatajudOficial(tipo, termo, tribunal);
 
+    // Se não encontrar dados, retornar resposta de sucesso com dados vazios
     if (!dadosReais || (Array.isArray(dadosReais) && dadosReais.length === 0)) {
-      console.log('❌ NENHUM DADO ENCONTRADO na API oficial do CNJ');
+      console.log('⚠️ NENHUM PROCESSO ENCONTRADO na API oficial do CNJ');
       return new Response(
         JSON.stringify({ 
-          success: false, 
-          error: 'Processo não encontrado na base oficial do CNJ DataJud. Verifique se o número está correto.',
-          consulta_realizada: true
+          success: true, 
+          data: null,
+          message: 'Nenhum processo encontrado na base oficial do CNJ DataJud para o número informado.',
+          consulta_realizada: true,
+          fonte: 'CNJ DataJud API Oficial'
         }),
         { 
-          status: 404,
+          status: 200, // Mudança: retornar 200 em vez de 404
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
@@ -181,7 +182,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Erro ao consultar a API oficial do CNJ DataJud: ' + error.message
+        error: 'Erro ao consultar a API oficial do CNJ DataJud: ' + error.message,
+        consulta_realizada: false
       }),
       { 
         status: 500,
@@ -198,9 +200,9 @@ async function consultarApiDatajudOficial(tipo: string, termo: string, tribunal?
     if (tipo === 'numero') {
       return await consultarPorNumeroOficial(termo, tribunal);
     } else if (tipo === 'nome') {
-      return await consultarPorNomeOficial(termo, tribunal);
+      throw new Error('Busca por nome ainda não implementada na API oficial CNJ');
     } else if (tipo === 'documento') {
-      return await consultarPorDocumentoOficial(termo, tribunal);
+      throw new Error('Busca por documento ainda não implementada na API oficial CNJ');
     }
     
     throw new Error('Tipo de consulta não suportado pela API oficial do CNJ');
@@ -219,12 +221,15 @@ async function consultarPorNumeroOficial(numeroProcesso: string, tribunal?: stri
     throw new Error(`Tribunal ${tribunalCode} não suportado pela API CNJ DataJud`);
   }
 
+  // Remover formatação do número do processo (pontos, traços)
+  const numeroLimpo = numeroProcesso.replace(/[.-]/g, '');
+
   const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
   
   const query = {
     query: {
       match: {
-        numeroProcesso: numeroProcesso
+        numeroProcesso: numeroLimpo
       }
     },
     size: 1
@@ -233,6 +238,7 @@ async function consultarPorNumeroOficial(numeroProcesso: string, tribunal?: stri
   console.log('📡 URL da API CNJ:', url);
   console.log('🔑 Usando API Key oficial do CNJ');
   console.log('📋 Query Elasticsearch:', JSON.stringify(query, null, 2));
+  console.log('🔢 Número do processo limpo:', numeroLimpo);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -274,18 +280,6 @@ async function consultarPorNumeroOficial(numeroProcesso: string, tribunal?: stri
   
   console.log('⚠️ Nenhum processo encontrado na base oficial CNJ para:', numeroProcesso);
   return null;
-}
-
-async function consultarPorNomeOficial(nome: string, tribunal?: string) {
-  // Implementar busca por nome na API oficial
-  console.log('🔍 Consultando por nome na API oficial CNJ:', nome);
-  throw new Error('Busca por nome ainda não implementada na API oficial CNJ');
-}
-
-async function consultarPorDocumentoOficial(documento: string, tribunal?: string) {
-  // Implementar busca por documento na API oficial
-  console.log('🔍 Consultando por documento na API oficial CNJ:', documento);
-  throw new Error('Busca por documento ainda não implementada na API oficial CNJ');
 }
 
 function formatarProcessoDatajudOficial(processo: any) {

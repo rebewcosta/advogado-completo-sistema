@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Search, Clock, Star, StarOff, FileDown, AlertCircle } from 'lucide-react';
+import { Search, Clock, Star, StarOff, FileDown, AlertCircle, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -39,9 +38,26 @@ const ConsultaProcessual: React.FC = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro na chamada da função:', error);
+        throw new Error(error.message || 'Erro na consulta');
+      }
+
+      console.log('Resposta da API:', data);
 
       if (data.success) {
+        // Se não há dados (processo não encontrado)
+        if (!data.data) {
+          setResultado(null);
+          toast({
+            title: "Processo não encontrado",
+            description: data.message || "O número do processo não foi encontrado na base de dados oficial do CNJ.",
+            variant: "default"
+          });
+          return;
+        }
+
+        // Se há dados válidos
         setResultado(data.data);
         
         // Verificar se já é favorito
@@ -58,30 +74,20 @@ const ConsultaProcessual: React.FC = () => {
 
         toast({
           title: "Consulta realizada com sucesso",
-          description: data.fromCache ? "Dados obtidos do cache" : "Dados atualizados da API CNJ"
+          description: "Dados obtidos da API oficial do CNJ DataJud"
         });
       } else {
-        throw new Error(data.error || 'Processo não encontrado');
+        throw new Error(data.error || 'Erro desconhecido na consulta');
       }
     } catch (error) {
       console.error('Erro na consulta:', error);
       
-      // Verificar se é um erro 404 (processo não encontrado)
-      if (error.message?.includes('não encontrado') || error.message?.includes('404')) {
-        toast({
-          title: "Processo não encontrado",
-          description: "O número do processo não foi encontrado na base de dados do CNJ. Verifique se o número está correto.",
-          variant: "destructive"
-        });
-      } else {
-        toast({
-          title: "Erro na consulta",
-          description: "Não foi possível consultar a API do CNJ. Tente novamente em alguns minutos.",
-          variant: "destructive"
-        });
-      }
-      
       setResultado(null);
+      toast({
+        title: "Erro na consulta",
+        description: error.message || "Não foi possível consultar a API do CNJ. Tente novamente em alguns minutos.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -192,6 +198,7 @@ const ConsultaProcessual: React.FC = () => {
         </CardContent>
       </Card>
 
+      {/* Área de resultado - só mostra se há dados válidos */}
       {resultado && (
         <Card>
           <CardHeader>
@@ -232,6 +239,20 @@ const ConsultaProcessual: React.FC = () => {
           </CardHeader>
           <CardContent>
             <ProcessoDetalhes processo={resultado} />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Informações sobre a consulta quando não há resultado */}
+      {!resultado && !isLoading && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 p-4 bg-gray-50 rounded-lg">
+              <Info className="h-4 w-4 text-gray-600" />
+              <p className="text-sm text-gray-700">
+                Digite um número de processo válido para consultar os dados oficiais na base do CNJ DataJud.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
