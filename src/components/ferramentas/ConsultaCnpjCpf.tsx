@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Building2, User, Search, Loader2 } from 'lucide-react';
+import { Building2, User, Search, Loader2, CheckCircle } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface CNPJData {
@@ -29,19 +29,12 @@ interface CNPJData {
   }>;
 }
 
-interface CPFData {
-  cpf: string;
-  nome: string;
-  situacao: string;
-  data_nascimento: string;
-}
-
 export const ConsultaCnpjCpf: React.FC = () => {
   const { toast } = useToast();
   const [cnpj, setCnpj] = useState('');
   const [cpf, setCpf] = useState('');
   const [cnpjData, setCnpjData] = useState<CNPJData | null>(null);
-  const [cpfData, setCpfData] = useState<CPFData | null>(null);
+  const [cpfValidated, setCpfValidated] = useState<boolean | null>(null);
   const [isLoadingCnpj, setIsLoadingCnpj] = useState(false);
   const [isLoadingCpf, setIsLoadingCpf] = useState(false);
 
@@ -59,6 +52,35 @@ export const ConsultaCnpjCpf: React.FC = () => {
       return digitsOnly.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
     }
     return digitsOnly.slice(0, 11).replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  };
+
+  const validarCPF = (cpfString: string): boolean => {
+    const cpfDigits = cpfString.replace(/\D/g, '');
+    
+    if (cpfDigits.length !== 11) return false;
+    
+    // Verifica se todos os dígitos são iguais
+    if (/^(\d)\1{10}$/.test(cpfDigits)) return false;
+    
+    // Valida primeiro dígito verificador
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+      sum += parseInt(cpfDigits.charAt(i)) * (10 - i);
+    }
+    let remainder = 11 - (sum % 11);
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpfDigits.charAt(9))) return false;
+    
+    // Valida segundo dígito verificador
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+      sum += parseInt(cpfDigits.charAt(i)) * (11 - i);
+    }
+    remainder = 11 - (sum % 11);
+    if (remainder === 10 || remainder === 11) remainder = 0;
+    if (remainder !== parseInt(cpfDigits.charAt(10))) return false;
+    
+    return true;
   };
 
   const consultarCNPJ = async () => {
@@ -124,21 +146,32 @@ export const ConsultaCnpjCpf: React.FC = () => {
     setIsLoadingCpf(true);
     
     try {
-      // Simulação de consulta CPF (APIs públicas de CPF são limitadas)
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Validação local do CPF
+      const isValid = validarCPF(cpf);
+      setCpfValidated(isValid);
       
-      toast({
-        title: "Consulta CPF",
-        description: "Funcionalidade de consulta CPF disponível apenas para APIs premium.",
-        variant: "destructive",
-      });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      if (isValid) {
+        toast({
+          title: "CPF Válido",
+          description: "O CPF informado possui formato válido e passou na validação matemática.",
+        });
+      } else {
+        toast({
+          title: "CPF Inválido",
+          description: "O CPF informado não é válido.",
+          variant: "destructive",
+        });
+      }
       
     } catch (error) {
       toast({
-        title: "Erro na consulta",
-        description: "Não foi possível consultar o CPF. Tente novamente.",
+        title: "Erro na validação",
+        description: "Não foi possível validar o CPF. Tente novamente.",
         variant: "destructive",
       });
+      setCpfValidated(null);
     } finally {
       setIsLoadingCpf(false);
     }
@@ -152,7 +185,7 @@ export const ConsultaCnpjCpf: React.FC = () => {
           Consulta CNPJ/CPF
         </CardTitle>
         <CardDescription>
-          Consulte dados de empresas (CNPJ) e pessoas físicas (CPF)
+          Consulte dados de empresas (CNPJ) e valide documentos CPF
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -236,7 +269,10 @@ export const ConsultaCnpjCpf: React.FC = () => {
                   id="cpf"
                   type="text"
                   value={cpf}
-                  onChange={(e) => setCpf(formatCPF(e.target.value))}
+                  onChange={(e) => {
+                    setCpf(formatCPF(e.target.value));
+                    setCpfValidated(null);
+                  }}
                   onKeyPress={(e) => e.key === 'Enter' && consultarCPF()}
                   placeholder="123.456.789-01"
                   maxLength={14}
@@ -254,15 +290,36 @@ export const ConsultaCnpjCpf: React.FC = () => {
                   ) : (
                     <User className="h-4 w-4 mr-2" />
                   )}
-                  Consultar
+                  Validar
                 </Button>
               </div>
             </div>
             
-            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm text-yellow-800">
-                <strong>Nota:</strong> Consultas de CPF são restritas por leis de proteção de dados. 
-                Esta funcionalidade está disponível apenas para validação do formato.
+            {cpfValidated !== null && (
+              <div className={`p-4 rounded-lg border ${cpfValidated ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                <div className="flex items-center gap-2">
+                  {cpfValidated ? (
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  ) : (
+                    <User className="h-5 w-5 text-red-600" />
+                  )}
+                  <span className={`font-medium ${cpfValidated ? 'text-green-800' : 'text-red-800'}`}>
+                    {cpfValidated ? 'CPF Válido' : 'CPF Inválido'}
+                  </span>
+                </div>
+                <p className={`text-sm mt-1 ${cpfValidated ? 'text-green-700' : 'text-red-700'}`}>
+                  {cpfValidated 
+                    ? 'O CPF informado possui formato válido e passou na validação dos dígitos verificadores.'
+                    : 'O CPF informado não passou na validação dos dígitos verificadores.'
+                  }
+                </p>
+              </div>
+            )}
+            
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                <strong>Funcionalidade:</strong> Esta ferramenta valida a autenticidade matemática do CPF informado. 
+                Para consultas de dados pessoais, utilize apenas fontes oficiais e autorizadas.
               </p>
             </div>
           </TabsContent>
