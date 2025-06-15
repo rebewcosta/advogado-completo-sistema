@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// API Key oficial do CNJ DataJud
+// API Key oficial do CNJ
 const CNJ_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
 interface ConsultaRequest {
@@ -263,16 +263,25 @@ async function consultarPorDocumentoOficial(documento: string, tribunal?: string
     try {
       const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
       
-      // Query para buscar o documento em vários campos onde pode aparecer
+      // Query mais ampla para buscar documento em qualquer lugar
       const query = {
         query: {
           bool: {
             should: [
-              // Busca por wildcard no conteúdo geral (pode estar em movimentos, partes, etc)
-              { wildcard: { "_source": `*${documentoLimpo}*` } },
-              // Busca em campos de texto que podem conter CPF/CNPJ
-              { match_phrase: { "movimentos.nome": documentoLimpo } },
-              { match_phrase: { "movimentos.complementosTabelados.nome": documentoLimpo } }
+              // Busca no conteúdo geral usando wildcard
+              { 
+                query_string: {
+                  query: `*${documentoLimpo}*`,
+                  fields: ["*"],
+                  default_operator: "OR"
+                }
+              },
+              // Busca em texto livre
+              { 
+                match: {
+                  "_all": documentoLimpo
+                }
+              }
             ],
             minimum_should_match: 1
           }
@@ -295,9 +304,8 @@ async function consultarPorDocumentoOficial(documento: string, tribunal?: string
         resultados.push(result);
       }
       
-      // Se encontrou resultados, pode parar ou continuar dependendo da necessidade
+      // Se encontrou resultados e tribunal específico foi informado, pode parar
       if (resultados.length > 0 && tribunal) {
-        // Se tribunal específico foi informado e já encontrou, para
         break;
       }
       
@@ -317,7 +325,8 @@ async function consultarPorDocumentoOficial(documento: string, tribunal?: string
 }
 
 async function consultarPorNomeOficial(nome: string, tribunal?: string) {
-  console.log('🔍 Implementando busca por nome na API oficial CNJ DataJud');
+  console.log('🔍 Implementando busca AMPLA por nome na API oficial CNJ DataJud');
+  console.log('👤 Nome buscado:', nome);
   
   // Se tribunal específico foi informado, buscar apenas nele
   const tribunaisParaBuscar = tribunal ? [tribunal] : ['TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR']; // Principais tribunais
@@ -337,21 +346,79 @@ async function consultarPorNomeOficial(nome: string, tribunal?: string) {
     try {
       const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
       
-      // Query para buscar o nome em campos relevantes
+      // Query muito mais ampla para buscar nome em QUALQUER lugar do documento
       const query = {
         query: {
           bool: {
             should: [
-              // Busca em movimentos que podem conter nomes
-              { match_phrase: { "movimentos.nome": nome } },
-              { match_phrase: { "movimentos.complementosTabelados.nome": nome } },
-              // Busca fuzzy para nomes similares
-              { fuzzy: { "movimentos.nome": { value: nome, fuzziness: "AUTO" } } }
+              // 1. Busca em todos os campos usando query_string
+              {
+                query_string: {
+                  query: `"${nome}"`,
+                  fields: ["*"],
+                  default_operator: "OR"
+                }
+              },
+              // 2. Busca em todos os campos com wildcard
+              {
+                query_string: {
+                  query: `*${nome.split(' ').join('* AND *')}*`,
+                  fields: ["*"],
+                  default_operator: "AND"
+                }
+              },
+              // 3. Busca match simples em texto geral
+              {
+                multi_match: {
+                  query: nome,
+                  fields: ["*"],
+                  type: "phrase",
+                  slop: 2
+                }
+              },
+              // 4. Busca match com fuzziness para tolerância a erros
+              {
+                multi_match: {
+                  query: nome,
+                  fields: ["*"],
+                  fuzziness: "AUTO",
+                  operator: "and"
+                }
+              },
+              // 5. Busca nas partes do processo (se existir campo específico)
+              {
+                nested: {
+                  path: "partes",
+                  query: {
+                    bool: {
+                      should: [
+                        { match_phrase: { "partes.nome": nome } },
+                        { match: { "partes.nome": { query: nome, fuzziness: "AUTO" } } }
+                      ]
+                    }
+                  }
+                }
+              },
+              // 6. Busca em movimentações
+              {
+                nested: {
+                  path: "movimentos",
+                  query: {
+                    bool: {
+                      should: [
+                        { match_phrase: { "movimentos.nome": nome } },
+                        { match_phrase: { "movimentos.complementosTabelados.nome": nome } },
+                        { match: { "movimentos.nome": { query: nome, fuzziness: "AUTO" } } }
+                      ]
+                    }
+                  }
+                }
+              }
             ],
             minimum_should_match: 1
           }
         },
-        size: 10,
+        size: 20,
         sort: [
           {
             "@timestamp": {
@@ -361,12 +428,18 @@ async function consultarPorNomeOficial(nome: string, tribunal?: string) {
         ]
       };
 
+      console.log('📋 Query AMPLA para busca por nome:', JSON.stringify(query, null, 2));
+
       const result = await executarConsultaElasticsearch(url, query, `nome "${nome}" em ${tribunalCode}`);
       
       if (result && Array.isArray(result)) {
         resultados.push(...result);
+        console.log(`✅ Encontrados ${result.length} resultados no ${tribunalCode}`);
       } else if (result) {
         resultados.push(result);
+        console.log(`✅ Encontrado 1 resultado no ${tribunalCode}`);
+      } else {
+        console.log(`⚠️ Nenhum resultado no ${tribunalCode}`);
       }
       
       // Se encontrou resultados e tribunal específico foi informado, pode parar
@@ -385,7 +458,7 @@ async function consultarPorNomeOficial(nome: string, tribunal?: string) {
     return null;
   }
   
-  console.log(`✅ Encontrados ${resultados.length} processos para o nome "${nome}"`);
+  console.log(`✅ TOTAL: Encontrados ${resultados.length} processos para o nome "${nome}"`);
   return resultados;
 }
 
