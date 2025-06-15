@@ -66,7 +66,7 @@ const FerramentasPage: React.FC = () => {
     {
       id: 'qrcode',
       title: 'Gerador QR Code',
-      description: 'Crie QR Codes para documentos e links',
+      description: 'Crie QR Codes para WhatsApp, Wi-Fi, e-mails, contatos e muito mais',
       icon: QrCode,
       component: GeradorQrCode,
       color: 'from-indigo-500 to-indigo-600'
