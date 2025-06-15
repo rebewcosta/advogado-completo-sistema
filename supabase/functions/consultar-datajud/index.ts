@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -6,6 +5,9 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+// API Key oficial do CNJ DataJud
+const CNJ_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
 interface ConsultaRequest {
   tipo: 'numero' | 'nome' | 'documento';
@@ -135,7 +137,7 @@ serve(async (req) => {
 
     const { tipo, termo, tribunal, useCache = true }: ConsultaRequest = await req.json();
     
-    console.log('=== CONSULTA DATAJUD REAL ===');
+    console.log('=== CONSULTA DATAJUD CNJ COM AUTENTICAÇÃO ===');
     console.log('Parâmetros:', { tipo, termo, tribunal });
 
     // Verificar cache primeiro para consultas por número
@@ -160,15 +162,15 @@ serve(async (req) => {
       }
     }
 
-    // Consultar API real do DataJud
+    // Consultar API oficial do DataJud CNJ com autenticação
     const dadosReais = await consultarApiDatajud(tipo, termo, tribunal);
 
     if (!dadosReais) {
-      console.log('❌ Nenhum dado encontrado na API DataJud');
+      console.log('❌ Nenhum dado encontrado na API DataJud CNJ');
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Processo não encontrado na base de dados do CNJ'
+          error: 'Processo não encontrado na base de dados oficial do CNJ'
         }),
         { 
           status: 404,
@@ -214,7 +216,7 @@ serve(async (req) => {
       }
     }
 
-    console.log('✅ Dados reais encontrados e processados');
+    console.log('✅ Dados oficiais do CNJ encontrados e processados');
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -225,12 +227,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ ERRO na consulta DataJud:', error);
+    console.error('❌ ERRO na consulta DataJud CNJ:', error);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Erro interno do servidor ao consultar a API do CNJ'
+        error: 'Erro interno do servidor ao consultar a API oficial do CNJ'
       }),
       { 
         status: 500,
@@ -242,7 +244,7 @@ serve(async (req) => {
 
 async function consultarApiDatajud(tipo: string, termo: string, tribunal?: string) {
   try {
-    console.log('🔍 Iniciando consulta à API DataJud:', { tipo, termo, tribunal });
+    console.log('🔍 Iniciando consulta autenticada à API DataJud CNJ:', { tipo, termo, tribunal });
     
     if (tipo === 'numero') {
       return await consultarPorNumero(termo, tribunal);
@@ -254,7 +256,7 @@ async function consultarApiDatajud(tipo: string, termo: string, tribunal?: strin
     
     throw new Error('Tipo de consulta não suportado');
   } catch (error) {
-    console.error('❌ Erro ao consultar API DataJud:', error);
+    console.error('❌ Erro ao consultar API DataJud CNJ:', error);
     return null;
   }
 }
@@ -295,7 +297,8 @@ async function consultarPorNumero(numeroProcesso: string, tribunal?: string) {
     size: 1
   };
 
-  console.log('📡 Consultando URL:', url);
+  console.log('📡 Consultando URL autenticada:', url);
+  console.log('🔑 Usando API Key oficial do CNJ DataJud');
   console.log('📋 Query Elasticsearch:', JSON.stringify(query, null, 2));
 
   try {
@@ -303,7 +306,8 @@ async function consultarPorNumero(numeroProcesso: string, tribunal?: string) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        'Accept': 'application/json',
+        'Authorization': `APIKey ${CNJ_API_KEY}`
       },
       body: JSON.stringify(query)
     });
@@ -313,24 +317,31 @@ async function consultarPorNumero(numeroProcesso: string, tribunal?: string) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`❌ Erro na API DataJud: ${response.status} - ${response.statusText}`);
+      console.error(`❌ Erro na API DataJud CNJ: ${response.status} - ${response.statusText}`);
       console.error('❌ Error body:', errorText);
+      
+      if (response.status === 401) {
+        console.error('❌ Erro de autenticação - API Key pode estar inválida');
+      } else if (response.status === 403) {
+        console.error('❌ Acesso negado - Verifique permissões da API Key');
+      }
+      
       return null;
     }
 
     const data = await response.json();
-    console.log('📦 Resposta completa da API:', JSON.stringify(data, null, 2));
+    console.log('📦 Resposta completa da API CNJ:', JSON.stringify(data, null, 2));
     
     if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
       const processo = data.hits.hits[0]._source;
-      console.log('✅ Processo encontrado na API:', JSON.stringify(processo, null, 2));
+      console.log('✅ Processo encontrado na API oficial do CNJ:', JSON.stringify(processo, null, 2));
       return formatarProcessoDatajud(processo);
     }
     
-    console.log('⚠️ Nenhum processo encontrado na resposta da API para o número:', numeroProcesso);
+    console.log('⚠️ Nenhum processo encontrado na base oficial do CNJ para o número:', numeroProcesso);
     return null;
   } catch (error) {
-    console.error('❌ Erro na requisição à API DataJud:', error);
+    console.error('❌ Erro na requisição à API DataJud CNJ:', error);
     return null;
   }
 }
