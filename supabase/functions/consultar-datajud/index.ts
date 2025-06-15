@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -142,29 +143,8 @@ serve(async (req) => {
     console.log('Termo:', termo);
     console.log('Tribunal:', tribunal);
 
-    // Verificar cache primeiro para consultas por número
-    if (tipo === 'numero' && useCache) {
-      const { data: cached } = await supabase
-        .from('processos_cache')
-        .select('*')
-        .eq('numero_processo', termo)
-        .gt('data_expiracao', new Date().toISOString())
-        .single();
-
-      if (cached) {
-        console.log('✅ Dados encontrados no cache');
-        return new Response(
-          JSON.stringify({ 
-            success: true, 
-            data: cached.dados_processo,
-            fromCache: true 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    }
-
-    console.log('🔍 Consultando API oficial do CNJ DataJud...');
+    // REMOVIDO TODO CACHE E DADOS FICTÍCIOS
+    console.log('🔍 Consultando SOMENTE a API oficial do CNJ DataJud...');
 
     // Consultar SOMENTE a API oficial do DataJud CNJ
     const dadosReais = await consultarApiDatajudOficial(tipo, termo, tribunal);
@@ -182,43 +162,6 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
-    }
-
-    let resultadosCount = 0;
-    if (dadosReais) {
-      resultadosCount = Array.isArray(dadosReais) ? dadosReais.length : 1;
-    }
-
-    // Salvar no cache se for consulta por número
-    if (tipo === 'numero' && dadosReais && !Array.isArray(dadosReais)) {
-      await supabase
-        .from('processos_cache')
-        .upsert({
-          numero_processo: termo,
-          dados_processo: dadosReais,
-          tribunal: tribunal || extrairTribunalDoNumero(termo),
-          data_consulta: new Date().toISOString(),
-          data_expiracao: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h
-        });
-    }
-
-    // Salvar no histórico de consultas
-    const authHeader = req.headers.get('Authorization');
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
-      const { data: { user } } = await supabase.auth.getUser(token);
-      
-      if (user) {
-        await supabase
-          .from('historico_consultas')
-          .insert({
-            user_id: user.id,
-            tipo_consulta: tipo,
-            termo_busca: termo,
-            tribunal: tribunal,
-            resultados_encontrados: resultadosCount
-          });
-      }
     }
 
     console.log('✅ DADOS REAIS DO CNJ RETORNADOS COM SUCESSO');
@@ -280,25 +223,8 @@ async function consultarPorNumeroOficial(numeroProcesso: string, tribunal?: stri
   
   const query = {
     query: {
-      bool: {
-        should: [
-          {
-            term: {
-              "numeroProcesso.keyword": numeroProcesso
-            }
-          },
-          {
-            term: {
-              "numeroProcesso": numeroProcesso
-            }
-          },
-          {
-            match: {
-              "numeroProcesso": numeroProcesso
-            }
-          }
-        ],
-        minimum_should_match: 1
+      match: {
+        numeroProcesso: numeroProcesso
       }
     },
     size: 1
@@ -365,92 +291,27 @@ async function consultarPorDocumentoOficial(documento: string, tribunal?: string
 function formatarProcessoDatajudOficial(processo: any) {
   console.log('🔧 Formatando processo oficial da API CNJ:', JSON.stringify(processo, null, 2));
   
-  // SOMENTE DADOS REAIS DA API CNJ - SEM DADOS FICTÍCIOS
-  const dadosBasicos = processo.dadosBasicos || {};
-  const movimentacao = processo.movimentacao || [];
-  
-  // Extrair partes do processo - SOMENTE SE EXISTIREM NA RESPOSTA DA API
-  const partes = [];
-  if (dadosBasicos.polo && Array.isArray(dadosBasicos.polo)) {
-    dadosBasicos.polo.forEach((polo: any) => {
-      if (polo.polo && Array.isArray(polo.polo)) {
-        polo.polo.forEach((parte: any) => {
-          if (parte.pessoa && parte.pessoa.nome) {
-            partes.push({
-              nome: parte.pessoa.nome,
-              tipo: determinarTipoParte(polo.codigoTipoPolo),
-              documento: extrairDocumento(parte.pessoa.documento)
-            });
-          }
-        });
-      }
-    });
-  }
-
-  // Extrair advogados - SOMENTE SE EXISTIREM NA RESPOSTA DA API
-  const advogados = [];
-  if (dadosBasicos.polo && Array.isArray(dadosBasicos.polo)) {
-    dadosBasicos.polo.forEach((polo: any) => {
-      if (polo.polo && Array.isArray(polo.polo)) {
-        polo.polo.forEach((parte: any) => {
-          if (parte.advogado && Array.isArray(parte.advogado)) {
-            parte.advogado.forEach((adv: any) => {
-              if (adv.nome) {
-                advogados.push({
-                  nome: adv.nome,
-                  oab: adv.numeroOAB || 'Não informado',
-                  parte: determinarTipoParte(polo.codigoTipoPolo)
-                });
-              }
-            });
-          }
-        });
-      }
-    });
-  }
-
-  // Extrair movimentações - SOMENTE SE EXISTIREM NA RESPOSTA DA API
-  const movimentacoes = [];
-  if (Array.isArray(movimentacao)) {
-    movimentacao.forEach((mov: any) => {
-      if (mov.nome) {
-        movimentacoes.push({
-          data: formatarData(mov.dataHora),
-          descricao: mov.nome,
-          observacao: mov.complemento || ''
-        });
-      }
-    });
-  }
-
-  // Calcular informações jurimétricas SOMENTE COM DADOS REAIS
-  const dataAjuizamento = dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento) : null;
-  const hoje = new Date();
-  const diasTramitando = dataAjuizamento ? Math.floor((hoje.getTime() - dataAjuizamento.getTime()) / (1000 * 60 * 60 * 24)) : 0;
-
+  // FORMATAÇÃO BASEADA NA RESPOSTA REAL DA API CNJ
   const processoFormatado = {
     numero_processo: processo.numeroProcesso || 'Não informado',
-    classe: dadosBasicos.classeProcessual || 'Não informado',
-    assunto: extrairAssunto(dadosBasicos.assunto),
-    tribunal: extrairTribunalDoNumero(processo.numeroProcesso || ''),
-    orgao_julgador: dadosBasicos.orgaoJulgador?.nome || 'Não informado',
-    comarca: dadosBasicos.orgaoJulgador?.municipio || 'Não informado',
-    data_ajuizamento: formatarData(dadosBasicos.dataAjuizamento),
-    data_ultima_movimentacao: movimentacoes.length > 0 ? movimentacoes[movimentacoes.length - 1].data : 'Não informado',
-    status: dadosBasicos.situacaoProcessual || 'Não informado',
-    valor_causa: dadosBasicos.valorCausa || 0,
-    partes: partes, // Somente partes reais da API
-    advogados: advogados, // Somente advogados reais da API
-    movimentacoes: movimentacoes.slice(-20), // Últimas 20 movimentações reais
-    jurimetria: {
-      tempo_total_dias: diasTramitando,
-      total_movimentacoes: movimentacoes.length,
-      tempo_medio_entre_movimentacoes: movimentacoes.length > 1 ? Math.floor(diasTramitando / movimentacoes.length) : 0,
-      fase_atual: determinarFaseAtual(movimentacoes),
-      tempo_na_fase_atual: calcularTempoFaseAtual(movimentacoes),
-      previsao_sentenca: calcularPrevisaoSentenca(diasTramitando)
-    },
-    fonte_dados: 'CNJ DataJud API Oficial'
+    classe: processo.classe?.nome || 'Não informado',
+    assunto: extrairAssuntos(processo.assuntos),
+    tribunal: processo.tribunal || 'Não informado',
+    orgao_julgador: processo.orgaoJulgador?.nome || 'Não informado',
+    comarca: processo.orgaoJulgador?.nome || 'Não informado',
+    data_ajuizamento: formatarData(processo.dataAjuizamento),
+    data_ultima_movimentacao: extrairUltimaMovimentacao(processo.movimentos),
+    status: determinarStatus(processo.movimentos),
+    valor_causa: 0, // Não disponível na resposta padrão
+    partes: [], // Não disponível na resposta básica
+    advogados: [], // Não disponível na resposta básica
+    movimentacoes: formatarMovimentacoes(processo.movimentos),
+    jurimetria: calcularJurimetria(processo),
+    fonte_dados: 'CNJ DataJud API Oficial',
+    nivel_sigilo: processo.nivelSigilo || 0,
+    formato: processo.formato?.nome || 'Não informado',
+    sistema: processo.sistema?.nome || 'Não informado',
+    grau: processo.grau || 'Não informado'
   };
 
   console.log('✅ Processo formatado da API oficial CNJ:', JSON.stringify(processoFormatado, null, 2));
@@ -489,50 +350,79 @@ function extrairTribunalDoNumero(numeroProcesso: string): string {
   return mapeamento[codigoTribunal] || 'TJSP';
 }
 
-function determinarTipoParte(codigoTipoPolo: string): string {
-  const codigo = String(codigoTipoPolo);
-  
-  if (codigo === '1' || codigo === '01') return 'Autor';
-  if (codigo === '2' || codigo === '02') return 'Réu';
-  if (codigo === '3' || codigo === '03') return 'Terceiro';
-  
-  return 'Parte';
-}
-
-function extrairDocumento(documento: any): string {
-  if (!documento) return 'Não informado';
-  if (typeof documento === 'string') return documento;
-  if (documento.numero) return documento.numero;
-  return 'Não informado';
-}
-
-function extrairAssunto(assunto: any): string {
-  if (!assunto) return 'Não informado';
-  if (Array.isArray(assunto) && assunto.length > 0) {
-    return assunto[0].nome || assunto[0].descricao || 'Não informado';
-  }
-  if (typeof assunto === 'string') return assunto;
-  if (assunto.nome) return assunto.nome;
-  return 'Não informado';
-}
-
-function formatarData(data: any): string {
-  if (!data) return 'Não informado';
-  
-  try {
-    const date = new Date(data);
-    if (isNaN(date.getTime())) return 'Não informado';
-    return date.toISOString().split('T')[0];
-  } catch {
+function extrairAssuntos(assuntos: any[]): string {
+  if (!assuntos || !Array.isArray(assuntos) || assuntos.length === 0) {
     return 'Não informado';
   }
+  
+  // Extrair o primeiro assunto encontrado
+  const primeiroAssunto = Array.isArray(assuntos[0]) ? assuntos[0][0] : assuntos[0];
+  return primeiroAssunto?.nome || 'Não informado';
+}
+
+function formatarMovimentacoes(movimentos: any[]): any[] {
+  if (!movimentos || !Array.isArray(movimentos)) {
+    return [];
+  }
+  
+  return movimentos.map((mov: any) => ({
+    data: formatarData(mov.dataHora),
+    descricao: mov.nome || 'Movimentação não identificada',
+    observacao: mov.complementosTabelados?.map((comp: any) => comp.nome).join(', ') || ''
+  })).slice(-20); // Últimas 20 movimentações
+}
+
+function extrairUltimaMovimentacao(movimentos: any[]): string {
+  if (!movimentos || !Array.isArray(movimentos) || movimentos.length === 0) {
+    return 'Não informado';
+  }
+  
+  const ultimaMovimentacao = movimentos[movimentos.length - 1];
+  return formatarData(ultimaMovimentacao.dataHora);
+}
+
+function determinarStatus(movimentos: any[]): string {
+  if (!movimentos || !Array.isArray(movimentos) || movimentos.length === 0) {
+    return 'Em andamento';
+  }
+  
+  const ultimaMovimentacao = movimentos[movimentos.length - 1];
+  const nomeMovimento = ultimaMovimentacao.nome?.toLowerCase() || '';
+  
+  if (nomeMovimento.includes('arquivamento') || nomeMovimento.includes('baixa')) {
+    return 'Arquivado';
+  } else if (nomeMovimento.includes('sentença') || nomeMovimento.includes('sentenca')) {
+    return 'Sentenciado';
+  } else if (nomeMovimento.includes('suspensão') || nomeMovimento.includes('suspensao')) {
+    return 'Suspenso';
+  }
+  
+  return 'Em andamento';
+}
+
+function calcularJurimetria(processo: any): any {
+  const dataAjuizamento = processo.dataAjuizamento ? new Date(processo.dataAjuizamento) : null;
+  const hoje = new Date();
+  const diasTramitando = dataAjuizamento ? Math.floor((hoje.getTime() - dataAjuizamento.getTime()) / (1000 * 60 * 60 * 24)) : 0;
+  
+  const movimentos = processo.movimentos || [];
+  const totalMovimentacoes = movimentos.length;
+  
+  return {
+    tempo_total_dias: diasTramitando,
+    total_movimentacoes: totalMovimentacoes,
+    tempo_medio_entre_movimentacoes: totalMovimentacoes > 1 ? Math.floor(diasTramitando / totalMovimentacoes) : 0,
+    fase_atual: determinarFaseAtual(movimentos),
+    tempo_na_fase_atual: calcularTempoFaseAtual(movimentos),
+    previsao_sentenca: calcularPrevisaoSentenca(diasTramitando)
+  };
 }
 
 function determinarFaseAtual(movimentacoes: any[]): string {
   if (movimentacoes.length === 0) return 'Não informado';
   
   const ultimaMovimentacao = movimentacoes[movimentacoes.length - 1];
-  const descricao = ultimaMovimentacao.descricao.toLowerCase();
+  const descricao = ultimaMovimentacao.nome?.toLowerCase() || '';
   
   if (descricao.includes('audiência') || descricao.includes('audiencia')) {
     return 'Instrução';
@@ -553,7 +443,7 @@ function calcularTempoFaseAtual(movimentacoes: any[]): number {
   if (movimentacoes.length === 0) return 0;
   
   try {
-    const ultimaData = new Date(movimentacoes[movimentacoes.length - 1].data);
+    const ultimaData = new Date(movimentacoes[movimentacoes.length - 1].dataHora);
     const hoje = new Date();
     const diff = Math.floor((hoje.getTime() - ultimaData.getTime()) / (1000 * 60 * 60 * 24));
     return Math.max(0, diff);
@@ -570,6 +460,18 @@ function calcularPrevisaoSentenca(diasTramitando: number): string {
     const previsao = new Date();
     previsao.setDate(previsao.getDate() + diasAdicionais);
     return previsao.toISOString().split('T')[0];
+  } catch {
+    return 'Não informado';
+  }
+}
+
+function formatarData(data: any): string {
+  if (!data) return 'Não informado';
+  
+  try {
+    const date = new Date(data);
+    if (isNaN(date.getTime())) return 'Não informado';
+    return date.toISOString().split('T')[0];
   } catch {
     return 'Não informado';
   }
