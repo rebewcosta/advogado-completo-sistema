@@ -9,7 +9,6 @@ import { CalculadoraCorrecao } from '@/components/ferramentas/CalculadoraCorreca
 import { ConsultaFeriados } from '@/components/ferramentas/ConsultaFeriados';
 import { ValidadorCpfCnpj } from '@/components/ferramentas/ValidadorCpfCnpj';
 import { GeradorPeticoes } from '@/components/ferramentas/GeradorPeticoes';
-import { ConversorDocumentos } from '@/components/ferramentas/ConversorDocumentos';
 import { GeradorQrCode } from '@/components/ferramentas/GeradorQrCode';
 
 const FerramentasPage: React.FC = () => {
@@ -23,14 +22,13 @@ const FerramentasPage: React.FC = () => {
         />
         
         <Tabs defaultValue="prazos" className="w-full">
-          <TabsList className="grid w-full grid-cols-8">
+          <TabsList className="grid w-full grid-cols-7">
             <TabsTrigger value="prazos">Prazos</TabsTrigger>
             <TabsTrigger value="cep">CEP</TabsTrigger>
             <TabsTrigger value="correcao">Correção</TabsTrigger>
             <TabsTrigger value="feriados">Feriados</TabsTrigger>
             <TabsTrigger value="validador">Validador CPF</TabsTrigger>
             <TabsTrigger value="peticoes">Petições</TabsTrigger>
-            <TabsTrigger value="conversor">Conversor</TabsTrigger>
             <TabsTrigger value="qrcode">QR Code</TabsTrigger>
           </TabsList>
           
@@ -56,10 +54,6 @@ const FerramentasPage: React.FC = () => {
           
           <TabsContent value="peticoes" className="mt-6">
             <GeradorPeticoes />
-          </TabsContent>
-          
-          <TabsContent value="conversor" className="mt-6">
-            <ConversorDocumentos />
           </TabsContent>
           
           <TabsContent value="qrcode" className="mt-6">

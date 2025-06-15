@@ -1,16 +1,10 @@
-
 import { QRType, EmailData, PhoneData, WifiData, VCardData } from './types';
 
-// Importação condicional para evitar erros de build
-let QRCodeLib: any;
-try {
-  QRCodeLib = require('qrcode');
-} catch (error) {
-  console.warn('QRCode library não disponível:', error);
-}
+// Importação ES6 para a biblioteca QRCode
+import QRCode from 'qrcode';
 
 export const isQRCodeLibAvailable = (): boolean => {
-  return !!QRCodeLib;
+  return !!QRCode;
 };
 
 export const buildQRContent = (
@@ -56,11 +50,11 @@ END:VCARD`;
 };
 
 export const generateQRCode = async (content: string, canvas: HTMLCanvasElement): Promise<void> => {
-  if (!QRCodeLib) {
+  if (!QRCode) {
     throw new Error('QRCode library não disponível');
   }
 
-  await QRCodeLib.toCanvas(canvas, content, {
+  await QRCode.toCanvas(canvas, content, {
     width: 300,
     margin: 2,
     color: {
