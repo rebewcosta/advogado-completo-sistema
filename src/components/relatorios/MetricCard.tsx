@@ -2,6 +2,7 @@
 import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { FinanceValueToggle } from '@/components/finance/FinanceValueToggle';
 
 interface MetricCardProps {
   title: string;
@@ -13,6 +14,8 @@ interface MetricCardProps {
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, trend, formatValue, gradient }) => {
+  const isFinancialValue = typeof value === 'number' && (formatValue || title.toLowerCase().includes('receita') || title.toLowerCase().includes('lucro') || title.toLowerCase().includes('despesa'));
+
   return (
     <Card className={`relative overflow-hidden ${gradient} border-0 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105`}>
       <CardHeader className="pb-2">
@@ -31,7 +34,15 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, trend, form
       <CardContent>
         <div className="space-y-1">
           <h3 className="text-2xl font-bold">
-            {typeof value === 'number' && formatValue ? formatValue(value) : value}
+            {isFinancialValue && typeof value === 'number' ? (
+              <FinanceValueToggle 
+                value={value} 
+                formatValue={formatValue}
+                className="text-white"
+              />
+            ) : (
+              typeof value === 'number' && formatValue ? formatValue(value) : value
+            )}
           </h3>
           <p className="text-white/80 text-sm font-medium">{title}</p>
         </div>

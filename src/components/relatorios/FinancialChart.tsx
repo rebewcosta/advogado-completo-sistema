@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar } from 'recharts';
 import { BarChart3 } from 'lucide-react';
+import { FinanceValueToggle } from '@/components/finance/FinanceValueToggle';
 
 interface MonthlyData {
   month: string;
@@ -37,15 +38,23 @@ const FinancialChart: React.FC<FinancialChartProps> = ({ monthlyFinancialData, f
                 dataKey="month" 
                 fontSize={12}
                 tick={{ fill: '#64748b' }}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={{ stroke: '#e2e8f0' }}
               />
               <YAxis 
                 fontSize={12}
                 tick={{ fill: '#64748b' }}
+                axisLine={{ stroke: '#e2e8f0' }}
+                tickLine={{ stroke: '#e2e8f0' }}
                 tickFormatter={(value) => `${(value/1000).toFixed(0)}k`}
               />
               <Tooltip 
                 formatter={(value: number, name: string) => [
-                  formatCurrency(value), 
+                  <FinanceValueToggle 
+                    key={name}
+                    value={value} 
+                    formatValue={formatCurrency}
+                  />, 
                   name === 'receitas' ? 'Receitas' : name === 'despesas' ? 'Despesas' : 'Lucro'
                 ]}
                 labelStyle={{ color: '#1e293b', fontWeight: 'bold' }}
