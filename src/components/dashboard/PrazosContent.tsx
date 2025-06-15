@@ -43,7 +43,7 @@ const PrazosContent: React.FC = () => {
     try {
       const { data, error } = await supabase.rpc('get_prazos_criticos', {
         p_user_id: user.id,
-        p_dias_limite: 15 // Mostrar apenas os próximos 15 dias no dashboard
+        p_dias_limite: 15
       });
 
       if (error) throw error;
@@ -77,9 +77,9 @@ const PrazosContent: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Card className="shadow-sm">
+      <Card className="bg-white/70 backdrop-blur-sm border-white/50 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-base flex items-center">
+          <CardTitle className="text-lg flex items-center text-gray-800">
             <AlertTriangle className="mr-2 h-5 w-5 text-red-500"/>
             Prazos Críticos
           </CardTitle>
@@ -93,15 +93,15 @@ const PrazosContent: React.FC = () => {
 
   if (error) {
     return (
-      <Card className="border-destructive bg-red-50">
+      <Card className="bg-white/70 backdrop-blur-sm border-red-200 shadow-lg">
         <CardHeader>
-          <CardTitle className="text-destructive-foreground flex items-center">
+          <CardTitle className="text-red-600 flex items-center">
             <AlertTriangle className="mr-2"/>
             Erro no Monitor de Prazos
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-destructive-foreground/90">{error}</p>
+          <p className="text-sm text-red-600">{error}</p>
           <Button variant="outline" size="sm" onClick={fetchPrazos} className="mt-3">
             <RefreshCw className="mr-2 h-4 w-4"/> Tentar Novamente
           </Button>
@@ -111,13 +111,13 @@ const PrazosContent: React.FC = () => {
   }
 
   return (
-    <Card className="shadow-sm">
+    <Card className="bg-white/70 backdrop-blur-sm border-white/50 shadow-lg">
       <CardHeader>
-        <CardTitle className="text-base flex items-center">
+        <CardTitle className="text-lg flex items-center text-gray-800">
           <AlertTriangle className="mr-2 h-5 w-5 text-red-500"/>
           Prazos Críticos (15 dias)
         </CardTitle>
-        <CardDescription className="text-xs">
+        <CardDescription className="text-sm text-gray-600">
           Prazos que precisam de atenção imediata
         </CardDescription>
       </CardHeader>
@@ -128,10 +128,10 @@ const PrazosContent: React.FC = () => {
               <div
                 key={prazo.id}
                 className={cn(
-                  "flex items-center justify-between p-3 rounded-lg border",
-                  prazo.nivel_criticidade === 'critico' && "border-red-200 bg-red-50",
-                  prazo.nivel_criticidade === 'urgente' && "border-orange-200 bg-orange-50",
-                  prazo.nivel_criticidade === 'medio' && "border-yellow-200 bg-yellow-50"
+                  "flex items-center justify-between p-3 rounded-lg border bg-white/50 backdrop-blur-sm",
+                  prazo.nivel_criticidade === 'critico' && "border-red-200 bg-red-50/50",
+                  prazo.nivel_criticidade === 'urgente' && "border-orange-200 bg-orange-50/50",
+                  prazo.nivel_criticidade === 'medio' && "border-yellow-200 bg-yellow-50/50"
                 )}
               >
                 <div className="flex-1 min-w-0">
@@ -180,7 +180,7 @@ const PrazosContent: React.FC = () => {
         )}
         
         <div className="mt-4 text-center">
-          <Button asChild variant="outline" size="sm">
+          <Button asChild variant="outline" size="sm" className="bg-white/50 hover:bg-white/70 border-gray-300">
             <Link to="/prazos">
               Ver Todos os Prazos
               <ExternalLink className="ml-2 h-3 w-3" />

@@ -1,5 +1,4 @@
 
-// src/pages/DashboardPage.tsx
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
@@ -30,56 +29,58 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 bg-lawyer-background min-h-full">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 md:p-6 lg:p-8">
       <DashboardHeader
         user={user}
         getUserFirstName={getUserFirstName}
         handleSignOut={handleSignOut}
       />
 
-      <Tabs defaultValue="visao-geral" className="mt-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 bg-gray-200 p-1.5 rounded-lg mb-6 h-auto">
+      <Tabs defaultValue="visao-geral" className="mt-8">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 bg-white/80 backdrop-blur-sm p-2 rounded-xl mb-8 shadow-lg border border-white/50">
           <TabsTrigger
             value="visao-geral"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
+            className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
             <BarChartHorizontalBig className="h-4 w-4" /> Visão Geral
           </TabsTrigger>
           <TabsTrigger
             value="financeiro"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
+            className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
             <DollarSignIcon className="h-4 w-4" /> Financeiro
           </TabsTrigger>
           <TabsTrigger
             value="processos"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
+            className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
             <Briefcase className="h-4 w-4" /> Processos
           </TabsTrigger>
           <TabsTrigger
             value="agenda"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
+            className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
             <CalendarIcon className="h-4 w-4" /> Agenda
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="visao-geral">
-          <VisaoGeralContent />
-        </TabsContent>
+        <div className="bg-white/40 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/50">
+          <TabsContent value="visao-geral" className="mt-0">
+            <VisaoGeralContent />
+          </TabsContent>
 
-        <TabsContent value="financeiro">
-          <FinanceiroContent />
-        </TabsContent>
+          <TabsContent value="financeiro" className="mt-0">
+            <FinanceiroContent />
+          </TabsContent>
 
-        <TabsContent value="processos">
-          <ProcessosContent />
-        </TabsContent>
+          <TabsContent value="processos" className="mt-0">
+            <ProcessosContent />
+          </TabsContent>
 
-        <TabsContent value="agenda">
-          <AgendaContent />
-        </TabsContent>
+          <TabsContent value="agenda" className="mt-0">
+            <AgendaContent />
+          </TabsContent>
+        </div>
       </Tabs>
     </div>
   );
