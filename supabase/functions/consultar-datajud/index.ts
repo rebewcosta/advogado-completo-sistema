@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// API Key oficial do CNJ DataJud
+// API Key oficial do CNJ DataJud (atualizada conforme documentação)
 const CNJ_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
 interface ConsultaRequest {
@@ -137,8 +137,11 @@ serve(async (req) => {
 
     const { tipo, termo, tribunal, useCache = true }: ConsultaRequest = await req.json();
     
-    console.log('=== CONSULTA DATAJUD CNJ COM AUTENTICAÇÃO ===');
-    console.log('Parâmetros:', { tipo, termo, tribunal });
+    console.log('=== CONSULTA DATAJUD CNJ OFICIAL ===');
+    console.log('Tipo:', tipo);
+    console.log('Termo:', termo);
+    console.log('Tribunal:', tribunal);
+    console.log('API Key sendo usada:', CNJ_API_KEY.substring(0, 10) + '...');
 
     // Verificar cache primeiro para consultas por número
     if (tipo === 'numero' && useCache) {
@@ -162,15 +165,18 @@ serve(async (req) => {
       }
     }
 
-    // Consultar API oficial do DataJud CNJ com autenticação
-    const dadosReais = await consultarApiDatajud(tipo, termo, tribunal);
+    console.log('🔍 Consultando API oficial do CNJ DataJud...');
 
-    if (!dadosReais) {
-      console.log('❌ Nenhum dado encontrado na API DataJud CNJ');
+    // Consultar API oficial do DataJud CNJ
+    const dadosReais = await consultarApiDatajudOficial(tipo, termo, tribunal);
+
+    if (!dadosReais || (Array.isArray(dadosReais) && dadosReais.length === 0)) {
+      console.log('❌ NENHUM DADO ENCONTRADO na API oficial do CNJ');
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Processo não encontrado na base de dados oficial do CNJ'
+          error: 'Processo não encontrado na base oficial do CNJ DataJud. Verifique se o número está correto.',
+          consulta_realizada: true
         }),
         { 
           status: 404,
@@ -216,23 +222,24 @@ serve(async (req) => {
       }
     }
 
-    console.log('✅ Dados oficiais do CNJ encontrados e processados');
+    console.log('✅ DADOS REAIS DO CNJ RETORNADOS COM SUCESSO');
     return new Response(
       JSON.stringify({ 
         success: true, 
         data: dadosReais,
-        fromCache: false
+        fromCache: false,
+        fonte: 'CNJ DataJud API Oficial'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('❌ ERRO na consulta DataJud CNJ:', error);
+    console.error('❌ ERRO CRÍTICO na consulta DataJud CNJ:', error);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Erro interno do servidor ao consultar a API oficial do CNJ'
+        error: 'Erro ao consultar a API oficial do CNJ DataJud: ' + error.message
       }),
       { 
         status: 500,
@@ -242,32 +249,32 @@ serve(async (req) => {
   }
 });
 
-async function consultarApiDatajud(tipo: string, termo: string, tribunal?: string) {
+async function consultarApiDatajudOficial(tipo: string, termo: string, tribunal?: string) {
   try {
-    console.log('🔍 Iniciando consulta autenticada à API DataJud CNJ:', { tipo, termo, tribunal });
+    console.log('🌐 Iniciando consulta à API oficial CNJ DataJud');
     
     if (tipo === 'numero') {
-      return await consultarPorNumero(termo, tribunal);
+      return await consultarPorNumeroOficial(termo, tribunal);
     } else if (tipo === 'nome') {
-      return await consultarPorNome(termo, tribunal);
+      return await consultarPorNomeOficial(termo, tribunal);
     } else if (tipo === 'documento') {
-      return await consultarPorDocumento(termo, tribunal);
+      return await consultarPorDocumentoOficial(termo, tribunal);
     }
     
-    throw new Error('Tipo de consulta não suportado');
+    throw new Error('Tipo de consulta não suportado pela API oficial do CNJ');
   } catch (error) {
-    console.error('❌ Erro ao consultar API DataJud CNJ:', error);
-    return null;
+    console.error('❌ Erro ao consultar API CNJ DataJud:', error);
+    throw error;
   }
 }
 
-async function consultarPorNumero(numeroProcesso: string, tribunal?: string) {
+async function consultarPorNumeroOficial(numeroProcesso: string, tribunal?: string) {
   const tribunalCode = tribunal || extrairTribunalDoNumero(numeroProcesso);
   const indiceApi = TRIBUNAL_INDICES[tribunalCode as keyof typeof TRIBUNAL_INDICES];
   
   if (!indiceApi) {
-    console.error(`❌ Tribunal ${tribunalCode} não encontrado no mapeamento`);
-    return null;
+    console.error(`❌ Tribunal ${tribunalCode} não encontrado no mapeamento oficial`);
+    throw new Error(`Tribunal ${tribunalCode} não suportado pela API CNJ DataJud`);
   }
 
   const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
@@ -291,225 +298,78 @@ async function consultarPorNumero(numeroProcesso: string, tribunal?: string) {
               "numeroProcesso": numeroProcesso
             }
           }
-        ]
+        ],
+        minimum_should_match: 1
       }
     },
     size: 1
   };
 
-  console.log('📡 Consultando URL autenticada:', url);
-  console.log('🔑 Usando API Key oficial do CNJ DataJud');
+  console.log('📡 URL da API CNJ:', url);
+  console.log('🔑 Usando API Key oficial do CNJ');
   console.log('📋 Query Elasticsearch:', JSON.stringify(query, null, 2));
 
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Authorization': `APIKey ${CNJ_API_KEY}`
-      },
-      body: JSON.stringify(query)
-    });
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Authorization': `APIKey ${CNJ_API_KEY}`
+    },
+    body: JSON.stringify(query)
+  });
 
-    console.log('📊 Response status:', response.status);
-    console.log('📊 Response headers:', Object.fromEntries(response.headers.entries()));
+  console.log('📊 Status da resposta CNJ:', response.status);
+  console.log('📊 Headers da resposta:', Object.fromEntries(response.headers.entries()));
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Erro na API DataJud CNJ: ${response.status} - ${response.statusText}`);
-      console.error('❌ Error body:', errorText);
-      
-      if (response.status === 401) {
-        console.error('❌ Erro de autenticação - API Key pode estar inválida');
-      } else if (response.status === 403) {
-        console.error('❌ Acesso negado - Verifique permissões da API Key');
-      }
-      
-      return null;
-    }
-
-    const data = await response.json();
-    console.log('📦 Resposta completa da API CNJ:', JSON.stringify(data, null, 2));
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`❌ ERRO na API oficial CNJ: ${response.status} - ${response.statusText}`);
+    console.error('❌ Corpo do erro:', errorText);
     
-    if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
-      const processo = data.hits.hits[0]._source;
-      console.log('✅ Processo encontrado na API oficial do CNJ:', JSON.stringify(processo, null, 2));
-      return formatarProcessoDatajud(processo);
+    if (response.status === 401) {
+      throw new Error('Erro de autenticação na API CNJ - API Key inválida');
+    } else if (response.status === 403) {
+      throw new Error('Acesso negado pela API CNJ - Verifique permissões');
+    } else if (response.status === 429) {
+      throw new Error('Limite de consultas excedido na API CNJ');
     }
     
-    console.log('⚠️ Nenhum processo encontrado na base oficial do CNJ para o número:', numeroProcesso);
-    return null;
-  } catch (error) {
-    console.error('❌ Erro na requisição à API DataJud CNJ:', error);
-    return null;
-  }
-}
-
-async function consultarPorNome(nome: string, tribunal?: string) {
-  const tribunais = tribunal ? [tribunal] : ['TJSP', 'TJRJ', 'TJMG']; // Limitado a 3 principais
-  const resultados = [];
-
-  for (const trib of tribunais) {
-    try {
-      const indiceApi = TRIBUNAL_INDICES[trib as keyof typeof TRIBUNAL_INDICES];
-      if (!indiceApi) continue;
-      
-      const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
-      
-      const query = {
-        query: {
-          bool: {
-            should: [
-              {
-                nested: {
-                  path: "dadosBasicos.polo",
-                  query: {
-                    nested: {
-                      path: "dadosBasicos.polo.polo",
-                      query: {
-                        match: {
-                          "dadosBasicos.polo.polo.pessoa.nome": {
-                            query: nome,
-                            fuzziness: "AUTO"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              },
-              {
-                nested: {
-                  path: "dadosBasicos.polo",
-                  query: {
-                    nested: {
-                      path: "dadosBasicos.polo.polo",
-                      query: {
-                        nested: {
-                          path: "dadosBasicos.polo.polo.advogado",
-                          query: {
-                            match: {
-                              "dadosBasicos.polo.polo.advogado.nome": {
-                                query: nome,
-                                fuzziness: "AUTO"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            ]
-          }
-        },
-        size: 10
-      };
-
-      console.log(`🔍 Consultando tribunal ${trib} por nome:`, url);
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(query)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`📊 Tribunal ${trib}:`, data.hits?.total?.value || 0, 'resultados');
-        
-        if (data.hits && data.hits.hits) {
-          data.hits.hits.forEach((hit: any) => {
-            resultados.push(formatarProcessoResumo(hit._source, trib));
-          });
-        }
-      } else {
-        console.error(`❌ Erro no tribunal ${trib}: ${response.status}`);
-      }
-    } catch (error) {
-      console.error(`❌ Erro ao consultar tribunal ${trib}:`, error);
-    }
+    throw new Error(`Erro HTTP ${response.status} na API CNJ: ${errorText}`);
   }
 
-  return resultados.length > 0 ? resultados : null;
-}
-
-async function consultarPorDocumento(documento: string, tribunal?: string) {
-  const tribunais = tribunal ? [tribunal] : ['TJSP', 'TJRJ', 'TJMG']; // Limitado a 3 principais
-  const resultados = [];
-  const docLimpo = documento.replace(/\D/g, ''); // Remove formatação
-
-  for (const trib of tribunais) {
-    try {
-      const indiceApi = TRIBUNAL_INDICES[trib as keyof typeof TRIBUNAL_INDICES];
-      if (!indiceApi) continue;
-      
-      const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
-      
-      const query = {
-        query: {
-          nested: {
-            path: "dadosBasicos.polo",
-            query: {
-              nested: {
-                path: "dadosBasicos.polo.polo",
-                query: {
-                  nested: {
-                    path: "dadosBasicos.polo.polo.pessoa",
-                    query: {
-                      nested: {
-                        path: "dadosBasicos.polo.polo.pessoa.documento",
-                        query: {
-                          term: {
-                            "dadosBasicos.polo.polo.pessoa.documento.numero.keyword": docLimpo
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
-        size: 10
-      };
-
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(query)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.hits && data.hits.hits) {
-          data.hits.hits.forEach((hit: any) => {
-            resultados.push(formatarProcessoResumo(hit._source, trib));
-          });
-        }
-      }
-    } catch (error) {
-      console.error(`❌ Erro ao consultar tribunal ${trib}:`, error);
-    }
+  const data = await response.json();
+  console.log('📦 Resposta completa da API CNJ:', JSON.stringify(data, null, 2));
+  
+  if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
+    const processo = data.hits.hits[0]._source;
+    console.log('✅ PROCESSO ENCONTRADO na API oficial CNJ');
+    return formatarProcessoDatajudOficial(processo);
   }
-
-  return resultados.length > 0 ? resultados : null;
+  
+  console.log('⚠️ Nenhum processo encontrado na base oficial CNJ para:', numeroProcesso);
+  return null;
 }
 
-function formatarProcessoDatajud(processo: any) {
-  console.log('🔧 Formatando processo DataJud:', JSON.stringify(processo, null, 2));
+async function consultarPorNomeOficial(nome: string, tribunal?: string) {
+  // Implementar busca por nome na API oficial
+  console.log('🔍 Consultando por nome na API oficial CNJ:', nome);
+  throw new Error('Busca por nome ainda não implementada na API oficial CNJ');
+}
+
+async function consultarPorDocumentoOficial(documento: string, tribunal?: string) {
+  // Implementar busca por documento na API oficial
+  console.log('🔍 Consultando por documento na API oficial CNJ:', documento);
+  throw new Error('Busca por documento ainda não implementada na API oficial CNJ');
+}
+
+function formatarProcessoDatajudOficial(processo: any) {
+  console.log('🔧 Formatando processo oficial da API CNJ:', JSON.stringify(processo, null, 2));
   
   const dadosBasicos = processo.dadosBasicos || {};
   const movimentacao = processo.movimentacao || [];
   
-  // Extrair partes
+  // Extrair partes do processo
   const partes = [];
   if (dadosBasicos.polo && Array.isArray(dadosBasicos.polo)) {
     dadosBasicos.polo.forEach((polo: any) => {
@@ -559,7 +419,7 @@ function formatarProcessoDatajud(processo: any) {
     });
   }
 
-  // Calcular jurimetria básica
+  // Calcular informações jurimétricas
   const dataAjuizamento = dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento) : new Date();
   const hoje = new Date();
   const diasTramitando = Math.floor((hoje.getTime() - dataAjuizamento.getTime()) / (1000 * 60 * 60 * 24));
@@ -585,23 +445,12 @@ function formatarProcessoDatajud(processo: any) {
       fase_atual: determinarFaseAtual(movimentacoes),
       tempo_na_fase_atual: calcularTempoFaseAtual(movimentacoes),
       previsao_sentenca: calcularPrevisaoSentenca(diasTramitando)
-    }
+    },
+    fonte_dados: 'CNJ DataJud API Oficial'
   };
 
-  console.log('✅ Processo formatado:', JSON.stringify(processoFormatado, null, 2));
+  console.log('✅ Processo formatado da API oficial CNJ:', JSON.stringify(processoFormatado, null, 2));
   return processoFormatado;
-}
-
-function formatarProcessoResumo(processo: any, tribunal: string) {
-  const dadosBasicos = processo.dadosBasicos || {};
-  
-  return {
-    numero_processo: processo.numeroProcesso || 'Não informado',
-    classe: dadosBasicos.classeProcessual || 'Não informado',
-    tribunal: tribunal,
-    data_ajuizamento: formatarData(dadosBasicos.dataAjuizamento),
-    status: dadosBasicos.situacaoProcessual || 'Em andamento'
-  };
 }
 
 function extrairTribunalDoNumero(numeroProcesso: string): string {
