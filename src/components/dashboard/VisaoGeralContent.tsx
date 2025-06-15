@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { StatsCards } from './StatsCards';
+import StatsCards from './StatsCards';
 import ProcessosContent from './ProcessosContent';
 import AgendaContent from './AgendaContent';
 import FinanceiroContent from './FinanceiroContent';
