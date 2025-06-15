@@ -1,9 +1,15 @@
 
 import React from 'react';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
+import { Wrench } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PrazosCalculadora } from '@/components/prazos/PrazosCalculadora';
 import { ConsultaCep } from '@/components/correios/ConsultaCep';
-import { Wrench } from 'lucide-react';
+import { ConsultaCnpjCpf } from '@/components/ferramentas/ConsultaCnpjCpf';
+import { CalculadoraCorrecao } from '@/components/ferramentas/CalculadoraCorrecao';
+import { ConsultaFeriados } from '@/components/ferramentas/ConsultaFeriados';
+import { ValidadorCpfCnpj } from '@/components/ferramentas/ValidadorCpfCnpj';
+import { GeradorPeticoes } from '@/components/ferramentas/GeradorPeticoes';
 
 const FerramentasPage: React.FC = () => {
   return (
@@ -11,14 +17,49 @@ const FerramentasPage: React.FC = () => {
       <div className="p-6">
         <SharedPageHeader 
           title="Ferramentas" 
-          description="Acesse todas as ferramentas disponíveis para otimizar seu trabalho"
+          description="Acesse todas as ferramentas disponíveis para otimizar seu trabalho jurídico"
           pageIcon={<Wrench />}
         />
         
-        <div className="space-y-6">
-          <PrazosCalculadora />
-          <ConsultaCep />
-        </div>
+        <Tabs defaultValue="prazos" className="w-full">
+          <TabsList className="grid w-full grid-cols-7">
+            <TabsTrigger value="prazos">Prazos</TabsTrigger>
+            <TabsTrigger value="cep">CEP</TabsTrigger>
+            <TabsTrigger value="cnpj-cpf">CNPJ/CPF</TabsTrigger>
+            <TabsTrigger value="correcao">Correção</TabsTrigger>
+            <TabsTrigger value="feriados">Feriados</TabsTrigger>
+            <TabsTrigger value="validador">Validador</TabsTrigger>
+            <TabsTrigger value="peticoes">Petições</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="prazos" className="mt-6">
+            <PrazosCalculadora />
+          </TabsContent>
+          
+          <TabsContent value="cep" className="mt-6">
+            <ConsultaCep />
+          </TabsContent>
+          
+          <TabsContent value="cnpj-cpf" className="mt-6">
+            <ConsultaCnpjCpf />
+          </TabsContent>
+          
+          <TabsContent value="correcao" className="mt-6">
+            <CalculadoraCorrecao />
+          </TabsContent>
+          
+          <TabsContent value="feriados" className="mt-6">
+            <ConsultaFeriados />
+          </TabsContent>
+          
+          <TabsContent value="validador" className="mt-6">
+            <ValidadorCpfCnpj />
+          </TabsContent>
+          
+          <TabsContent value="peticoes" className="mt-6">
+            <GeradorPeticoes />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
