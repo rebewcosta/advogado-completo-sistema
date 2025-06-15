@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -102,20 +101,25 @@ export const PrazosAlertas: React.FC = () => {
   const gerarNovosAlertas = async () => {
     setIsGenerating(true);
     try {
-      const { data, error } = await supabase.rpc('gerar_alertas_prazos');
+      const { data, error } = await supabase.functions.invoke('gerar-alertas-prazos', {
+        headers: {
+          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+        },
+      });
       
       if (error) throw error;
 
       toast({
         title: "Alertas gerados",
-        description: `${data || 0} novos alertas foram criados.`,
+        description: `${data?.alertas_gerados || 0} novos alertas foram criados.`,
       });
 
       fetchAlertas();
     } catch (error: any) {
+      console.error('Erro ao gerar alertas:', error);
       toast({
         title: "Erro ao gerar alertas",
-        description: error.message,
+        description: error.message || 'Erro desconhecido',
         variant: "destructive",
       });
     } finally {
