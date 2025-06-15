@@ -101,25 +101,49 @@ export const PrazosAlertas: React.FC = () => {
   const gerarNovosAlertas = async () => {
     setIsGenerating(true);
     try {
+      console.log('Chamando função de gerar alertas...');
+      
+      const session = await supabase.auth.getSession();
+      if (!session.data.session?.access_token) {
+        throw new Error('Usuário não autenticado');
+      }
+
       const { data, error } = await supabase.functions.invoke('gerar-alertas-prazos', {
         headers: {
-          Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
+          Authorization: `Bearer ${session.data.session.access_token}`,
         },
       });
       
-      if (error) throw error;
+      console.log('Resposta da função:', data, error);
+      
+      if (error) {
+        console.error('Erro da função:', error);
+        throw error;
+      }
 
+      const alertasGerados = data?.alertas_gerados || 0;
+      
       toast({
-        title: "Alertas gerados",
-        description: `${data?.alertas_gerados || 0} novos alertas foram criados.`,
+        title: "Alertas gerados com sucesso!",
+        description: `${alertasGerados} ${alertasGerados === 1 ? 'novo alerta foi criado' : 'novos alertas foram criados'}.`,
       });
 
+      // Recarregar a lista de alertas
       fetchAlertas();
     } catch (error: any) {
       console.error('Erro ao gerar alertas:', error);
+      
+      let errorMessage = 'Erro desconhecido ao gerar alertas';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
+      
       toast({
         title: "Erro ao gerar alertas",
-        description: error.message || 'Erro desconhecido',
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -8,17 +8,24 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
+    console.log('Iniciando geração de alertas...')
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const authHeader = req.headers.get('Authorization')!
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Token de autorização não fornecido')
+    }
+
     const token = authHeader.replace('Bearer ', '')
     const { data: { user } } = await supabaseClient.auth.getUser(token)
 
@@ -28,18 +35,22 @@ serve(async (req) => {
 
     console.log('Gerando alertas para usuário:', user.id)
     
-    // Buscar configurações do usuário
+    // Buscar configurações do usuário ou usar padrões
     const { data: config } = await supabaseClient
       .from('prazo_configuracoes')
       .select('*')
       .eq('user_id', user.id)
-      .single()
+      .maybeSingle()
 
     const diasCritico = config?.dias_alerta_critico || 3
     const diasUrgente = config?.dias_alerta_urgente || 7
     const diasMedio = config?.dias_alerta_medio || 15
 
     let totalAlertas = 0
+    const hoje = new Date()
+    const dataHoje = hoje.toISOString().split('T')[0]
+
+    console.log('Configurações de prazo:', { diasCritico, diasUrgente, diasMedio })
 
     // Gerar alertas para processos com próximo prazo
     const { data: processos } = await supabaseClient
@@ -48,11 +59,14 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .not('proximo_prazo', 'is', null)
 
-    if (processos) {
+    console.log('Processos encontrados:', processos?.length || 0)
+
+    if (processos && processos.length > 0) {
       for (const processo of processos) {
         const dataPrazo = new Date(processo.proximo_prazo)
-        const hoje = new Date()
         const diasRestantes = Math.ceil((dataPrazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+
+        console.log(`Processo ${processo.numero_processo}: ${diasRestantes} dias restantes`)
 
         if (diasRestantes <= diasMedio && diasRestantes >= 0) {
           let tipoAlerta = 'medio'
@@ -69,7 +83,7 @@ serve(async (req) => {
             .eq('user_id', user.id)
             .eq('processo_id', processo.id)
             .eq('data_prazo', processo.proximo_prazo)
-            .single()
+            .maybeSingle()
 
           if (!alertaExistente) {
             const { error } = await supabaseClient
@@ -82,7 +96,7 @@ serve(async (req) => {
                 data_prazo: processo.proximo_prazo,
                 dias_restantes: diasRestantes,
                 titulo: `Prazo do processo ${processo.numero_processo}`,
-                descricao: `Processo ${processo.numero_processo} vence em ${diasRestantes} dias`,
+                descricao: `Processo ${processo.numero_processo} vence em ${diasRestantes} ${diasRestantes === 1 ? 'dia' : 'dias'}`,
                 alerta_enviado: false
               })
 
@@ -104,11 +118,14 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .gte('data_hora_inicio', new Date().toISOString())
 
-    if (eventos) {
+    console.log('Eventos encontrados:', eventos?.length || 0)
+
+    if (eventos && eventos.length > 0) {
       for (const evento of eventos) {
         const dataEvento = new Date(evento.data_hora_inicio)
-        const hoje = new Date()
         const diasRestantes = Math.ceil((dataEvento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+
+        console.log(`Evento ${evento.titulo}: ${diasRestantes} dias restantes`)
 
         if (diasRestantes <= diasMedio && diasRestantes >= 0) {
           let tipoAlerta = 'medio'
@@ -125,7 +142,7 @@ serve(async (req) => {
             .eq('user_id', user.id)
             .eq('evento_agenda_id', evento.id)
             .eq('data_prazo', evento.data_hora_inicio.split('T')[0])
-            .single()
+            .maybeSingle()
 
           if (!alertaExistente) {
             const { error } = await supabaseClient
@@ -138,7 +155,7 @@ serve(async (req) => {
                 data_prazo: evento.data_hora_inicio.split('T')[0],
                 dias_restantes: diasRestantes,
                 titulo: `Evento: ${evento.titulo}`,
-                descricao: `Evento "${evento.titulo}" acontece em ${diasRestantes} dias`,
+                descricao: `Evento "${evento.titulo}" acontece em ${diasRestantes} ${diasRestantes === 1 ? 'dia' : 'dias'}`,
                 alerta_enviado: false
               })
 
@@ -156,7 +173,11 @@ serve(async (req) => {
     console.log('Total de alertas gerados:', totalAlertas)
 
     return new Response(
-      JSON.stringify({ alertas_gerados: totalAlertas }),
+      JSON.stringify({ 
+        success: true,
+        alertas_gerados: totalAlertas,
+        message: `${totalAlertas} ${totalAlertas === 1 ? 'alerta gerado' : 'alertas gerados'} com sucesso!`
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200,
@@ -165,7 +186,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Erro ao gerar alertas:', error)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        success: false,
+        error: error.message,
+        alertas_gerados: 0
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
