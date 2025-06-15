@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -86,52 +87,13 @@ const TRIBUNAL_INDICES = {
   'STJ': 'api_publica_stj',
   'STF': 'api_publica_stf',
   'TSE': 'api_publica_tse',
-  'STM': 'api_publica_stm',
-  
-  // Tribunais Regionais Eleitorais
-  'TREAC': 'api_publica_treac',
-  'TREAL': 'api_publica_treal',
-  'TREAP': 'api_publica_treap',
-  'TREAM': 'api_publica_tream',
-  'TREBA': 'api_publica_treba',
-  'TRECE': 'api_publica_trece',
-  'TREDF': 'api_publica_tredf',
-  'TREES': 'api_publica_trees',
-  'TREGO': 'api_publica_trego',
-  'TREMA': 'api_publica_trema',
-  'TREMT': 'api_publica_tremt',
-  'TREMS': 'api_publica_trems',
-  'TREMG': 'api_publica_tremg',
-  'TREPA': 'api_publica_trepa',
-  'TREPB': 'api_publica_trepb',
-  'TREPR': 'api_publica_trepr',
-  'TREPE': 'api_publica_trepe',
-  'TREPI': 'api_publica_trepi',
-  'TRERJ': 'api_publica_trerj',
-  'TRERN': 'api_publica_trern',
-  'TRERS': 'api_publica_trers',
-  'TRERO': 'api_publica_trero',
-  'TRERR': 'api_publica_trerr',
-  'TRESC': 'api_publica_tresc',
-  'TRESP': 'api_publica_tresp',
-  'TRESE': 'api_publica_trese',
-  'TRETO': 'api_publica_treto',
-  
-  // Tribunais de Justiça Militar
-  'TJMSP': 'api_publica_tjmsp',
-  'TJMRJ': 'api_publica_tjmrj',
-  'TJMRS': 'api_publica_tjmrs',
-  'TJMMG': 'api_publica_tjmmg',
-  
-  // Tribunal Superior do Trabalho Militar
-  'TSTM': 'api_publica_tstm',
-  
-  // Conselho Superior da Justiça do Trabalho
-  'CSJT': 'api_publica_csjt',
-  
-  // Conselho Nacional de Justiça
-  'CNJ': 'api_publica_cnj'
+  'STM': 'api_publica_stm'
 };
+
+// Criar cliente Supabase para cache
+const supabaseUrl = 'https://lqprcsquknlegzmzdoct.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxcHJjc3F1a25sZWd6bXpkb2N0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcyNzA4NjAsImV4cCI6MjA2Mjg0Njg2MH0.7L4U-NZvY_WzQy6svqL7xzSUdGVvQ0IkYd-L6PhdYJs';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -146,44 +108,101 @@ serve(async (req) => {
     console.log('Termo:', termo);
     console.log('Tribunal:', tribunal);
 
+    // Validar entrada
+    if (!termo || !termo.trim()) {
+      throw new Error('Termo de busca é obrigatório');
+    }
+
+    const termoLimpo = sanitizarTermo(termo.trim(), tipo);
+    console.log('Termo sanitizado:', termoLimpo);
+
+    // Verificar cache primeiro
+    const cacheKey = `${tipo}_${termoLimpo}_${tribunal || 'todos'}`;
+    const resultadoCache = await verificarCache(cacheKey);
+    
+    if (resultadoCache) {
+      console.log('✅ Resultado encontrado no cache');
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          data: resultadoCache.dados,
+          fonte: 'cache',
+          cache_timestamp: resultadoCache.timestamp
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Determinar tribunais para buscar
     let tribunaisParaBuscar: string[];
     
-    if (tribunal && tribunal !== 'todos' && TRIBUNAL_INDICES[tribunal as keyof typeof TRIBUNAL_INDICES]) {
+    if (tribunal === 'principais') {
+      tribunaisParaBuscar = ['TJSP', 'TJRJ', 'TJMG'];
+    } else if (tribunal && tribunal !== 'todos' && TRIBUNAL_INDICES[tribunal as keyof typeof TRIBUNAL_INDICES]) {
       tribunaisParaBuscar = [tribunal];
     } else {
-      // Se não especificou tribunal, buscar nos principais
+      // Busca estratégica: principais primeiro
       tribunaisParaBuscar = ['TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR'];
     }
 
     console.log('Tribunais para buscar:', tribunaisParaBuscar);
 
     const resultados: any[] = [];
+    const tribunaisConsultados: string[] = [];
     
-    for (const tribunalCode of tribunaisParaBuscar) {
-      const indiceApi = TRIBUNAL_INDICES[tribunalCode as keyof typeof TRIBUNAL_INDICES];
+    // Buscar em paralelo nos tribunais (máximo 3 simultâneos para não sobrecarregar)
+    const batchSize = 3;
+    for (let i = 0; i < tribunaisParaBuscar.length; i += batchSize) {
+      const batch = tribunaisParaBuscar.slice(i, i + batchSize);
       
-      if (!indiceApi) {
-        console.log(`Tribunal ${tribunalCode} não mapeado`);
-        continue;
-      }
-
-      console.log(`🔍 Buscando em ${tribunalCode}...`);
-      
-      try {
-        const resultado = await buscarNoTribunal(tipo, termo, indiceApi, tribunalCode);
-        if (resultado && Array.isArray(resultado)) {
-          resultados.push(...resultado);
-        } else if (resultado) {
-          resultados.push(resultado);
+      const promisesBatch = batch.map(async (tribunalCode) => {
+        const indiceApi = TRIBUNAL_INDICES[tribunalCode as keyof typeof TRIBUNAL_INDICES];
+        
+        if (!indiceApi) {
+          console.log(`❌ Tribunal ${tribunalCode} não mapeado`);
+          return null;
         }
+
+        console.log(`🔍 Buscando em ${tribunalCode}...`);
+        tribunaisConsultados.push(tribunalCode);
         
-        console.log(`✅ ${tribunalCode}: ${resultado ? (Array.isArray(resultado) ? resultado.length : 1) : 0} resultado(s)`);
-        
-      } catch (error) {
-        console.error(`❌ Erro no tribunal ${tribunalCode}:`, error.message);
-        // Continua para próximo tribunal
+        try {
+          const resultado = await buscarNoTribunalComRetry(tipo, termoLimpo, indiceApi, tribunalCode);
+          if (resultado && Array.isArray(resultado) && resultado.length > 0) {
+            console.log(`✅ ${tribunalCode}: ${resultado.length} resultado(s)`);
+            return resultado;
+          } else if (resultado) {
+            console.log(`✅ ${tribunalCode}: 1 resultado`);
+            return [resultado];
+          }
+          
+          console.log(`⚠️ ${tribunalCode}: Nenhum resultado`);
+          return null;
+          
+        } catch (error) {
+          console.error(`❌ Erro no tribunal ${tribunalCode}:`, error.message);
+          return null;
+        }
+      });
+
+      const batchResults = await Promise.allSettled(promisesBatch);
+      
+      batchResults.forEach((result) => {
+        if (result.status === 'fulfilled' && result.value) {
+          resultados.push(...result.value);
+        }
+      });
+
+      // Se já encontrou resultados suficientes, pode parar
+      if (resultados.length >= 10) {
+        console.log('✅ Limite de resultados atingido, parando busca');
+        break;
       }
+    }
+
+    // Salvar no cache
+    if (resultados.length > 0) {
+      await salvarCache(cacheKey, resultados, tribunaisConsultados);
     }
 
     if (resultados.length === 0) {
@@ -192,8 +211,8 @@ serve(async (req) => {
           success: true, 
           data: null,
           message: `Nenhum processo encontrado na base oficial do CNJ DataJud para "${termo}".`,
-          tribunais_consultados: tribunaisParaBuscar,
-          detalhes: 'Busca realizada conforme solicitado'
+          tribunais_consultados: tribunaisConsultados,
+          detalhes: 'Busca realizada conforme critérios do CNJ'
         }),
         { 
           status: 200,
@@ -202,13 +221,20 @@ serve(async (req) => {
       );
     }
 
-    console.log(`✅ TOTAL ENCONTRADO: ${resultados.length} processos em ${tribunaisParaBuscar.length} tribunais`);
+    // Ordenar por relevância (score) e limitar resultados
+    const resultadosOrdenados = resultados
+      .sort((a, b) => (b.relevancia_score || 0) - (a.relevancia_score || 0))
+      .slice(0, 20);
+
+    console.log(`✅ TOTAL ENCONTRADO: ${resultadosOrdenados.length} processos em ${tribunaisConsultados.length} tribunais`);
+    
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: resultados,
-        tribunais_consultados: tribunaisParaBuscar,
-        total_encontrados: resultados.length
+        data: resultadosOrdenados,
+        tribunais_consultados: tribunaisConsultados,
+        total_encontrados: resultadosOrdenados.length,
+        fonte: 'api_cnj'
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
@@ -230,97 +256,267 @@ serve(async (req) => {
   }
 });
 
+async function buscarNoTribunalComRetry(tipo: string, termo: string, indiceApi: string, tribunalCode: string, maxRetries = 2) {
+  for (let tentativa = 1; tentativa <= maxRetries; tentativa++) {
+    try {
+      console.log(`📡 Tentativa ${tentativa} para ${tribunalCode}`);
+      return await buscarNoTribunal(tipo, termo, indiceApi, tribunalCode);
+    } catch (error) {
+      console.error(`❌ Tentativa ${tentativa} falhou para ${tribunalCode}:`, error.message);
+      
+      if (tentativa === maxRetries) {
+        throw error;
+      }
+      
+      // Aguardar antes da próxima tentativa (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, tentativa * 1000));
+    }
+  }
+}
+
 async function buscarNoTribunal(tipo: string, termo: string, indiceApi: string, tribunalCode: string) {
   const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
   
   let query;
   
   if (tipo === 'numero') {
-    // Busca por número de processo
-    const numeroLimpo = termo.replace(/[.\-]/g, '');
+    // Busca por número de processo - query exata
+    const numeroFormatado = formatarNumeroProcesso(termo);
     query = {
       query: {
-        term: {
-          "numeroProcesso": numeroLimpo
+        bool: {
+          should: [
+            {
+              term: {
+                "numeroProcesso": numeroFormatado
+              }
+            },
+            {
+              term: {
+                "numeroProcesso": termo.replace(/\D/g, '')
+              }
+            }
+          ],
+          minimum_should_match: 1
         }
       },
-      size: 5
+      size: 5,
+      sort: [
+        { "_score": { "order": "desc" } }
+      ]
     };
   } else if (tipo === 'documento') {
-    // Busca por CPF/CNPJ
-    const documentoLimpo = termo.replace(/[.\-\/]/g, '');
+    // Busca por CPF/CNPJ - múltiplas estratégias
+    const documentoLimpo = termo.replace(/[^\d]/g, '');
     query = {
       query: {
-        multi_match: {
-          query: documentoLimpo,
-          fields: [
-            "partes.pessoa.cpfCnpj",
-            "partes.advogados.cpf"
+        bool: {
+          should: [
+            // Busca exata no documento limpo
+            {
+              term: {
+                "partes.pessoa.cpfCnpj": documentoLimpo
+              }
+            },
+            // Busca no CPF dos advogados
+            {
+              term: {
+                "partes.advogados.cpf": documentoLimpo
+              }
+            },
+            // Busca com formatação original
+            {
+              multi_match: {
+                query: termo,
+                fields: [
+                  "partes.pessoa.cpfCnpj",
+                  "partes.advogados.cpf"
+                ],
+                type: "phrase"
+              }
+            }
           ],
-          type: "phrase"
+          minimum_should_match: 1
         }
       },
-      size: 20
+      size: 15,
+      sort: [
+        { "_score": { "order": "desc" } }
+      ]
     };
   } else if (tipo === 'nome') {
-    // Busca por nome - estratégia simplificada e direta
+    // Busca por nome - estratégia avançada com múltiplas abordagens
+    const nomeNormalizado = normalizarNome(termo);
     query = {
       query: {
-        multi_match: {
-          query: termo,
-          fields: [
-            "partes.pessoa.nome",
-            "partes.advogados.nome"
+        bool: {
+          should: [
+            // Busca exata com boost alto
+            {
+              multi_match: {
+                query: termo,
+                fields: [
+                  "partes.pessoa.nome^3",
+                  "partes.advogados.nome^2"
+                ],
+                type: "phrase",
+                boost: 3
+              }
+            },
+            // Busca normalizada
+            {
+              multi_match: {
+                query: nomeNormalizado,
+                fields: [
+                  "partes.pessoa.nome^2",
+                  "partes.advogados.nome^1.5"
+                ],
+                type: "phrase",
+                boost: 2
+              }
+            },
+            // Busca com fuzziness para erros de digitação
+            {
+              multi_match: {
+                query: termo,
+                fields: [
+                  "partes.pessoa.nome",
+                  "partes.advogados.nome"
+                ],
+                type: "best_fields",
+                fuzziness: "AUTO",
+                boost: 1.5
+              }
+            },
+            // Busca por termos individuais
+            {
+              multi_match: {
+                query: termo,
+                fields: [
+                  "partes.pessoa.nome",
+                  "partes.advogados.nome"
+                ],
+                type: "cross_fields",
+                operator: "and",
+                boost: 1
+              }
+            },
+            // Busca prefix para nomes parciais
+            {
+              multi_match: {
+                query: termo,
+                fields: [
+                  "partes.pessoa.nome",
+                  "partes.advogados.nome"
+                ],
+                type: "phrase_prefix",
+                boost: 0.5
+              }
+            }
           ],
-          type: "phrase_prefix",
-          fuzziness: "AUTO"
+          minimum_should_match: 1
         }
       },
-      size: 20
+      size: 20,
+      sort: [
+        { "_score": { "order": "desc" } }
+      ]
     };
   }
 
   console.log(`📡 URL: ${url}`);
   console.log(`📋 Query ${tipo} para "${termo}":`, JSON.stringify(query, null, 2));
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Authorization': `APIKey ${CNJ_API_KEY}`
-    },
-    body: JSON.stringify(query)
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
-  console.log(`📊 Status ${tribunalCode}: ${response.status}`);
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`❌ Erro HTTP ${tribunalCode}: ${response.status} - ${errorText.substring(0, 500)}`);
-    throw new Error(`HTTP ${response.status} em ${tribunalCode}: ${errorText.substring(0, 200)}`);
-  }
-
-  const data = await response.json();
-  console.log(`📦 Resposta ${tribunalCode} - Total hits: ${data.hits?.total?.value || 0}`);
-  
-  if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
-    console.log(`✅ ${data.hits.hits.length} processo(s) encontrado(s) em ${tribunalCode}`);
-    
-    // Log dos primeiros resultados para debug
-    data.hits.hits.slice(0, 2).forEach((hit: any, index: number) => {
-      console.log(`🔍 Resultado ${index + 1} em ${tribunalCode}:`, {
-        numeroProcesso: hit._source?.numeroProcesso,
-        score: hit._score,
-        primeiraParteNome: hit._source?.partes?.[0]?.pessoa?.nome || 'N/A'
-      });
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `APIKey ${CNJ_API_KEY}`,
+        'User-Agent': 'JusGestao/1.0'
+      },
+      body: JSON.stringify(query),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
+
+    console.log(`📊 Status ${tribunalCode}: ${response.status}`);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`❌ Erro HTTP ${tribunalCode}: ${response.status} - ${errorText.substring(0, 500)}`);
+      throw new Error(`HTTP ${response.status} em ${tribunalCode}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log(`📦 Resposta ${tribunalCode} - Total hits: ${data.hits?.total?.value || 0}`);
     
-    return data.hits.hits.map((hit: any) => formatarProcesso(hit._source, tribunalCode, hit._score));
+    if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
+      console.log(`✅ ${data.hits.hits.length} processo(s) encontrado(s) em ${tribunalCode}`);
+      
+      // Log dos primeiros resultados para debug
+      data.hits.hits.slice(0, 2).forEach((hit: any, index: number) => {
+        console.log(`🔍 Resultado ${index + 1} em ${tribunalCode}:`, {
+          numeroProcesso: hit._source?.numeroProcesso,
+          score: hit._score,
+          primeiraParteNome: hit._source?.partes?.[0]?.pessoa?.nome || 'N/A'
+        });
+      });
+      
+      return data.hits.hits.map((hit: any) => formatarProcesso(hit._source, tribunalCode, hit._score));
+    }
+    
+    console.log(`⚠️ Nenhum processo encontrado em ${tribunalCode}`);
+    return null;
+
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      throw new Error(`Timeout na consulta ao ${tribunalCode}`);
+    }
+    throw error;
+  }
+}
+
+function sanitizarTermo(termo: string, tipo: string): string {
+  switch (tipo) {
+    case 'documento':
+      // Remove tudo que não é número
+      return termo.replace(/\D/g, '');
+    case 'numero':
+      // Remove pontos e hífens mas mantém números
+      return termo.replace(/[.\-]/g, '');
+    case 'nome':
+      // Remove caracteres especiais mas mantém espaços e acentos
+      return termo.replace(/[^\w\sÀ-ÿ]/g, '').trim();
+    default:
+      return termo.trim();
+  }
+}
+
+function normalizarNome(nome: string): string {
+  return nome
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+    .replace(/[^\w\s]/g, '') // Remove caracteres especiais
+    .trim();
+}
+
+function formatarNumeroProcesso(numero: string): string {
+  const apenasNumeros = numero.replace(/\D/g, '');
+  
+  if (apenasNumeros.length === 20) {
+    // Formato: NNNNNNN-DD.AAAA.J.TR.OOOO
+    return `${apenasNumeros.substring(0, 7)}-${apenasNumeros.substring(7, 9)}.${apenasNumeros.substring(9, 13)}.${apenasNumeros.substring(13, 14)}.${apenasNumeros.substring(14, 16)}.${apenasNumeros.substring(16, 20)}`;
   }
   
-  console.log(`⚠️ Nenhum processo encontrado em ${tribunalCode}`);
-  return null;
+  return apenasNumeros;
 }
 
 function formatarProcesso(processo: any, tribunal: string, score?: number) {
@@ -344,7 +540,7 @@ function formatarProcesso(processo: any, tribunal: string, score?: number) {
     fonte_dados: 'CNJ DataJud API Oficial',
     nivel_sigilo: processo.nivelSigilo || 0,
     grau: processo.grau || 'Não informado',
-    relevancia_score: score
+    relevancia_score: score || 0
   };
 }
 
@@ -430,5 +626,52 @@ function formatarData(data: any): string {
     return date.toISOString().split('T')[0];
   } catch {
     return 'Não informado';
+  }
+}
+
+async function verificarCache(cacheKey: string): Promise<any> {
+  try {
+    const { data, error } = await supabase
+      .from('processos_cache')
+      .select('dados_processo, data_consulta')
+      .eq('numero_processo', cacheKey)
+      .gt('data_expiracao', new Date().toISOString())
+      .single();
+
+    if (error) {
+      console.log('Cache miss ou erro:', error.message);
+      return null;
+    }
+
+    console.log('✅ Cache hit para:', cacheKey);
+    return {
+      dados: data.dados_processo,
+      timestamp: data.data_consulta
+    };
+  } catch (error) {
+    console.log('Erro ao verificar cache:', error);
+    return null;
+  }
+}
+
+async function salvarCache(cacheKey: string, dados: any[], tribunaisConsultados: string[]): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from('processos_cache')
+      .upsert({
+        numero_processo: cacheKey,
+        dados_processo: dados,
+        tribunal: tribunaisConsultados.join(','),
+        data_consulta: new Date().toISOString(),
+        data_expiracao: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h
+      });
+
+    if (error) {
+      console.error('Erro ao salvar cache:', error);
+    } else {
+      console.log('✅ Cache salvo para:', cacheKey);
+    }
+  } catch (error) {
+    console.error('Erro ao salvar cache:', error);
   }
 }

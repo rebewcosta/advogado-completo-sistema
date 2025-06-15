@@ -4,26 +4,35 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Clock, User, FileText, AlertCircle } from 'lucide-react';
+import { Search, Clock, User, FileText, AlertCircle, CheckCircle, Info, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import ResultadosLista from './ResultadosLista';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 
 const BuscaAvancada: React.FC = () => {
   const [tipoBusca, setTipoBusca] = useState('nome');
   const [termoBusca, setTermoBusca] = useState('');
-  const [tribunal, setTribunal] = useState('todos');
+  const [tribunal, setTribunal] = useState('principais');
   const [isLoading, setIsLoading] = useState(false);
   const [resultados, setResultados] = useState<any[]>([]);
   const [ultimaBusca, setUltimaBusca] = useState<string>('');
+  const [dadosConsulta, setDadosConsulta] = useState<any>(null);
   const { toast } = useToast();
 
   const tribunais = [
-    { value: 'todos', label: 'Todos os tribunais' },
     { value: 'principais', label: 'Principais tribunais (TJSP, TJRJ, TJMG)' },
+    { value: 'todos', label: 'Todos os tribunais disponíveis' },
     
-    // Tribunais de Justiça Estaduais
+    // Tribunais de Justiça Estaduais (principais em destaque)
+    { value: 'TJSP', label: '⭐ TJSP - Tribunal de Justiça de São Paulo' },
+    { value: 'TJRJ', label: '⭐ TJRJ - Tribunal de Justiça do Rio de Janeiro' },
+    { value: 'TJMG', label: '⭐ TJMG - Tribunal de Justiça de Minas Gerais' },
+    { value: 'TJRS', label: '⭐ TJRS - Tribunal de Justiça do Rio Grande do Sul' },
+    { value: 'TJPR', label: '⭐ TJPR - Tribunal de Justiça do Paraná' },
+    
+    // ... keep existing code (resto dos tribunais)
     { value: 'TJAC', label: 'TJAC - Tribunal de Justiça do Acre' },
     { value: 'TJAL', label: 'TJAL - Tribunal de Justiça de Alagoas' },
     { value: 'TJAP', label: 'TJAP - Tribunal de Justiça do Amapá' },
@@ -36,10 +45,8 @@ const BuscaAvancada: React.FC = () => {
     { value: 'TJMA', label: 'TJMA - Tribunal de Justiça do Maranhão' },
     { value: 'TJMT', label: 'TJMT - Tribunal de Justiça de Mato Grosso' },
     { value: 'TJMS', label: 'TJMS - Tribunal de Justiça de Mato Grosso do Sul' },
-    { value: 'TJMG', label: 'TJMG - Tribunal de Justiça de Minas Gerais' },
     { value: 'TJPA', label: 'TJPA - Tribunal de Justiça do Pará' },
     { value: 'TJPB', label: 'TJPB - Tribunal de Justiça da Paraíba' },
-    { value: 'TJPR', label: 'TJPR - Tribunal de Justiça do Paraná' },
     { value: 'TJPE', label: 'TJPE - Tribunal de Justiça de Pernambuco' },
     { value: 'TJPI', label: 'TJPI - Tribunal de Justiça do Piauí' },
     { value: 'TJRJ', label: 'TJRJ - Tribunal de Justiça do Rio de Janeiro' },
@@ -144,20 +151,49 @@ const BuscaAvancada: React.FC = () => {
       return;
     }
 
+    // Validações específicas por tipo
+    if (tipoBusca === 'documento') {
+      const docLimpo = termoBusca.replace(/\D/g, '');
+      if (docLimpo.length !== 11 && docLimpo.length !== 14) {
+        toast({
+          title: "Erro",
+          description: "CPF deve ter 11 dígitos e CNPJ deve ter 14 dígitos",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    if (tipoBusca === 'numero') {
+      const numLimpo = termoBusca.replace(/\D/g, '');
+      if (numLimpo.length < 15) {
+        toast({
+          title: "Atenção",
+          description: "Número do processo pode estar incompleto. Para melhores resultados, use o número completo com 20 dígitos."
+        });
+      }
+    }
+
     setIsLoading(true);
     setResultados([]);
     setUltimaBusca(termoBusca.trim());
+    setDadosConsulta(null);
 
     try {
       console.log('Iniciando busca:', { tipo: tipoBusca, termo: termoBusca.trim(), tribunal });
 
+      const startTime = Date.now();
+      
       const { data, error } = await supabase.functions.invoke('consultar-datajud', {
         body: {
           tipo: tipoBusca,
           termo: termoBusca.trim(),
-          tribunal: tribunal === 'todos' || tribunal === 'principais' ? tribunal : tribunal
+          tribunal: tribunal
         }
       });
+
+      const endTime = Date.now();
+      const tempoConsulta = ((endTime - startTime) / 1000).toFixed(2);
 
       console.log('Resposta da função:', data);
 
@@ -167,13 +203,22 @@ const BuscaAvancada: React.FC = () => {
       }
 
       if (data.success) {
-        if (data.data) {
-          const resultadosArray = Array.isArray(data.data) ? data.data : [data.data];
-          setResultados(resultadosArray);
+        setDadosConsulta({
+          tribunais_consultados: data.tribunais_consultados || [],
+          total_encontrados: data.total_encontrados || 0,
+          fonte: data.fonte || 'api_cnj',
+          tempo_consulta: tempoConsulta,
+          cache_timestamp: data.cache_timestamp
+        });
+
+        if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+          setResultados(data.data);
+          
+          const fonteMsg = data.fonte === 'cache' ? '(resultado do cache)' : '(consulta em tempo real)';
           
           toast({
             title: "Busca concluída",
-            description: `${resultadosArray.length} resultado(s) encontrado(s) em ${data.tribunais_consultados?.join(', ') || 'tribunais consultados'}`
+            description: `${data.data.length} resultado(s) encontrado(s) em ${tempoConsulta}s ${fonteMsg}`
           });
         } else {
           setResultados([]);
@@ -194,6 +239,7 @@ const BuscaAvancada: React.FC = () => {
         variant: "destructive"
       });
       setResultados([]);
+      setDadosConsulta(null);
     } finally {
       setIsLoading(false);
     }
@@ -205,6 +251,8 @@ const BuscaAvancada: React.FC = () => {
         return 'Ex: João da Silva Santos';
       case 'documento':
         return 'Ex: 123.456.789-00 ou 12.345.678/0001-90';
+      case 'numero':
+        return 'Ex: 1234567-89.2023.8.26.0001';
       default:
         return 'Digite o termo para busca';
     }
@@ -216,8 +264,23 @@ const BuscaAvancada: React.FC = () => {
         return <User className="h-5 w-5" />;
       case 'documento':
         return <FileText className="h-5 w-5" />;
+      case 'numero':
+        return <Search className="h-5 w-5" />;
       default:
         return <Search className="h-5 w-5" />;
+    }
+  };
+
+  const getTipoBuscaHelp = () => {
+    switch (tipoBusca) {
+      case 'nome':
+        return "Digite o nome completo da pessoa física ou razão social da empresa. A busca é inteligente e aceita variações.";
+      case 'documento':
+        return "Digite o CPF (11 dígitos) ou CNPJ (14 dígitos). Pode incluir ou não a formatação (pontos, hífen, barra).";
+      case 'numero':
+        return "Digite o número do processo judicial. Funciona melhor com o número completo de 20 dígitos, mas aceita formatos parciais.";
+      default:
+        return "";
     }
   };
 
@@ -226,8 +289,8 @@ const BuscaAvancada: React.FC = () => {
       <Alert>
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          Esta busca consulta a API oficial do CNJ DataJud. Para obter melhores resultados, 
-          use termos exatos conforme constam nos processos.
+          Esta busca consulta a API oficial do CNJ DataJud em tempo real. Os resultados são oficiais e 
+          atualizados conforme a base de dados do Conselho Nacional de Justiça.
         </AlertDescription>
       </Alert>
 
@@ -235,10 +298,10 @@ const BuscaAvancada: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             {getIcon()}
-            Busca Avançada por Partes
+            Busca Avançada DataJud CNJ
           </CardTitle>
           <CardDescription>
-            Encontre processos pelo nome ou documento das partes envolvidas na base oficial do CNJ
+            Encontre processos na base oficial do CNJ por nome das partes, CPF/CNPJ ou número do processo
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -252,8 +315,12 @@ const BuscaAvancada: React.FC = () => {
                 <SelectContent>
                   <SelectItem value="nome">Nome da Parte</SelectItem>
                   <SelectItem value="documento">CPF/CNPJ</SelectItem>
+                  <SelectItem value="numero">Número do Processo</SelectItem>
                 </SelectContent>
               </Select>
+              {getTipoBuscaHelp() && (
+                <p className="text-xs text-muted-foreground">{getTipoBuscaHelp()}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -303,9 +370,41 @@ const BuscaAvancada: React.FC = () => {
           </Button>
           
           {ultimaBusca && (
-            <p className="text-sm text-muted-foreground">
-              Última busca: "{ultimaBusca}"
-            </p>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>Última busca: "{ultimaBusca}"</span>
+              {dadosConsulta && (
+                <div className="flex items-center gap-2">
+                  {dadosConsulta.fonte === 'cache' ? (
+                    <Badge variant="secondary" className="text-xs">
+                      <Database className="h-3 w-3 mr-1" />
+                      Cache
+                    </Badge>
+                  ) : (
+                    <Badge variant="default" className="text-xs">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Tempo real
+                    </Badge>
+                  )}
+                  <span className="text-xs">{dadosConsulta.tempo_consulta}s</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {dadosConsulta && (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-1">
+                  <p><strong>Tribunais consultados:</strong> {dadosConsulta.tribunais_consultados.join(', ')}</p>
+                  <p><strong>Total encontrado:</strong> {dadosConsulta.total_encontrados} processo(s)</p>
+                  <p><strong>Fonte:</strong> {dadosConsulta.fonte === 'cache' ? 'Cache (dados previamente consultados)' : 'API CNJ em tempo real'}</p>
+                  {dadosConsulta.cache_timestamp && (
+                    <p><strong>Última atualização:</strong> {new Date(dadosConsulta.cache_timestamp).toLocaleString('pt-BR')}</p>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
           )}
         </CardContent>
       </Card>
