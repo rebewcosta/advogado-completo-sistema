@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -17,7 +16,7 @@ interface ConsultaRequest {
   useCache?: boolean;
 }
 
-// Mapeamento simplificado dos principais tribunais
+// Mapeamento dos tribunais mais importantes primeiro
 const TRIBUNAL_INDICES = {
   'TJSP': 'api_publica_tjsp',
   'TJRJ': 'api_publica_tjrj', 
@@ -45,10 +44,10 @@ serve(async (req) => {
     console.log('Termo:', termo);
     console.log('Tribunal:', tribunal);
 
-    // Determinar tribunais para buscar
+    // Determinar tribunais para buscar - focando nos principais
     const tribunaisParaBuscar = tribunal && TRIBUNAL_INDICES[tribunal as keyof typeof TRIBUNAL_INDICES] 
       ? [tribunal] 
-      : ['TJSP', 'TJRJ']; // Apenas os principais para evitar timeout
+      : ['TJSP', 'TJRJ', 'TJMG']; // Os 3 maiores tribunais do Brasil
 
     const resultados: any[] = [];
     
@@ -70,12 +69,11 @@ serve(async (req) => {
           resultados.push(resultado);
         }
         
-        // Se encontrou algo e é busca específica por tribunal, pode parar
-        if (resultados.length > 0 && tribunal) {
-          break;
-        }
+        console.log(`✅ ${tribunalCode}: ${resultado ? (Array.isArray(resultado) ? resultado.length : 1) : 0} resultado(s)`);
+        
+        // Se encontrou resultados, pode continuar buscando em outros tribunais para comparar
       } catch (error) {
-        console.error(`Erro no tribunal ${tribunalCode}:`, error.message);
+        console.error(`❌ Erro no tribunal ${tribunalCode}:`, error.message);
         // Continua para próximo tribunal
       }
     }
@@ -85,8 +83,9 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           data: null,
-          message: `Nenhum processo encontrado na base oficial do CNJ DataJud.`,
-          tribunais_consultados: tribunaisParaBuscar
+          message: `Nenhum processo encontrado na base oficial do CNJ DataJud para "${termo}".`,
+          tribunais_consultados: tribunaisParaBuscar,
+          detalhes: 'Busca realizada nos principais tribunais brasileiros'
         }),
         { 
           status: 200,
@@ -95,7 +94,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`✅ Total encontrado: ${resultados.length} processos`);
+    console.log(`✅ TOTAL ENCONTRADO: ${resultados.length} processos em ${tribunaisParaBuscar.length} tribunais`);
     return new Response(
       JSON.stringify({ 
         success: true, 
@@ -107,13 +106,13 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('❌ ERRO na consulta DataJud:', error);
+    console.error('❌ ERRO GERAL na consulta DataJud:', error);
     
     return new Response(
       JSON.stringify({ 
         success: false, 
         error: error.message,
-        debug: 'Erro na função de consulta DataJud'
+        debug: 'Erro na função de consulta DataJud CNJ'
       }),
       { 
         status: 500,
@@ -129,52 +128,98 @@ async function buscarNoTribunal(tipo: string, termo: string, indiceApi: string, 
   let query;
   
   if (tipo === 'numero') {
+    // Busca por número de processo
     const numeroLimpo = termo.replace(/[.\-]/g, '');
     query = {
       query: {
-        match: {
-          numeroProcesso: numeroLimpo
+        term: {
+          "numeroProcesso": numeroLimpo
         }
       },
       size: 5
     };
   } else if (tipo === 'documento') {
+    // Busca por CPF/CNPJ
     const documentoLimpo = termo.replace(/[.\-\/]/g, '');
     query = {
       query: {
-        query_string: {
-          query: `*${documentoLimpo}*`,
-          fields: ["*"]
+        multi_match: {
+          query: documentoLimpo,
+          fields: [
+            "partes.pessoa.cpfCnpj",
+            "partes.advogados.cpf"
+          ],
+          type: "phrase"
         }
       },
-      size: 10
+      size: 20
     };
   } else if (tipo === 'nome') {
-    // Query mais simples para nome
+    // Busca por nome - usando a estratégia mais próxima do site oficial da CNJ
+    const termosNome = termo.trim().split(' ').filter(t => t.length > 2);
+    
     query = {
       query: {
         bool: {
           should: [
+            // Busca exata por frase
             {
-              query_string: {
-                query: `"${termo}"`,
-                fields: ["*"]
+              multi_match: {
+                query: termo,
+                fields: [
+                  "partes.pessoa.nome^3",
+                  "partes.advogados.nome^2",
+                  "movimentos.nome",
+                  "assuntos.nome"
+                ],
+                type: "phrase",
+                boost: 3
               }
             },
+            // Busca por palavras individuais (deve conter todas)
             {
-              match: {
-                "_all": termo
+              bool: {
+                must: termosNome.map(palavra => ({
+                  multi_match: {
+                    query: palavra,
+                    fields: [
+                      "partes.pessoa.nome^2",
+                      "partes.advogados.nome^1.5"
+                    ],
+                    type: "best_fields",
+                    fuzziness: "AUTO"
+                  }
+                }))
+              }
+            },
+            // Busca menos restritiva (deve conter pelo menos metade das palavras)
+            {
+              bool: {
+                should: termosNome.map(palavra => ({
+                  multi_match: {
+                    query: palavra,
+                    fields: [
+                      "partes.pessoa.nome",
+                      "partes.advogados.nome"
+                    ],
+                    type: "best_fields"
+                  }
+                })),
+                minimum_should_match: Math.max(1, Math.floor(termosNome.length / 2))
               }
             }
           ]
         }
       },
-      size: 10
+      size: 20,
+      sort: [
+        "_score"
+      ]
     };
   }
 
   console.log(`📡 URL: ${url}`);
-  console.log(`📋 Query para ${tipo}:`, JSON.stringify(query, null, 2));
+  console.log(`📋 Query ${tipo} para "${termo}":`, JSON.stringify(query, null, 2));
 
   const response = await fetch(url, {
     method: 'POST',
@@ -190,29 +235,34 @@ async function buscarNoTribunal(tipo: string, termo: string, indiceApi: string, 
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error(`❌ Erro ${tribunalCode}: ${response.status} - ${errorText}`);
-    throw new Error(`HTTP ${response.status}: ${errorText.substring(0, 200)}`);
+    console.error(`❌ Erro HTTP ${tribunalCode}: ${response.status} - ${errorText.substring(0, 500)}`);
+    throw new Error(`HTTP ${response.status} em ${tribunalCode}: ${errorText.substring(0, 200)}`);
   }
 
   const data = await response.json();
-  console.log(`📦 Resposta ${tribunalCode}:`, JSON.stringify(data, null, 2));
+  console.log(`📦 Resposta ${tribunalCode} - Total hits: ${data.hits?.total?.value || 0}`);
   
   if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
     console.log(`✅ ${data.hits.hits.length} processo(s) encontrado(s) em ${tribunalCode}`);
     
-    if (data.hits.hits.length > 1) {
-      return data.hits.hits.map((hit: any) => formatarProcesso(hit._source, tribunalCode));
-    } else {
-      return formatarProcesso(data.hits.hits[0]._source, tribunalCode);
-    }
+    // Log dos primeiros resultados para debug
+    data.hits.hits.slice(0, 2).forEach((hit: any, index: number) => {
+      console.log(`🔍 Resultado ${index + 1} em ${tribunalCode}:`, {
+        numeroProcesso: hit._source?.numeroProcesso,
+        score: hit._score,
+        primeiraParteNome: hit._source?.partes?.[0]?.pessoa?.nome || 'N/A'
+      });
+    });
+    
+    return data.hits.hits.map((hit: any) => formatarProcesso(hit._source, tribunalCode, hit._score));
   }
   
   console.log(`⚠️ Nenhum processo encontrado em ${tribunalCode}`);
   return null;
 }
 
-function formatarProcesso(processo: any, tribunal: string) {
-  console.log('🔧 Formatando processo:', JSON.stringify(processo, null, 2));
+function formatarProcesso(processo: any, tribunal: string, score?: number) {
+  console.log(`🔧 Formatando processo ${processo.numeroProcesso} do ${tribunal} (score: ${score})`);
   
   return {
     numero_processo: processo.numeroProcesso || 'Não informado',
@@ -226,13 +276,47 @@ function formatarProcesso(processo: any, tribunal: string) {
     data_ultima_movimentacao: extrairUltimaMovimentacao(processo.movimentos),
     status: determinarStatus(processo.movimentos),
     valor_causa: processo.valorCausa || 0,
-    partes: [],
-    advogados: [],
+    partes: extrairPartes(processo.partes),
+    advogados: extrairAdvogados(processo.partes),
     movimentacoes: formatarMovimentacoes(processo.movimentos),
     fonte_dados: 'CNJ DataJud API Oficial',
     nivel_sigilo: processo.nivelSigilo || 0,
-    grau: processo.grau || 'Não informado'
+    grau: processo.grau || 'Não informado',
+    relevancia_score: score
   };
+}
+
+function extrairPartes(partes: any[]): any[] {
+  if (!partes || !Array.isArray(partes)) {
+    return [];
+  }
+  
+  return partes.map((parte: any) => ({
+    nome: parte.pessoa?.nome || 'Nome não informado',
+    tipo: parte.polo || 'Não informado',
+    cpf_cnpj: parte.pessoa?.cpfCnpj || 'Não informado'
+  }));
+}
+
+function extrairAdvogados(partes: any[]): any[] {
+  if (!partes || !Array.isArray(partes)) {
+    return [];
+  }
+  
+  const advogados: any[] = [];
+  partes.forEach((parte: any) => {
+    if (parte.advogados && Array.isArray(parte.advogados)) {
+      parte.advogados.forEach((adv: any) => {
+        advogados.push({
+          nome: adv.nome || 'Nome não informado',
+          oab: adv.numeroOAB || 'Não informado',
+          cpf: adv.cpf || 'Não informado'
+        });
+      });
+    }
+  });
+  
+  return advogados;
 }
 
 function formatarMovimentacoes(movimentos: any[]): any[] {
