@@ -32,6 +32,7 @@ import RedefinirPinFinanceiroPage from './pages/RedefinirPinFinanceiroPage';
 import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
 import PublicacoesPage from './pages/PublicacoesPage';
 import DataJudPage from './pages/DataJudPage';
+import FerramentasPage from './pages/FerramentasPage';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -93,6 +94,7 @@ function App() {
                   <Route path="/agenda" element={<ProtectedRoute><ProtectedLayout><AgendaPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/prazos" element={<ProtectedRoute><ProtectedLayout><PrazosPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/tarefas" element={<ProtectedRoute><ProtectedLayout><TarefasPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/ferramentas" element={<ProtectedRoute><ProtectedLayout><FerramentasPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/publicacoes" element={<ProtectedRoute><ProtectedLayout><PublicacoesPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/datajud" element={<ProtectedRoute><ProtectedLayout><DataJudPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/financeiro" element={<ProtectedRoute><ProtectedLayout><FinanceiroPage /></ProtectedLayout></ProtectedRoute>} />

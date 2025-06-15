@@ -1,7 +1,6 @@
 
 import React from 'react';
 import StatsCards from './StatsCards';
-import { PrazosCalculadoraWidget } from './PrazosCalculadoraWidget';
 import ProcessosContent from './ProcessosContent';
 import PrazosContent from './PrazosContent';
 import AgendaContent from './AgendaContent';
@@ -14,7 +13,6 @@ const VisaoGeralContent: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-6">
           <PrazosContent />
-          <PrazosCalculadoraWidget />
         </div>
         
         <div className="space-y-6">

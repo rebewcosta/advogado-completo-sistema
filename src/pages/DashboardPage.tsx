@@ -8,8 +8,7 @@ import VisaoGeralContent from '@/components/dashboard/VisaoGeralContent';
 import FinanceiroContent from '@/components/dashboard/FinanceiroContent';
 import ProcessosContent from '@/components/dashboard/ProcessosContent';
 import AgendaContent from '@/components/dashboard/AgendaContent';
-import FerramentasContent from '@/components/dashboard/FerramentasContent';
-import { Briefcase, Calendar as CalendarIcon, DollarSign as DollarSignIcon, BarChartHorizontalBig, Wrench } from 'lucide-react';
+import { Briefcase, Calendar as CalendarIcon, DollarSign as DollarSignIcon, BarChartHorizontalBig } from 'lucide-react';
 
 const DashboardPage = () => {
   const { user, signOut } = useAuth();
@@ -39,7 +38,7 @@ const DashboardPage = () => {
       />
 
       <Tabs defaultValue="visao-geral" className="mt-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 bg-gray-200 p-1.5 rounded-lg mb-6 h-auto">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 bg-gray-200 p-1.5 rounded-lg mb-6 h-auto">
           <TabsTrigger
             value="visao-geral"
             className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
@@ -64,12 +63,6 @@ const DashboardPage = () => {
           >
             <CalendarIcon className="h-4 w-4" /> Agenda
           </TabsTrigger>
-          <TabsTrigger
-            value="ferramentas"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
-          >
-            <Wrench className="h-4 w-4" /> Ferramentas
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="visao-geral">
@@ -86,10 +79,6 @@ const DashboardPage = () => {
 
         <TabsContent value="agenda">
           <AgendaContent />
-        </TabsContent>
-
-        <TabsContent value="ferramentas">
-          <FerramentasContent />
         </TabsContent>
       </Tabs>
     </div>
