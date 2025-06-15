@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,7 +10,6 @@ import { Loader2, User, Mail, Phone, Scale, Building, Lock } from 'lucide-react'
 import PlanInfoBox from './PlanInfoBox';
 
 const RegisterForm = () => {
-  const { signUp } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
@@ -80,29 +78,32 @@ const RegisterForm = () => {
     setIsLoading(true);
     
     try {
-      await signUp(
-        formData.email,
-        formData.senha,
-        {
-          nome: formData.nome,
-          telefone: formData.telefone,
-          oab: formData.oab,
-          empresa: formData.empresa || 'Meu Escritório de Advocacia',
-          plano: formData.plano
+      // Em vez de criar a conta diretamente, redirecionar para a página de pagamento
+      // com os dados do formulário
+      navigate('/pagamento', { 
+        state: { 
+          registrationData: {
+            nome: formData.nome,
+            email: formData.email,
+            senha: formData.senha,
+            telefone: formData.telefone,
+            oab: formData.oab,
+            empresa: formData.empresa || 'Meu Escritório de Advocacia',
+            plano: formData.plano
+          }
         }
-      );
-
-      toast({
-        title: "Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar a conta antes de fazer login.",
       });
 
-      navigate('/login');
-    } catch (error: any) {
-      console.error('Erro no cadastro:', error);
       toast({
-        title: "Erro no cadastro",
-        description: error.message || "Não foi possível criar a conta. Tente novamente.",
+        title: "Dados validados!",
+        description: "Redirecionando para o pagamento...",
+      });
+
+    } catch (error: any) {
+      console.error('Erro na validação:', error);
+      toast({
+        title: "Erro na validação",
+        description: "Houve um problema. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -275,15 +276,15 @@ const RegisterForm = () => {
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Criando conta...
+                      Processando...
                     </>
                   ) : (
-                    'Criar Conta'
+                    'Continuar para Pagamento'
                   )}
                 </Button>
                 
                 <p className="text-center text-sm text-gray-600 mt-4">
-                  Ao criar sua conta, você concorda com nossos{' '}
+                  Ao continuar, você concorda com nossos{' '}
                   <a href="/termos" className="text-blue-600 hover:text-blue-700 font-medium">
                     Termos de Uso
                   </a>{' '}
