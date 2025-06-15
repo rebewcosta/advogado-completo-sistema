@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -134,7 +135,8 @@ serve(async (req) => {
 
     const { tipo, termo, tribunal, useCache = true }: ConsultaRequest = await req.json();
     
-    console.log('Consulta DataJud Real - Parâmetros:', { tipo, termo, tribunal });
+    console.log('=== CONSULTA DATAJUD REAL ===');
+    console.log('Parâmetros:', { tipo, termo, tribunal });
 
     // Verificar cache primeiro para consultas por número
     if (tipo === 'numero' && useCache) {
@@ -146,7 +148,7 @@ serve(async (req) => {
         .single();
 
       if (cached) {
-        console.log('Dados encontrados no cache');
+        console.log('✅ Dados encontrados no cache');
         return new Response(
           JSON.stringify({ 
             success: true, 
@@ -162,19 +164,16 @@ serve(async (req) => {
     const dadosReais = await consultarApiDatajud(tipo, termo, tribunal);
 
     if (!dadosReais) {
-      console.log('Nenhum dado retornado da API DataJud');
-      // Se não encontrou dados reais, retornar dados simulados como fallback
-      const dadosSimulados = gerarDadosSimulados(termo, tribunal);
-      
+      console.log('❌ Nenhum dado encontrado na API DataJud');
       return new Response(
         JSON.stringify({ 
-          success: true, 
-          data: dadosSimulados,
-          fromCache: false,
-          isSimulated: true,
-          message: "Dados não encontrados na API real. Exibindo dados simulados para demonstração."
+          success: false, 
+          error: 'Processo não encontrado na base de dados do CNJ'
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { 
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
       );
     }
 
@@ -215,34 +214,26 @@ serve(async (req) => {
       }
     }
 
+    console.log('✅ Dados reais encontrados e processados');
     return new Response(
       JSON.stringify({ 
         success: true, 
         data: dadosReais,
-        fromCache: false,
-        isSimulated: false
+        fromCache: false
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Erro na consulta DataJud:', error);
-    
-    // Em caso de erro, retornar dados simulados como fallback
-    const { tipo, termo, tribunal }: ConsultaRequest = await req.json();
-    const dadosSimulados = gerarDadosSimulados(termo, tribunal);
+    console.error('❌ ERRO na consulta DataJud:', error);
     
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        data: dadosSimulados,
-        fromCache: false,
-        isSimulated: true,
-        message: "Erro ao acessar API real. Exibindo dados simulados para demonstração.",
-        error: error.message
+        success: false, 
+        error: 'Erro interno do servidor ao consultar a API do CNJ'
       }),
       { 
-        status: 200,
+        status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
@@ -251,7 +242,7 @@ serve(async (req) => {
 
 async function consultarApiDatajud(tipo: string, termo: string, tribunal?: string) {
   try {
-    console.log('Iniciando consulta real à API DataJud:', { tipo, termo, tribunal });
+    console.log('🔍 Iniciando consulta à API DataJud:', { tipo, termo, tribunal });
     
     if (tipo === 'numero') {
       return await consultarPorNumero(termo, tribunal);
@@ -263,8 +254,8 @@ async function consultarApiDatajud(tipo: string, termo: string, tribunal?: strin
     
     throw new Error('Tipo de consulta não suportado');
   } catch (error) {
-    console.error('Erro ao consultar API DataJud:', error);
-    return null; // Retorna null para indicar que não conseguiu obter dados reais
+    console.error('❌ Erro ao consultar API DataJud:', error);
+    return null;
   }
 }
 
@@ -273,7 +264,7 @@ async function consultarPorNumero(numeroProcesso: string, tribunal?: string) {
   const indiceApi = TRIBUNAL_INDICES[tribunalCode as keyof typeof TRIBUNAL_INDICES];
   
   if (!indiceApi) {
-    console.error(`Tribunal ${tribunalCode} não encontrado no mapeamento`);
+    console.error(`❌ Tribunal ${tribunalCode} não encontrado no mapeamento`);
     return null;
   }
 
@@ -281,57 +272,78 @@ async function consultarPorNumero(numeroProcesso: string, tribunal?: string) {
   
   const query = {
     query: {
-      match: {
-        numeroProcesso: numeroProcesso
+      bool: {
+        should: [
+          {
+            term: {
+              "numeroProcesso.keyword": numeroProcesso
+            }
+          },
+          {
+            term: {
+              "numeroProcesso": numeroProcesso
+            }
+          },
+          {
+            match: {
+              "numeroProcesso": numeroProcesso
+            }
+          }
+        ]
       }
     },
     size: 1
   };
 
-  console.log('Consultando URL:', url);
-  console.log('Query:', JSON.stringify(query, null, 2));
+  console.log('📡 Consultando URL:', url);
+  console.log('📋 Query Elasticsearch:', JSON.stringify(query, null, 2));
 
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json'
       },
       body: JSON.stringify(query)
     });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    console.log('📊 Response status:', response.status);
+    console.log('📊 Response headers:', Object.fromEntries(response.headers.entries()));
 
     if (!response.ok) {
-      console.error(`Erro na API DataJud: ${response.status} - ${response.statusText}`);
+      const errorText = await response.text();
+      console.error(`❌ Erro na API DataJud: ${response.status} - ${response.statusText}`);
+      console.error('❌ Error body:', errorText);
       return null;
     }
 
     const data = await response.json();
-    console.log('Resposta da API DataJud:', JSON.stringify(data, null, 2));
+    console.log('📦 Resposta completa da API:', JSON.stringify(data, null, 2));
     
     if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
       const processo = data.hits.hits[0]._source;
-      console.log('Processo encontrado:', JSON.stringify(processo, null, 2));
+      console.log('✅ Processo encontrado na API:', JSON.stringify(processo, null, 2));
       return formatarProcessoDatajud(processo);
     }
     
-    console.log('Nenhum processo encontrado na resposta da API');
+    console.log('⚠️ Nenhum processo encontrado na resposta da API para o número:', numeroProcesso);
     return null;
   } catch (error) {
-    console.error('Erro na requisição à API DataJud:', error);
+    console.error('❌ Erro na requisição à API DataJud:', error);
     return null;
   }
 }
 
 async function consultarPorNome(nome: string, tribunal?: string) {
-  const tribunais = tribunal ? [tribunal] : Object.keys(TRIBUNAL_INDICES);
+  const tribunais = tribunal ? [tribunal] : ['TJSP', 'TJRJ', 'TJMG']; // Limitado a 3 principais
   const resultados = [];
 
-  for (const trib of tribunais.slice(0, 3)) { // Limitar a 3 tribunais para evitar timeout
+  for (const trib of tribunais) {
     try {
       const indiceApi = TRIBUNAL_INDICES[trib as keyof typeof TRIBUNAL_INDICES];
+      if (!indiceApi) continue;
+      
       const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
       
       const query = {
@@ -339,11 +351,44 @@ async function consultarPorNome(nome: string, tribunal?: string) {
           bool: {
             should: [
               {
-                multi_match: {
-                  query: nome,
-                  fields: ["dadosBasicos.polo.polo.pessoa.nome^2", "dadosBasicos.polo.polo.advogado.nome"],
-                  type: "best_fields",
-                  fuzziness: "AUTO"
+                nested: {
+                  path: "dadosBasicos.polo",
+                  query: {
+                    nested: {
+                      path: "dadosBasicos.polo.polo",
+                      query: {
+                        match: {
+                          "dadosBasicos.polo.polo.pessoa.nome": {
+                            query: nome,
+                            fuzziness: "AUTO"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                nested: {
+                  path: "dadosBasicos.polo",
+                  query: {
+                    nested: {
+                      path: "dadosBasicos.polo.polo",
+                      query: {
+                        nested: {
+                          path: "dadosBasicos.polo.polo.advogado",
+                          query: {
+                            match: {
+                              "dadosBasicos.polo.polo.advogado.nome": {
+                                query: nome,
+                                fuzziness: "AUTO"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
                 }
               }
             ]
@@ -352,7 +397,7 @@ async function consultarPorNome(nome: string, tribunal?: string) {
         size: 10
       };
 
-      console.log(`Consultando tribunal ${trib}:`, url);
+      console.log(`🔍 Consultando tribunal ${trib} por nome:`, url);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -364,7 +409,7 @@ async function consultarPorNome(nome: string, tribunal?: string) {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`Resposta do tribunal ${trib}:`, data.hits?.total?.value || 0, 'resultados');
+        console.log(`📊 Tribunal ${trib}:`, data.hits?.total?.value || 0, 'resultados');
         
         if (data.hits && data.hits.hits) {
           data.hits.hits.forEach((hit: any) => {
@@ -372,10 +417,10 @@ async function consultarPorNome(nome: string, tribunal?: string) {
           });
         }
       } else {
-        console.error(`Erro no tribunal ${trib}: ${response.status}`);
+        console.error(`❌ Erro no tribunal ${trib}: ${response.status}`);
       }
     } catch (error) {
-      console.error(`Erro ao consultar tribunal ${trib}:`, error);
+      console.error(`❌ Erro ao consultar tribunal ${trib}:`, error);
     }
   }
 
@@ -383,20 +428,41 @@ async function consultarPorNome(nome: string, tribunal?: string) {
 }
 
 async function consultarPorDocumento(documento: string, tribunal?: string) {
-  const tribunais = tribunal ? [tribunal] : Object.keys(TRIBUNAL_INDICES);
+  const tribunais = tribunal ? [tribunal] : ['TJSP', 'TJRJ', 'TJMG']; // Limitado a 3 principais
   const resultados = [];
+  const docLimpo = documento.replace(/\D/g, ''); // Remove formatação
 
-  for (const trib of tribunais.slice(0, 3)) { // Limitar a 3 tribunais
+  for (const trib of tribunais) {
     try {
       const indiceApi = TRIBUNAL_INDICES[trib as keyof typeof TRIBUNAL_INDICES];
+      if (!indiceApi) continue;
+      
       const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
       
       const query = {
         query: {
-          multi_match: {
-            query: documento.replace(/\D/g, ''), // Remove formatação
-            fields: ["dadosBasicos.polo.polo.pessoa.documento.numero"],
-            type: "phrase"
+          nested: {
+            path: "dadosBasicos.polo",
+            query: {
+              nested: {
+                path: "dadosBasicos.polo.polo",
+                query: {
+                  nested: {
+                    path: "dadosBasicos.polo.polo.pessoa",
+                    query: {
+                      nested: {
+                        path: "dadosBasicos.polo.polo.pessoa.documento",
+                        query: {
+                          term: {
+                            "dadosBasicos.polo.polo.pessoa.documento.numero.keyword": docLimpo
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         size: 10
@@ -419,7 +485,7 @@ async function consultarPorDocumento(documento: string, tribunal?: string) {
         }
       }
     } catch (error) {
-      console.error(`Erro ao consultar tribunal ${trib}:`, error);
+      console.error(`❌ Erro ao consultar tribunal ${trib}:`, error);
     }
   }
 
@@ -427,6 +493,8 @@ async function consultarPorDocumento(documento: string, tribunal?: string) {
 }
 
 function formatarProcessoDatajud(processo: any) {
+  console.log('🔧 Formatando processo DataJud:', JSON.stringify(processo, null, 2));
+  
   const dadosBasicos = processo.dadosBasicos || {};
   const movimentacao = processo.movimentacao || [];
   
@@ -439,8 +507,8 @@ function formatarProcessoDatajud(processo: any) {
           if (parte.pessoa) {
             partes.push({
               nome: parte.pessoa.nome || 'Nome não informado',
-              tipo: polo.codigoTipoPolo === '1' ? 'Autor' : 'Réu',
-              documento: parte.pessoa.documento?.numero || 'Não informado'
+              tipo: determinarTipoParte(polo.codigoTipoPolo),
+              documento: extrairDocumento(parte.pessoa.documento)
             });
           }
         });
@@ -459,7 +527,7 @@ function formatarProcessoDatajud(processo: any) {
               advogados.push({
                 nome: adv.nome || 'Nome não informado',
                 oab: adv.numeroOAB || 'Não informado',
-                parte: polo.codigoTipoPolo === '1' ? 'Autor' : 'Réu'
+                parte: determinarTipoParte(polo.codigoTipoPolo)
               });
             });
           }
@@ -473,7 +541,7 @@ function formatarProcessoDatajud(processo: any) {
   if (Array.isArray(movimentacao)) {
     movimentacao.forEach((mov: any) => {
       movimentacoes.push({
-        data: mov.dataHora ? new Date(mov.dataHora).toISOString().split('T')[0] : 'Não informado',
+        data: formatarData(mov.dataHora),
         descricao: mov.nome || 'Movimentação não especificada',
         observacao: mov.complemento || ''
       });
@@ -485,29 +553,32 @@ function formatarProcessoDatajud(processo: any) {
   const hoje = new Date();
   const diasTramitando = Math.floor((hoje.getTime() - dataAjuizamento.getTime()) / (1000 * 60 * 60 * 24));
 
-  return {
+  const processoFormatado = {
     numero_processo: processo.numeroProcesso || 'Não informado',
     classe: dadosBasicos.classeProcessual || 'Não informado',
-    assunto: dadosBasicos.assunto?.[0]?.nome || 'Não informado',
+    assunto: extrairAssunto(dadosBasicos.assunto),
     tribunal: extrairTribunalDoNumero(processo.numeroProcesso || ''),
     orgao_julgador: dadosBasicos.orgaoJulgador?.nome || 'Não informado',
     comarca: dadosBasicos.orgaoJulgador?.municipio || 'Não informado',
-    data_ajuizamento: dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento).toISOString().split('T')[0] : 'Não informado',
+    data_ajuizamento: formatarData(dadosBasicos.dataAjuizamento),
     data_ultima_movimentacao: movimentacoes.length > 0 ? movimentacoes[movimentacoes.length - 1].data : 'Não informado',
     status: dadosBasicos.situacaoProcessual || 'Em andamento',
     valor_causa: dadosBasicos.valorCausa || 0,
     partes: partes,
     advogados: advogados,
-    movimentacoes: movimentacoes.slice(-10), // Últimas 10 movimentações
+    movimentacoes: movimentacoes.slice(-20), // Últimas 20 movimentações
     jurimetria: {
       tempo_total_dias: diasTramitando,
       total_movimentacoes: movimentacoes.length,
       tempo_medio_entre_movimentacoes: movimentacoes.length > 1 ? Math.floor(diasTramitando / movimentacoes.length) : 0,
       fase_atual: determinarFaseAtual(movimentacoes),
-      tempo_na_fase_atual: Math.floor(Math.random() * 60) + 15,
-      previsao_sentenca: new Date(hoje.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      tempo_na_fase_atual: calcularTempoFaseAtual(movimentacoes),
+      previsao_sentenca: calcularPrevisaoSentenca(diasTramitando)
     }
   };
+
+  console.log('✅ Processo formatado:', JSON.stringify(processoFormatado, null, 2));
+  return processoFormatado;
 }
 
 function formatarProcessoResumo(processo: any, tribunal: string) {
@@ -517,46 +588,84 @@ function formatarProcessoResumo(processo: any, tribunal: string) {
     numero_processo: processo.numeroProcesso || 'Não informado',
     classe: dadosBasicos.classeProcessual || 'Não informado',
     tribunal: tribunal,
-    data_ajuizamento: dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento).toISOString().split('T')[0] : 'Não informado',
+    data_ajuizamento: formatarData(dadosBasicos.dataAjuizamento),
     status: dadosBasicos.situacaoProcessual || 'Em andamento'
   };
 }
 
 function extrairTribunalDoNumero(numeroProcesso: string): string {
-  // Extrai o código do tribunal do NPU (posições 14-15)
-  if (numeroProcesso && numeroProcesso.length >= 20) {
-    const codigoTribunal = numeroProcesso.substring(13, 15);
-    
-    const mapeamento: { [key: string]: string } = {
-      // Justiça Estadual
-      '26': 'TJSP', '19': 'TJRJ', '13': 'TJMG', '21': 'TJRS',
-      '16': 'TJPR', '24': 'TJSC', '09': 'TJGO', '07': 'TJDF',
-      '17': 'TJPE', '05': 'TJBA', '06': 'TJCE', '11': 'TJMT',
-      '12': 'TJMS', '15': 'TJPB', '02': 'TJAL', '25': 'TJSE',
-      '20': 'TJRN', '18': 'TJPI', '10': 'TJMA', '03': 'TJAP',
-      '01': 'TJAC', '04': 'TJAM', '23': 'TJRO', '22': 'TJRR',
-      '27': 'TJTO', '14': 'TJES', '08': 'TJPA',
-      
-      // Justiça Federal
-      '31': 'TRF1', '32': 'TRF2', '33': 'TRF3', '34': 'TRF4',
-      '35': 'TRF5', '36': 'TRF6',
-      
-      // Justiça do Trabalho
-      '41': 'TRT1', '42': 'TRT2', '43': 'TRT3', '44': 'TRT4',
-      '45': 'TRT5', '46': 'TRT6', '47': 'TRT7', '48': 'TRT8',
-      '49': 'TRT9', '50': 'TRT10', '51': 'TRT11', '52': 'TRT12',
-      '53': 'TRT13', '54': 'TRT14', '55': 'TRT15', '56': 'TRT16',
-      '57': 'TRT17', '58': 'TRT18', '59': 'TRT19', '60': 'TRT20',
-      '61': 'TRT21', '62': 'TRT22', '63': 'TRT23', '64': 'TRT24',
-      
-      // Tribunais Superiores
-      '90': 'STF', '91': 'STJ', '92': 'TST', '93': 'TSE', '94': 'STM'
-    };
-    
-    return mapeamento[codigoTribunal] || 'TJSP';
+  if (!numeroProcesso || numeroProcesso.length < 20) {
+    return 'TJSP'; // Default
   }
   
-  return 'TJSP';
+  const codigoTribunal = numeroProcesso.substring(13, 15);
+  
+  const mapeamento: { [key: string]: string } = {
+    // Justiça Estadual
+    '26': 'TJSP', '19': 'TJRJ', '13': 'TJMG', '21': 'TJRS',
+    '16': 'TJPR', '24': 'TJSC', '09': 'TJGO', '07': 'TJDF',
+    '17': 'TJPE', '05': 'TJBA', '06': 'TJCE', '11': 'TJMT',
+    '12': 'TJMS', '15': 'TJPB', '02': 'TJAL', '25': 'TJSE',
+    '20': 'TJRN', '18': 'TJPI', '10': 'TJMA', '03': 'TJAP',
+    '01': 'TJAC', '04': 'TJAM', '23': 'TJRO', '22': 'TJRR',
+    '27': 'TJTO', '14': 'TJES', '08': 'TJPA',
+    
+    // Justiça Federal
+    '31': 'TRF1', '32': 'TRF2', '33': 'TRF3', '34': 'TRF4',
+    '35': 'TRF5', '36': 'TRF6',
+    
+    // Justiça do Trabalho
+    '41': 'TRT1', '42': 'TRT2', '43': 'TRT3', '44': 'TRT4',
+    '45': 'TRT5', '46': 'TRT6', '47': 'TRT7', '48': 'TRT8',
+    '49': 'TRT9', '50': 'TRT10', '51': 'TRT11', '52': 'TRT12',
+    '53': 'TRT13', '54': 'TRT14', '55': 'TRT15', '56': 'TRT16',
+    '57': 'TRT17', '58': 'TRT18', '59': 'TRT19', '60': 'TRT20',
+    '61': 'TRT21', '62': 'TRT22', '63': 'TRT23', '64': 'TRT24',
+    
+    // Tribunais Superiores
+    '90': 'STF', '91': 'STJ', '92': 'TST', '93': 'TSE', '94': 'STM'
+  };
+  
+  return mapeamento[codigoTribunal] || 'TJSP';
+}
+
+function determinarTipoParte(codigoTipoPolo: string): string {
+  const codigo = String(codigoTipoPolo);
+  
+  if (codigo === '1' || codigo === '01') return 'Autor';
+  if (codigo === '2' || codigo === '02') return 'Réu';
+  if (codigo === '3' || codigo === '03') return 'Terceiro';
+  
+  return 'Parte';
+}
+
+function extrairDocumento(documento: any): string {
+  if (!documento) return 'Não informado';
+  if (typeof documento === 'string') return documento;
+  if (documento.numero) return documento.numero;
+  return 'Não informado';
+}
+
+function extrairAssunto(assunto: any): string {
+  if (!assunto) return 'Não informado';
+  if (Array.isArray(assunto) && assunto.length > 0) {
+    return assunto[0].nome || assunto[0].descricao || 'Não informado';
+  }
+  if (typeof assunto === 'string') return assunto;
+  if (assunto.nome) return assunto.nome;
+  return 'Não informado';
+}
+
+function formatarData(data: any): string {
+  if (!data) return 'Não informado';
+  
+  try {
+    const date = new Date(data);
+    if (isNaN(date.getTime())) return 'Não informado';
+    return date.toISOString().split('T')[0];
+  } catch {
+    return 'Não informado';
+  }
 }
 
 function determinarFaseAtual(movimentacoes: any[]): string {
@@ -565,73 +674,42 @@ function determinarFaseAtual(movimentacoes: any[]): string {
   const ultimaMovimentacao = movimentacoes[movimentacoes.length - 1];
   const descricao = ultimaMovimentacao.descricao.toLowerCase();
   
-  if (descricao.includes('audiência')) {
+  if (descricao.includes('audiência') || descricao.includes('audiencia')) {
     return 'Instrução';
-  } else if (descricao.includes('contestação')) {
+  } else if (descricao.includes('contestação') || descricao.includes('contestacao')) {
     return 'Conhecimento';
   } else if (descricao.includes('conclusão') || descricao.includes('concluso')) {
     return 'Concluso para Sentença';
-  } else if (descricao.includes('alegações')) {
+  } else if (descricao.includes('alegações') || descricao.includes('alegacoes')) {
     return 'Alegações Finais';
-  } else if (descricao.includes('sentença')) {
+  } else if (descricao.includes('sentença') || descricao.includes('sentenca')) {
     return 'Sentenciado';
   } else {
     return 'Conhecimento';
   }
 }
 
-function gerarDadosSimulados(numeroProcesso: string, tribunal?: string) {
-  const tribunalCode = tribunal || extrairTribunalDoNumero(numeroProcesso);
+function calcularTempoFaseAtual(movimentacoes: any[]): number {
+  if (movimentacoes.length === 0) return 0;
   
-  return {
-    numero_processo: numeroProcesso,
-    classe: "Procedimento Comum Cível",
-    assunto: "Responsabilidade Civil",
-    tribunal: tribunalCode,
-    orgao_julgador: "1ª Vara Cível",
-    comarca: "São Paulo",
-    data_ajuizamento: "2024-01-15",
-    data_ultima_movimentacao: "2024-06-10",
-    status: "Em andamento",
-    valor_causa: 50000,
-    partes: [
-      {
-        nome: "DADOS SIMULADOS - Nome Fictício",
-        tipo: "Autor",
-        documento: "000.000.000-00"
-      },
-      {
-        nome: "DADOS SIMULADOS - Empresa Fictícia",
-        tipo: "Réu",
-        documento: "00.000.000/0001-00"
-      }
-    ],
-    advogados: [
-      {
-        nome: "DADOS SIMULADOS - Dr. Advogado Fictício",
-        oab: "SP 000000",
-        parte: "Autor"
-      }
-    ],
-    movimentacoes: [
-      {
-        data: "2024-01-15",
-        descricao: "DADOS SIMULADOS - Distribuição",
-        observacao: "Processo distribuído automaticamente - DADOS FICTÍCIOS"
-      },
-      {
-        data: "2024-06-10",
-        descricao: "DADOS SIMULADOS - Última movimentação",
-        observacao: "Movimentação fictícia para demonstração"
-      }
-    ],
-    jurimetria: {
-      tempo_total_dias: 147,
-      total_movimentacoes: 2,
-      tempo_medio_entre_movimentacoes: 73,
-      fase_atual: "Conhecimento",
-      tempo_na_fase_atual: 35,
-      previsao_sentenca: "2024-12-15"
-    }
-  };
+  try {
+    const ultimaData = new Date(movimentacoes[movimentacoes.length - 1].data);
+    const hoje = new Date();
+    const diff = Math.floor((hoje.getTime() - ultimaData.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, diff);
+  } catch {
+    return 0;
+  }
+}
+
+function calcularPrevisaoSentenca(diasTramitando: number): string {
+  try {
+    // Estimativa baseada no tempo já tramitado
+    const diasAdicionais = diasTramitando < 180 ? 90 : 60;
+    const previsao = new Date();
+    previsao.setDate(previsao.getDate() + diasAdicionais);
+    return previsao.toISOString().split('T')[0];
+  } catch {
+    return 'Não informado';
+  }
 }

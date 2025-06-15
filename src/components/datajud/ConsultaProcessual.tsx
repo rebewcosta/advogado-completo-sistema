@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Search, Clock, Star, StarOff, FileDown } from 'lucide-react';
+import { Search, Clock, Star, StarOff, FileDown, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,8 +14,6 @@ const ConsultaProcessual: React.FC = () => {
   const [numeroProcesso, setNumeroProcesso] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
-  const [isSimulated, setIsSimulated] = useState(false);
-  const [simulatedMessage, setSimulatedMessage] = useState('');
   const [isFavorito, setIsFavorito] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -31,6 +29,8 @@ const ConsultaProcessual: React.FC = () => {
     }
 
     setIsLoading(true);
+    setResultado(null);
+    
     try {
       const { data, error } = await supabase.functions.invoke('consultar-datajud', {
         body: {
@@ -43,8 +43,6 @@ const ConsultaProcessual: React.FC = () => {
 
       if (data.success) {
         setResultado(data.data);
-        setIsSimulated(data.isSimulated || false);
-        setSimulatedMessage(data.message || '');
         
         // Verificar se já é favorito
         if (user) {
@@ -58,28 +56,32 @@ const ConsultaProcessual: React.FC = () => {
           setIsFavorito(!!favorito);
         }
 
-        if (data.isSimulated) {
-          toast({
-            title: "Dados simulados",
-            description: "Não foi possível obter dados reais. Exibindo dados simulados.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Consulta realizada",
-            description: data.fromCache ? "Dados obtidos do cache" : "Dados atualizados da API CNJ"
-          });
-        }
+        toast({
+          title: "Consulta realizada com sucesso",
+          description: data.fromCache ? "Dados obtidos do cache" : "Dados atualizados da API CNJ"
+        });
       } else {
-        throw new Error(data.error || 'Erro na consulta');
+        throw new Error(data.error || 'Processo não encontrado');
       }
     } catch (error) {
       console.error('Erro na consulta:', error);
-      toast({
-        title: "Erro na consulta",
-        description: "Não foi possível consultar o processo",
-        variant: "destructive"
-      });
+      
+      // Verificar se é um erro 404 (processo não encontrado)
+      if (error.message?.includes('não encontrado') || error.message?.includes('404')) {
+        toast({
+          title: "Processo não encontrado",
+          description: "O número do processo não foi encontrado na base de dados do CNJ. Verifique se o número está correto.",
+          variant: "destructive"
+        });
+      } else {
+        toast({
+          title: "Erro na consulta",
+          description: "Não foi possível consultar a API do CNJ. Tente novamente em alguns minutos.",
+          variant: "destructive"
+        });
+      }
+      
+      setResultado(null);
     } finally {
       setIsLoading(false);
     }
@@ -148,7 +150,7 @@ const ConsultaProcessual: React.FC = () => {
             Consulta por Número Processual
           </CardTitle>
           <CardDescription>
-            Digite o NPU (Número Processual Unificado) para consultar dados do processo
+            Digite o NPU (Número Processual Unificado) para consultar dados oficiais do CNJ
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -163,6 +165,13 @@ const ConsultaProcessual: React.FC = () => {
             />
           </div>
 
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+            <AlertCircle className="h-4 w-4 text-blue-600" />
+            <p className="text-sm text-blue-800">
+              <strong>Sistema conectado à API oficial do CNJ DataJud.</strong> Apenas dados reais serão exibidos.
+            </p>
+          </div>
+
           <Button 
             onClick={handleConsulta} 
             disabled={!numeroProcesso.trim() || isLoading}
@@ -171,12 +180,12 @@ const ConsultaProcessual: React.FC = () => {
             {isLoading ? (
               <>
                 <Clock className="mr-2 h-4 w-4 animate-spin" />
-                Consultando...
+                Consultando API CNJ...
               </>
             ) : (
               <>
                 <Search className="mr-2 h-4 w-4" />
-                Consultar Processo
+                Consultar na Base CNJ
               </>
             )}
           </Button>
@@ -188,7 +197,7 @@ const ConsultaProcessual: React.FC = () => {
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle>Resultado da Consulta</CardTitle>
+                <CardTitle>Dados Oficiais do CNJ</CardTitle>
                 <CardDescription>Processo: {resultado.numero_processo}</CardDescription>
               </div>
               <div className="flex gap-2">
@@ -222,11 +231,7 @@ const ConsultaProcessual: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <ProcessoDetalhes 
-              processo={resultado} 
-              isSimulated={isSimulated}
-              message={simulatedMessage}
-            />
+            <ProcessoDetalhes processo={resultado} />
           </CardContent>
         </Card>
       )}

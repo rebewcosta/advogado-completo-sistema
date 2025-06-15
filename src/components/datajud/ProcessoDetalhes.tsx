@@ -1,28 +1,24 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Calendar, MapPin, DollarSign, Users, Scale, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Calendar, MapPin, DollarSign, Users, Scale, TrendingUp, CheckCircle } from 'lucide-react';
 
 interface ProcessoDetalhesProps {
   processo: any;
-  isSimulated?: boolean;
-  message?: string;
 }
 
-const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo, isSimulated, message }) => {
+const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo }) => {
   return (
     <div className="space-y-6">
-      {/* Aviso de dados simulados */}
-      {isSimulated && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>ATENÇÃO:</strong> {message || "Estes são dados simulados para demonstração. Os dados reais não foram encontrados na API do CNJ."}
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Badge de dados oficiais */}
+      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <CheckCircle className="h-4 w-4 text-green-600" />
+        <span className="text-sm font-medium text-green-800">
+          Dados Oficiais do CNJ DataJud
+        </span>
+      </div>
 
       {/* Informações Básicas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -46,7 +42,12 @@ const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo, isSimulat
           <Calendar className="h-4 w-4 text-purple-500" />
           <div>
             <p className="text-sm text-gray-500">Data Ajuizamento</p>
-            <p className="font-medium">{new Date(processo.data_ajuizamento).toLocaleDateString('pt-BR')}</p>
+            <p className="font-medium">
+              {processo.data_ajuizamento !== 'Não informado' ? 
+                new Date(processo.data_ajuizamento).toLocaleDateString('pt-BR') : 
+                'Não informado'
+              }
+            </p>
           </div>
         </div>
         
@@ -82,37 +83,43 @@ const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo, isSimulat
 
       <Separator />
 
-      {/* Partes do Processo */}
+      {/* Assunto */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">
-            Partes do Processo
-            {isSimulated && <span className="text-red-500 ml-2">(DADOS SIMULADOS)</span>}
-          </CardTitle>
+          <CardTitle className="text-lg">Assunto Principal</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {processo.partes?.map((parte: any, index: number) => (
-              <div key={index} className="border rounded-lg p-3">
-                <div className="flex justify-between items-start mb-2">
-                  <Badge variant="outline">{parte.tipo}</Badge>
-                </div>
-                <p className="font-medium">{parte.nome}</p>
-                <p className="text-sm text-gray-500">{parte.documento}</p>
-              </div>
-            ))}
-          </div>
+          <p className="text-base">{processo.assunto}</p>
         </CardContent>
       </Card>
+
+      {/* Partes do Processo */}
+      {processo.partes && processo.partes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Partes do Processo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {processo.partes.map((parte: any, index: number) => (
+                <div key={index} className="border rounded-lg p-3">
+                  <div className="flex justify-between items-start mb-2">
+                    <Badge variant="outline">{parte.tipo}</Badge>
+                  </div>
+                  <p className="font-medium">{parte.nome}</p>
+                  <p className="text-sm text-gray-500">{parte.documento}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Advogados */}
       {processo.advogados && processo.advogados.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">
-              Advogados
-              {isSimulated && <span className="text-red-500 ml-2">(DADOS SIMULADOS)</span>}
-            </CardTitle>
+            <CardTitle className="text-lg">Advogados</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,7 +143,7 @@ const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo, isSimulat
               <TrendingUp className="h-5 w-5" />
               Análise Jurimétrica
             </CardTitle>
-            <CardDescription>Insights automáticos baseados nos dados do processo</CardDescription>
+            <CardDescription>Insights automáticos baseados nos dados oficiais do processo</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -162,7 +169,11 @@ const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo, isSimulat
                 <strong>Fase Atual:</strong> {processo.jurimetria.fase_atual}
               </p>
               <p className="text-sm">
-                <strong>Previsão de Sentença:</strong> {new Date(processo.jurimetria.previsao_sentenca).toLocaleDateString('pt-BR')}
+                <strong>Previsão de Sentença:</strong> {
+                  processo.jurimetria.previsao_sentenca !== 'Não informado' ?
+                    new Date(processo.jurimetria.previsao_sentenca).toLocaleDateString('pt-BR') :
+                    'Não informado'
+                }
               </p>
             </div>
           </CardContent>
@@ -170,32 +181,48 @@ const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo, isSimulat
       )}
 
       {/* Timeline de Movimentações */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">
-            Linha do Tempo - Movimentações
-            {isSimulated && <span className="text-red-500 ml-2">(DADOS SIMULADOS)</span>}
-          </CardTitle>
-          <CardDescription>Histórico completo das movimentações processuais</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {processo.movimentacoes?.map((mov: any, index: number) => (
-              <div key={index} className="flex gap-4 border-l-2 border-blue-200 pl-4 pb-4">
-                <div className="flex-shrink-0 w-20 text-sm text-gray-500">
-                  {new Date(mov.data).toLocaleDateString('pt-BR')}
+      {processo.movimentacoes && processo.movimentacoes.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Linha do Tempo - Movimentações</CardTitle>
+            <CardDescription>Histórico oficial das movimentações processuais</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {processo.movimentacoes.map((mov: any, index: number) => (
+                <div key={index} className="flex gap-4 border-l-2 border-blue-200 pl-4 pb-4">
+                  <div className="flex-shrink-0 w-20 text-sm text-gray-500">
+                    {mov.data !== 'Não informado' ? 
+                      new Date(mov.data).toLocaleDateString('pt-BR') : 
+                      'Não informado'
+                    }
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">{mov.descricao}</p>
+                    {mov.observacao && (
+                      <p className="text-sm text-gray-600 mt-1">{mov.observacao}</p>
+                    )}
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="font-medium">{mov.descricao}</p>
-                  {mov.observacao && (
-                    <p className="text-sm text-gray-600 mt-1">{mov.observacao}</p>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Se não há movimentações */}
+      {(!processo.movimentacoes || processo.movimentacoes.length === 0) && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Movimentações</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-gray-500 text-center py-4">
+              Nenhuma movimentação encontrada para este processo
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };
