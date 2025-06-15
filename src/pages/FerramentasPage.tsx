@@ -22,14 +22,14 @@ const FerramentasPage: React.FC = () => {
         />
         
         <Tabs defaultValue="prazos" className="w-full">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="prazos">Prazos</TabsTrigger>
             <TabsTrigger value="cep">CEP</TabsTrigger>
             <TabsTrigger value="correcao">Correção</TabsTrigger>
             <TabsTrigger value="feriados">Feriados</TabsTrigger>
             <TabsTrigger value="validador">Validador CPF</TabsTrigger>
             <TabsTrigger value="peticoes">Petições</TabsTrigger>
-            <TabsTrigger value="qrcode">QR Code</TabsTrigger>
+            <TabsTrigger value="qrcode">Gerador QR Code</TabsTrigger>
           </TabsList>
           
           <TabsContent value="prazos" className="mt-6">
