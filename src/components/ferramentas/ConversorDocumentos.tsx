@@ -7,8 +7,26 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { FileType, Download, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { saveAs } from 'file-saver';
+
+// Importações condicionais para evitar erros de build
+let PDFDocument: any, rgb: any, StandardFonts: any;
+let saveAs: any;
+
+try {
+  const pdfLib = require('pdf-lib');
+  PDFDocument = pdfLib.PDFDocument;
+  rgb = pdfLib.rgb;
+  StandardFonts = pdfLib.StandardFonts;
+} catch (error) {
+  console.warn('PDF-lib não disponível:', error);
+}
+
+try {
+  const fileSaver = require('file-saver');
+  saveAs = fileSaver.saveAs;
+} catch (error) {
+  console.warn('File-saver não disponível:', error);
+}
 
 type ConversionType = 'txt-to-pdf' | 'html-to-pdf' | 'pdf-merge' | 'pdf-split';
 
@@ -33,7 +51,21 @@ export const ConversorDocumentos: React.FC = () => {
     }
   };
 
+  const checkLibrariesAvailable = () => {
+    if (!PDFDocument || !saveAs) {
+      toast({
+        title: "Bibliotecas não disponíveis",
+        description: "As bibliotecas necessárias para conversão não estão carregadas.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const createPDFFromText = async (text: string): Promise<Uint8Array> => {
+    if (!checkLibrariesAvailable()) throw new Error('Bibliotecas não disponíveis');
+    
     const pdfDoc = await PDFDocument.create();
     const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
     
@@ -72,6 +104,8 @@ export const ConversorDocumentos: React.FC = () => {
   };
 
   const createPDFFromHTML = async (htmlContent: string): Promise<Uint8Array> => {
+    if (!checkLibrariesAvailable()) throw new Error('Bibliotecas não disponíveis');
+    
     const pdfDoc = await PDFDocument.create();
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     
@@ -102,6 +136,8 @@ export const ConversorDocumentos: React.FC = () => {
   };
 
   const mergePDFs = async (files: File[]): Promise<Uint8Array> => {
+    if (!checkLibrariesAvailable()) throw new Error('Bibliotecas não disponíveis');
+    
     const mergedPdf = await PDFDocument.create();
     
     for (const file of files) {
@@ -115,6 +151,8 @@ export const ConversorDocumentos: React.FC = () => {
   };
 
   const splitPDF = async (file: File): Promise<Uint8Array[]> => {
+    if (!checkLibrariesAvailable()) throw new Error('Bibliotecas não disponíveis');
+    
     const fileBuffer = await file.arrayBuffer();
     const sourcePdf = await PDFDocument.load(fileBuffer);
     const pageCount = sourcePdf.getPageCount();
@@ -139,6 +177,10 @@ export const ConversorDocumentos: React.FC = () => {
         description: "Por favor, selecione um arquivo para converter.",
         variant: "destructive",
       });
+      return;
+    }
+
+    if (!checkLibrariesAvailable()) {
       return;
     }
 

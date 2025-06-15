@@ -8,7 +8,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { QrCode, Download, Copy, Link2, Mail, Phone, Wifi } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import QRCodeLib from 'qrcode';
+
+// Importação condicional para evitar erros de build
+let QRCodeLib: any;
+try {
+  QRCodeLib = require('qrcode');
+} catch (error) {
+  console.warn('QRCode library não disponível:', error);
+}
 
 type QRType = 'url' | 'text' | 'email' | 'phone' | 'wifi' | 'vcard';
 
@@ -81,6 +88,15 @@ END:VCARD`;
       toast({
         title: "Conteúdo obrigatório",
         description: "Por favor, preencha os campos necessários para gerar o QR Code.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!QRCodeLib) {
+      toast({
+        title: "Biblioteca não disponível",
+        description: "A biblioteca QR Code não está carregada.",
         variant: "destructive",
       });
       return;
