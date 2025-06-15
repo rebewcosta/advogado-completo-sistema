@@ -154,12 +154,12 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           data: null,
-          message: 'Nenhum processo encontrado na base oficial do CNJ DataJud para o número informado.',
+          message: `Nenhum processo encontrado na base oficial do CNJ DataJud para ${tipo === 'documento' ? 'o documento' : tipo === 'nome' ? 'o nome' : 'o número'} informado.`,
           consulta_realizada: true,
           fonte: 'CNJ DataJud API Oficial'
         }),
         { 
-          status: 200, // Mudança: retornar 200 em vez de 404
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
@@ -200,9 +200,9 @@ async function consultarApiDatajudOficial(tipo: string, termo: string, tribunal?
     if (tipo === 'numero') {
       return await consultarPorNumeroOficial(termo, tribunal);
     } else if (tipo === 'nome') {
-      throw new Error('Busca por nome ainda não implementada na API oficial CNJ');
+      return await consultarPorNomeOficial(termo, tribunal);
     } else if (tipo === 'documento') {
-      throw new Error('Busca por documento ainda não implementada na API oficial CNJ');
+      return await consultarPorDocumentoOficial(termo, tribunal);
     }
     
     throw new Error('Tipo de consulta não suportado pela API oficial do CNJ');
@@ -235,10 +235,164 @@ async function consultarPorNumeroOficial(numeroProcesso: string, tribunal?: stri
     size: 1
   };
 
+  return await executarConsultaElasticsearch(url, query, numeroProcesso);
+}
+
+async function consultarPorDocumentoOficial(documento: string, tribunal?: string) {
+  console.log('🔍 Implementando busca por CPF/CNPJ na API oficial CNJ DataJud');
+  
+  // Limpar documento (remover formatação)
+  const documentoLimpo = documento.replace(/[.\-\/]/g, '');
+  console.log('📄 Documento limpo:', documentoLimpo);
+  
+  // Se tribunal específico foi informado, buscar apenas nele
+  const tribunaisParaBuscar = tribunal ? [tribunal] : ['TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR']; // Principais tribunais
+  
+  const resultados: any[] = [];
+  
+  for (const tribunalCode of tribunaisParaBuscar) {
+    const indiceApi = TRIBUNAL_INDICES[tribunalCode as keyof typeof TRIBUNAL_INDICES];
+    
+    if (!indiceApi) {
+      console.log(`⚠️ Tribunal ${tribunalCode} não mapeado, pulando...`);
+      continue;
+    }
+
+    console.log(`🔍 Buscando documento ${documentoLimpo} no tribunal ${tribunalCode}...`);
+    
+    try {
+      const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
+      
+      // Query para buscar o documento em vários campos onde pode aparecer
+      const query = {
+        query: {
+          bool: {
+            should: [
+              // Busca por wildcard no conteúdo geral (pode estar em movimentos, partes, etc)
+              { wildcard: { "_source": `*${documentoLimpo}*` } },
+              // Busca em campos de texto que podem conter CPF/CNPJ
+              { match_phrase: { "movimentos.nome": documentoLimpo } },
+              { match_phrase: { "movimentos.complementosTabelados.nome": documentoLimpo } }
+            ],
+            minimum_should_match: 1
+          }
+        },
+        size: 10,
+        sort: [
+          {
+            "@timestamp": {
+              "order": "desc"
+            }
+          }
+        ]
+      };
+
+      const result = await executarConsultaElasticsearch(url, query, `documento ${documentoLimpo} em ${tribunalCode}`);
+      
+      if (result && Array.isArray(result)) {
+        resultados.push(...result);
+      } else if (result) {
+        resultados.push(result);
+      }
+      
+      // Se encontrou resultados, pode parar ou continuar dependendo da necessidade
+      if (resultados.length > 0 && tribunal) {
+        // Se tribunal específico foi informado e já encontrou, para
+        break;
+      }
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar no tribunal ${tribunalCode}:`, error);
+      // Continua para o próximo tribunal
+    }
+  }
+  
+  if (resultados.length === 0) {
+    console.log('⚠️ Nenhum processo encontrado para o documento informado');
+    return null;
+  }
+  
+  console.log(`✅ Encontrados ${resultados.length} processos para o documento ${documentoLimpo}`);
+  return resultados;
+}
+
+async function consultarPorNomeOficial(nome: string, tribunal?: string) {
+  console.log('🔍 Implementando busca por nome na API oficial CNJ DataJud');
+  
+  // Se tribunal específico foi informado, buscar apenas nele
+  const tribunaisParaBuscar = tribunal ? [tribunal] : ['TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR']; // Principais tribunais
+  
+  const resultados: any[] = [];
+  
+  for (const tribunalCode of tribunaisParaBuscar) {
+    const indiceApi = TRIBUNAL_INDICES[tribunalCode as keyof typeof TRIBUNAL_INDICES];
+    
+    if (!indiceApi) {
+      console.log(`⚠️ Tribunal ${tribunalCode} não mapeado, pulando...`);
+      continue;
+    }
+
+    console.log(`🔍 Buscando nome "${nome}" no tribunal ${tribunalCode}...`);
+    
+    try {
+      const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
+      
+      // Query para buscar o nome em campos relevantes
+      const query = {
+        query: {
+          bool: {
+            should: [
+              // Busca em movimentos que podem conter nomes
+              { match_phrase: { "movimentos.nome": nome } },
+              { match_phrase: { "movimentos.complementosTabelados.nome": nome } },
+              // Busca fuzzy para nomes similares
+              { fuzzy: { "movimentos.nome": { value: nome, fuzziness: "AUTO" } } }
+            ],
+            minimum_should_match: 1
+          }
+        },
+        size: 10,
+        sort: [
+          {
+            "@timestamp": {
+              "order": "desc"
+            }
+          }
+        ]
+      };
+
+      const result = await executarConsultaElasticsearch(url, query, `nome "${nome}" em ${tribunalCode}`);
+      
+      if (result && Array.isArray(result)) {
+        resultados.push(...result);
+      } else if (result) {
+        resultados.push(result);
+      }
+      
+      // Se encontrou resultados e tribunal específico foi informado, pode parar
+      if (resultados.length > 0 && tribunal) {
+        break;
+      }
+      
+    } catch (error) {
+      console.error(`❌ Erro ao buscar no tribunal ${tribunalCode}:`, error);
+      // Continua para o próximo tribunal
+    }
+  }
+  
+  if (resultados.length === 0) {
+    console.log('⚠️ Nenhum processo encontrado para o nome informado');
+    return null;
+  }
+  
+  console.log(`✅ Encontrados ${resultados.length} processos para o nome "${nome}"`);
+  return resultados;
+}
+
+async function executarConsultaElasticsearch(url: string, query: any, contexto: string) {
   console.log('📡 URL da API CNJ:', url);
   console.log('🔑 Usando API Key oficial do CNJ');
   console.log('📋 Query Elasticsearch:', JSON.stringify(query, null, 2));
-  console.log('🔢 Número do processo limpo:', numeroLimpo);
 
   const response = await fetch(url, {
     method: 'POST',
@@ -273,12 +427,18 @@ async function consultarPorNumeroOficial(numeroProcesso: string, tribunal?: stri
   console.log('📦 Resposta completa da API CNJ:', JSON.stringify(data, null, 2));
   
   if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
-    const processo = data.hits.hits[0]._source;
-    console.log('✅ PROCESSO ENCONTRADO na API oficial CNJ');
-    return formatarProcessoDatajudOficial(processo);
+    console.log(`✅ ${data.hits.hits.length} PROCESSO(S) ENCONTRADO(S) na API oficial CNJ para ${contexto}`);
+    
+    // Se múltiplos resultados, retornar array formatado
+    if (data.hits.hits.length > 1) {
+      return data.hits.hits.map((hit: any) => formatarProcessoDatajudOficial(hit._source));
+    } else {
+      // Se único resultado, retornar objeto único
+      return formatarProcessoDatajudOficial(data.hits.hits[0]._source);
+    }
   }
   
-  console.log('⚠️ Nenhum processo encontrado na base oficial CNJ para:', numeroProcesso);
+  console.log(`⚠️ Nenhum processo encontrado na base oficial CNJ para: ${contexto}`);
   return null;
 }
 
