@@ -1,4 +1,6 @@
 
+import { supabase } from '@/integrations/supabase/client';
+
 export const formatCPF = (value: string) => {
   const digitsOnly = value.replace(/\D/g, '');
   if (digitsOnly.length <= 11) {
@@ -57,59 +59,31 @@ export interface CPFData {
 }
 
 export const consultarCPFAPI = async (cpf: string, dataNascimento: string): Promise<CPFData> => {
-  const cpfLimpo = cpf.replace(/\D/g, '');
-  const dataLimpa = dataNascimento.replace(/\D/g, '');
-  
-  // Primeira validação local
-  const isValid = validarCPF(cpf);
-  if (!isValid) {
-    return {
-      valid: false,
-      formatted: cpf
-    };
-  }
-
   try {
-    // Tentativa de consulta na Receita Federal
-    const dataFormatada = `${dataLimpa.slice(0,2)}${dataLimpa.slice(2,4)}${dataLimpa.slice(4,8)}`;
-    
-    const response = await fetch(`https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: `txtCPF=${cpfLimpo}&txtDataNascimento=${dataFormatada}&txtCaptcha=&Submit=Consultar`
+    const { data, error } = await supabase.functions.invoke('consultar-cpf', {
+      body: {
+        cpf: cpf,
+        dataNascimento: dataNascimento
+      }
     });
 
-    if (response.ok) {
-      const htmlText = await response.text();
-      
-      // Parse simples do HTML de resposta da Receita Federal
-      const nomeMatch = htmlText.match(/Nome:\s*([^<]+)/i);
-      const situacaoMatch = htmlText.match(/Situação:\s*([^<]+)/i);
-      
-      return {
-        valid: true,
-        formatted: cpf,
-        nome: nomeMatch ? nomeMatch[1].trim() : 'Consulta realizada com sucesso',
-        situacao: situacaoMatch ? situacaoMatch[1].trim() : 'Regular',
-        nascimento: dataNascimento,
-        descricao_situacao: 'Dados consultados na Receita Federal'
-      };
-    } else {
-      throw new Error('Erro na consulta da Receita Federal');
+    if (error) {
+      console.error('Erro ao chamar função edge:', error);
+      throw new Error(error.message || 'Erro ao consultar CPF');
     }
-    
+
+    return data as CPFData;
   } catch (error) {
-    console.log('Erro na consulta da Receita Federal:', error);
+    console.error('Erro na consulta do CPF:', error);
     
-    // Fallback: validação local com informações básicas
+    // Fallback para validação local em caso de erro
+    const isValid = validarCPF(cpf);
     return {
       valid: isValid,
       formatted: cpf,
       nascimento: dataNascimento,
       situacao: isValid ? 'CPF válido (consulta offline)' : 'CPF inválido',
-      descricao_situacao: 'Validação realizada localmente - API da Receita Federal indisponível'
+      descricao_situacao: 'Erro na consulta - Validação realizada localmente'
     };
   }
 };
