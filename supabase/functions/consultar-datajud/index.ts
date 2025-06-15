@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// API Key oficial do CNJ DataJud (atualizada conforme documentação)
+// API Key oficial do CNJ DataJud
 const CNJ_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
 interface ConsultaRequest {
@@ -62,7 +62,7 @@ const TRIBUNAL_INDICES = {
   'TJSP': 'api_publica_tjsp',
   'TJTO': 'api_publica_tjto',
 
-  // Justiça do Trabalho
+  // Justiça do Trabalho  
   'TRT1': 'api_publica_trt1',
   'TRT2': 'api_publica_trt2',
   'TRT3': 'api_publica_trt3',
@@ -141,7 +141,6 @@ serve(async (req) => {
     console.log('Tipo:', tipo);
     console.log('Termo:', termo);
     console.log('Tribunal:', tribunal);
-    console.log('API Key sendo usada:', CNJ_API_KEY.substring(0, 10) + '...');
 
     // Verificar cache primeiro para consultas por número
     if (tipo === 'numero' && useCache) {
@@ -167,7 +166,7 @@ serve(async (req) => {
 
     console.log('🔍 Consultando API oficial do CNJ DataJud...');
 
-    // Consultar API oficial do DataJud CNJ
+    // Consultar SOMENTE a API oficial do DataJud CNJ
     const dadosReais = await consultarApiDatajudOficial(tipo, termo, tribunal);
 
     if (!dadosReais || (Array.isArray(dadosReais) && dadosReais.length === 0)) {
@@ -366,18 +365,19 @@ async function consultarPorDocumentoOficial(documento: string, tribunal?: string
 function formatarProcessoDatajudOficial(processo: any) {
   console.log('🔧 Formatando processo oficial da API CNJ:', JSON.stringify(processo, null, 2));
   
+  // SOMENTE DADOS REAIS DA API CNJ - SEM DADOS FICTÍCIOS
   const dadosBasicos = processo.dadosBasicos || {};
   const movimentacao = processo.movimentacao || [];
   
-  // Extrair partes do processo
+  // Extrair partes do processo - SOMENTE SE EXISTIREM NA RESPOSTA DA API
   const partes = [];
   if (dadosBasicos.polo && Array.isArray(dadosBasicos.polo)) {
     dadosBasicos.polo.forEach((polo: any) => {
       if (polo.polo && Array.isArray(polo.polo)) {
         polo.polo.forEach((parte: any) => {
-          if (parte.pessoa) {
+          if (parte.pessoa && parte.pessoa.nome) {
             partes.push({
-              nome: parte.pessoa.nome || 'Nome não informado',
+              nome: parte.pessoa.nome,
               tipo: determinarTipoParte(polo.codigoTipoPolo),
               documento: extrairDocumento(parte.pessoa.documento)
             });
@@ -387,7 +387,7 @@ function formatarProcessoDatajudOficial(processo: any) {
     });
   }
 
-  // Extrair advogados
+  // Extrair advogados - SOMENTE SE EXISTIREM NA RESPOSTA DA API
   const advogados = [];
   if (dadosBasicos.polo && Array.isArray(dadosBasicos.polo)) {
     dadosBasicos.polo.forEach((polo: any) => {
@@ -395,11 +395,13 @@ function formatarProcessoDatajudOficial(processo: any) {
         polo.polo.forEach((parte: any) => {
           if (parte.advogado && Array.isArray(parte.advogado)) {
             parte.advogado.forEach((adv: any) => {
-              advogados.push({
-                nome: adv.nome || 'Nome não informado',
-                oab: adv.numeroOAB || 'Não informado',
-                parte: determinarTipoParte(polo.codigoTipoPolo)
-              });
+              if (adv.nome) {
+                advogados.push({
+                  nome: adv.nome,
+                  oab: adv.numeroOAB || 'Não informado',
+                  parte: determinarTipoParte(polo.codigoTipoPolo)
+                });
+              }
             });
           }
         });
@@ -407,22 +409,24 @@ function formatarProcessoDatajudOficial(processo: any) {
     });
   }
 
-  // Extrair movimentações
+  // Extrair movimentações - SOMENTE SE EXISTIREM NA RESPOSTA DA API
   const movimentacoes = [];
   if (Array.isArray(movimentacao)) {
     movimentacao.forEach((mov: any) => {
-      movimentacoes.push({
-        data: formatarData(mov.dataHora),
-        descricao: mov.nome || 'Movimentação não especificada',
-        observacao: mov.complemento || ''
-      });
+      if (mov.nome) {
+        movimentacoes.push({
+          data: formatarData(mov.dataHora),
+          descricao: mov.nome,
+          observacao: mov.complemento || ''
+        });
+      }
     });
   }
 
-  // Calcular informações jurimétricas
-  const dataAjuizamento = dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento) : new Date();
+  // Calcular informações jurimétricas SOMENTE COM DADOS REAIS
+  const dataAjuizamento = dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento) : null;
   const hoje = new Date();
-  const diasTramitando = Math.floor((hoje.getTime() - dataAjuizamento.getTime()) / (1000 * 60 * 60 * 24));
+  const diasTramitando = dataAjuizamento ? Math.floor((hoje.getTime() - dataAjuizamento.getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
   const processoFormatado = {
     numero_processo: processo.numeroProcesso || 'Não informado',
@@ -433,11 +437,11 @@ function formatarProcessoDatajudOficial(processo: any) {
     comarca: dadosBasicos.orgaoJulgador?.municipio || 'Não informado',
     data_ajuizamento: formatarData(dadosBasicos.dataAjuizamento),
     data_ultima_movimentacao: movimentacoes.length > 0 ? movimentacoes[movimentacoes.length - 1].data : 'Não informado',
-    status: dadosBasicos.situacaoProcessual || 'Em andamento',
+    status: dadosBasicos.situacaoProcessual || 'Não informado',
     valor_causa: dadosBasicos.valorCausa || 0,
-    partes: partes,
-    advogados: advogados,
-    movimentacoes: movimentacoes.slice(-20), // Últimas 20 movimentações
+    partes: partes, // Somente partes reais da API
+    advogados: advogados, // Somente advogados reais da API
+    movimentacoes: movimentacoes.slice(-20), // Últimas 20 movimentações reais
     jurimetria: {
       tempo_total_dias: diasTramitando,
       total_movimentacoes: movimentacoes.length,
@@ -455,13 +459,12 @@ function formatarProcessoDatajudOficial(processo: any) {
 
 function extrairTribunalDoNumero(numeroProcesso: string): string {
   if (!numeroProcesso || numeroProcesso.length < 20) {
-    return 'TJSP'; // Default
+    return 'TJSP';
   }
   
   const codigoTribunal = numeroProcesso.substring(13, 15);
   
   const mapeamento: { [key: string]: string } = {
-    // Justiça Estadual
     '26': 'TJSP', '19': 'TJRJ', '13': 'TJMG', '21': 'TJRS',
     '16': 'TJPR', '24': 'TJSC', '09': 'TJGO', '07': 'TJDF',
     '17': 'TJPE', '05': 'TJBA', '06': 'TJCE', '11': 'TJMT',
@@ -470,11 +473,9 @@ function extrairTribunalDoNumero(numeroProcesso: string): string {
     '01': 'TJAC', '04': 'TJAM', '23': 'TJRO', '22': 'TJRR',
     '27': 'TJTO', '14': 'TJES', '08': 'TJPA',
     
-    // Justiça Federal
     '31': 'TRF1', '32': 'TRF2', '33': 'TRF3', '34': 'TRF4',
     '35': 'TRF5', '36': 'TRF6',
     
-    // Justiça do Trabalho
     '41': 'TRT1', '42': 'TRT2', '43': 'TRT3', '44': 'TRT4',
     '45': 'TRT5', '46': 'TRT6', '47': 'TRT7', '48': 'TRT8',
     '49': 'TRT9', '50': 'TRT10', '51': 'TRT11', '52': 'TRT12',
@@ -482,7 +483,6 @@ function extrairTribunalDoNumero(numeroProcesso: string): string {
     '57': 'TRT17', '58': 'TRT18', '59': 'TRT19', '60': 'TRT20',
     '61': 'TRT21', '62': 'TRT22', '63': 'TRT23', '64': 'TRT24',
     
-    // Tribunais Superiores
     '90': 'STF', '91': 'STJ', '92': 'TST', '93': 'TSE', '94': 'STM'
   };
   
@@ -529,7 +529,7 @@ function formatarData(data: any): string {
 }
 
 function determinarFaseAtual(movimentacoes: any[]): string {
-  if (movimentacoes.length === 0) return 'Conhecimento';
+  if (movimentacoes.length === 0) return 'Não informado';
   
   const ultimaMovimentacao = movimentacoes[movimentacoes.length - 1];
   const descricao = ultimaMovimentacao.descricao.toLowerCase();
@@ -545,7 +545,7 @@ function determinarFaseAtual(movimentacoes: any[]): string {
   } else if (descricao.includes('sentença') || descricao.includes('sentenca')) {
     return 'Sentenciado';
   } else {
-    return 'Conhecimento';
+    return 'Em andamento';
   }
 }
 
@@ -563,8 +563,9 @@ function calcularTempoFaseAtual(movimentacoes: any[]): number {
 }
 
 function calcularPrevisaoSentenca(diasTramitando: number): string {
+  if (diasTramitando === 0) return 'Não informado';
+  
   try {
-    // Estimativa baseada no tempo já tramitado
     const diasAdicionais = diasTramitando < 180 ? 90 : 60;
     const previsao = new Date();
     previsao.setDate(previsao.getDate() + diasAdicionais);
