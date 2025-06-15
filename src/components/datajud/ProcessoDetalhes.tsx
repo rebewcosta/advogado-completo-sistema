@@ -1,17 +1,29 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Calendar, MapPin, DollarSign, Users, Scale, TrendingUp } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Calendar, MapPin, DollarSign, Users, Scale, TrendingUp, AlertTriangle } from 'lucide-react';
 
 interface ProcessoDetalhesProps {
   processo: any;
+  isSimulated?: boolean;
+  message?: string;
 }
 
-const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo }) => {
+const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo, isSimulated, message }) => {
   return (
     <div className="space-y-6">
+      {/* Aviso de dados simulados */}
+      {isSimulated && (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>ATENÇÃO:</strong> {message || "Estes são dados simulados para demonstração. Os dados reais não foram encontrados na API do CNJ."}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Informações Básicas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="flex items-center gap-2">
@@ -73,7 +85,10 @@ const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo }) => {
       {/* Partes do Processo */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Partes do Processo</CardTitle>
+          <CardTitle className="text-lg">
+            Partes do Processo
+            {isSimulated && <span className="text-red-500 ml-2">(DADOS SIMULADOS)</span>}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -94,7 +109,10 @@ const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo }) => {
       {processo.advogados && processo.advogados.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Advogados</CardTitle>
+            <CardTitle className="text-lg">
+              Advogados
+              {isSimulated && <span className="text-red-500 ml-2">(DADOS SIMULADOS)</span>}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -154,7 +172,10 @@ const ProcessoDetalhes: React.FC<ProcessoDetalhesProps> = ({ processo }) => {
       {/* Timeline de Movimentações */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Linha do Tempo - Movimentações</CardTitle>
+          <CardTitle className="text-lg">
+            Linha do Tempo - Movimentações
+            {isSimulated && <span className="text-red-500 ml-2">(DADOS SIMULADOS)</span>}
+          </CardTitle>
           <CardDescription>Histórico completo das movimentações processuais</CardDescription>
         </CardHeader>
         <CardContent>

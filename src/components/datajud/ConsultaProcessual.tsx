@@ -14,6 +14,8 @@ const ConsultaProcessual: React.FC = () => {
   const [numeroProcesso, setNumeroProcesso] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resultado, setResultado] = useState<any>(null);
+  const [isSimulated, setIsSimulated] = useState(false);
+  const [simulatedMessage, setSimulatedMessage] = useState('');
   const [isFavorito, setIsFavorito] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
@@ -41,6 +43,8 @@ const ConsultaProcessual: React.FC = () => {
 
       if (data.success) {
         setResultado(data.data);
+        setIsSimulated(data.isSimulated || false);
+        setSimulatedMessage(data.message || '');
         
         // Verificar se já é favorito
         if (user) {
@@ -54,10 +58,18 @@ const ConsultaProcessual: React.FC = () => {
           setIsFavorito(!!favorito);
         }
 
-        toast({
-          title: "Consulta realizada",
-          description: data.fromCache ? "Dados obtidos do cache" : "Dados atualizados"
-        });
+        if (data.isSimulated) {
+          toast({
+            title: "Dados simulados",
+            description: "Não foi possível obter dados reais. Exibindo dados simulados.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Consulta realizada",
+            description: data.fromCache ? "Dados obtidos do cache" : "Dados atualizados da API CNJ"
+          });
+        }
       } else {
         throw new Error(data.error || 'Erro na consulta');
       }
@@ -210,7 +222,11 @@ const ConsultaProcessual: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent>
-            <ProcessoDetalhes processo={resultado} />
+            <ProcessoDetalhes 
+              processo={resultado} 
+              isSimulated={isSimulated}
+              message={simulatedMessage}
+            />
           </CardContent>
         </Card>
       )}
