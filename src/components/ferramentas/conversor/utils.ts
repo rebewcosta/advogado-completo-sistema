@@ -1,25 +1,9 @@
 
 import { ConversionType } from './types';
 
-// Importação condicional para evitar erros de build
-let PDFDocument: any, rgb: any, StandardFonts: any;
-let saveAs: any;
-
-try {
-  const pdfLib = require('pdf-lib');
-  PDFDocument = pdfLib.PDFDocument;
-  rgb = pdfLib.rgb;
-  StandardFonts = pdfLib.StandardFonts;
-} catch (error) {
-  console.warn('PDF-lib não disponível:', error);
-}
-
-try {
-  const fileSaver = require('file-saver');
-  saveAs = fileSaver.saveAs;
-} catch (error) {
-  console.warn('File-saver não disponível:', error);
-}
+// Imports ES6 para as bibliotecas
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { saveAs } from 'file-saver';
 
 export const checkLibrariesAvailable = (): boolean => {
   return !!(PDFDocument && saveAs);
