@@ -32,7 +32,7 @@ const BuscaAvancada: React.FC = () => {
     { value: 'TJRS', label: '⭐ TJRS - Tribunal de Justiça do Rio Grande do Sul' },
     { value: 'TJPR', label: '⭐ TJPR - Tribunal de Justiça do Paraná' },
     
-    // ... keep existing code (resto dos tribunais)
+    // Tribunais de Justiça Estaduais (ordem alfabética, removendo duplicatas)
     { value: 'TJAC', label: 'TJAC - Tribunal de Justiça do Acre' },
     { value: 'TJAL', label: 'TJAL - Tribunal de Justiça de Alagoas' },
     { value: 'TJAP', label: 'TJAP - Tribunal de Justiça do Amapá' },
@@ -49,13 +49,10 @@ const BuscaAvancada: React.FC = () => {
     { value: 'TJPB', label: 'TJPB - Tribunal de Justiça da Paraíba' },
     { value: 'TJPE', label: 'TJPE - Tribunal de Justiça de Pernambuco' },
     { value: 'TJPI', label: 'TJPI - Tribunal de Justiça do Piauí' },
-    { value: 'TJRJ', label: 'TJRJ - Tribunal de Justiça do Rio de Janeiro' },
     { value: 'TJRN', label: 'TJRN - Tribunal de Justiça do Rio Grande do Norte' },
-    { value: 'TJRS', label: 'TJRS - Tribunal de Justiça do Rio Grande do Sul' },
     { value: 'TJRO', label: 'TJRO - Tribunal de Justiça de Rondônia' },
     { value: 'TJRR', label: 'TJRR - Tribunal de Justiça de Roraima' },
     { value: 'TJSC', label: 'TJSC - Tribunal de Justiça de Santa Catarina' },
-    { value: 'TJSP', label: 'TJSP - Tribunal de Justiça de São Paulo' },
     { value: 'TJSE', label: 'TJSE - Tribunal de Justiça de Sergipe' },
     { value: 'TJTO', label: 'TJTO - Tribunal de Justiça do Tocantins' },
     
@@ -197,12 +194,7 @@ const BuscaAvancada: React.FC = () => {
 
       console.log('Resposta da função:', data);
 
-      if (error) {
-        console.error('Erro na chamada da função:', error);
-        throw new Error(error.message || 'Erro na comunicação com o servidor');
-      }
-
-      if (data.success) {
+      if (data && data.success) {
         setDadosConsulta({
           tribunais_consultados: data.tribunais_consultados || [],
           total_encontrados: data.total_encontrados || 0,
@@ -228,7 +220,7 @@ const BuscaAvancada: React.FC = () => {
           });
         }
       } else {
-        throw new Error(data.error || 'Erro desconhecido na busca');
+        throw new Error(data?.error || 'Erro desconhecido na busca');
       }
     } catch (error) {
       console.error('Erro na busca:', error);
