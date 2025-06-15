@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,33 +31,54 @@ export const GeradorQrCode: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleGenerate = async () => {
-    const content = buildQRContent(qrType, qrContent, emailData, phoneData, wifiData, vcardData);
-    
-    if (!content.trim()) {
-      toast({
-        title: "Conteúdo obrigatório",
-        description: "Por favor, preencha os campos necessários para gerar o QR Code.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (!isQRCodeLibAvailable()) {
-      toast({
-        title: "Biblioteca não disponível",
-        description: "A biblioteca QR Code não está carregada.",
-        variant: "destructive",
-      });
-      return;
-    }
+    console.log('HandleGenerate called');
+    console.log('QR Type:', qrType);
+    console.log('QR Content:', qrContent);
+    console.log('Email Data:', emailData);
+    console.log('Phone Data:', phoneData);
+    console.log('WiFi Data:', wifiData);
+    console.log('VCard Data:', vcardData);
 
     try {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+      const content = buildQRContent(qrType, qrContent, emailData, phoneData, wifiData, vcardData);
+      console.log('Built content:', content);
+      
+      if (!content.trim()) {
+        console.log('Content is empty, showing error toast');
+        toast({
+          title: "Conteúdo obrigatório",
+          description: "Por favor, preencha os campos necessários para gerar o QR Code.",
+          variant: "destructive",
+        });
+        return;
+      }
 
+      if (!isQRCodeLibAvailable()) {
+        console.log('QRCode library not available');
+        toast({
+          title: "Biblioteca não disponível",
+          description: "A biblioteca QR Code não está carregada.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const canvas = canvasRef.current;
+      if (!canvas) {
+        console.log('Canvas not available');
+        toast({
+          title: "Erro no canvas",
+          description: "Canvas não disponível para gerar o QR Code.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Starting QR Code generation...');
       await generateQRCode(content, canvas);
 
       const dataURL = canvas.toDataURL('image/png');
+      console.log('Generated QR Code data URL length:', dataURL.length);
       setGeneratedQR(dataURL);
       
       toast({
@@ -69,7 +89,7 @@ export const GeradorQrCode: React.FC = () => {
       console.error('Erro ao gerar QR Code:', error);
       toast({
         title: "Erro ao gerar QR Code",
-        description: "Não foi possível gerar o QR Code. Tente novamente.",
+        description: error instanceof Error ? error.message : "Não foi possível gerar o QR Code. Tente novamente.",
         variant: "destructive",
       });
     }

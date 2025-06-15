@@ -1,3 +1,4 @@
+
 import { QRType, EmailData, PhoneData, WifiData, VCardData } from './types';
 
 // Importação ES6 para a biblioteca QRCode
@@ -15,6 +16,8 @@ export const buildQRContent = (
   wifiData: WifiData,
   vcardData: VCardData
 ): string => {
+  console.log('Building QR content for type:', qrType, 'content:', qrContent);
+  
   switch (qrType) {
     case 'url':
       return qrContent.startsWith('http') ? qrContent : `https://${qrContent}`;
@@ -50,17 +53,32 @@ END:VCARD`;
 };
 
 export const generateQRCode = async (content: string, canvas: HTMLCanvasElement): Promise<void> => {
+  console.log('Generating QR Code with content:', content);
+  console.log('QRCode library available:', !!QRCode);
+  
   if (!QRCode) {
+    console.error('QRCode library not available');
     throw new Error('QRCode library não disponível');
   }
 
-  await QRCode.toCanvas(canvas, content, {
-    width: 300,
-    margin: 2,
-    color: {
-      dark: '#000000',
-      light: '#FFFFFF'
-    },
-    errorCorrectionLevel: 'M'
-  });
+  if (!content || content.trim() === '') {
+    console.error('Content is empty');
+    throw new Error('Conteúdo não pode estar vazio');
+  }
+
+  try {
+    await QRCode.toCanvas(canvas, content, {
+      width: 300,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      },
+      errorCorrectionLevel: 'M'
+    });
+    console.log('QR Code generated successfully');
+  } catch (error) {
+    console.error('Error generating QR Code:', error);
+    throw error;
+  }
 };
