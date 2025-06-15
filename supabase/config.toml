@@ -1,6 +1,9 @@
 
 project_id = "lqprcsquknlegzmzdoct"
 
+[functions.gerar-alertas]
+verify_jwt = false
+
 [functions.criar-sessao-checkout]
 verify_jwt = false
 

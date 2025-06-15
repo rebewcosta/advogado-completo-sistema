@@ -11,7 +11,6 @@ const corsHeaders = {
 serve(async (req) => {
   console.log('=== FUNÇÃO GERAR-ALERTAS INICIADA ===')
   console.log('Método da requisição:', req.method)
-  console.log('Headers da requisição:', Object.fromEntries(req.headers.entries()))
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
