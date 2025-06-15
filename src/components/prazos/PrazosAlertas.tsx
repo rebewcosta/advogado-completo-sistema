@@ -109,37 +109,25 @@ export const PrazosAlertas: React.FC = () => {
     }
 
     setIsGenerating(true);
-    console.log('=== INICIANDO GERAÇÃO DE ALERTAS ===');
     
     try {
-      // Obter o token de sessão atual
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session?.access_token) {
-        console.error('Erro ao obter sessão:', sessionError);
-        throw new Error('Sessão não encontrada. Faça login novamente.');
-      }
-
-      console.log('Sessão obtida com sucesso. Chamando função gerar-alertas...');
-      
-      // Chamar a função Edge
-      const { data, error } = await supabase.functions.invoke('gerar-alertas', {
+      // Fazer chamada direta para a Edge Function com fetch
+      const response = await fetch(`https://lqprcsquknlegzmzdoct.supabase.co/functions/v1/gerar-alertas`, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          user_id: user.id
+        }),
       });
       
-      console.log('Resposta da função:', { data, error });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       
-      if (error) {
-        console.error('Erro retornado pela função:', error);
-        throw new Error(error.message || 'Erro ao chamar a função de alertas');
-      }
-
-      if (!data) {
-        throw new Error('Nenhuma resposta recebida da função');
-      }
-
+      const data = await response.json();
+      
       if (!data.success) {
         throw new Error(data.error || 'Erro desconhecido na função');
       }
@@ -155,24 +143,13 @@ export const PrazosAlertas: React.FC = () => {
       await fetchAlertas();
       
     } catch (error: any) {
-      console.error('Erro completo ao gerar alertas:', error);
-      
-      let errorMessage = 'Erro desconhecido ao gerar alertas';
-      
-      if (error.message) {
-        errorMessage = error.message;
-      } else if (typeof error === 'string') {
-        errorMessage = error;
-      }
-      
       toast({
         title: "Erro ao gerar alertas",
-        description: errorMessage,
+        description: error.message || 'Erro desconhecido ao gerar alertas',
         variant: "destructive",
       });
     } finally {
       setIsGenerating(false);
-      console.log('=== FIM DA GERAÇÃO DE ALERTAS ===');
     }
   };
 
