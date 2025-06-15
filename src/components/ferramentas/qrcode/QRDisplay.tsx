@@ -20,12 +20,19 @@ export const QRDisplay: React.FC<QRDisplayProps> = ({
 }) => {
   return (
     <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+      {/* Canvas sempre visível mas pequeno para não afetar o layout */}
+      <canvas 
+        ref={canvasRef}
+        style={{ 
+          position: 'absolute',
+          top: '-9999px',
+          left: '-9999px',
+          visibility: 'hidden'
+        }}
+      />
+      
       {generatedQR ? (
         <div className="space-y-4">
-          <canvas 
-            ref={canvasRef}
-            style={{ display: 'none' }}
-          />
           <img 
             src={generatedQR} 
             alt="QR Code gerado" 

@@ -55,6 +55,8 @@ END:VCARD`;
 export const generateQRCode = async (content: string, canvas: HTMLCanvasElement): Promise<void> => {
   console.log('Generating QR Code with content:', content);
   console.log('QRCode library available:', !!QRCode);
+  console.log('Canvas element:', canvas);
+  console.log('Canvas width:', canvas.width, 'height:', canvas.height);
   
   if (!QRCode) {
     console.error('QRCode library not available');
@@ -66,7 +68,23 @@ export const generateQRCode = async (content: string, canvas: HTMLCanvasElement)
     throw new Error('Conteúdo não pode estar vazio');
   }
 
+  if (!canvas) {
+    console.error('Canvas element is null or undefined');
+    throw new Error('Canvas não está disponível');
+  }
+
+  // Verificar se o canvas tem contexto de desenho
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    console.error('Canvas context not available');
+    throw new Error('Contexto do canvas não disponível');
+  }
+
   try {
+    // Definir dimensões do canvas antes da geração
+    canvas.width = 300;
+    canvas.height = 300;
+    
     await QRCode.toCanvas(canvas, content, {
       width: 300,
       margin: 2,
