@@ -4,20 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { QrCode, Download, Copy, Link2, Mail, Phone, Wifi } from 'lucide-react';
+import { QrCode, Copy } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-// Importação condicional para evitar erros de build
-let QRCodeLib: any;
-try {
-  QRCodeLib = require('qrcode');
-} catch (error) {
-  console.warn('QRCode library não disponível:', error);
-}
-
-type QRType = 'url' | 'text' | 'email' | 'phone' | 'wifi' | 'vcard';
+import { QRFormFields } from './qrcode/QRFormFields';
+import { QRDisplay } from './qrcode/QRDisplay';
+import { qrTypes } from './qrcode/qrTypes';
+import { buildQRContent, generateQRCode, isQRCodeLibAvailable } from './qrcode/utils';
+import { QRType, EmailData, PhoneData, WifiData, VCardData } from './qrcode/types';
 
 export const GeradorQrCode: React.FC = () => {
   const { toast } = useToast();
@@ -25,10 +19,10 @@ export const GeradorQrCode: React.FC = () => {
   const [qrContent, setQRContent] = useState('');
   const [qrTitle, setQRTitle] = useState('');
   const [generatedQR, setGeneratedQR] = useState<string | null>(null);
-  const [emailData, setEmailData] = useState({ to: '', subject: '', body: '' });
-  const [phoneData, setPhoneData] = useState({ number: '', message: '' });
-  const [wifiData, setWifiData] = useState({ ssid: '', password: '', security: 'WPA' });
-  const [vcardData, setVcardData] = useState({ 
+  const [emailData, setEmailData] = useState<EmailData>({ to: '', subject: '', body: '' });
+  const [phoneData, setPhoneData] = useState<PhoneData>({ number: '', message: '' });
+  const [wifiData, setWifiData] = useState<WifiData>({ ssid: '', password: '', security: 'WPA' });
+  const [vcardData, setVcardData] = useState<VCardData>({ 
     name: '', 
     organization: '', 
     phone: '', 
@@ -37,52 +31,8 @@ export const GeradorQrCode: React.FC = () => {
   });
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const qrTypes = [
-    { value: 'url', label: 'Link/URL', icon: Link2 },
-    { value: 'text', label: 'Texto Livre', icon: QrCode },
-    { value: 'email', label: 'E-mail', icon: Mail },
-    { value: 'phone', label: 'Telefone/WhatsApp', icon: Phone },
-    { value: 'wifi', label: 'Wi-Fi', icon: Wifi },
-    { value: 'vcard', label: 'Cartão de Visita', icon: QrCode }
-  ];
-
-  const buildContent = (): string => {
-    switch (qrType) {
-      case 'url':
-        return qrContent.startsWith('http') ? qrContent : `https://${qrContent}`;
-      
-      case 'text':
-        return qrContent;
-      
-      case 'email':
-        return `mailto:${emailData.to}?subject=${encodeURIComponent(emailData.subject)}&body=${encodeURIComponent(emailData.body)}`;
-      
-      case 'phone':
-        const cleanNumber = phoneData.number.replace(/\D/g, '');
-        return phoneData.message 
-          ? `https://wa.me/${cleanNumber}?text=${encodeURIComponent(phoneData.message)}`
-          : `tel:${cleanNumber}`;
-      
-      case 'wifi':
-        return `WIFI:T:${wifiData.security};S:${wifiData.ssid};P:${wifiData.password};;`;
-      
-      case 'vcard':
-        return `BEGIN:VCARD
-VERSION:3.0
-FN:${vcardData.name}
-ORG:${vcardData.organization}
-TEL:${vcardData.phone}
-EMAIL:${vcardData.email}
-URL:${vcardData.website}
-END:VCARD`;
-      
-      default:
-        return qrContent;
-    }
-  };
-
   const handleGenerate = async () => {
-    const content = buildContent();
+    const content = buildQRContent(qrType, qrContent, emailData, phoneData, wifiData, vcardData);
     
     if (!content.trim()) {
       toast({
@@ -93,7 +43,7 @@ END:VCARD`;
       return;
     }
 
-    if (!QRCodeLib) {
+    if (!isQRCodeLibAvailable()) {
       toast({
         title: "Biblioteca não disponível",
         description: "A biblioteca QR Code não está carregada.",
@@ -106,15 +56,7 @@ END:VCARD`;
       const canvas = canvasRef.current;
       if (!canvas) return;
 
-      await QRCodeLib.toCanvas(canvas, content, {
-        width: 300,
-        margin: 2,
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF'
-        },
-        errorCorrectionLevel: 'M'
-      });
+      await generateQRCode(content, canvas);
 
       const dataURL = canvas.toDataURL('image/png');
       setGeneratedQR(dataURL);
@@ -150,7 +92,7 @@ END:VCARD`;
   };
 
   const handleCopyContent = async () => {
-    const content = buildContent();
+    const content = buildQRContent(qrType, qrContent, emailData, phoneData, wifiData, vcardData);
     try {
       await navigator.clipboard.writeText(content);
       toast({
@@ -198,192 +140,6 @@ END:VCARD`;
     }
   };
 
-  const renderFormFields = () => {
-    switch (qrType) {
-      case 'url':
-      case 'text':
-        return (
-          <div>
-            <Label htmlFor="content">
-              {qrType === 'url' ? 'URL/Link' : 'Texto'}
-            </Label>
-            <Input
-              id="content"
-              value={qrContent}
-              onChange={(e) => setQRContent(e.target.value)}
-              placeholder={qrType === 'url' ? 'https://exemplo.com' : 'Digite seu texto aqui...'}
-              className="mt-1"
-            />
-          </div>
-        );
-
-      case 'email':
-        return (
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="email-to">E-mail de Destino</Label>
-              <Input
-                id="email-to"
-                type="email"
-                value={emailData.to}
-                onChange={(e) => setEmailData(prev => ({ ...prev, to: e.target.value }))}
-                placeholder="destinatario@exemplo.com"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email-subject">Assunto</Label>
-              <Input
-                id="email-subject"
-                value={emailData.subject}
-                onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
-                placeholder="Assunto do e-mail"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="email-body">Mensagem</Label>
-              <Textarea
-                id="email-body"
-                value={emailData.body}
-                onChange={(e) => setEmailData(prev => ({ ...prev, body: e.target.value }))}
-                placeholder="Corpo do e-mail..."
-                className="mt-1"
-                rows={3}
-              />
-            </div>
-          </div>
-        );
-
-      case 'phone':
-        return (
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="phone-number">Número do Telefone</Label>
-              <Input
-                id="phone-number"
-                value={phoneData.number}
-                onChange={(e) => setPhoneData(prev => ({ ...prev, number: e.target.value }))}
-                placeholder="5511999999999"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="phone-message">Mensagem (WhatsApp)</Label>
-              <Textarea
-                id="phone-message"
-                value={phoneData.message}
-                onChange={(e) => setPhoneData(prev => ({ ...prev, message: e.target.value }))}
-                placeholder="Mensagem pré-definida para WhatsApp (opcional)"
-                className="mt-1"
-                rows={2}
-              />
-            </div>
-          </div>
-        );
-
-      case 'wifi':
-        return (
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="wifi-ssid">Nome da Rede (SSID)</Label>
-              <Input
-                id="wifi-ssid"
-                value={wifiData.ssid}
-                onChange={(e) => setWifiData(prev => ({ ...prev, ssid: e.target.value }))}
-                placeholder="Nome da rede Wi-Fi"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="wifi-password">Senha</Label>
-              <Input
-                id="wifi-password"
-                type="password"
-                value={wifiData.password}
-                onChange={(e) => setWifiData(prev => ({ ...prev, password: e.target.value }))}
-                placeholder="Senha da rede"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="wifi-security">Tipo de Segurança</Label>
-              <Select value={wifiData.security} onValueChange={(value) => setWifiData(prev => ({ ...prev, security: value }))}>
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="WPA">WPA/WPA2</SelectItem>
-                  <SelectItem value="WEP">WEP</SelectItem>
-                  <SelectItem value="nopass">Sem senha</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        );
-
-      case 'vcard':
-        return (
-          <div className="space-y-3">
-            <div>
-              <Label htmlFor="vcard-name">Nome Completo</Label>
-              <Input
-                id="vcard-name"
-                value={vcardData.name}
-                onChange={(e) => setVcardData(prev => ({ ...prev, name: e.target.value }))}
-                placeholder="João Silva"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="vcard-organization">Escritório/Organização</Label>
-              <Input
-                id="vcard-organization"
-                value={vcardData.organization}
-                onChange={(e) => setVcardData(prev => ({ ...prev, organization: e.target.value }))}
-                placeholder="Silva & Associados Advocacia"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="vcard-phone">Telefone</Label>
-              <Input
-                id="vcard-phone"
-                value={vcardData.phone}
-                onChange={(e) => setVcardData(prev => ({ ...prev, phone: e.target.value }))}
-                placeholder="(11) 99999-9999"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="vcard-email">E-mail</Label>
-              <Input
-                id="vcard-email"
-                type="email"
-                value={vcardData.email}
-                onChange={(e) => setVcardData(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="joao@silva-advocacia.com"
-                className="mt-1"
-              />
-            </div>
-            <div>
-              <Label htmlFor="vcard-website">Website</Label>
-              <Input
-                id="vcard-website"
-                value={vcardData.website}
-                onChange={(e) => setVcardData(prev => ({ ...prev, website: e.target.value }))}
-                placeholder="https://silva-advocacia.com"
-                className="mt-1"
-              />
-            </div>
-          </div>
-        );
-
-      default:
-        return null;
-    }
-  };
-
   return (
     <Card>
       <CardHeader>
@@ -425,7 +181,19 @@ END:VCARD`;
               />
             </div>
 
-            {renderFormFields()}
+            <QRFormFields
+              qrType={qrType}
+              qrContent={qrContent}
+              setQRContent={setQRContent}
+              emailData={emailData}
+              setEmailData={setEmailData}
+              phoneData={phoneData}
+              setPhoneData={setPhoneData}
+              wifiData={wifiData}
+              setWifiData={setWifiData}
+              vcardData={vcardData}
+              setVcardData={setVcardData}
+            />
 
             <div className="flex gap-2">
               <Button onClick={handleGenerate} className="flex-1">
@@ -439,39 +207,13 @@ END:VCARD`;
           </div>
 
           <div className="space-y-4">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              {generatedQR ? (
-                <div className="space-y-4">
-                  <canvas 
-                    ref={canvasRef}
-                    style={{ display: 'none' }}
-                  />
-                  <img 
-                    src={generatedQR} 
-                    alt="QR Code gerado" 
-                    className="mx-auto max-w-full h-auto border rounded"
-                  />
-                  {qrTitle && (
-                    <p className="font-medium text-gray-900">{qrTitle}</p>
-                  )}
-                  <div className="flex gap-2 justify-center">
-                    <Button onClick={handleDownload} variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-2" />
-                      Baixar
-                    </Button>
-                    <Button onClick={handleCopyImage} variant="outline" size="sm">
-                      <Copy className="h-4 w-4 mr-2" />
-                      Copiar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-gray-500">
-                  <QrCode className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Seu QR Code aparecerá aqui</p>
-                </div>
-              )}
-            </div>
+            <QRDisplay
+              generatedQR={generatedQR}
+              qrTitle={qrTitle}
+              canvasRef={canvasRef}
+              onDownload={handleDownload}
+              onCopyImage={handleCopyImage}
+            />
           </div>
         </div>
 
