@@ -26,8 +26,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
   if (!isMenuOpen) return null;
 
   return (
-    <div className="md:hidden bg-lawyer-dark border-t border-gray-700">
-      <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+    <div className="md:hidden bg-lawyer-dark border-t border-gray-700 safe-area-inset-bottom">
+      <div className="px-3 sm:px-4 pt-3 pb-4 space-y-2">
         {user ? (
           <>
             {navItems.map((item) => (
@@ -45,11 +45,11 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
             {user.email === 'webercostag@gmail.com' && (
               <Link 
                 to="/admin" 
-                className={`flex items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white ${isActive('/admin')}`}
+                className={`flex items-center px-4 py-3 rounded-lg text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white transition-colors ${isActive('/admin')}`}
                 onClick={() => setIsMenuOpen(false)}
               >
                 <Shield className="h-5 w-5" />
-                <span className="ml-2">Admin</span>
+                <span className="ml-3">Admin</span>
               </Link>
             )}
 
@@ -58,24 +58,24 @@ const MobileMenu: React.FC<MobileMenuProps> = ({
                 handleSignOut();
                 setIsMenuOpen(false);
               }}
-              className="flex w-full items-center px-3 py-2 rounded-md text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white"
+              className="flex w-full items-center px-4 py-3 rounded-lg text-base font-medium hover:bg-lawyer-primary/10 hover:text-lawyer-primary text-white transition-colors"
             >
               <LogOut className="h-5 w-5" />
-              <span className="ml-2">Sair</span>
+              <span className="ml-3">Sair</span>
             </button>
           </>
         ) : (
           <>
             <Link
               to="/login"
-              className="block px-3 py-2 rounded-md text-base font-medium text-white hover:bg-lawyer-primary/10 hover:text-lawyer-primary"
+              className="block px-4 py-3 rounded-lg text-base font-medium text-white hover:bg-lawyer-primary/10 hover:text-lawyer-primary transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Login
             </Link>
             <Link
               to="/cadastro"
-              className="block px-3 py-2 rounded-md text-base font-medium bg-lawyer-primary text-white hover:bg-blue-700"
+              className="block px-4 py-3 rounded-lg text-base font-medium bg-lawyer-primary text-white hover:bg-blue-700 transition-colors"
               onClick={() => setIsMenuOpen(false)}
             >
               Cadastre-se

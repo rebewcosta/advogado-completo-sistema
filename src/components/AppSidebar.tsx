@@ -41,12 +41,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export const AppSidebar = () => {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   // VERIFICAÇÃO CORRETA: apenas webercostag@gmail.com tem acesso admin
   const isAdmin = user?.email === 'webercostag@gmail.com';
@@ -99,14 +101,14 @@ export const AppSidebar = () => {
   };
 
   return (
-    <Sidebar>
-      <SidebarHeader className="bg-lawyer-dark">
-        <div className="px-3 py-4 flex justify-between items-center">
-          <Link to="/dashboard" className="text-lg font-bold flex items-center gap-2 text-white">
+    <Sidebar className="border-r border-gray-200">
+      <SidebarHeader className="bg-lawyer-dark border-b border-gray-700">
+        <div className={`px-3 ${isMobile ? 'py-3' : 'py-4'} flex justify-between items-center`}>
+          <Link to="/dashboard" className={`${isMobile ? 'text-base' : 'text-lg'} font-bold flex items-center gap-2 text-white`}>
             <img 
               src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png" 
               alt="JusGestão Logo" 
-              className="h-6 w-auto"
+              className={`${isMobile ? 'h-5' : 'h-6'} w-auto`}
             />
             <span>JusGestão</span>
           </Link>
@@ -114,20 +116,29 @@ export const AppSidebar = () => {
       </SidebarHeader>
       <SidebarContent className="bg-lawyer-dark text-white">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-400">Menu</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-300 text-xs uppercase tracking-wider px-3 py-2">
+            Menu Principal
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1 px-2">
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton 
                     asChild 
-                    tooltip={item.label}
                     isActive={isActive(item.path)}
-                    className="px-1"
+                    className={`
+                      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200
+                      hover:bg-lawyer-primary/10 hover:text-lawyer-primary
+                      ${isActive(item.path) 
+                        ? 'bg-lawyer-primary/20 text-lawyer-primary border-r-2 border-lawyer-primary' 
+                        : 'text-gray-300'
+                      }
+                      ${isMobile ? 'text-sm' : 'text-base'}
+                    `}
                   >
-                    <Link to={item.path} className="flex items-center gap-4">
-                      <item.icon className="w-5 h-5" />
-                      <span>{item.label}</span>
+                    <Link to={item.path} className="flex items-center gap-3 w-full">
+                      <item.icon className={`${isMobile ? 'h-4 w-4' : 'h-5 w-5'} flex-shrink-0`} />
+                      <span className="truncate">{item.label}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -136,59 +147,59 @@ export const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="bg-lawyer-dark text-white">
-        <SidebarGroup className="pt-0"> 
-          <SidebarMenuItem>
-            <SidebarMenuButton 
-              asChild 
-              tooltip="Configurações"
-              isActive={isActive("/configuracoes")}
-              className="px-1"
-            >
-              <Link to="/configuracoes" className="flex items-center gap-4">
-                <Settings className="w-5 h-5" />
-                <span>Configurações</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          
-          <div className="px-3 py-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="flex items-center space-x-2 w-full p-2 rounded-md hover:bg-gray-700 transition-colors">
-                  <Avatar className="h-8 w-8">
-                    {user?.user_metadata?.logo_url ? (
-                      <AvatarImage src={user.user_metadata.logo_url as string} alt="Logo do Escritório" />
-                    ) : (
-                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="flex-1 text-left overflow-hidden">
-                    <p className="text-xs font-medium truncate text-white">
-                      {user?.user_metadata?.nome || user?.email || "Usuário"}
-                    </p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {user?.email || ""}
-                    </p>
+      <SidebarFooter className="bg-lawyer-dark border-t border-gray-700 p-3">
+        <div className="flex items-center justify-between">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 transition-colors w-full">
+                <Avatar className={`${isMobile ? 'h-8 w-8' : 'h-10 w-10'}`}>
+                  <AvatarImage src="" />
+                  <AvatarFallback className="bg-lawyer-primary text-white text-xs font-semibold">
+                    {getUserInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-white truncate`}>
+                    {user?.user_metadata?.nome || user?.email?.split('@')[0] || 'Usuário'}
                   </div>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/configuracoes')} className="flex items-center cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Ir para Configurações</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="flex items-center cursor-pointer text-red-600 focus:text-red-600">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </SidebarGroup>
+                  <div className="text-xs text-gray-400 truncate">
+                    {user?.email}
+                  </div>
+                </div>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 mr-4 mb-2 bg-white border border-gray-200 shadow-lg z-50" align="end">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium text-gray-900">
+                    {user?.user_metadata?.nome || 'Usuário'}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {user?.email}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/perfil-usuario" className="flex items-center cursor-pointer">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configurações</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/suporte" className="flex items-center cursor-pointer">
+                  <Shield className="mr-2 h-4 w-4" />
+                  <span>Suporte</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleSignOut} className="text-red-600 cursor-pointer">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Sair</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

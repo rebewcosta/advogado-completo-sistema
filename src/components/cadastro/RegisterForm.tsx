@@ -112,30 +112,30 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 pb-12">
+    <div className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
       <div className="max-w-2xl mx-auto">
         <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl">
-          <CardContent className="p-8">
-            <form onSubmit={handleSubmit} className="space-y-8">
+          <CardContent className="p-4 sm:p-6 lg:p-8">
+            <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
               
               {/* Informações Pessoais */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <User className="h-5 w-5 text-blue-600" />
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
+                    <User className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">Informações Pessoais</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">Informações Pessoais</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div className="md:col-span-2">
-                    <Label htmlFor="nome" className="text-gray-700 font-medium">Nome completo *</Label>
+                    <Label htmlFor="nome" className="text-gray-700 font-medium text-sm sm:text-base">Nome completo *</Label>
                     <Input
                       id="nome"
                       type="text"
                       value={formData.nome}
                       onChange={(e) => handleChange('nome', e.target.value)}
-                      className="mt-1 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 h-11 sm:h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       placeholder="Seu nome completo"
                       required
                     />
@@ -143,17 +143,17 @@ const RegisterForm = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="email" className="text-gray-700 font-medium">Email *</Label>
+                    <Label htmlFor="email" className="text-gray-700 font-medium text-sm sm:text-base">Email *</Label>
                     <div className="relative mt-1">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
+                        <Mail className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                       </div>
                       <Input
                         id="email"
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleChange('email', e.target.value)}
-                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        className="pl-8 sm:pl-10 h-11 sm:h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                         placeholder="seu@email.com"
                         required
                       />
@@ -162,10 +162,10 @@ const RegisterForm = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone</Label>
+                    <Label htmlFor="telefone" className="text-gray-700 font-medium text-sm sm:text-base">Telefone</Label>
                     <div className="relative mt-1">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Phone className="h-5 w-5 text-gray-400" />
+                        <Phone className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                       </div>
                       <Input
                         id="telefone"
@@ -173,7 +173,7 @@ const RegisterForm = () => {
                         value={formData.telefone}
                         onChange={(e) => handleChange('telefone', e.target.value)}
                         placeholder="(11) 99999-9999"
-                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        className="pl-8 sm:pl-10 h-11 sm:h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -181,23 +181,23 @@ const RegisterForm = () => {
               </div>
 
               {/* Segurança */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-slate-100 rounded-lg">
-                    <Lock className="h-5 w-5 text-slate-600" />
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div className="p-1.5 sm:p-2 bg-slate-100 rounded-lg">
+                    <Lock className="h-4 w-4 sm:h-5 sm:w-5 text-slate-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">Segurança</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">Segurança</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <Label htmlFor="senha" className="text-gray-700 font-medium">Senha *</Label>
+                    <Label htmlFor="senha" className="text-gray-700 font-medium text-sm sm:text-base">Senha *</Label>
                     <Input
                       id="senha"
                       type="password"
                       value={formData.senha}
                       onChange={(e) => handleChange('senha', e.target.value)}
-                      className="mt-1 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 h-11 sm:h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       placeholder="Mínimo 6 caracteres"
                       required
                     />
@@ -205,13 +205,13 @@ const RegisterForm = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="confirmarSenha" className="text-gray-700 font-medium">Confirmar senha *</Label>
+                    <Label htmlFor="confirmarSenha" className="text-gray-700 font-medium text-sm sm:text-base">Confirmar senha *</Label>
                     <Input
                       id="confirmarSenha"
                       type="password"
                       value={formData.confirmarSenha}
                       onChange={(e) => handleChange('confirmarSenha', e.target.value)}
-                      className="mt-1 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 h-11 sm:h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       placeholder="Confirme sua senha"
                       required
                     />
@@ -221,32 +221,32 @@ const RegisterForm = () => {
               </div>
 
               {/* Informações Profissionais */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Scale className="h-5 w-5 text-blue-600" />
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4">
+                  <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg">
+                    <Scale className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-800">Informações Profissionais</h3>
+                  <h3 className="text-base sm:text-lg font-semibold text-gray-800">Informações Profissionais</h3>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <Label htmlFor="oab" className="text-gray-700 font-medium">Número da OAB</Label>
+                    <Label htmlFor="oab" className="text-gray-700 font-medium text-sm sm:text-base">Número da OAB</Label>
                     <Input
                       id="oab"
                       type="text"
                       value={formData.oab}
                       onChange={(e) => handleChange('oab', e.target.value)}
                       placeholder="Ex: 123456/SP"
-                      className="mt-1 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      className="mt-1 h-11 sm:h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="empresa" className="text-gray-700 font-medium">Nome do escritório</Label>
+                    <Label htmlFor="empresa" className="text-gray-700 font-medium text-sm sm:text-base">Nome do escritório</Label>
                     <div className="relative mt-1">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Building className="h-5 w-5 text-gray-400" />
+                        <Building className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" />
                       </div>
                       <Input
                         id="empresa"
@@ -254,7 +254,7 @@ const RegisterForm = () => {
                         value={formData.empresa}
                         onChange={(e) => handleChange('empresa', e.target.value)}
                         placeholder="Meu Escritório de Advocacia"
-                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        className="pl-8 sm:pl-10 h-11 sm:h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
                   </div>
@@ -262,20 +262,20 @@ const RegisterForm = () => {
               </div>
 
               {/* Informações do Plano */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 sm:p-6 border border-blue-200">
                 <PlanInfoBox />
               </div>
 
               {/* Botão de Submissão */}
-              <div className="pt-6 border-t border-gray-200">
+              <div className="pt-4 sm:pt-6 border-t border-gray-200">
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-75 disabled:cursor-not-allowed"
+                  className="w-full h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-75 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                       Processando...
                     </>
                   ) : (
@@ -283,7 +283,7 @@ const RegisterForm = () => {
                   )}
                 </Button>
                 
-                <p className="text-center text-sm text-gray-600 mt-4">
+                <p className="text-center text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4 px-2">
                   Ao continuar, você concorda com nossos{' '}
                   <a href="/termos" className="text-blue-600 hover:text-blue-700 font-medium">
                     Termos de Uso

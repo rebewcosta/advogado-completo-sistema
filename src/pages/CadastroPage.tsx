@@ -12,56 +12,56 @@ const CadastroPage = () => {
       
       <div className="relative min-h-screen">
         {/* Header Section */}
-        <div className="relative z-10 pt-8 pb-12">
-          <div className="container mx-auto px-4">
+        <div className="relative z-10 pt-4 sm:pt-6 lg:pt-8 pb-8 sm:pb-10 lg:pb-12">
+          <div className="container mx-auto px-3 sm:px-4">
             <Link 
               to="/" 
-              className="inline-flex items-center text-white/70 hover:text-white transition-colors duration-300 mb-8 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg backdrop-blur-sm"
+              className="inline-flex items-center text-white/70 hover:text-white transition-colors duration-300 mb-6 sm:mb-8 bg-white/10 hover:bg-white/20 px-3 sm:px-4 py-2 rounded-lg backdrop-blur-sm text-sm"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar para a home
             </Link>
             
             {/* Hero Section */}
-            <div className="text-center mb-12">
+            <div className="text-center mb-8 sm:mb-10 lg:mb-12">
               {/* Logo */}
-              <div className="flex items-center justify-center gap-3 mb-6">
+              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-4 sm:mb-6">
                 <img 
                   src="/lovable-uploads/11a8e9cf-456c-4c4c-bd41-fac2efeaa537.png"
                   alt="JusGestão Logo" 
-                  className="h-12 w-12"
+                  className="h-10 w-10 sm:h-12 sm:w-12"
                 />
-                <span className="text-3xl font-bold">
+                <span className="text-2xl sm:text-3xl font-bold">
                   <span className="text-white">Jus</span><span className="text-blue-400">Gestão</span>
                 </span>
               </div>
 
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-blue-600/20 border border-blue-400/30 rounded-full px-4 py-2 mb-6 backdrop-blur-sm">
-                <Award className="h-4 w-4 text-blue-300" />
-                <span className="text-blue-200 text-sm font-medium">Sistema #1 para Advogados</span>
+              <div className="inline-flex items-center gap-2 bg-blue-600/20 border border-blue-400/30 rounded-full px-3 sm:px-4 py-2 mb-4 sm:mb-6 backdrop-blur-sm">
+                <Award className="h-3 w-3 sm:h-4 sm:w-4 text-blue-300" />
+                <span className="text-blue-200 text-xs sm:text-sm font-medium">Sistema #1 para Advogados</span>
               </div>
 
-              <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 leading-tight">
                 <span className="text-white">Crie sua conta e</span><br />
                 <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-blue-300 bg-clip-text text-transparent">
                   transforme seu escritório
                 </span>
               </h1>
               
-              <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-base sm:text-lg lg:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed px-4">
                 Cadastre-se para acessar o sistema JusGestão e otimize a gestão do seu escritório de advocacia
               </p>
 
               {/* Trust indicators */}
-              <div className="flex items-center justify-center gap-6 text-blue-300">
-                <div className="flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  <span className="text-sm">100% Seguro</span>
+              <div className="flex items-center justify-center gap-4 sm:gap-6 text-blue-300">
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">100% Seguro</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Award className="h-4 w-4" />
-                  <span className="text-sm">Setup em 5min</span>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Award className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="text-xs sm:text-sm">Setup em 5min</span>
                 </div>
               </div>
             </div>

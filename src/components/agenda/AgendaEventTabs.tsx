@@ -32,23 +32,23 @@ const AgendaEventTabs: React.FC<AgendaEventTabsProps> = ({
   isRefreshing
 }) => {
   return (
-    <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-8">
-      <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+    <Tabs value={activeTab} onValueChange={onTabChange} className="space-y-4 sm:space-y-6 lg:space-y-8">
+      <TabsList className="grid w-full grid-cols-2 bg-white/80 backdrop-blur-sm border-0 shadow-lg h-12 sm:h-14">
         <TabsTrigger 
           value="lista" 
-          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300"
+          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300 text-sm sm:text-base font-medium"
         >
           Lista
         </TabsTrigger>
         <TabsTrigger 
           value="calendario"
-          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300"
+          className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-600 data-[state=active]:to-indigo-600 data-[state=active]:text-white transition-all duration-300 text-sm sm:text-base font-medium"
         >
           Calendário
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value="lista" className="animate-fade-in">
+      <TabsContent value="lista" className="animate-fade-in mt-4 sm:mt-6">
         <div className="hidden md:block">
           <AgendaEventTable
             events={filteredEvents}
@@ -69,7 +69,7 @@ const AgendaEventTabs: React.FC<AgendaEventTabsProps> = ({
         </div>
       </TabsContent>
 
-      <TabsContent value="calendario" className="animate-fade-in">
+      <TabsContent value="calendario" className="animate-fade-in mt-4 sm:mt-6">
         <ModernCalendarView
           events={filteredEvents}
           selectedDate={selectedDate}
