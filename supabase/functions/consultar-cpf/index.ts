@@ -49,83 +49,6 @@ const validarCPF = (cpfString: string): boolean => {
   return true;
 };
 
-const consultarReceitaFederal = async (cpf: string, dataNascimento: string): Promise<CPFResponse> => {
-  const cpfLimpo = cpf.replace(/\D/g, '');
-  const dataLimpa = dataNascimento.replace(/\D/g, '');
-  
-  // Primeira validação local
-  const isValid = validarCPF(cpf);
-  if (!isValid) {
-    return {
-      valid: false,
-      formatted: cpf,
-      descricao_situacao: 'CPF inválido - não passou na validação dos dígitos verificadores'
-    };
-  }
-
-  try {
-    // Formatar data para o formato esperado pela Receita Federal
-    const dataFormatada = `${dataLimpa.slice(0,2)}${dataLimpa.slice(2,4)}${dataLimpa.slice(4,8)}`;
-    
-    // Tentar consulta na Receita Federal
-    const formData = new URLSearchParams();
-    formData.append('txtCPF', cpfLimpo);
-    formData.append('txtDataNascimento', dataFormatada);
-    formData.append('Submit', 'Consultar');
-    
-    const response = await fetch('https://servicos.receita.fazenda.gov.br/Servicos/CPF/ConsultaSituacao/ConsultaPublica.asp', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-      },
-      body: formData.toString()
-    });
-
-    if (response.ok) {
-      const htmlText = await response.text();
-      console.log('Resposta da Receita Federal obtida');
-      
-      // Parse simples do HTML de resposta
-      const nomeMatch = htmlText.match(/Nome:\s*([^<\n\r]+)/i);
-      const situacaoMatch = htmlText.match(/Situação:\s*([^<\n\r]+)/i);
-      const erroMatch = htmlText.match(/CPF não encontrado|Dados não conferem|inválido/i);
-      
-      if (erroMatch) {
-        return {
-          valid: false,
-          formatted: cpf,
-          nascimento: dataNascimento,
-          descricao_situacao: 'CPF ou data de nascimento não conferem com os dados da Receita Federal'
-        };
-      }
-      
-      return {
-        valid: true,
-        formatted: cpf,
-        nome: nomeMatch ? nomeMatch[1].trim() : 'Consulta realizada com sucesso',
-        situacao: situacaoMatch ? situacaoMatch[1].trim() : 'Regular',
-        nascimento: dataNascimento,
-        descricao_situacao: 'Dados consultados na Receita Federal'
-      };
-    } else {
-      throw new Error(`Erro HTTP: ${response.status}`);
-    }
-    
-  } catch (error) {
-    console.log('Erro na consulta da Receita Federal:', error);
-    
-    // Fallback: validação local
-    return {
-      valid: isValid,
-      formatted: cpf,
-      nascimento: dataNascimento,
-      situacao: isValid ? 'CPF válido (consulta offline)' : 'CPF inválido',
-      descricao_situacao: 'Validação realizada localmente - API da Receita Federal indisponível'
-    };
-  }
-};
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -148,7 +71,19 @@ serve(async (req) => {
       );
     }
 
-    const resultado = await consultarReceitaFederal(cpf, dataNascimento);
+    const isValid = validarCPF(cpf);
+    
+    // Para CPF, mantemos apenas a validação local por enquanto
+    // pois a consulta online na Receita Federal é mais complexa
+    const resultado: CPFResponse = {
+      valid: isValid,
+      formatted: cpf,
+      nascimento: dataNascimento,
+      situacao: isValid ? 'CPF válido (validação local)' : 'CPF inválido',
+      descricao_situacao: isValid ? 
+        'CPF passou na validação dos dígitos verificadores' : 
+        'CPF não passou na validação dos dígitos verificadores'
+    };
 
     return new Response(JSON.stringify(resultado), {
       status: 200,

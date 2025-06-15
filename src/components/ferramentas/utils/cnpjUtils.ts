@@ -1,4 +1,6 @@
 
+import { supabase } from '@/integrations/supabase/client';
+
 export const formatCNPJ = (value: string) => {
   const digitsOnly = value.replace(/\D/g, '');
   if (digitsOnly.length <= 14) {
@@ -29,45 +31,41 @@ export interface CNPJData {
 }
 
 export const consultarCNPJAPI = async (cnpj: string): Promise<CNPJData> => {
-  const cnpjLimpo = cnpj.replace(/\D/g, '');
-  
-  // Primeira tentativa: ReceitaWS
-  let response = await fetch(`https://www.receitaws.com.br/v1/cnpj/${cnpjLimpo}`);
-  
-  if (response.ok) {
-    const data = await response.json();
-    if (data.status !== 'ERROR') {
-      return data;
+  try {
+    const { data, error } = await supabase.functions.invoke('consultar-cnpj', {
+      body: {
+        cnpj: cnpj
+      }
+    });
+
+    if (error) {
+      console.error('Erro ao chamar função edge:', error);
+      throw new Error(error.message || 'Erro ao consultar CNPJ');
     }
-  }
 
-  // Segunda tentativa: API alternativa
-  response = await fetch(`https://publica.cnpj.ws/cnpj/${cnpjLimpo}`);
-  
-  if (response.ok) {
-    const data = await response.json();
-    
-    // Adapta os dados para o formato esperado
+    if (!data.success) {
+      throw new Error(data.error || 'CNPJ não encontrado');
+    }
+
     return {
-      cnpj: data.estabelecimento?.cnpj || cnpjLimpo,
+      cnpj: data.cnpj,
       razao_social: data.razao_social || 'Não informado',
-      nome_fantasia: data.estabelecimento?.nome_fantasia || '',
-      situacao: data.estabelecimento?.situacao_cadastral || 'Não informado',
-      tipo: data.natureza_juridica?.descricao || 'Não informado',
-      porte: data.porte?.descricao || 'Não informado',
-      natureza_juridica: data.natureza_juridica?.descricao || 'Não informado',
-      logradouro: data.estabelecimento?.logradouro || 'Não informado',
-      numero: data.estabelecimento?.numero || '',
-      municipio: data.estabelecimento?.cidade?.nome || 'Não informado',
-      uf: data.estabelecimento?.estado?.sigla || 'Não informado',
-      cep: data.estabelecimento?.cep || 'Não informado',
-      telefone: data.estabelecimento?.telefone1 || 'Não informado',
-      email: data.estabelecimento?.email || 'Não informado',
-      atividade_principal: data.estabelecimento?.atividade_principal ? 
-        [{ code: data.estabelecimento.atividade_principal.id, text: data.estabelecimento.atividade_principal.descricao }] : 
-        [{ code: '', text: 'Não informado' }]
+      nome_fantasia: data.nome_fantasia || '',
+      situacao: data.situacao || 'Não informado',
+      tipo: data.tipo || 'Não informado',
+      porte: data.porte || 'Não informado',
+      natureza_juridica: data.natureza_juridica || 'Não informado',
+      logradouro: data.logradouro || 'Não informado',
+      numero: data.numero || '',
+      municipio: data.municipio || 'Não informado',
+      uf: data.uf || 'Não informado',
+      cep: data.cep || 'Não informado',
+      telefone: data.telefone || 'Não informado',
+      email: data.email || 'Não informado',
+      atividade_principal: data.atividade_principal || [{ code: '', text: 'Não informado' }]
     };
+  } catch (error) {
+    console.error('Erro na consulta do CNPJ:', error);
+    throw new Error('Não foi possível consultar o CNPJ');
   }
-
-  throw new Error('Todas as APIs falharam');
 };
