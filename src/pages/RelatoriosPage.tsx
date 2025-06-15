@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { BarChart3, AlertCircle, RefreshCw, FileText, CheckSquare } from 'lucide-react';
@@ -93,18 +92,19 @@ const RelatoriosPage = () => {
             if (statusPagamento === 'Recebido') {
               receitas += valor;
             } else if (statusPagamento === 'Pago') {
-              despesas += valor;
+              despesas += Math.abs(valor); // Garantir que despesas sejam positivas
             }
           } else {
             // Lógica normal
             if ((tipoTransacao === 'Receita' || tipoTransacao === 'receita') && (statusPagamento === 'Recebido' || statusPagamento === 'Pago')) {
-              receitas += valor;
+              receitas += Math.abs(valor); // Garantir que receitas sejam positivas
             } else if ((tipoTransacao === 'Despesa' || tipoTransacao === 'despesa') && statusPagamento === 'Pago') {
-              despesas += valor;
+              despesas += Math.abs(valor); // Garantir que despesas sejam positivas
             }
           }
         });
         console.log(`Mês ${res.month}: Receitas=${receitas}, Despesas=${despesas}`);
+        // Lucro pode ser negativo se despesas > receitas
         return { month: res.month, receitas, despesas, lucro: receitas - despesas };
       });
       setMonthlyFinancialData(monthlyData);
