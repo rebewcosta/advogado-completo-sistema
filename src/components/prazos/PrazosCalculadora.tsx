@@ -9,9 +9,20 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Calculator, Calendar, Plus, Save } from 'lucide-react';
+import { Calculator, Calendar, Plus, Save, Edit, Trash2, AlertCircle } from 'lucide-react';
 import { format, addDays, isWeekend, addBusinessDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface PrazoCalculo {
   id: string;
@@ -50,6 +61,7 @@ export const PrazosCalculadora: React.FC = () => {
     observacoes: ''
   });
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [editandoCalculo, setEditandoCalculo] = useState<PrazoCalculo | null>(null);
   const [usandoPadrao, setUsandoPadrao] = useState(true);
 
   useEffect(() => {
@@ -69,7 +81,6 @@ export const PrazosCalculadora: React.FC = () => {
 
       if (error) throw error;
       
-      // Se não há cálculos personalizados, usar os padrão
       if (!data || data.length === 0) {
         setUsandoPadrao(true);
         setCalculos([]);
@@ -106,10 +117,8 @@ export const PrazosCalculadora: React.FC = () => {
     let dataFinal: Date;
 
     if (consideraFinsSemana) {
-      // Usando addBusinessDays para pular fins de semana
       dataFinal = addBusinessDays(dataBase, diasPrazo);
     } else {
-      // Adicionando dias corridos
       dataFinal = addDays(dataBase, diasPrazo);
     }
 
@@ -121,7 +130,7 @@ export const PrazosCalculadora: React.FC = () => {
     });
   };
 
-  const salvarNovoCalculo = async () => {
+  const salvarCalculo = async () => {
     if (!novoCalculo.nome || !novoCalculo.tipo || !user) {
       toast({
         title: "Dados incompletos",
@@ -132,34 +141,49 @@ export const PrazosCalculadora: React.FC = () => {
     }
 
     try {
-      const { error } = await supabase
-        .from('prazo_calculos')
-        .insert({
-          user_id: user.id,
-          nome_calculo: novoCalculo.nome,
-          tipo_prazo: novoCalculo.tipo,
-          dias_prazo: novoCalculo.dias,
-          considera_feriados: novoCalculo.consideraFeriados,
-          considera_fins_semana: novoCalculo.consideraFinsSemana,
-          observacoes: novoCalculo.observacoes
+      if (editandoCalculo) {
+        // Atualizar cálculo existente
+        const { error } = await supabase
+          .from('prazo_calculos')
+          .update({
+            nome_calculo: novoCalculo.nome,
+            tipo_prazo: novoCalculo.tipo,
+            dias_prazo: novoCalculo.dias,
+            considera_feriados: novoCalculo.consideraFeriados,
+            considera_fins_semana: novoCalculo.consideraFinsSemana,
+            observacoes: novoCalculo.observacoes
+          })
+          .eq('id', editandoCalculo.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Cálculo atualizado",
+          description: "Cálculo de prazo atualizado com sucesso!",
         });
+      } else {
+        // Criar novo cálculo
+        const { error } = await supabase
+          .from('prazo_calculos')
+          .insert({
+            user_id: user.id,
+            nome_calculo: novoCalculo.nome,
+            tipo_prazo: novoCalculo.tipo,
+            dias_prazo: novoCalculo.dias,
+            considera_feriados: novoCalculo.consideraFeriados,
+            considera_fins_semana: novoCalculo.consideraFinsSemana,
+            observacoes: novoCalculo.observacoes
+          });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Cálculo salvo",
-        description: "Novo cálculo de prazo criado com sucesso!",
-      });
+        toast({
+          title: "Cálculo salvo",
+          description: "Novo cálculo de prazo criado com sucesso!",
+        });
+      }
 
-      setNovoCalculo({
-        nome: '',
-        tipo: '',
-        dias: 15,
-        consideraFeriados: true,
-        consideraFinsSemana: true,
-        observacoes: ''
-      });
-      setMostrarFormulario(false);
+      resetFormulario();
       fetchCalculos();
     } catch (error: any) {
       toast({
@@ -170,16 +194,66 @@ export const PrazosCalculadora: React.FC = () => {
     }
   };
 
+  const editarCalculo = (calculo: PrazoCalculo) => {
+    setEditandoCalculo(calculo);
+    setNovoCalculo({
+      nome: calculo.nome_calculo,
+      tipo: calculo.tipo_prazo,
+      dias: calculo.dias_prazo,
+      consideraFeriados: calculo.considera_feriados,
+      consideraFinsSemana: calculo.considera_fins_semana,
+      observacoes: calculo.observacoes || ''
+    });
+    setMostrarFormulario(true);
+  };
+
+  const excluirCalculo = async (calculoId: string) => {
+    try {
+      const { error } = await supabase
+        .from('prazo_calculos')
+        .update({ ativo: false })
+        .eq('id', calculoId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cálculo excluído",
+        description: "Cálculo de prazo excluído com sucesso!",
+      });
+
+      fetchCalculos();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir cálculo",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetFormulario = () => {
+    setNovoCalculo({
+      nome: '',
+      tipo: '',
+      dias: 15,
+      consideraFeriados: true,
+      consideraFinsSemana: true,
+      observacoes: ''
+    });
+    setMostrarFormulario(false);
+    setEditandoCalculo(null);
+  };
+
   const tiposDisponiveis = usandoPadrao ? TIPOS_PRAZO_PADRAO : calculos;
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Calculadora */}
-        <Card>
+        <Card className="border-2 border-blue-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Calculator className="h-5 w-5" />
+              <Calculator className="h-5 w-5 text-blue-600" />
               Calculadora de Prazos
             </CardTitle>
             <CardDescription>
@@ -216,9 +290,12 @@ export const PrazosCalculadora: React.FC = () => {
                 </SelectContent>
               </Select>
               {usandoPadrao && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Usando tipos de prazo padrão. Crie tipos personalizados ao lado.
-                </p>
+                <div className="flex items-center gap-1 mt-1">
+                  <AlertCircle className="h-3 w-3 text-amber-500" />
+                  <p className="text-xs text-amber-600">
+                    Usando tipos padrão. Crie tipos personalizados ao lado →
+                  </p>
+                </div>
               )}
             </div>
 
@@ -248,12 +325,15 @@ export const PrazosCalculadora: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Gerenciar Cálculos */}
-        <Card>
+        {/* Tipos Personalizados */}
+        <Card className="border-2 border-green-200">
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Tipos de Prazo Personalizados</CardTitle>
+                <CardTitle className="flex items-center gap-2">
+                  <Plus className="h-5 w-5 text-green-600" />
+                  Tipos de Prazo Personalizados
+                </CardTitle>
                 <CardDescription>
                   Crie seus próprios cálculos de prazo
                 </CardDescription>
@@ -261,7 +341,11 @@ export const PrazosCalculadora: React.FC = () => {
               <Button 
                 variant="outline" 
                 size="sm"
-                onClick={() => setMostrarFormulario(!mostrarFormulario)}
+                onClick={() => {
+                  resetFormulario();
+                  setMostrarFormulario(!mostrarFormulario);
+                }}
+                className="border-green-200 text-green-700 hover:bg-green-50"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Novo
@@ -270,7 +354,18 @@ export const PrazosCalculadora: React.FC = () => {
           </CardHeader>
           <CardContent>
             {mostrarFormulario && (
-              <div className="space-y-4 p-4 border rounded-lg mb-4">
+              <div className="space-y-4 p-4 border-2 border-dashed border-green-200 rounded-lg mb-4 bg-green-50/50">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-green-800">
+                    {editandoCalculo ? 'Editar Cálculo' : 'Novo Cálculo'}
+                  </h4>
+                  {editandoCalculo && (
+                    <Button variant="ghost" size="sm" onClick={resetFormulario}>
+                      Cancelar Edição
+                    </Button>
+                  )}
+                </div>
+
                 <div>
                   <Label htmlFor="nome-calculo">Nome do Cálculo</Label>
                   <Input
@@ -329,11 +424,11 @@ export const PrazosCalculadora: React.FC = () => {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={salvarNovoCalculo} size="sm">
+                  <Button onClick={salvarCalculo} size="sm" className="bg-green-600 hover:bg-green-700">
                     <Save className="h-4 w-4 mr-2" />
-                    Salvar
+                    {editandoCalculo ? 'Atualizar' : 'Salvar'}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setMostrarFormulario(false)}>
+                  <Button variant="outline" size="sm" onClick={resetFormulario}>
                     Cancelar
                   </Button>
                 </div>
@@ -342,19 +437,60 @@ export const PrazosCalculadora: React.FC = () => {
 
             <div className="space-y-2">
               {usandoPadrao ? (
-                <div className="text-center py-4 text-gray-500">
+                <div className="text-center py-8 text-gray-500">
                   <p className="text-sm">Nenhum tipo personalizado criado ainda.</p>
                   <p className="text-xs">Clique em "Novo" para criar seu primeiro tipo de prazo.</p>
                 </div>
               ) : (
                 calculos.map((calculo) => (
-                  <div key={calculo.id} className="flex items-center justify-between p-2 border rounded">
-                    <div>
-                      <div className="font-medium">{calculo.nome_calculo}</div>
-                      <div className="text-sm text-gray-500">{calculo.dias_prazo} dias</div>
+                  <div key={calculo.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-900">{calculo.nome_calculo}</div>
+                      <div className="text-sm text-gray-500">
+                        {calculo.dias_prazo} dias • {calculo.considera_fins_semana ? 'Úteis' : 'Corridos'}
+                      </div>
+                      {calculo.observacoes && (
+                        <div className="text-xs text-gray-400 mt-1">{calculo.observacoes}</div>
+                      )}
                     </div>
-                    <div className="text-xs text-gray-400">
-                      {calculo.considera_fins_semana ? 'Úteis' : 'Corridos'}
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => editarCalculo(calculo)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Excluir Cálculo</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir o cálculo "{calculo.nome_calculo}"? 
+                              Esta ação não pode ser desfeita.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => excluirCalculo(calculo.id)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Excluir
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </div>
                 ))

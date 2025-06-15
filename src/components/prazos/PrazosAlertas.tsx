@@ -6,10 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Bell, CheckCircle, RefreshCw, Trash2 } from 'lucide-react';
+import { Bell, CheckCircle, RefreshCw, Trash2, Filter, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Spinner } from '@/components/ui/spinner';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface AlertaPrazo {
   id: string;
@@ -28,8 +30,12 @@ export const PrazosAlertas: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [alertas, setAlertas] = useState<AlertaPrazo[]>([]);
+  const [alertasFiltrados, setAlertasFiltrados] = useState<AlertaPrazo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [filtroStatus, setFiltroStatus] = useState<string>('todos');
+  const [filtroTipo, setFiltroTipo] = useState<string>('todos');
+  const [termoBusca, setTermoBusca] = useState('');
 
   const fetchAlertas = useCallback(async () => {
     if (!user) return;
@@ -41,10 +47,11 @@ export const PrazosAlertas: React.FC = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (error) throw error;
       setAlertas(data || []);
+      setAlertasFiltrados(data || []);
     } catch (error: any) {
       toast({
         title: "Erro ao carregar alertas",
@@ -56,9 +63,41 @@ export const PrazosAlertas: React.FC = () => {
     }
   }, [user, toast]);
 
+  const filtrarAlertas = useCallback(() => {
+    let alertasFiltradosTemp = [...alertas];
+
+    // Filtro por status
+    if (filtroStatus !== 'todos') {
+      if (filtroStatus === 'enviados') {
+        alertasFiltradosTemp = alertasFiltradosTemp.filter(a => a.alerta_enviado);
+      } else if (filtroStatus === 'pendentes') {
+        alertasFiltradosTemp = alertasFiltradosTemp.filter(a => !a.alerta_enviado);
+      }
+    }
+
+    // Filtro por tipo
+    if (filtroTipo !== 'todos') {
+      alertasFiltradosTemp = alertasFiltradosTemp.filter(a => a.tipo_alerta === filtroTipo);
+    }
+
+    // Filtro por busca
+    if (termoBusca) {
+      alertasFiltradosTemp = alertasFiltradosTemp.filter(a => 
+        a.titulo.toLowerCase().includes(termoBusca.toLowerCase()) ||
+        a.descricao.toLowerCase().includes(termoBusca.toLowerCase())
+      );
+    }
+
+    setAlertasFiltrados(alertasFiltradosTemp);
+  }, [alertas, filtroStatus, filtroTipo, termoBusca]);
+
   useEffect(() => {
     fetchAlertas();
   }, [fetchAlertas]);
+
+  useEffect(() => {
+    filtrarAlertas();
+  }, [filtrarAlertas]);
 
   const gerarNovosAlertas = async () => {
     setIsGenerating(true);
@@ -142,6 +181,12 @@ export const PrazosAlertas: React.FC = () => {
     }
   };
 
+  const resetFiltros = () => {
+    setFiltroStatus('todos');
+    setFiltroTipo('todos');
+    setTermoBusca('');
+  };
+
   if (isLoading) {
     return (
       <Card>
@@ -192,26 +237,82 @@ export const PrazosAlertas: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {alertas.length === 0 ? (
+          {/* Filtros */}
+          <div className="mb-6 space-y-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+              <Filter className="h-4 w-4" />
+              Filtros
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <Input
+                  placeholder="Buscar por título ou descrição..."
+                  value={termoBusca}
+                  onChange={(e) => setTermoBusca(e.target.value)}
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Select value={filtroStatus} onValueChange={setFiltroStatus}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os status</SelectItem>
+                    <SelectItem value="pendentes">Pendentes</SelectItem>
+                    <SelectItem value="enviados">Enviados</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os tipos</SelectItem>
+                    <SelectItem value="critico">Crítico</SelectItem>
+                    <SelectItem value="urgente">Urgente</SelectItem>
+                    <SelectItem value="medio">Médio</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Button variant="outline" onClick={resetFiltros} className="w-full">
+                  Limpar Filtros
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {alertasFiltrados.length === 0 ? (
             <div className="text-center py-12">
               <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Nenhum alerta encontrado
+                {alertas.length === 0 ? "Nenhum alerta encontrado" : "Nenhum alerta encontrado com os filtros aplicados"}
               </h3>
               <p className="text-gray-500 mb-4">
-                Clique em "Gerar Alertas" para verificar novos prazos críticos.
+                {alertas.length === 0 
+                  ? "Clique em 'Gerar Alertas' para verificar novos prazos críticos."
+                  : "Tente ajustar os filtros para ver mais resultados."
+                }
               </p>
-              <Button onClick={gerarNovosAlertas} disabled={isGenerating}>
-                {isGenerating ? <Spinner /> : <Bell className="h-4 w-4 mr-2" />}
-                Gerar Primeiro Alerta
-              </Button>
+              {alertas.length === 0 && (
+                <Button onClick={gerarNovosAlertas} disabled={isGenerating}>
+                  {isGenerating ? <Spinner /> : <Bell className="h-4 w-4 mr-2" />}
+                  Gerar Primeiro Alerta
+                </Button>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
-              {alertas.map((alerta) => (
+              <div className="text-sm text-gray-500 mb-4">
+                Mostrando {alertasFiltrados.length} de {alertas.length} alertas
+              </div>
+              {alertasFiltrados.map((alerta) => (
                 <div
                   key={alerta.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -244,6 +345,7 @@ export const PrazosAlertas: React.FC = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => marcarComoEnviado(alerta.id)}
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50"
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Marcar Enviado
@@ -253,7 +355,7 @@ export const PrazosAlertas: React.FC = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => excluirAlerta(alerta.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
