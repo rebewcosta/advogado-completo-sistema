@@ -1,4 +1,4 @@
-// src/pages/LoginPage.tsx
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react';
@@ -85,7 +85,7 @@ const LoginPage = () => {
             className="w-full md:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
             onClick={() => navigate('/cadastro')}
           >
-            Cadastre-se agora
+            Cadastre-se
           </Button>
         </div>
       </div>

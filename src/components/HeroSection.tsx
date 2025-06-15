@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowRight, DownloadCloud, X as CloseIcon, Share2, Shield, Zap, Users, Award } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -257,7 +258,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                       <div className="text-center text-sm pt-4 border-t border-gray-200">
                         <span className="text-gray-600">Não tem uma conta? </span>
                         <Link to="/cadastro" className="text-blue-600 hover:text-blue-500 font-semibold transition-colors">
-                          Cadastre-se gratuitamente
+                          Cadastre-se
                         </Link>
                       </div>
                     </form>

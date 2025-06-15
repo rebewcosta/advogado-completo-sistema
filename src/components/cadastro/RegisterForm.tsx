@@ -6,8 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import RegisterFormHeader from './RegisterFormHeader';
-import SubmitButton from './SubmitButton';
+import { Button } from "@/components/ui/button";
+import { Loader2, User, Mail, Phone, Scale, Building, Lock } from 'lucide-react';
 import PlanInfoBox from './PlanInfoBox';
 
 const RegisterForm = () => {
@@ -111,122 +111,187 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="min-h-screen bg-lawyer-dark py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md mx-auto">
-        <RegisterFormHeader />
-        
-        <Card className="border-0 shadow-lg bg-lawyer-dark">
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
-                <h3 className="text-white text-sm font-medium mb-4">📝 Informações Pessoais</h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="nome" className="text-white">Nome completo *</Label>
+    <div className="container mx-auto px-4 pb-12">
+      <div className="max-w-2xl mx-auto">
+        <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl">
+          <CardContent className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              
+              {/* Informações Pessoais */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <User className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">Informações Pessoais</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="md:col-span-2">
+                    <Label htmlFor="nome" className="text-gray-700 font-medium">Nome completo *</Label>
                     <Input
                       id="nome"
                       type="text"
                       value={formData.nome}
                       onChange={(e) => handleChange('nome', e.target.value)}
-                      className="bg-slate-800 border-slate-600 text-white"
+                      className="mt-1 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Seu nome completo"
                       required
                     />
-                    {errors.nome && <p className="text-red-400 text-sm mt-1">{errors.nome}</p>}
+                    {errors.nome && <p className="text-red-500 text-sm mt-1">{errors.nome}</p>}
                   </div>
                   
                   <div>
-                    <Label htmlFor="email" className="text-white">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => handleChange('email', e.target.value)}
-                      className="bg-slate-800 border-slate-600 text-white"
-                      required
-                    />
-                    {errors.email && <p className="text-red-400 text-sm mt-1">{errors.email}</p>}
+                    <Label htmlFor="email" className="text-gray-700 font-medium">Email *</Label>
+                    <div className="relative mt-1">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => handleChange('email', e.target.value)}
+                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                        placeholder="seu@email.com"
+                        required
+                      />
+                    </div>
+                    {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                   </div>
                   
                   <div>
-                    <Label htmlFor="telefone" className="text-white">Telefone</Label>
-                    <Input
-                      id="telefone"
-                      type="tel"
-                      value={formData.telefone}
-                      onChange={(e) => handleChange('telefone', e.target.value)}
-                      placeholder="(11) 99999-9999"
-                      className="bg-slate-800 border-slate-600 text-white"
-                    />
+                    <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone</Label>
+                    <div className="relative mt-1">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="telefone"
+                        type="tel"
+                        value={formData.telefone}
+                        onChange={(e) => handleChange('telefone', e.target.value)}
+                        placeholder="(11) 99999-9999"
+                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                <h3 className="text-white text-sm font-medium mb-4">🔒 Segurança</h3>
-                <div className="space-y-4">
+              {/* Segurança */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-slate-100 rounded-lg">
+                    <Lock className="h-5 w-5 text-slate-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">Segurança</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="senha" className="text-white">Senha *</Label>
+                    <Label htmlFor="senha" className="text-gray-700 font-medium">Senha *</Label>
                     <Input
                       id="senha"
                       type="password"
                       value={formData.senha}
                       onChange={(e) => handleChange('senha', e.target.value)}
-                      className="bg-slate-800 border-slate-600 text-white"
+                      className="mt-1 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Mínimo 6 caracteres"
                       required
                     />
-                    {errors.senha && <p className="text-red-400 text-sm mt-1">{errors.senha}</p>}
+                    {errors.senha && <p className="text-red-500 text-sm mt-1">{errors.senha}</p>}
                   </div>
                   
                   <div>
-                    <Label htmlFor="confirmarSenha" className="text-white">Confirmar senha *</Label>
+                    <Label htmlFor="confirmarSenha" className="text-gray-700 font-medium">Confirmar senha *</Label>
                     <Input
                       id="confirmarSenha"
                       type="password"
                       value={formData.confirmarSenha}
                       onChange={(e) => handleChange('confirmarSenha', e.target.value)}
-                      className="bg-slate-800 border-slate-600 text-white"
+                      className="mt-1 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Confirme sua senha"
                       required
                     />
-                    {errors.confirmarSenha && <p className="text-red-400 text-sm mt-1">{errors.confirmarSenha}</p>}
+                    {errors.confirmarSenha && <p className="text-red-500 text-sm mt-1">{errors.confirmarSenha}</p>}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-blue-900 p-4 rounded-lg border border-blue-700">
-                <h3 className="text-white text-sm font-medium mb-4">⚖️ Informações Profissionais</h3>
-                <div className="space-y-4">
+              {/* Informações Profissionais */}
+              <div className="space-y-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Scale className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800">Informações Profissionais</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <Label htmlFor="oab" className="text-white">Número da OAB</Label>
+                    <Label htmlFor="oab" className="text-gray-700 font-medium">Número da OAB</Label>
                     <Input
                       id="oab"
                       type="text"
                       value={formData.oab}
                       onChange={(e) => handleChange('oab', e.target.value)}
                       placeholder="Ex: 123456/SP"
-                      className="bg-slate-800 border-slate-600 text-white"
+                      className="mt-1 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="empresa" className="text-white">Nome do escritório</Label>
-                    <Input
-                      id="empresa"
-                      type="text"
-                      value={formData.empresa}
-                      onChange={(e) => handleChange('empresa', e.target.value)}
-                      placeholder="Meu Escritório de Advocacia"
-                      className="bg-slate-800 border-slate-600 text-white"
-                    />
+                    <Label htmlFor="empresa" className="text-gray-700 font-medium">Nome do escritório</Label>
+                    <div className="relative mt-1">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Building className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <Input
+                        id="empresa"
+                        type="text"
+                        value={formData.empresa}
+                        onChange={(e) => handleChange('empresa', e.target.value)}
+                        placeholder="Meu Escritório de Advocacia"
+                        className="pl-10 h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
+              {/* Informações do Plano */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-200">
                 <PlanInfoBox />
               </div>
 
-              <div className="pt-4 border-t border-blue-600">
-                <SubmitButton isLoading={isLoading} />
+              {/* Botão de Submissão */}
+              <div className="pt-6 border-t border-gray-200">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-75 disabled:cursor-not-allowed"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    'Criar Conta'
+                  )}
+                </Button>
+                
+                <p className="text-center text-sm text-gray-600 mt-4">
+                  Ao criar sua conta, você concorda com nossos{' '}
+                  <a href="/termos" className="text-blue-600 hover:text-blue-700 font-medium">
+                    Termos de Uso
+                  </a>{' '}
+                  e{' '}
+                  <a href="/privacidade" className="text-blue-600 hover:text-blue-700 font-medium">
+                    Política de Privacidade
+                  </a>
+                </p>
               </div>
             </form>
           </CardContent>
