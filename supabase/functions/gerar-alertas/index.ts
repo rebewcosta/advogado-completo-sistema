@@ -9,13 +9,18 @@ const corsHeaders = {
 }
 
 serve(async (req) => {
+  console.log('=== FUNÇÃO GERAR-ALERTAS INICIADA ===')
+  console.log('Método da requisição:', req.method)
+  console.log('Headers da requisição:', Object.fromEntries(req.headers.entries()))
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Retornando resposta OPTIONS para CORS')
     return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    console.log('=== INICIO GERAÇÃO DE ALERTAS ===')
+    console.log('Iniciando processamento da função gerar-alertas')
     
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -23,6 +28,8 @@ serve(async (req) => {
     )
 
     const authHeader = req.headers.get('Authorization')
+    console.log('Authorization header presente:', !!authHeader)
+    
     if (!authHeader) {
       console.error('Token de autorização não fornecido')
       throw new Error('Token de autorização não fornecido')
@@ -36,7 +43,7 @@ serve(async (req) => {
       throw new Error('Usuário não autenticado')
     }
 
-    console.log('Usuário autenticado:', user.id)
+    console.log('Usuário autenticado com sucesso:', user.id)
     
     // Buscar configurações do usuário ou usar padrões
     const { data: config } = await supabaseClient
@@ -52,9 +59,10 @@ serve(async (req) => {
     let totalAlertas = 0
     const hoje = new Date()
 
-    console.log('Configurações:', { diasCritico, diasUrgente, diasMedio })
+    console.log('Configurações de alertas:', { diasCritico, diasUrgente, diasMedio })
 
     // Gerar alertas para processos com próximo prazo
+    console.log('Buscando processos...')
     const { data: processos, error: processosError } = await supabaseClient
       .from('processos')
       .select('*')
@@ -70,6 +78,8 @@ serve(async (req) => {
         for (const processo of processos) {
           const dataPrazo = new Date(processo.proximo_prazo)
           const diasRestantes = Math.ceil((dataPrazo.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+
+          console.log(`Processo ${processo.numero_processo}: ${diasRestantes} dias restantes`)
 
           if (diasRestantes <= diasMedio && diasRestantes >= 0) {
             let tipoAlerta = 'medio'
@@ -89,6 +99,7 @@ serve(async (req) => {
               .maybeSingle()
 
             if (!alertaExistente) {
+              console.log(`Criando alerta para processo ${processo.numero_processo}`)
               const { error: insertError } = await supabaseClient
                 .from('prazo_alertas')
                 .insert({
@@ -105,10 +116,12 @@ serve(async (req) => {
 
               if (!insertError) {
                 totalAlertas++
-                console.log('Alerta criado para processo:', processo.numero_processo)
+                console.log('Alerta criado com sucesso para processo:', processo.numero_processo)
               } else {
                 console.error('Erro ao criar alerta para processo:', insertError)
               }
+            } else {
+              console.log(`Alerta já existe para processo ${processo.numero_processo}`)
             }
           }
         }
@@ -116,6 +129,7 @@ serve(async (req) => {
     }
 
     // Gerar alertas para eventos da agenda
+    console.log('Buscando eventos da agenda...')
     const { data: eventos, error: eventosError } = await supabaseClient
       .from('agenda_eventos')
       .select('*')
@@ -131,6 +145,8 @@ serve(async (req) => {
         for (const evento of eventos) {
           const dataEvento = new Date(evento.data_hora_inicio)
           const diasRestantes = Math.ceil((dataEvento.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+
+          console.log(`Evento ${evento.titulo}: ${diasRestantes} dias restantes`)
 
           if (diasRestantes <= diasMedio && diasRestantes >= 0) {
             let tipoAlerta = 'medio'
@@ -150,6 +166,7 @@ serve(async (req) => {
               .maybeSingle()
 
             if (!alertaExistente) {
+              console.log(`Criando alerta para evento ${evento.titulo}`)
               const { error: insertError } = await supabaseClient
                 .from('prazo_alertas')
                 .insert({
@@ -166,39 +183,55 @@ serve(async (req) => {
 
               if (!insertError) {
                 totalAlertas++
-                console.log('Alerta criado para evento:', evento.titulo)
+                console.log('Alerta criado com sucesso para evento:', evento.titulo)
               } else {
                 console.error('Erro ao criar alerta para evento:', insertError)
               }
+            } else {
+              console.log(`Alerta já existe para evento ${evento.titulo}`)
             }
           }
         }
       }
     }
 
-    console.log('=== FIM - Total de alertas gerados:', totalAlertas, '===')
+    console.log('=== FUNÇÃO CONCLUÍDA - Total de alertas gerados:', totalAlertas, '===')
+
+    const response = {
+      success: true,
+      alertas_gerados: totalAlertas,
+      message: `${totalAlertas} ${totalAlertas === 1 ? 'alerta gerado' : 'alertas gerados'} com sucesso!`
+    }
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        alertas_gerados: totalAlertas,
-        message: `${totalAlertas} ${totalAlertas === 1 ? 'alerta gerado' : 'alertas gerados'} com sucesso!`
-      }),
+      JSON.stringify(response),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
         status: 200,
       },
     )
   } catch (error) {
-    console.error('=== ERRO NA FUNÇÃO ===', error)
+    console.error('=== ERRO NA FUNÇÃO GERAR-ALERTAS ===')
+    console.error('Tipo do erro:', error.constructor.name)
+    console.error('Mensagem do erro:', error.message)
+    console.error('Stack trace:', error.stack)
+    
+    const errorResponse = {
+      success: false,
+      error: error.message || 'Erro interno do servidor',
+      alertas_gerados: 0
+    }
+
     return new Response(
-      JSON.stringify({ 
-        success: false,
-        error: error.message || 'Erro interno do servidor',
-        alertas_gerados: 0
-      }),
+      JSON.stringify(errorResponse),
       {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json' 
+        },
         status: 500,
       },
     )

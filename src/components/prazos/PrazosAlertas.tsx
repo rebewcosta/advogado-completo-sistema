@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Bell, CheckCircle, RefreshCw, Trash2, Filter, Search } from 'lucide-react';
+import { Bell, CheckCircle, RefreshCw, Trash2, Filter } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Spinner } from '@/components/ui/spinner';
@@ -99,31 +99,52 @@ export const PrazosAlertas: React.FC = () => {
   }, [filtrarAlertas]);
 
   const gerarNovosAlertas = async () => {
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsGenerating(true);
+    console.log('=== INICIANDO GERAÇÃO DE ALERTAS ===');
+    
     try {
-      console.log('Iniciando geração de alertas...');
+      // Obter o token de sessão atual
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      const session = await supabase.auth.getSession();
-      if (!session.data.session?.access_token) {
-        throw new Error('Usuário não autenticado');
+      if (sessionError || !session?.access_token) {
+        console.error('Erro ao obter sessão:', sessionError);
+        throw new Error('Sessão não encontrada. Faça login novamente.');
       }
 
-      console.log('Chamando função gerar-alertas...');
+      console.log('Sessão obtida com sucesso. Chamando função gerar-alertas...');
       
+      // Chamar a função Edge
       const { data, error } = await supabase.functions.invoke('gerar-alertas', {
         headers: {
-          Authorization: `Bearer ${session.data.session.access_token}`,
+          Authorization: `Bearer ${session.access_token}`,
         },
       });
       
-      console.log('Resposta da função:', data, error);
+      console.log('Resposta da função:', { data, error });
       
       if (error) {
-        console.error('Erro da função:', error);
-        throw new Error(error.message || 'Erro ao chamar função de alertas');
+        console.error('Erro retornado pela função:', error);
+        throw new Error(error.message || 'Erro ao chamar a função de alertas');
       }
 
-      const alertasGerados = data?.alertas_gerados || 0;
+      if (!data) {
+        throw new Error('Nenhuma resposta recebida da função');
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Erro desconhecido na função');
+      }
+
+      const alertasGerados = data.alertas_gerados || 0;
       
       toast({
         title: "Alertas gerados com sucesso!",
@@ -132,16 +153,26 @@ export const PrazosAlertas: React.FC = () => {
 
       // Recarregar a lista de alertas
       await fetchAlertas();
+      
     } catch (error: any) {
-      console.error('Erro ao gerar alertas:', error);
+      console.error('Erro completo ao gerar alertas:', error);
+      
+      let errorMessage = 'Erro desconhecido ao gerar alertas';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      }
       
       toast({
         title: "Erro ao gerar alertas",
-        description: error.message || 'Erro desconhecido ao gerar alertas',
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
       setIsGenerating(false);
+      console.log('=== FIM DA GERAÇÃO DE ALERTAS ===');
     }
   };
 
