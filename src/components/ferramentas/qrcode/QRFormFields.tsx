@@ -11,13 +11,13 @@ interface QRFormFieldsProps {
   qrContent: string;
   setQRContent: (content: string) => void;
   emailData: EmailData;
-  setEmailData: (data: EmailData) => void;
+  setEmailData: (data: EmailData | ((prev: EmailData) => EmailData)) => void;
   phoneData: PhoneData;
-  setPhoneData: (data: PhoneData) => void;
+  setPhoneData: (data: PhoneData | ((prev: PhoneData) => PhoneData)) => void;
   wifiData: WifiData;
-  setWifiData: (data: WifiData) => void;
+  setWifiData: (data: WifiData | ((prev: WifiData) => WifiData)) => void;
   vcardData: VCardData;
-  setVcardData: (data: VCardData) => void;
+  setVcardData: (data: VCardData | ((prev: VCardData) => VCardData)) => void;
 }
 
 export const QRFormFields: React.FC<QRFormFieldsProps> = ({
