@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,14 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { QrCode, Download, Copy, Link2, Mail, Phone, Wifi } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import QRCodeLib from 'qrcode';
 
 type QRType = 'url' | 'text' | 'email' | 'phone' | 'wifi' | 'vcard';
-
-interface QRData {
-  type: QRType;
-  content: string;
-  title?: string;
-}
 
 export const GeradorQrCode: React.FC = () => {
   const { toast } = useToast();
@@ -33,6 +28,7 @@ export const GeradorQrCode: React.FC = () => {
     email: '', 
     website: '' 
   });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const qrTypes = [
     { value: 'url', label: 'Link/URL', icon: Link2 },
@@ -42,27 +38,6 @@ export const GeradorQrCode: React.FC = () => {
     { value: 'wifi', label: 'Wi-Fi', icon: Wifi },
     { value: 'vcard', label: 'Cartão de Visita', icon: QrCode }
   ];
-
-  // Simula geração de QR Code (normalmente usaria uma biblioteca como qrcode)
-  const generateQRCodeDataURL = (content: string): string => {
-    // Para demonstração, criamos um SVG simples
-    const size = 200;
-    const svg = `
-      <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-        <rect width="${size}" height="${size}" fill="white"/>
-        <rect x="20" y="20" width="160" height="160" fill="black" rx="5"/>
-        <rect x="30" y="30" width="140" height="140" fill="white" rx="3"/>
-        <text x="${size/2}" y="${size/2}" text-anchor="middle" font-family="monospace" font-size="8" fill="black">
-          QR CODE
-        </text>
-        <text x="${size/2}" y="${size/2 + 15}" text-anchor="middle" font-family="monospace" font-size="6" fill="black">
-          ${content.length > 20 ? content.substring(0, 20) + '...' : content}
-        </text>
-      </svg>
-    `;
-    
-    return `data:image/svg+xml;base64,${btoa(svg)}`;
-  };
 
   const buildContent = (): string => {
     switch (qrType) {
@@ -99,7 +74,7 @@ END:VCARD`;
     }
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     const content = buildContent();
     
     if (!content.trim()) {
@@ -111,13 +86,35 @@ END:VCARD`;
       return;
     }
 
-    const qrDataURL = generateQRCodeDataURL(content);
-    setGeneratedQR(qrDataURL);
-    
-    toast({
-      title: "QR Code gerado!",
-      description: "Seu QR Code foi criado com sucesso.",
-    });
+    try {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
+      await QRCodeLib.toCanvas(canvas, content, {
+        width: 300,
+        margin: 2,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF'
+        },
+        errorCorrectionLevel: 'M'
+      });
+
+      const dataURL = canvas.toDataURL('image/png');
+      setGeneratedQR(dataURL);
+      
+      toast({
+        title: "QR Code gerado!",
+        description: "Seu QR Code foi criado com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error);
+      toast({
+        title: "Erro ao gerar QR Code",
+        description: "Não foi possível gerar o QR Code. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDownload = () => {
@@ -125,7 +122,7 @@ END:VCARD`;
     
     const link = document.createElement('a');
     link.href = generatedQR;
-    link.download = `qrcode_${qrTitle || qrType}_${Date.now()}.svg`;
+    link.download = `qrcode_${qrTitle || qrType}_${Date.now()}.png`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -136,14 +133,53 @@ END:VCARD`;
     });
   };
 
-  const handleCopyContent = () => {
+  const handleCopyContent = async () => {
     const content = buildContent();
-    navigator.clipboard.writeText(content);
+    try {
+      await navigator.clipboard.writeText(content);
+      toast({
+        title: "Conteúdo copiado!",
+        description: "O conteúdo do QR Code foi copiado para a área de transferência.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar o conteúdo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCopyImage = async () => {
+    if (!generatedQR) return;
     
-    toast({
-      title: "Conteúdo copiado!",
-      description: "O conteúdo do QR Code foi copiado para a área de transferência.",
-    });
+    try {
+      const response = await fetch(generatedQR);
+      const blob = await response.blob();
+      
+      if (navigator.clipboard && window.ClipboardItem) {
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': blob })
+        ]);
+        
+        toast({
+          title: "QR Code copiado!",
+          description: "A imagem do QR Code foi copiada para a área de transferência.",
+        });
+      } else {
+        // Fallback para navegadores que não suportam clipboard API para imagens
+        const link = document.createElement('a');
+        link.href = generatedQR;
+        link.download = `qrcode_${qrTitle || qrType}_${Date.now()}.png`;
+        link.click();
+      }
+    } catch (error) {
+      toast({
+        title: "Erro ao copiar",
+        description: "Não foi possível copiar a imagem. Tente fazer o download.",
+        variant: "destructive",
+      });
+    }
   };
 
   const renderFormFields = () => {
@@ -390,18 +426,28 @@ END:VCARD`;
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
               {generatedQR ? (
                 <div className="space-y-4">
+                  <canvas 
+                    ref={canvasRef}
+                    style={{ display: 'none' }}
+                  />
                   <img 
                     src={generatedQR} 
                     alt="QR Code gerado" 
-                    className="mx-auto max-w-full h-auto"
+                    className="mx-auto max-w-full h-auto border rounded"
                   />
                   {qrTitle && (
                     <p className="font-medium text-gray-900">{qrTitle}</p>
                   )}
-                  <Button onClick={handleDownload} variant="outline" size="sm">
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar QR Code
-                  </Button>
+                  <div className="flex gap-2 justify-center">
+                    <Button onClick={handleDownload} variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar
+                    </Button>
+                    <Button onClick={handleCopyImage} variant="outline" size="sm">
+                      <Copy className="h-4 w-4 mr-2" />
+                      Copiar
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="text-gray-500">

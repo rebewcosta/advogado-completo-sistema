@@ -7,59 +7,133 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { FileType, Download, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { saveAs } from 'file-saver';
 
-type ConversionType = 'pdf-to-docx' | 'docx-to-pdf' | 'txt-to-pdf' | 'html-to-pdf';
+type ConversionType = 'txt-to-pdf' | 'html-to-pdf' | 'pdf-merge' | 'pdf-split';
 
 export const ConversorDocumentos: React.FC = () => {
   const { toast } = useToast();
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [conversionType, setConversionType] = useState<ConversionType>('pdf-to-docx');
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [conversionType, setConversionType] = useState<ConversionType>('txt-to-pdf');
   const [isConverting, setIsConverting] = useState(false);
-  const [convertedFileUrl, setConvertedFileUrl] = useState<string | null>(null);
+  const [textContent, setTextContent] = useState('');
 
   const conversionOptions = [
-    { value: 'pdf-to-docx', label: 'PDF para Word (.docx)', accepts: '.pdf' },
-    { value: 'docx-to-pdf', label: 'Word para PDF (.pdf)', accepts: '.docx,.doc' },
-    { value: 'txt-to-pdf', label: 'Texto para PDF (.pdf)', accepts: '.txt' },
-    { value: 'html-to-pdf', label: 'HTML para PDF (.pdf)', accepts: '.html,.htm' }
+    { value: 'txt-to-pdf', label: 'Texto para PDF', accepts: '.txt', multiple: false },
+    { value: 'html-to-pdf', label: 'HTML para PDF', accepts: '.html,.htm', multiple: false },
+    { value: 'pdf-merge', label: 'Unir PDFs', accepts: '.pdf', multiple: true },
+    { value: 'pdf-split', label: 'Dividir PDF', accepts: '.pdf', multiple: false }
   ];
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setConvertedFileUrl(null);
+    const files = event.target.files;
+    if (files) {
+      setSelectedFiles(files);
     }
   };
 
-  const getOutputExtension = (type: ConversionType): string => {
-    switch (type) {
-      case 'pdf-to-docx':
-        return 'docx';
-      case 'docx-to-pdf':
-      case 'txt-to-pdf':
-      case 'html-to-pdf':
-        return 'pdf';
-      default:
-        return 'pdf';
+  const createPDFFromText = async (text: string): Promise<Uint8Array> => {
+    const pdfDoc = await PDFDocument.create();
+    const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
+    
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
+    const fontSize = 12;
+    const lineHeight = fontSize * 1.2;
+    
+    const lines = text.split('\n');
+    let yPosition = height - 50;
+    
+    for (const line of lines) {
+      if (yPosition < 50) {
+        const newPage = pdfDoc.addPage();
+        yPosition = newPage.getSize().height - 50;
+        newPage.drawText(line, {
+          x: 50,
+          y: yPosition,
+          size: fontSize,
+          font: timesRomanFont,
+          color: rgb(0, 0, 0),
+        });
+      } else {
+        page.drawText(line, {
+          x: 50,
+          y: yPosition,
+          size: fontSize,
+          font: timesRomanFont,
+          color: rgb(0, 0, 0),
+        });
+      }
+      yPosition -= lineHeight;
     }
+    
+    return await pdfDoc.save();
   };
 
-  const simulateConversion = async (file: File, type: ConversionType): Promise<Blob> => {
-    // Simula o processo de conversão
-    await new Promise(resolve => setTimeout(resolve, 2000));
+  const createPDFFromHTML = async (htmlContent: string): Promise<Uint8Array> => {
+    const pdfDoc = await PDFDocument.create();
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
     
-    // Para demonstração, retorna um blob vazio com o tipo MIME correto
-    const outputExtension = getOutputExtension(type);
-    const mimeType = outputExtension === 'docx' 
-      ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-      : 'application/pdf';
+    const page = pdfDoc.addPage();
+    const { width, height } = page.getSize();
     
-    return new Blob(['Arquivo convertido (demonstração)'], { type: mimeType });
+    // Simples conversão HTML para texto (para demonstração)
+    const textContent = htmlContent.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ');
+    const lines = textContent.split('\n');
+    
+    let yPosition = height - 50;
+    const fontSize = 12;
+    const lineHeight = fontSize * 1.2;
+    
+    for (const line of lines) {
+      if (yPosition < 50) break;
+      page.drawText(line, {
+        x: 50,
+        y: yPosition,
+        size: fontSize,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+      yPosition -= lineHeight;
+    }
+    
+    return await pdfDoc.save();
+  };
+
+  const mergePDFs = async (files: File[]): Promise<Uint8Array> => {
+    const mergedPdf = await PDFDocument.create();
+    
+    for (const file of files) {
+      const fileBuffer = await file.arrayBuffer();
+      const pdf = await PDFDocument.load(fileBuffer);
+      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+      copiedPages.forEach((page) => mergedPdf.addPage(page));
+    }
+    
+    return await mergedPdf.save();
+  };
+
+  const splitPDF = async (file: File): Promise<Uint8Array[]> => {
+    const fileBuffer = await file.arrayBuffer();
+    const sourcePdf = await PDFDocument.load(fileBuffer);
+    const pageCount = sourcePdf.getPageCount();
+    
+    const splitPdfs: Uint8Array[] = [];
+    
+    for (let i = 0; i < pageCount; i++) {
+      const newPdf = await PDFDocument.create();
+      const [copiedPage] = await newPdf.copyPages(sourcePdf, [i]);
+      newPdf.addPage(copiedPage);
+      const pdfBytes = await newPdf.save();
+      splitPdfs.push(pdfBytes);
+    }
+    
+    return splitPdfs;
   };
 
   const handleConvert = async () => {
-    if (!selectedFile) {
+    if (!selectedFiles && !textContent && conversionType !== 'txt-to-pdf') {
       toast({
         title: "Arquivo obrigatório",
         description: "Por favor, selecione um arquivo para converter.",
@@ -71,46 +145,86 @@ export const ConversorDocumentos: React.FC = () => {
     setIsConverting(true);
     
     try {
-      const convertedBlob = await simulateConversion(selectedFile, conversionType);
+      let result: Uint8Array | Uint8Array[];
       
-      // Cria URL para download
-      const url = URL.createObjectURL(convertedBlob);
-      setConvertedFileUrl(url);
+      switch (conversionType) {
+        case 'txt-to-pdf':
+          if (selectedFiles && selectedFiles[0]) {
+            const file = selectedFiles[0];
+            const text = await file.text();
+            result = await createPDFFromText(text);
+          } else if (textContent) {
+            result = await createPDFFromText(textContent);
+          } else {
+            throw new Error('Nenhum texto fornecido');
+          }
+          break;
+          
+        case 'html-to-pdf':
+          if (selectedFiles && selectedFiles[0]) {
+            const file = selectedFiles[0];
+            const html = await file.text();
+            result = await createPDFFromHTML(html);
+          } else {
+            throw new Error('Nenhum arquivo HTML selecionado');
+          }
+          break;
+          
+        case 'pdf-merge':
+          if (selectedFiles && selectedFiles.length > 1) {
+            const filesArray = Array.from(selectedFiles);
+            result = await mergePDFs(filesArray);
+          } else {
+            throw new Error('Selecione pelo menos 2 arquivos PDF');
+          }
+          break;
+          
+        case 'pdf-split':
+          if (selectedFiles && selectedFiles[0]) {
+            result = await splitPDF(selectedFiles[0]);
+          } else {
+            throw new Error('Nenhum arquivo PDF selecionado');
+          }
+          break;
+          
+        default:
+          throw new Error('Tipo de conversão não suportado');
+      }
       
-      toast({
-        title: "Conversão concluída!",
-        description: "Seu arquivo foi convertido com sucesso. Clique em 'Baixar' para salvar.",
-      });
+      // Download dos arquivos
+      if (Array.isArray(result)) {
+        // Múltiplos arquivos (split)
+        result.forEach((pdfBytes, index) => {
+          const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+          saveAs(blob, `documento_parte_${index + 1}.pdf`);
+        });
+        
+        toast({
+          title: "Conversão concluída!",
+          description: `${result.length} arquivos foram gerados e baixados.`,
+        });
+      } else {
+        // Arquivo único
+        const blob = new Blob([result], { type: 'application/pdf' });
+        const fileName = conversionType === 'pdf-merge' ? 'documentos_unidos.pdf' : 'documento_convertido.pdf';
+        saveAs(blob, fileName);
+        
+        toast({
+          title: "Conversão concluída!",
+          description: "Seu arquivo foi convertido e baixado com sucesso.",
+        });
+      }
       
     } catch (error) {
+      console.error('Erro na conversão:', error);
       toast({
         title: "Erro na conversão",
-        description: "Não foi possível converter o arquivo. Tente novamente.",
+        description: "Não foi possível converter o arquivo. Verifique o formato e tente novamente.",
         variant: "destructive",
       });
     } finally {
       setIsConverting(false);
     }
-  };
-
-  const handleDownload = () => {
-    if (!convertedFileUrl || !selectedFile) return;
-    
-    const outputExtension = getOutputExtension(conversionType);
-    const originalName = selectedFile.name.split('.')[0];
-    const fileName = `${originalName}_convertido.${outputExtension}`;
-    
-    const link = document.createElement('a');
-    link.href = convertedFileUrl;
-    link.download = fileName;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    toast({
-      title: "Download iniciado",
-      description: `Arquivo ${fileName} está sendo baixado.`,
-    });
   };
 
   const selectedOption = conversionOptions.find(opt => opt.value === conversionType);
@@ -123,7 +237,7 @@ export const ConversorDocumentos: React.FC = () => {
           Conversor de Documentos
         </CardTitle>
         <CardDescription>
-          Converta seus documentos entre diferentes formatos (PDF, Word, TXT, HTML)
+          Converta e manipule seus documentos (PDF, TXT, HTML)
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -144,75 +258,68 @@ export const ConversorDocumentos: React.FC = () => {
             </Select>
           </div>
 
+          {conversionType === 'txt-to-pdf' && (
+            <div>
+              <Label htmlFor="text-content">Texto para converter (ou selecione arquivo .txt)</Label>
+              <textarea
+                id="text-content"
+                value={textContent}
+                onChange={(e) => setTextContent(e.target.value)}
+                placeholder="Digite seu texto aqui ou selecione um arquivo .txt abaixo..."
+                className="mt-1 w-full min-h-[150px] p-3 border border-input rounded-md resize-vertical"
+              />
+            </div>
+          )}
+
           <div>
-            <Label htmlFor="file-upload">Arquivo para Conversão</Label>
+            <Label htmlFor="file-upload">
+              {selectedOption?.multiple ? 'Arquivos' : 'Arquivo'} para Conversão
+            </Label>
             <Input
               id="file-upload"
               type="file"
               onChange={handleFileSelect}
               accept={selectedOption?.accepts}
+              multiple={selectedOption?.multiple}
               className="mt-1"
             />
-            {selectedFile && (
+            {selectedFiles && (
               <p className="text-sm text-gray-600 mt-1">
-                Arquivo selecionado: {selectedFile.name}
+                {selectedFiles.length > 1 
+                  ? `${selectedFiles.length} arquivos selecionados`
+                  : `Arquivo selecionado: ${selectedFiles[0].name}`
+                }
               </p>
             )}
           </div>
 
-          <div className="flex gap-2">
-            <Button 
-              onClick={handleConvert} 
-              disabled={!selectedFile || isConverting}
-              className="flex-1"
-            >
-              {isConverting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Convertendo...
-                </>
-              ) : (
-                <>
-                  <Upload className="h-4 w-4 mr-2" />
-                  Converter Arquivo
-                </>
-              )}
-            </Button>
-            
-            {convertedFileUrl && (
-              <Button 
-                onClick={handleDownload}
-                variant="outline"
-                className="flex-1"
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Baixar Convertido
-              </Button>
+          <Button 
+            onClick={handleConvert} 
+            disabled={(!selectedFiles && !textContent) || isConverting}
+            className="w-full"
+          >
+            {isConverting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                Convertendo...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                Converter
+              </>
             )}
-          </div>
-        </div>
-
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
-              <p className="font-medium mb-1">Funcionalidade em Demonstração</p>
-              <p>
-                Esta ferramenta está em modo demonstração. Para implementação completa, 
-                seria necessário integrar bibliotecas como PDF-lib, docx, ou serviços 
-                de conversão online como CloudConvert.
-              </p>
-            </div>
-          </div>
+          </Button>
         </div>
 
         <div className="space-y-2">
-          <h4 className="font-medium text-gray-900">Formatos Suportados:</h4>
+          <h4 className="font-medium text-gray-900">Funcionalidades Disponíveis:</h4>
           <ul className="text-sm text-gray-600 space-y-1">
-            <li>• PDF ↔ Word (.docx)</li>
-            <li>• Texto (.txt) → PDF</li>
-            <li>• HTML (.html) → PDF</li>
-            <li>• Preservação de formatação básica</li>
+            <li>• Converter texto para PDF</li>
+            <li>• Converter HTML para PDF</li>
+            <li>• Unir múltiplos PDFs em um arquivo</li>
+            <li>• Dividir PDF em páginas separadas</li>
+            <li>• Download automático dos arquivos convertidos</li>
           </ul>
         </div>
       </CardContent>
