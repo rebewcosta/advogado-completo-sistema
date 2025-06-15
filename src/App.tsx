@@ -100,7 +100,7 @@ function App() {
                   <Route path="/relatorios" element={<ProtectedRoute><ProtectedLayout><RelatoriosPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/configuracoes" element={<ProtectedRoute><ProtectedLayout><ConfiguracoesPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/perfil-usuario" element={<ProtectedRoute><ProtectedLayout><PerfilUsuarioPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/suporte" element={<ProtectedRoute><ProtectedLayout><SuportePage /></ProtectedRoute>} />
+                  <Route path="/suporte" element={<ProtectedRoute><ProtectedLayout><SuportePage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute><ProtectedLayout><AdminPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/redefinir-pin-financeiro" element={<ProtectedRoute><ProtectedLayout><RedefinirPinFinanceiroPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/emails-transacionais" element={<ProtectedRoute><ProtectedLayout><EmailsTransacionaisPage /></ProtectedLayout></ProtectedRoute>} />
