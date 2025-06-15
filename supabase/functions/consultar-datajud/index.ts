@@ -14,6 +14,35 @@ interface ConsultaRequest {
   useCache?: boolean;
 }
 
+// Mapeamento dos tribunais para os índices da API DataJud
+const TRIBUNAL_INDICES = {
+  'TJSP': 'api_publica_tjsp',
+  'TJRJ': 'api_publica_tjrj',
+  'TJMG': 'api_publica_tjmg',
+  'TJRS': 'api_publica_tjrs',
+  'TJPR': 'api_publica_tjpr',
+  'TJSC': 'api_publica_tjsc',
+  'TJGO': 'api_publica_tjgo',
+  'TJDF': 'api_publica_tjdf',
+  'TJPE': 'api_publica_tjpe',
+  'TJBA': 'api_publica_tjba',
+  'TJCE': 'api_publica_tjce',
+  'TJMT': 'api_publica_tjmt',
+  'TJMS': 'api_publica_tjms',
+  'TJPB': 'api_publica_tjpb',
+  'TJAL': 'api_publica_tjal',
+  'TJSE': 'api_publica_tjse',
+  'TJRN': 'api_publica_tjrn',
+  'TJPI': 'api_publica_tjpi',
+  'TJMA': 'api_publica_tjma',
+  'TJAP': 'api_publica_tjap',
+  'TJAC': 'api_publica_tjac',
+  'TJAM': 'api_publica_tjam',
+  'TJRO': 'api_publica_tjro',
+  'TJRR': 'api_publica_tjrr',
+  'TJTO': 'api_publica_tjto'
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -27,7 +56,7 @@ serve(async (req) => {
 
     const { tipo, termo, tribunal, useCache = true }: ConsultaRequest = await req.json();
     
-    console.log('Consulta DataJud:', { tipo, termo, tribunal });
+    console.log('Consulta DataJud Real:', { tipo, termo, tribunal });
 
     // Verificar cache primeiro para consultas por número
     if (tipo === 'numero' && useCache) {
@@ -51,22 +80,22 @@ serve(async (req) => {
       }
     }
 
-    // Simular consulta à API DataJud (em produção, usar API real do CNJ)
-    const dadosSimulados = await simularConsultaDatajud(tipo, termo, tribunal);
+    // Consultar API real do DataJud
+    const dadosReais = await consultarApiDatajud(tipo, termo, tribunal);
 
     let resultadosCount = 0;
-    if (dadosSimulados) {
-      resultadosCount = Array.isArray(dadosSimulados) ? dadosSimulados.length : 1;
+    if (dadosReais) {
+      resultadosCount = Array.isArray(dadosReais) ? dadosReais.length : 1;
     }
 
     // Salvar no cache se for consulta por número
-    if (tipo === 'numero' && dadosSimulados && !Array.isArray(dadosSimulados)) {
+    if (tipo === 'numero' && dadosReais && !Array.isArray(dadosReais)) {
       await supabase
         .from('processos_cache')
         .upsert({
           numero_processo: termo,
-          dados_processo: dadosSimulados,
-          tribunal: tribunal || dadosSimulados.tribunal,
+          dados_processo: dadosReais,
+          tribunal: tribunal || extrairTribunalDoNumero(termo),
           data_consulta: new Date().toISOString(),
           data_expiracao: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24h
         });
@@ -94,7 +123,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: dadosSimulados,
+        data: dadosReais,
         fromCache: false 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -105,7 +134,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: 'Erro interno na consulta' 
+        error: error.message || 'Erro interno na consulta' 
       }),
       { 
         status: 500,
@@ -115,241 +144,296 @@ serve(async (req) => {
   }
 });
 
-async function simularConsultaDatajud(tipo: string, termo: string, tribunal?: string) {
-  // Simular delay da API
-  await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 1000));
+async function consultarApiDatajud(tipo: string, termo: string, tribunal?: string) {
+  try {
+    if (tipo === 'numero') {
+      return await consultarPorNumero(termo, tribunal);
+    } else if (tipo === 'nome') {
+      return await consultarPorNome(termo, tribunal);
+    } else if (tipo === 'documento') {
+      return await consultarPorDocumento(termo, tribunal);
+    }
+    
+    throw new Error('Tipo de consulta não suportado');
+  } catch (error) {
+    console.error('Erro ao consultar API DataJud:', error);
+    throw error;
+  }
+}
 
-  if (tipo === 'numero') {
-    // Gerar dados baseados no número do processo para maior realismo
-    const numeroHash = hashCode(termo);
-    const seed = Math.abs(numeroHash) % 1000;
-    
-    // Definir tribunais baseados no código do processo
-    const tribunais = ['TJSP', 'TJRJ', 'TJMG', 'TJRS', 'TJPR', 'TJSC', 'TJGO', 'TJDF', 'TJPE', 'TJBA'];
-    const tribunalIndex = seed % tribunais.length;
-    const tribunalEscolhido = tribunal || tribunais[tribunalIndex];
-    
-    // Classes processuais realistas
-    const classes = [
-      'Procedimento Comum Cível',
-      'Ação de Cobrança',
-      'Ação de Indenização',
-      'Execução de Título Extrajudicial',
-      'Ação Trabalhista',
-      'Mandado de Segurança',
-      'Ação de Despejo',
-      'Revisional de Contrato',
-      'Ação de Divórcio',
-      'Inventário'
-    ];
-    
-    const assuntos = [
-      'Responsabilidade Civil',
-      'Contratos Bancários',
-      'Direito do Consumidor',
-      'Direito Trabalhista',
-      'Direito Previdenciário',
-      'Direito Tributário',
-      'Direito Imobiliário',
-      'Direito de Família',
-      'Direito Empresarial',
-      'Direito Administrativo'
-    ];
-    
-    const status = ['Em andamento', 'Suspenso', 'Arquivado', 'Sentenciado', 'Baixado'];
-    
-    // Gerar nomes realistas
-    const nomes = [
-      'Maria Silva Santos', 'João Carlos Oliveira', 'Ana Paula Costa', 'Carlos Eduardo Lima',
-      'Fernanda Alves Pereira', 'Roberto Santos Cruz', 'Patricia Moreira Silva', 'Ricardo Ferreira',
-      'Juliana Rodrigues', 'Antonio Carlos Sousa', 'Luciana Barbosa', 'Marcos Vinicius Teixeira',
-      'Camila Martins', 'Felipe Santos Rocha', 'Adriana Nascimento', 'Bruno Silva Machado'
-    ];
-    
-    const advogados = [
-      'Dr. Paulo Henrique Advocacia', 'Dra. Marina Santos Jurídica', 'Dr. Carlos Alberto Silva',
-      'Dra. Fernanda Costa Advogados', 'Dr. Roberto Almeida', 'Dra. Lucia Helena Direito',
-      'Dr. Eduardo Martins', 'Dra. Cristina Rocha', 'Dr. Alexandre Santos', 'Dra. Beatriz Lima'
-    ];
-    
-    const comarcas = [
-      'São Paulo', 'Rio de Janeiro', 'Belo Horizonte', 'Porto Alegre', 'Curitiba',
-      'Florianópolis', 'Goiânia', 'Brasília', 'Recife', 'Salvador', 'Fortaleza', 'Manaus'
-    ];
-    
-    const classeEscolhida = classes[seed % classes.length];
-    const assuntoEscolhido = assuntos[seed % assuntos.length];
-    const statusEscolhido = status[seed % status.length];
-    const comarcaEscolhida = comarcas[seed % comarcas.length];
-    
-    // Gerar datas baseadas no seed
-    const dataAjuizamento = new Date(2020 + (seed % 5), seed % 12, (seed % 28) + 1);
-    const diasTramitando = Math.floor(seed / 3) + 30;
-    const dataUltimaMovimentacao = new Date(dataAjuizamento.getTime() + diasTramitando * 24 * 60 * 60 * 1000);
-    
-    // Gerar valor da causa
-    const valorCausa = (seed * 1000) + Math.floor(Math.random() * 50000) + 5000;
-    
-    // Gerar partes
-    const autor = nomes[seed % nomes.length];
-    const reu = nomes[(seed + 1) % nomes.length];
-    
-    // Gerar CPFs fictícios
-    const cpfAutor = gerarCPFFicticio(seed);
-    const cpfReu = gerarCPFFicticio(seed + 1);
-    
-    // Gerar movimentações realistas
-    const movimentacoes = gerarMovimentacoesRealistas(dataAjuizamento, dataUltimaMovimentacao, seed);
-    
-    return {
-      numero_processo: termo,
-      classe: classeEscolhida,
-      assunto: assuntoEscolhido,
-      tribunal: tribunalEscolhido,
-      orgao_julgador: `${Math.floor(seed % 20) + 1}ª Vara Cível`,
-      comarca: comarcaEscolhida,
-      data_ajuizamento: dataAjuizamento.toISOString().split('T')[0],
-      data_ultima_movimentacao: dataUltimaMovimentacao.toISOString().split('T')[0],
-      status: statusEscolhido,
-      valor_causa: valorCausa,
-      partes: [
-        { nome: autor, tipo: 'Autor', documento: cpfAutor },
-        { nome: reu, tipo: 'Réu', documento: cpfReu }
-      ],
-      advogados: [
-        { nome: advogados[seed % advogados.length], oab: `${tribunalEscolhido.replace('TJ', '')} ${String(seed).padStart(6, '0')}`, parte: 'Autor' },
-        { nome: advogados[(seed + 1) % advogados.length], oab: `${tribunalEscolhido.replace('TJ', '')} ${String(seed + 1000).padStart(6, '0')}`, parte: 'Réu' }
-      ],
-      movimentacoes: movimentacoes,
-      jurimetria: {
-        tempo_total_dias: diasTramitando,
-        total_movimentacoes: movimentacoes.length,
-        tempo_medio_entre_movimentacoes: Math.floor(diasTramitando / movimentacoes.length),
-        fase_atual: determinarFaseAtual(movimentacoes),
-        tempo_na_fase_atual: Math.floor(Math.random() * 60) + 15,
-        previsao_sentenca: new Date(dataUltimaMovimentacao.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+async function consultarPorNumero(numeroProcesso: string, tribunal?: string) {
+  const tribunalCode = tribunal || extrairTribunalDoNumero(numeroProcesso);
+  const indiceApi = TRIBUNAL_INDICES[tribunalCode as keyof typeof TRIBUNAL_INDICES];
+  
+  if (!indiceApi) {
+    throw new Error(`Tribunal ${tribunalCode} não suportado`);
+  }
+
+  const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
+  
+  const query = {
+    query: {
+      match: {
+        numeroProcesso: numeroProcesso
       }
-    };
-  } else if (tipo === 'nome') {
-    const numeroResultados = Math.floor(Math.random() * 5) + 1;
-    const resultados = [];
-    
-    for (let i = 0; i < numeroResultados; i++) {
-      const numeroProcesso = gerarNumeroProcesso();
-      const classes = ['Ação de Cobrança', 'Execução', 'Indenização', 'Procedimento Comum'];
-      const tribunais = ['TJSP', 'TJRJ', 'TJMG', 'TJRS'];
-      const status = ['Em andamento', 'Suspenso', 'Sentenciado'];
-      
-      resultados.push({
-        numero_processo: numeroProcesso,
-        classe: classes[Math.floor(Math.random() * classes.length)],
-        tribunal: tribunais[Math.floor(Math.random() * tribunais.length)],
-        data_ajuizamento: new Date(2020 + Math.floor(Math.random() * 5), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-        status: status[Math.floor(Math.random() * status.length)]
-      });
-    }
-    
-    return resultados;
-  } else if (tipo === 'documento') {
-    const numeroResultados = Math.floor(Math.random() * 3) + 1;
-    const resultados = [];
-    
-    for (let i = 0; i < numeroResultados; i++) {
-      const numeroProcesso = gerarNumeroProcesso();
-      const classes = ['Indenização', 'Cobrança', 'Execução'];
-      
-      resultados.push({
-        numero_processo: numeroProcesso,
-        classe: classes[Math.floor(Math.random() * classes.length)],
-        tribunal: 'TJSP',
-        data_ajuizamento: new Date(2021 + Math.floor(Math.random() * 4), Math.floor(Math.random() * 12), Math.floor(Math.random() * 28) + 1).toISOString().split('T')[0],
-        status: Math.random() > 0.5 ? 'Em andamento' : 'Sentenciado'
-      });
-    }
-    
-    return resultados;
+    },
+    size: 1
+  };
+
+  console.log('Consultando URL:', url);
+  console.log('Query:', JSON.stringify(query, null, 2));
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(query)
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erro na API DataJud: ${response.status} - ${response.statusText}`);
   }
 
-  return null;
-}
-
-function hashCode(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
+  const data = await response.json();
+  
+  if (data.hits && data.hits.hits && data.hits.hits.length > 0) {
+    const processo = data.hits.hits[0]._source;
+    return formatarProcessoDatajud(processo);
   }
-  return hash;
+  
+  throw new Error('Processo não encontrado');
 }
 
-function gerarCPFFicticio(seed: number): string {
-  const base = String(seed).padStart(9, '0').slice(-9);
-  return `${base.slice(0, 3)}.${base.slice(3, 6)}.${base.slice(6, 9)}-${String(seed % 100).padStart(2, '0')}`;
+async function consultarPorNome(nome: string, tribunal?: string) {
+  const tribunais = tribunal ? [tribunal] : Object.keys(TRIBUNAL_INDICES);
+  const resultados = [];
+
+  for (const trib of tribunais.slice(0, 3)) { // Limitar a 3 tribunais para evitar timeout
+    try {
+      const indiceApi = TRIBUNAL_INDICES[trib as keyof typeof TRIBUNAL_INDICES];
+      const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
+      
+      const query = {
+        query: {
+          bool: {
+            should: [
+              {
+                multi_match: {
+                  query: nome,
+                  fields: ["dadosBasicos.polo.polo.pessoa.nome^2", "dadosBasicos.polo.polo.advogado.nome"],
+                  type: "best_fields",
+                  fuzziness: "AUTO"
+                }
+              }
+            ]
+          }
+        },
+        size: 10
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(query)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.hits && data.hits.hits) {
+          data.hits.hits.forEach((hit: any) => {
+            resultados.push(formatarProcessoResumo(hit._source, trib));
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao consultar tribunal ${trib}:`, error);
+    }
+  }
+
+  return resultados;
 }
 
-function gerarNumeroProcesso(): string {
-  const sequencial = Math.floor(Math.random() * 9999999).toString().padStart(7, '0');
-  const dv = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-  const ano = new Date().getFullYear();
-  const segmento = '8';
-  const tribunal = '26';
-  const origem = Math.floor(Math.random() * 9999).toString().padStart(4, '0');
-  
-  return `${sequencial}-${dv}.${ano}.${segmento}.${tribunal}.${origem}`;
+async function consultarPorDocumento(documento: string, tribunal?: string) {
+  const tribunais = tribunal ? [tribunal] : Object.keys(TRIBUNAL_INDICES);
+  const resultados = [];
+
+  for (const trib of tribunais.slice(0, 3)) { // Limitar a 3 tribunais
+    try {
+      const indiceApi = TRIBUNAL_INDICES[trib as keyof typeof TRIBUNAL_INDICES];
+      const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
+      
+      const query = {
+        query: {
+          multi_match: {
+            query: documento.replace(/\D/g, ''), // Remove formatação
+            fields: ["dadosBasicos.polo.polo.pessoa.documento.numero"],
+            type: "phrase"
+          }
+        },
+        size: 10
+      };
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(query)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.hits && data.hits.hits) {
+          data.hits.hits.forEach((hit: any) => {
+            resultados.push(formatarProcessoResumo(hit._source, trib));
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Erro ao consultar tribunal ${trib}:`, error);
+    }
+  }
+
+  return resultados;
 }
 
-function gerarMovimentacoesRealistas(dataInicio: Date, dataFim: Date, seed: number): any[] {
-  const movimentacoesTipos = [
-    { descricao: 'Distribuição', observacao: 'Processo distribuído automaticamente' },
-    { descricao: 'Citação', observacao: 'Citação da parte requerida' },
-    { descricao: 'Contestação', observacao: 'Apresentada contestação pela parte requerida' },
-    { descricao: 'Despacho', observacao: 'Determina especificação de provas' },
-    { descricao: 'Manifestação', observacao: 'Partes especificaram provas' },
-    { descricao: 'Despacho Saneador', observacao: 'Processo saneado, marcada audiência' },
-    { descricao: 'Audiência de Instrução', observacao: 'Realizada audiência, colhidas provas orais' },
-    { descricao: 'Alegações Finais', observacao: 'Apresentadas alegações finais pelas partes' },
-    { descricao: 'Conclusão', observacao: 'Processo concluso para sentença' }
-  ];
+function formatarProcessoDatajud(processo: any) {
+  const dadosBasicos = processo.dadosBasicos || {};
+  const movimentacao = processo.movimentacao || [];
   
-  const numeroMovimentacoes = Math.min(movimentacoesTipos.length, Math.floor(seed % 7) + 3);
-  const movimentacoes = [];
-  
-  let dataAtual = new Date(dataInicio);
-  const intervaloDias = Math.floor((dataFim.getTime() - dataInicio.getTime()) / (1000 * 60 * 60 * 24)) / numeroMovimentacoes;
-  
-  for (let i = 0; i < numeroMovimentacoes; i++) {
-    movimentacoes.push({
-      data: dataAtual.toISOString().split('T')[0],
-      descricao: movimentacoesTipos[i].descricao,
-      observacao: movimentacoesTipos[i].observacao
+  // Extrair partes
+  const partes = [];
+  if (dadosBasicos.polo && Array.isArray(dadosBasicos.polo)) {
+    dadosBasicos.polo.forEach((polo: any) => {
+      if (polo.polo && Array.isArray(polo.polo)) {
+        polo.polo.forEach((parte: any) => {
+          if (parte.pessoa) {
+            partes.push({
+              nome: parte.pessoa.nome || 'Nome não informado',
+              tipo: polo.codigoTipoPolo === '1' ? 'Autor' : 'Réu',
+              documento: parte.pessoa.documento?.numero || 'Não informado'
+            });
+          }
+        });
+      }
     });
+  }
+
+  // Extrair advogados
+  const advogados = [];
+  if (dadosBasicos.polo && Array.isArray(dadosBasicos.polo)) {
+    dadosBasicos.polo.forEach((polo: any) => {
+      if (polo.polo && Array.isArray(polo.polo)) {
+        polo.polo.forEach((parte: any) => {
+          if (parte.advogado && Array.isArray(parte.advogado)) {
+            parte.advogado.forEach((adv: any) => {
+              advogados.push({
+                nome: adv.nome || 'Nome não informado',
+                oab: adv.numeroOAB || 'Não informado',
+                parte: polo.codigoTipoPolo === '1' ? 'Autor' : 'Réu'
+              });
+            });
+          }
+        });
+      }
+    });
+  }
+
+  // Extrair movimentações
+  const movimentacoes = [];
+  if (Array.isArray(movimentacao)) {
+    movimentacao.forEach((mov: any) => {
+      movimentacoes.push({
+        data: mov.dataHora ? new Date(mov.dataHora).toISOString().split('T')[0] : 'Não informado',
+        descricao: mov.nome || 'Movimentação não especificada',
+        observacao: mov.complemento || ''
+      });
+    });
+  }
+
+  // Calcular jurimetria básica
+  const dataAjuizamento = dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento) : new Date();
+  const hoje = new Date();
+  const diasTramitando = Math.floor((hoje.getTime() - dataAjuizamento.getTime()) / (1000 * 60 * 60 * 24));
+
+  return {
+    numero_processo: processo.numeroProcesso || 'Não informado',
+    classe: dadosBasicos.classeProcessual || 'Não informado',
+    assunto: dadosBasicos.assunto?.[0]?.nome || 'Não informado',
+    tribunal: extrairTribunalDoNumero(processo.numeroProcesso || ''),
+    orgao_julgador: dadosBasicos.orgaoJulgador?.nome || 'Não informado',
+    comarca: dadosBasicos.orgaoJulgador?.municipio || 'Não informado',
+    data_ajuizamento: dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento).toISOString().split('T')[0] : 'Não informado',
+    data_ultima_movimentacao: movimentacoes.length > 0 ? movimentacoes[movimentacoes.length - 1].data : 'Não informado',
+    status: dadosBasicos.situacaoProcessual || 'Em andamento',
+    valor_causa: dadosBasicos.valorCausa || 0,
+    partes: partes,
+    advogados: advogados,
+    movimentacoes: movimentacoes.slice(-10), // Últimas 10 movimentações
+    jurimetria: {
+      tempo_total_dias: diasTramitando,
+      total_movimentacoes: movimentacoes.length,
+      tempo_medio_entre_movimentacoes: movimentacoes.length > 1 ? Math.floor(diasTramitando / movimentacoes.length) : 0,
+      fase_atual: determinarFaseAtual(movimentacoes),
+      tempo_na_fase_atual: Math.floor(Math.random() * 60) + 15,
+      previsao_sentenca: new Date(hoje.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    }
+  };
+}
+
+function formatarProcessoResumo(processo: any, tribunal: string) {
+  const dadosBasicos = processo.dadosBasicos || {};
+  
+  return {
+    numero_processo: processo.numeroProcesso || 'Não informado',
+    classe: dadosBasicos.classeProcessual || 'Não informado',
+    tribunal: tribunal,
+    data_ajuizamento: dadosBasicos.dataAjuizamento ? new Date(dadosBasicos.dataAjuizamento).toISOString().split('T')[0] : 'Não informado',
+    status: dadosBasicos.situacaoProcessual || 'Em andamento'
+  };
+}
+
+function extrairTribunalDoNumero(numeroProcesso: string): string {
+  // Extrai o código do tribunal do NPU (posições 14-15)
+  if (numeroProcesso && numeroProcesso.length >= 20) {
+    const codigoTribunal = numeroProcesso.substring(13, 15);
     
-    dataAtual = new Date(dataAtual.getTime() + intervaloDias * 24 * 60 * 60 * 1000);
+    const mapeamento: { [key: string]: string } = {
+      '26': 'TJSP', '19': 'TJRJ', '13': 'TJMG', '21': 'TJRS',
+      '16': 'TJPR', '24': 'TJSC', '09': 'TJGO', '07': 'TJDF',
+      '17': 'TJPE', '05': 'TJBA', '06': 'TJCE', '11': 'TJMT',
+      '12': 'TJMS', '15': 'TJPB', '02': 'TJAL', '25': 'TJSE',
+      '20': 'TJRN', '18': 'TJPI', '10': 'TJMA', '03': 'TJAP',
+      '01': 'TJAC', '04': 'TJAM', '23': 'TJRO', '22': 'TJRR',
+      '27': 'TJTO'
+    };
+    
+    return mapeamento[codigoTribunal] || 'TJSP';
   }
   
-  return movimentacoes;
+  return 'TJSP';
 }
 
 function determinarFaseAtual(movimentacoes: any[]): string {
-  const ultimaMovimentacao = movimentacoes[movimentacoes.length - 1];
+  if (movimentacoes.length === 0) return 'Conhecimento';
   
-  if (ultimaMovimentacao.descricao.includes('Audiência')) {
+  const ultimaMovimentacao = movimentacoes[movimentacoes.length - 1];
+  const descricao = ultimaMovimentacao.descricao.toLowerCase();
+  
+  if (descricao.includes('audiência')) {
     return 'Instrução';
-  } else if (ultimaMovimentacao.descricao.includes('Contestação')) {
+  } else if (descricao.includes('contestação')) {
     return 'Conhecimento';
-  } else if (ultimaMovimentacao.descricao.includes('Conclusão')) {
+  } else if (descricao.includes('conclusão') || descricao.includes('concluso')) {
     return 'Concluso para Sentença';
-  } else if (ultimaMovimentacao.descricao.includes('Alegações')) {
+  } else if (descricao.includes('alegações')) {
     return 'Alegações Finais';
+  } else if (descricao.includes('sentença')) {
+    return 'Sentenciado';
   } else {
     return 'Conhecimento';
   }
-}
-
-function calcularDiasEntre(dataInicio: string, dataFim: string): number {
-  const inicio = new Date(dataInicio);
-  const fim = new Date(dataFim);
-  const diffTime = Math.abs(fim.getTime() - inicio.getTime());
-  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
