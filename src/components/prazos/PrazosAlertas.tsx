@@ -111,25 +111,19 @@ export const PrazosAlertas: React.FC = () => {
     setIsGenerating(true);
     
     try {
-      // Fazer chamada direta para a Edge Function com fetch
-      const response = await fetch(`https://lqprcsquknlegzmzdoct.supabase.co/functions/v1/gerar-alertas`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      // Usar o cliente Supabase para chamar a Edge Function
+      const { data, error } = await supabase.functions.invoke('gerar-alertas', {
+        body: {
           user_id: user.id
-        }),
+        },
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (error) {
+        throw error;
       }
       
-      const data = await response.json();
-      
-      if (!data.success) {
-        throw new Error(data.error || 'Erro desconhecido na função');
+      if (!data || !data.success) {
+        throw new Error(data?.error || 'Erro desconhecido na função');
       }
 
       const alertasGerados = data.alertas_gerados || 0;
@@ -143,6 +137,7 @@ export const PrazosAlertas: React.FC = () => {
       await fetchAlertas();
       
     } catch (error: any) {
+      console.error('Erro ao gerar alertas:', error);
       toast({
         title: "Erro ao gerar alertas",
         description: error.message || 'Erro desconhecido ao gerar alertas',
