@@ -24,7 +24,7 @@ interface ProcessosStats {
   totalProcessosAtivos: number;
 }
 
-const COLORS_STATUS = ['#3b82f6', '#10b981', '#f97316', '#ef4444', '#6b7280']; // Azul, Verde, Laranja, Vermelho, Cinza
+const COLORS_STATUS = ['#3b82f6', '#10b981', '#f97316', '#ef4444', '#6b7280'];
 
 const ProcessosContent: React.FC = () => {
   const { user } = useAuth();
@@ -138,17 +138,47 @@ const ProcessosContent: React.FC = () => {
     );
   };
 
-  const RADIAN = Math.PI / 180;
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, index, name, value }: any) => {
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-    const x = cx + (radius + 10) * Math.cos(-midAngle * RADIAN); 
-    const y = cy + (radius + 10) * Math.sin(-midAngle * RADIAN); 
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const data = payload[0];
+      const total = stats.processosPorStatus.reduce((sum, item) => sum + item.value, 0);
+      const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : '0';
+      
+      return (
+        <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+          <p className="font-medium text-gray-900">{data.name}</p>
+          <p className="text-sm text-gray-600">
+            {data.value} processo{data.value !== 1 ? 's' : ''} ({percentage}%)
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
-    if (percent < 0.05) return null; 
+  const CustomLabelContent = ({ cx, cy, midAngle, innerRadius, outerRadius, value, name }: any) => {
+    const RADIAN = Math.PI / 180;
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.7;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+    const total = stats.processosPorStatus.reduce((sum, item) => sum + item.value, 0);
+    const percent = total > 0 ? ((value / total) * 100) : 0;
+
+    // Só mostra o label se a porcentagem for maior que 8%
+    if (percent < 8) return null;
 
     return (
-      <text x={x} y={y} fill="white" textAnchor={x > cx ? 'start' : 'end'} dominantBaseline="central" fontSize="10px" className="font-medium pointer-events-none">
-        {`${name} (${value})`}
+      <text 
+        x={x} 
+        y={y} 
+        fill="white" 
+        textAnchor={x > cx ? 'start' : 'end'} 
+        dominantBaseline="central"
+        fontSize="12"
+        fontWeight="600"
+        className="drop-shadow-md"
+      >
+        {value}
       </text>
     );
   };
@@ -192,33 +222,51 @@ const ProcessosContent: React.FC = () => {
             </CardTitle>
             <CardDescription className="text-xs">Distribuição dos seus processos.</CardDescription>
           </CardHeader>
-          <CardContent className="h-60">
-            {stats.processosPorStatus.length > 0 ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stats.processosPorStatus}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={renderCustomizedLabel}
-                    outerRadius={70}
-                    fill="#8884d8"
-                    dataKey="value"
-                    nameKey="name"
-                    paddingAngle={2}
-                  >
-                    {stats.processosPorStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} stroke={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value: number, name: string) => [`${value} (${(value / stats.processosPorStatus.reduce((s,p) => s + p.value,0) * 100).toFixed(1)}%)`, name]}/>
-                  <Legend iconSize={10} wrapperStyle={{fontSize: "10px", paddingTop: "10px", lineHeight: "1.2"}}/>
-                </PieChart>
-              </ResponsiveContainer>
-            ) : (
-              <p className="text-sm text-center text-gray-500 py-10">Nenhum processo cadastrado.</p>
-            )}
+          <CardContent className="p-4">
+            <div className="h-64 w-full">
+              {stats.processosPorStatus.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={stats.processosPorStatus}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={CustomLabelContent}
+                      outerRadius={80}
+                      innerRadius={0}
+                      fill="#8884d8"
+                      dataKey="value"
+                      nameKey="name"
+                      paddingAngle={2}
+                      strokeWidth={2}
+                      stroke="#ffffff"
+                    >
+                      {stats.processosPorStatus.map((entry, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={entry.fill} 
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend 
+                      verticalAlign="bottom" 
+                      height={36}
+                      iconSize={12}
+                      wrapperStyle={{
+                        fontSize: "12px",
+                        paddingTop: "16px"
+                      }}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-sm text-center text-gray-500">Nenhum processo cadastrado.</p>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
