@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { DollarSign, TrendingUp, TrendingDown, List, AlertCircle, ExternalLink, RefreshCw, Clock } from 'lucide-react';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
+import { FinanceValueToggle } from '@/components/finance/FinanceValueToggle';
 import type { Database } from '@/integrations/supabase/types';
 
 type Transacao = Database['public']['Tables']['transacoes_financeiras']['Row'];
@@ -149,7 +150,10 @@ const FinanceiroContent: React.FC = () => {
         "text-xs",
         transacao.tipo_transacao === 'Receita' ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"
       )}>
-        R$ {Number(transacao.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        <FinanceValueToggle 
+          value={Number(transacao.valor)} 
+          className="text-inherit"
+        />
       </Badge>
     </li>
   );
@@ -194,7 +198,10 @@ const FinanceiroContent: React.FC = () => {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-base font-bold text-green-600 leading-none h-8 flex items-center">
-              R$ {stats.receitaMesConfirmada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <FinanceValueToggle 
+                value={stats.receitaMesConfirmada} 
+                className="text-green-600"
+              />
             </div>
           </CardContent>
         </Card>
@@ -206,7 +213,10 @@ const FinanceiroContent: React.FC = () => {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-base font-bold text-red-600 leading-none h-8 flex items-center">
-              R$ {stats.despesaMesConfirmada.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <FinanceValueToggle 
+                value={stats.despesaMesConfirmada} 
+                className="text-red-600"
+              />
             </div>
           </CardContent>
         </Card>
@@ -218,7 +228,10 @@ const FinanceiroContent: React.FC = () => {
           </CardHeader>
           <CardContent className="pb-4">
             <div className={`text-base font-bold leading-none h-8 flex items-center ${stats.saldoMes >= 0 ? 'text-blue-600' : 'text-red-600'}`}>
-              R$ {stats.saldoMes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <FinanceValueToggle 
+                value={stats.saldoMes} 
+                className={stats.saldoMes >= 0 ? 'text-blue-600' : 'text-red-600'}
+              />
             </div>
           </CardContent>
         </Card>
@@ -230,7 +243,10 @@ const FinanceiroContent: React.FC = () => {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-base font-bold text-yellow-600 leading-none h-8 flex items-center">
-              R$ {stats.receitaMesPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <FinanceValueToggle 
+                value={stats.receitaMesPendente} 
+                className="text-yellow-600"
+              />
             </div>
           </CardContent>
         </Card>
@@ -242,7 +258,10 @@ const FinanceiroContent: React.FC = () => {
           </CardHeader>
           <CardContent className="pb-4">
             <div className="text-base font-bold text-orange-600 leading-none h-8 flex items-center">
-              R$ {stats.despesaMesPendente.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <FinanceValueToggle 
+                value={stats.despesaMesPendente} 
+                className="text-orange-600"
+              />
             </div>
           </CardContent>
         </Card>
