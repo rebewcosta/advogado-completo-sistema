@@ -1,4 +1,3 @@
-
 // src/components/AppSidebar.tsx
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -189,12 +188,6 @@ export const AppSidebar = () => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link to="/perfil-usuario" className="flex items-center cursor-pointer">
-                  <Settings className="mr-2 h-4 w-4" />
-                  <span>Minha Conta</span>
-                </Link>
-              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link to="/suporte" className="flex items-center cursor-pointer">
                   <Shield className="mr-2 h-4 w-4" />
