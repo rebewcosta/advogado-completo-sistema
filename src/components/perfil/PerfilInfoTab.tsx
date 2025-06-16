@@ -34,20 +34,20 @@ const PerfilInfoTab = ({ user, nome, setNome, email, refreshSession }: PerfilInf
 
     setIsSaving(true);
     try {
-      // Verificar e renovar sessão se necessário
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      // Garantir que temos uma sessão válida
+      const { data: sessionData } = await supabase.auth.getSession();
       
-      if (sessionError || !sessionData.session) {
-        console.log('Sessão expirada, tentando renovar...');
+      if (!sessionData.session) {
+        console.log('Sessão não encontrada, tentando renovar...');
         await refreshSession();
         
         // Verificar novamente após renovar
-        const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
+        const { data: newSessionData } = await supabase.auth.getSession();
         
-        if (newSessionError || !newSessionData.session) {
+        if (!newSessionData.session) {
           toast({
-            title: "Sessão expirada",
-            description: "Sua sessão expirou. Por favor, faça login novamente.",
+            title: "Erro de autenticação",
+            description: "Não foi possível estabelecer uma sessão válida. Faça login novamente.",
             variant: "destructive"
           });
           setIsSaving(false);

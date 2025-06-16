@@ -103,7 +103,7 @@ export const useConfiguracoesState = () => {
   }, [user, loadUserSettings]);
 
   const handleSaveAllSettings = async () => {
-    if (!user || !session) {
+    if (!user) {
       toast({ 
         title: "Erro de autenticação", 
         description: "Você precisa estar logado para salvar as configurações. Tente fazer login novamente.", 
@@ -115,25 +115,29 @@ export const useConfiguracoesState = () => {
     setIsSaving(true);
     
     try {
-      // Verificar e renovar sessão se necessário
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      // Garantir que temos uma sessão válida
+      let currentSession = session;
       
-      if (sessionError || !sessionData.session) {
-        console.log('Sessão expirada, tentando renovar...');
-        await refreshSession();
+      if (!currentSession) {
+        console.log('Sessão não encontrada, tentando obter nova sessão...');
+        const { data: sessionData } = await supabase.auth.getSession();
+        currentSession = sessionData.session;
         
-        // Verificar novamente após renovar
-        const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
-        
-        if (newSessionError || !newSessionData.session) {
-          toast({
-            title: "Sessão expirada",
-            description: "Sua sessão expirou. Por favor, faça login novamente.",
-            variant: "destructive"
-          });
-          setIsSaving(false);
-          return;
+        if (!currentSession) {
+          await refreshSession();
+          const { data: newSessionData } = await supabase.auth.getSession();
+          currentSession = newSessionData.session;
         }
+      }
+
+      if (!currentSession) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Não foi possível estabelecer uma sessão válida. Faça login novamente.",
+          variant: "destructive"
+        });
+        setIsSaving(false);
+        return;
       }
 
       const { error } = await supabase.auth.updateUser({
@@ -177,8 +181,8 @@ export const useConfiguracoesState = () => {
   };
 
   const handleChangeFinanceiroPin = async (currentPinPlainText: string | null, newPinPlainText: string) => {
-    if (!session) {
-        toast({ title: "Erro de Autenticação", description: "Sessão não encontrada.", variant: "destructive" });
+    if (!user) {
+        toast({ title: "Erro de Autenticação", description: "Usuário não encontrado.", variant: "destructive" });
         return false;
     }
     if (newPinPlainText.length !== 4) {
@@ -192,25 +196,29 @@ export const useConfiguracoesState = () => {
 
     setIsSaving(true);
     try {
-        // Verificar e renovar sessão se necessário
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        // Garantir que temos uma sessão válida
+        let currentSession = session;
         
-        if (sessionError || !sessionData.session) {
-            console.log('Sessão expirada, tentando renovar...');
-            await refreshSession();
+        if (!currentSession) {
+            console.log('Sessão não encontrada, tentando obter nova sessão...');
+            const { data: sessionData } = await supabase.auth.getSession();
+            currentSession = sessionData.session;
             
-            // Verificar novamente após renovar
-            const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
-            
-            if (newSessionError || !newSessionData.session) {
-                toast({
-                    title: "Sessão expirada",
-                    description: "Sua sessão expirou. Por favor, faça login novamente.",
-                    variant: "destructive"
-                });
-                setIsSaving(false);
-                return false;
+            if (!currentSession) {
+                await refreshSession();
+                const { data: newSessionData } = await supabase.auth.getSession();
+                currentSession = newSessionData.session;
             }
+        }
+
+        if (!currentSession) {
+            toast({
+                title: "Erro de autenticação",
+                description: "Não foi possível estabelecer uma sessão válida. Faça login novamente.",
+                variant: "destructive"
+            });
+            setIsSaving(false);
+            return false;
         }
 
         const { data, error } = await supabase.functions.invoke('set-finance-pin', {

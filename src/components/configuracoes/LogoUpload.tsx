@@ -30,8 +30,8 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
       return;
     }
     
-    // Verificar se o usuário está autenticado
-    if (!user || !session) {
+    // Verificar se o usuário está autenticado primeiro
+    if (!user) {
       toast({
         title: "Usuário não autenticado",
         description: "Você precisa estar logado para enviar uma logo. Tente fazer login novamente.",
@@ -73,27 +73,31 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
     setUploading(true);
 
     try {
-      // Verificar e renovar sessão se necessário
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      // Garantir que temos uma sessão válida
+      let currentSession = session;
       
-      if (sessionError || !sessionData.session) {
-        console.log('Sessão expirada, tentando renovar...');
-        await refreshSession();
+      if (!currentSession) {
+        console.log('Sessão não encontrada, tentando obter nova sessão...');
+        const { data: sessionData } = await supabase.auth.getSession();
+        currentSession = sessionData.session;
         
-        // Verificar novamente após renovar
-        const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
-        
-        if (newSessionError || !newSessionData.session) {
-          toast({
-            title: "Sessão expirada",
-            description: "Sua sessão expirou. Por favor, faça login novamente.",
-            variant: "destructive"
-          });
-          setUploading(false);
-          setPreview(null);
-          e.target.value = '';
-          return;
+        if (!currentSession) {
+          await refreshSession();
+          const { data: newSessionData } = await supabase.auth.getSession();
+          currentSession = newSessionData.session;
         }
+      }
+
+      if (!currentSession) {
+        toast({
+          title: "Erro de autenticação",
+          description: "Não foi possível estabelecer uma sessão válida. Faça login novamente.",
+          variant: "destructive"
+        });
+        setUploading(false);
+        setPreview(null);
+        e.target.value = '';
+        return;
       }
 
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'png';
@@ -196,7 +200,7 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
           <Button
             type="button"
             variant="outline"
-            disabled={uploading || !user || !session}
+            disabled={uploading || !user}
             className="relative border-gray-300 hover:bg-gray-100"
           >
             {uploading ? (
@@ -215,13 +219,13 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
               accept="image/png, image/jpeg, image/gif, image/webp"
               className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
               onChange={handleFileChange}
-              disabled={uploading || !user || !session}
+              disabled={uploading || !user}
             />
           </Button>
           <p className="text-xs text-gray-500 mt-1">
             Máximo 1MB. Formatos: JPG, PNG, GIF, WEBP
           </p>
-          {(!user || !session) && (
+          {!user && (
             <p className="text-xs text-red-500 mt-1">
               Faça login para enviar uma logo
             </p>
