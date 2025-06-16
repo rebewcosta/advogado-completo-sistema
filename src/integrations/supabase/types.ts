@@ -78,6 +78,77 @@ export type Database = {
           },
         ]
       }
+      avisos_administrativos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          criado_por: string
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          mensagem: string
+          prioridade: string
+          tipo: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          criado_por: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          mensagem: string
+          prioridade?: string
+          tipo?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          criado_por?: string
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          mensagem?: string
+          prioridade?: string
+          tipo?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      avisos_lidos: {
+        Row: {
+          aviso_id: string
+          id: string
+          lido_em: string
+          user_id: string
+        }
+        Insert: {
+          aviso_id: string
+          id?: string
+          lido_em?: string
+          user_id: string
+        }
+        Update: {
+          aviso_id?: string
+          id?: string
+          lido_em?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "avisos_lidos_aviso_id_fkey"
+            columns: ["aviso_id"]
+            isOneToOne: false
+            referencedRelation: "avisos_administrativos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clientes: {
         Row: {
           cep: string | null
@@ -986,6 +1057,18 @@ export type Database = {
       gerar_alertas_prazos: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      get_avisos_nao_lidos: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          titulo: string
+          mensagem: string
+          tipo: string
+          prioridade: string
+          data_inicio: string
+          data_fim: string
+        }[]
       }
       get_current_user_role: {
         Args: Record<PropertyKey, never>

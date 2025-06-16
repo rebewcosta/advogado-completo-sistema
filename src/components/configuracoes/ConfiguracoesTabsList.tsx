@@ -1,14 +1,17 @@
 
 import React from 'react';
 import { TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { User, Building, Bell, Shield, CreditCard, Smartphone } from 'lucide-react';
+import { User, Building, Bell, Shield, CreditCard, Smartphone, Megaphone } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ConfiguracoesTabsListProps {
   activeTab: string;
 }
 
 const ConfiguracoesTabsList = ({ activeTab }: ConfiguracoesTabsListProps) => {
+  const { userRole } = useUserRole();
+
   const tabs = [
     { value: "perfil", label: "Perfil", icon: User },
     { value: "escritorio", label: "Escritório", icon: Building },
@@ -16,10 +19,14 @@ const ConfiguracoesTabsList = ({ activeTab }: ConfiguracoesTabsListProps) => {
     { value: "aplicativo", label: "Aplicativo", icon: Smartphone },
     { value: "notificacoes", label: "Notificações", icon: Bell },
     { value: "seguranca", label: "Segurança", icon: Shield },
+    ...(userRole === 'admin' ? [{ value: "avisos", label: "Avisos", icon: Megaphone }] : []),
   ];
 
   return (
-    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-1 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 mb-6 md:mb-8 h-auto">
+    <TabsList className={cn(
+      "grid w-full gap-1 p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 mb-6 md:mb-8 h-auto",
+      userRole === 'admin' ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-7" : "grid-cols-2 sm:grid-cols-3 md:grid-cols-6"
+    )}>
       {tabs.map(tab => (
         <TabsTrigger
           key={tab.value}

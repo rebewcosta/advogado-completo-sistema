@@ -9,6 +9,7 @@ import PerfilTab from './PerfilTab';
 import EscritorioTab from './EscritorioTab';
 import NotificacoesTab from './NotificacoesTab';
 import SegurancaTab from './SegurancaTab';
+import AvisosTab from './AvisosTab';
 import ConfiguracoesTabs from './ConfiguracoesTabs';
 import { useConfiguracoesState } from '@/hooks/useConfiguracoesState';
 
@@ -118,6 +119,10 @@ const ConfiguracoesContent = ({ activeTab, setActiveTab }: ConfiguracoesContentP
             onChangeFinanceiroPin={handleChangeFinanceiroPin}  
             isSavingPin={isSaving} 
           />
+        </TabsContent>
+
+        <TabsContent value="avisos">
+          <AvisosTab />
         </TabsContent>
       </Tabs>
     </div>

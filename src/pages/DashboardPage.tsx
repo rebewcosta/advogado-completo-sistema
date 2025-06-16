@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,6 +6,7 @@ import VisaoGeralContent from '@/components/dashboard/VisaoGeralContent';
 import FinanceiroContent from '@/components/dashboard/FinanceiroContent';
 import ProcessosContent from '@/components/dashboard/ProcessosContent';
 import AgendaContent from '@/components/dashboard/AgendaContent';
+import ListaAvisos from '@/components/avisos/ListaAvisos';
 import { Briefcase, Calendar as CalendarIcon, DollarSign as DollarSignIcon, BarChartHorizontalBig } from 'lucide-react';
 
 const DashboardPage = () => {
@@ -86,6 +86,9 @@ const DashboardPage = () => {
           </TabsContent>
         </div>
       </Tabs>
+
+      {/* Lista de avisos - aparece sempre no canto superior direito */}
+      <ListaAvisos />
     </div>
   );
 };
