@@ -1024,6 +1024,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      verify_current_password: {
+        Args: { current_password: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "admin" | "user" | "moderator"
