@@ -24,9 +24,10 @@ const PainelAdministrativo = () => {
   const [formData, setFormData] = useState({
     titulo: '',
     mensagem: '',
-    tipo: 'info' as const,
-    prioridade: 'normal' as const,
+    tipo: 'info' as 'info' | 'warning' | 'error' | 'success',
+    prioridade: 'normal' as 'baixa' | 'normal' | 'alta' | 'critica',
     ativo: true,
+    data_inicio: new Date().toISOString(),
     data_fim: ''
   });
 
@@ -45,7 +46,12 @@ const PainelAdministrativo = () => {
     
     try {
       const dadosAviso = {
-        ...formData,
+        titulo: formData.titulo,
+        mensagem: formData.mensagem,
+        tipo: formData.tipo,
+        prioridade: formData.prioridade,
+        ativo: formData.ativo,
+        data_inicio: formData.data_inicio,
         data_fim: formData.data_fim ? new Date(formData.data_fim).toISOString() : null
       };
 
@@ -69,6 +75,7 @@ const PainelAdministrativo = () => {
       tipo: 'info',
       prioridade: 'normal',
       ativo: true,
+      data_inicio: new Date().toISOString(),
       data_fim: ''
     });
     setAvisoEditando(null);
@@ -82,6 +89,7 @@ const PainelAdministrativo = () => {
       tipo: aviso.tipo,
       prioridade: aviso.prioridade,
       ativo: aviso.ativo,
+      data_inicio: aviso.data_inicio,
       data_fim: aviso.data_fim ? new Date(aviso.data_fim).toISOString().split('T')[0] : ''
     });
     setDialogAberto(true);
@@ -150,7 +158,7 @@ const PainelAdministrativo = () => {
                     <Label>Tipo</Label>
                     <Select
                       value={formData.tipo}
-                      onValueChange={(value: any) => setFormData(prev => ({ ...prev, tipo: value }))}
+                      onValueChange={(value: 'info' | 'warning' | 'error' | 'success') => setFormData(prev => ({ ...prev, tipo: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -168,7 +176,7 @@ const PainelAdministrativo = () => {
                     <Label>Prioridade</Label>
                     <Select
                       value={formData.prioridade}
-                      onValueChange={(value: any) => setFormData(prev => ({ ...prev, prioridade: value }))}
+                      onValueChange={(value: 'baixa' | 'normal' | 'alta' | 'critica') => setFormData(prev => ({ ...prev, prioridade: value }))}
                     >
                       <SelectTrigger>
                         <SelectValue />

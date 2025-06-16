@@ -23,7 +23,14 @@ export const useAvisos = () => {
 
       if (error) throw error;
 
-      setAvisosNaoLidos(data || []);
+      // Type cast the response to match our interface
+      const typedData = (data || []).map(item => ({
+        ...item,
+        tipo: item.tipo as 'info' | 'warning' | 'error' | 'success',
+        prioridade: item.prioridade as 'baixa' | 'normal' | 'alta' | 'critica'
+      }));
+
+      setAvisosNaoLidos(typedData);
     } catch (error: any) {
       console.error('Erro ao buscar avisos não lidos:', error);
       toast({
@@ -44,7 +51,14 @@ export const useAvisos = () => {
 
       if (error) throw error;
 
-      setAvisos(data || []);
+      // Type cast the response to match our interface
+      const typedData = (data || []).map(item => ({
+        ...item,
+        tipo: item.tipo as 'info' | 'warning' | 'error' | 'success',
+        prioridade: item.prioridade as 'baixa' | 'normal' | 'alta' | 'critica'
+      }));
+
+      setAvisos(typedData);
     } catch (error: any) {
       console.error('Erro ao buscar todos os avisos:', error);
       toast({
@@ -106,14 +120,21 @@ export const useAvisos = () => {
 
       if (error) throw error;
 
-      setAvisos(prev => [data, ...prev]);
+      // Type cast the response
+      const typedData = {
+        ...data,
+        tipo: data.tipo as 'info' | 'warning' | 'error' | 'success',
+        prioridade: data.prioridade as 'baixa' | 'normal' | 'alta' | 'critica'
+      };
+
+      setAvisos(prev => [typedData, ...prev]);
 
       toast({
         title: "Aviso criado com sucesso",
         description: "O aviso foi enviado para todos os usuários."
       });
 
-      return data;
+      return typedData;
     } catch (error: any) {
       console.error('Erro ao criar aviso:', error);
       toast({
@@ -137,8 +158,15 @@ export const useAvisos = () => {
 
       if (error) throw error;
 
+      // Type cast the response
+      const typedData = {
+        ...data,
+        tipo: data.tipo as 'info' | 'warning' | 'error' | 'success',
+        prioridade: data.prioridade as 'baixa' | 'normal' | 'alta' | 'critica'
+      };
+
       setAvisos(prev => prev.map(aviso => 
-        aviso.id === id ? data : aviso
+        aviso.id === id ? typedData : aviso
       ));
 
       toast({
@@ -146,7 +174,7 @@ export const useAvisos = () => {
         description: "O aviso foi atualizado com sucesso."
       });
 
-      return data;
+      return typedData;
     } catch (error: any) {
       console.error('Erro ao atualizar aviso:', error);
       toast({

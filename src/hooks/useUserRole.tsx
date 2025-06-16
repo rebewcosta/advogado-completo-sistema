@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
@@ -7,13 +6,13 @@ export type UserRole = 'admin' | 'user' | 'moderator' | null;
 
 export const useUserRole = () => {
   const { user } = useAuth();
-  const [role, setRole] = useState<UserRole>(null);
+  const [userRole, setUserRole] = useState<UserRole>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserRole = async () => {
       if (!user) {
-        setRole(null);
+        setUserRole(null);
         setLoading(false);
         return;
       }
@@ -21,14 +20,14 @@ export const useUserRole = () => {
       try {
         // Check if user is the master admin
         if (user.email === 'webercostag@gmail.com') {
-          setRole('admin');
+          setUserRole('admin');
           setLoading(false);
           return;
         }
 
         // Check user_metadata for special_access (for compatibility)
         if (user.user_metadata?.special_access === true) {
-          setRole('admin');
+          setUserRole('admin');
           setLoading(false);
           return;
         }
@@ -44,13 +43,13 @@ export const useUserRole = () => {
 
         if (error && error.code !== 'PGRST116') {
           console.error('Error fetching user role:', error);
-          setRole('user'); // Default to user role
+          setUserRole('user'); // Default to user role
         } else {
-          setRole(data?.role || 'user');
+          setUserRole(data?.role || 'user');
         }
       } catch (error) {
         console.error('Error in fetchUserRole:', error);
-        setRole('user');
+        setUserRole('user');
       } finally {
         setLoading(false);
       }
@@ -60,20 +59,22 @@ export const useUserRole = () => {
   }, [user]);
 
   const hasRole = (requiredRole: UserRole): boolean => {
-    if (!role || !requiredRole) return false;
+    if (!userRole || !requiredRole) return false;
     
     const roleHierarchy = { admin: 3, moderator: 2, user: 1 };
-    return roleHierarchy[role] >= roleHierarchy[requiredRole];
+    return roleHierarchy[userRole] >= roleHierarchy[requiredRole];
   };
 
   const isAdmin = (): boolean => hasRole('admin');
   const isModerator = (): boolean => hasRole('moderator');
 
   return {
-    role,
+    userRole,
     loading,
     hasRole,
     isAdmin,
-    isModerator
+    isModerator,
+    // Keep role for backward compatibility
+    role: userRole
   };
 };
