@@ -73,14 +73,14 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
     setUploading(true);
 
     try {
-      // Verificar sessão atual e renovar se necessário
+      // Verificar e renovar sessão se necessário
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
-        // Tentar renovar a sessão
+        console.log('Sessão expirada, tentando renovar...');
         await refreshSession();
         
-        // Verificar novamente
+        // Verificar novamente após renovar
         const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
         
         if (newSessionError || !newSessionData.session) {

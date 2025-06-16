@@ -119,6 +119,7 @@ export const useConfiguracoesState = () => {
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
+        console.log('Sessão expirada, tentando renovar...');
         await refreshSession();
         
         // Verificar novamente após renovar
@@ -191,6 +192,27 @@ export const useConfiguracoesState = () => {
 
     setIsSaving(true);
     try {
+        // Verificar e renovar sessão se necessário
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError || !sessionData.session) {
+            console.log('Sessão expirada, tentando renovar...');
+            await refreshSession();
+            
+            // Verificar novamente após renovar
+            const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
+            
+            if (newSessionError || !newSessionData.session) {
+                toast({
+                    title: "Sessão expirada",
+                    description: "Sua sessão expirou. Por favor, faça login novamente.",
+                    variant: "destructive"
+                });
+                setIsSaving(false);
+                return false;
+            }
+        }
+
         const { data, error } = await supabase.functions.invoke('set-finance-pin', {
             body: {  
                 currentPin: hasFinancePin ? currentPinPlainText : null,  

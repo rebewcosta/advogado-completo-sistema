@@ -34,10 +34,11 @@ const PerfilInfoTab = ({ user, nome, setNome, email, refreshSession }: PerfilInf
 
     setIsSaving(true);
     try {
-      // Verificar sessão atual
+      // Verificar e renovar sessão se necessário
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
+        console.log('Sessão expirada, tentando renovar...');
         await refreshSession();
         
         // Verificar novamente após renovar
