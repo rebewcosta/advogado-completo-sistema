@@ -1,3 +1,4 @@
+
 // src/pages/ConfiguracoesPage.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import AdminLayout from '@/components/AdminLayout';
