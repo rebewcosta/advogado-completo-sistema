@@ -65,6 +65,7 @@ export const AppSidebar = () => {
     { path: "/financeiro", icon: DollarSign, label: "Financeiro" },
     { path: "/documentos", icon: FileArchive, label: "Documentos" },
     { path: "/relatorios", icon: BarChart2, label: "Relatórios" },
+    { path: "/configuracoes", icon: Settings, label: "Configurações" },
     // APENAS adiciona o item Admin se for o email correto
     ...(isAdmin ? [{ path: "/admin", icon: Shield, label: "Admin" }] : []),
   ];
@@ -191,7 +192,7 @@ export const AppSidebar = () => {
               <DropdownMenuItem asChild>
                 <Link to="/perfil-usuario" className="flex items-center cursor-pointer">
                   <Settings className="mr-2 h-4 w-4" />
-                  <span>Configurações</span>
+                  <span>Minha Conta</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
