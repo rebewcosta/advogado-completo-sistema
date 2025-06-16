@@ -23,10 +23,37 @@ const PerfilInfoTab = ({ user, nome, setNome, email, refreshSession }: PerfilInf
 
   const handleSalvarPerfil = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user) return;
+    if (!user) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para salvar o perfil.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     setIsSaving(true);
     try {
+      // Verificar sessão atual
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        await refreshSession();
+        
+        // Verificar novamente após renovar
+        const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
+        
+        if (newSessionError || !newSessionData.session) {
+          toast({
+            title: "Sessão expirada",
+            description: "Sua sessão expirou. Por favor, faça login novamente.",
+            variant: "destructive"
+          });
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.auth.updateUser({
         data: { nome }
       });
@@ -39,6 +66,7 @@ const PerfilInfoTab = ({ user, nome, setNome, email, refreshSession }: PerfilInf
         description: "Suas informações de nome foram atualizadas com sucesso.",
       });
     } catch (error: any) {
+      console.error('Erro ao atualizar perfil:', error);
       toast({
         title: "Erro ao atualizar perfil",
         description: error.message || "Ocorreu um erro ao atualizar seu nome.",

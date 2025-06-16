@@ -103,12 +103,38 @@ export const useConfiguracoesState = () => {
   }, [user, loadUserSettings]);
 
   const handleSaveAllSettings = async () => {
-    if (!user) {
-      toast({ title: "Erro", description: "Usuário não autenticado.", variant: "destructive" });
+    if (!user || !session) {
+      toast({ 
+        title: "Erro de autenticação", 
+        description: "Você precisa estar logado para salvar as configurações. Tente fazer login novamente.", 
+        variant: "destructive" 
+      });
       return;
     }
+
     setIsSaving(true);
+    
     try {
+      // Verificar e renovar sessão se necessário
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        await refreshSession();
+        
+        // Verificar novamente após renovar
+        const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
+        
+        if (newSessionError || !newSessionData.session) {
+          toast({
+            title: "Sessão expirada",
+            description: "Sua sessão expirou. Por favor, faça login novamente.",
+            variant: "destructive"
+          });
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.auth.updateUser({
         data: { 
           nome: profileSettings.name || null,
@@ -126,16 +152,22 @@ export const useConfiguracoesState = () => {
           pref_seguranca_restricao_ip: securitySettings.pref_seguranca_restricao_ip,
         }
       });
-      if (error) throw error;
+      
+      if (error) {
+        throw error;
+      }
+      
       await refreshSession();  
+      
       toast({
         title: "Configurações salvas",
         description: "Suas configurações foram atualizadas com sucesso.",
       });
     } catch (error: any) {
+      console.error('Erro ao salvar configurações:', error);
       toast({
         title: "Erro ao salvar configurações",
-        description: error.message || "Ocorreu um erro ao tentar salvar.",
+        description: error.message || "Ocorreu um erro ao tentar salvar. Verifique sua conexão e tente novamente.",
         variant: "destructive",
       });
     } finally {

@@ -1,5 +1,4 @@
 
-// src/components/configuracoes/LogoUpload.tsx
 import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +7,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
 interface LogoUploadProps {
-  onUploadSuccess?: () => Promise<void>; // Adicionado callback
+  onUploadSuccess?: () => Promise<void>;
 }
 
 const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
@@ -22,7 +21,7 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
     if (user?.user_metadata?.logo_url) {
       setCurrentLogoUrl(user.user_metadata.logo_url as string);
     } else {
-      setCurrentLogoUrl(null); // Garante que se não houver logo, fique nulo
+      setCurrentLogoUrl(null);
     }
   }, [user]);
 
@@ -31,6 +30,7 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
       return;
     }
     
+    // Verificar se o usuário está autenticado
     if (!user || !session) {
       toast({
         title: "Usuário não autenticado",
@@ -42,6 +42,7 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
 
     const file = e.target.files[0];
 
+    // Validações do arquivo
     if (file.size > 1024 * 1024) { // 1MB
       toast({
         title: "Arquivo muito grande",
@@ -62,6 +63,7 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
       return;
     }
 
+    // Preview da imagem
     const reader = new FileReader();
     reader.onloadend = () => {
       setPreview(reader.result as string);
@@ -71,63 +73,84 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
     setUploading(true);
 
     try {
-      // Verificar se a sessão ainda é válida
+      // Verificar sessão atual e renovar se necessário
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
       if (sessionError || !sessionData.session) {
-        toast({
-          title: "Sessão expirada",
-          description: "Sua sessão expirou. Por favor, faça login novamente.",
-          variant: "destructive"
-        });
-        setUploading(false);
-        e.target.value = '';
-        return;
+        // Tentar renovar a sessão
+        await refreshSession();
+        
+        // Verificar novamente
+        const { data: newSessionData, error: newSessionError } = await supabase.auth.getSession();
+        
+        if (newSessionError || !newSessionData.session) {
+          toast({
+            title: "Sessão expirada",
+            description: "Sua sessão expirou. Por favor, faça login novamente.",
+            variant: "destructive"
+          });
+          setUploading(false);
+          setPreview(null);
+          e.target.value = '';
+          return;
+        }
       }
 
       const fileExt = file.name.split('.').pop()?.toLowerCase() || 'png';
       const filePath = `public/${user.id}/logo-${Date.now()}.${fileExt}`;
 
-      // Remover logo antiga se existir, para evitar acúmulo no storage
+      // Remover logo antiga se existir
       if (user.user_metadata?.logo_path_storage) {
-        await supabase.storage.from('logos').remove([user.user_metadata.logo_path_storage as string]);
+        try {
+          await supabase.storage.from('logos').remove([user.user_metadata.logo_path_storage as string]);
+        } catch (error) {
+          console.warn('Erro ao remover logo antiga:', error);
+        }
       }
 
+      // Upload do arquivo
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('logos')
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: false // upsert false para garantir novo path e evitar cache
+          upsert: false
         });
 
-      if (uploadError) throw new Error(`Erro no upload para o Storage: ${uploadError.message}`);
+      if (uploadError) {
+        throw new Error(`Erro no upload: ${uploadError.message}`);
+      }
 
+      // Obter URL pública
       const { data: publicUrlData } = supabase.storage
         .from('logos')
         .getPublicUrl(filePath);
 
-      if (!publicUrlData || !publicUrlData.publicUrl) {
+      if (!publicUrlData?.publicUrl) {
         await supabase.storage.from('logos').remove([filePath]);
-        throw new Error("Não foi possível obter a URL pública do logo após o upload.");
+        throw new Error("Não foi possível obter a URL pública do logo.");
       }
+
       const logoStorageUrl = publicUrlData.publicUrl;
 
+      // Atualizar metadados do usuário
       const { error: updateUserError } = await supabase.auth.updateUser({
         data: {
           logo_url: logoStorageUrl,
-          logo_path_storage: filePath // Salvar o path para futura remoção
+          logo_path_storage: filePath
         }
       });
 
       if (updateUserError) {
         await supabase.storage.from('logos').remove([filePath]);
-        throw new Error(`Erro ao atualizar perfil com nova logo: ${updateUserError.message}`);
+        throw new Error(`Erro ao atualizar perfil: ${updateUserError.message}`);
       }
 
-      await refreshSession(); // Atualiza os dados do usuário no useAuth
+      // Renovar sessão e atualizar estado
+      await refreshSession();
       setCurrentLogoUrl(logoStorageUrl);
-      setPreview(null); 
+      setPreview(null);
 
-      if(onUploadSuccess) { // Chama o callback
+      if (onUploadSuccess) {
         await onUploadSuccess();
       }
 
@@ -140,7 +163,7 @@ const LogoUpload: React.FC<LogoUploadProps> = ({ onUploadSuccess }) => {
       console.error('Erro completo ao fazer upload:', error);
       toast({
         title: "Erro ao fazer upload",
-        description: error.message || "Ocorreu um erro ao tentar fazer o upload da logo. Tente fazer login novamente se o problema persistir.",
+        description: error.message || "Ocorreu um erro ao tentar fazer o upload da logo.",
         variant: "destructive"
       });
       setPreview(null);
