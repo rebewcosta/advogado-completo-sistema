@@ -1,25 +1,19 @@
 
 import React from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Shield, Users, Settings, BarChart } from 'lucide-react';
+import { Shield, Users, Settings, BarChart, Megaphone } from 'lucide-react';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import CreateUserAccount from '@/components/admin/CreateUserAccount';
 import CriarContaEspecial from '@/components/admin/CriarContaEspecial';
 import SecurityMonitoring from '@/components/admin/SecurityMonitoring';
-import { useUserRole } from '@/hooks/useUserRole';
+import AvisosTab from '@/components/configuracoes/AvisosTab';
+import { useAuth } from '@/hooks/useAuth';
 
 const AdminPage = () => {
-  const { isAdmin, loading } = useUserRole();
+  const { user } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
-        <div>Verificando permissões...</div>
-      </div>
-    );
-  }
-
-  if (!isAdmin()) {
+  // VERIFICAÇÃO CRÍTICA: apenas webercostag@gmail.com tem acesso
+  if (!user || user.email !== 'webercostag@gmail.com') {
     return (
       <div className="min-h-screen bg-gray-50 p-4 flex items-center justify-center">
         <div className="text-center">
@@ -40,7 +34,7 @@ const AdminPage = () => {
       />
 
       <Tabs defaultValue="security" className="mt-6">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 bg-gray-200 p-1.5 rounded-lg mb-6 h-auto">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 gap-2 bg-gray-200 p-1.5 rounded-lg mb-6 h-auto">
           <TabsTrigger
             value="security"
             className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
@@ -60,6 +54,12 @@ const AdminPage = () => {
             <Settings className="h-4 w-4" /> Contas Especiais
           </TabsTrigger>
           <TabsTrigger
+            value="avisos"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
+          >
+            <Megaphone className="h-4 w-4" /> Avisos
+          </TabsTrigger>
+          <TabsTrigger
             value="analytics"
             className="flex items-center justify-center gap-2 px-3 py-2.5 text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-lawyer-primary data-[state=active]:shadow-md rounded-md h-full"
           >
@@ -77,6 +77,10 @@ const AdminPage = () => {
 
         <TabsContent value="special">
           <CriarContaEspecial />
+        </TabsContent>
+
+        <TabsContent value="avisos">
+          <AvisosTab />
         </TabsContent>
 
         <TabsContent value="analytics">

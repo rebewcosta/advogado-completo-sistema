@@ -49,12 +49,12 @@ export const AppSidebar = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // VERIFICAÇÃO CORRETA: apenas webercostag@gmail.com tem acesso admin
+  // VERIFICAÇÃO CRÍTICA: apenas webercostag@gmail.com tem acesso admin
   const isAdmin = user?.email === 'webercostag@gmail.com';
 
   const menuItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
-    { path: "/ferramentas", icon: Wrench, label: "Ferramentas", isSpecial: true }, // Movido para 2ª posição com destaque
+    { path: "/ferramentas", icon: Wrench, label: "Ferramentas", isSpecial: true },
     { path: "/meus-processos", icon: FileText, label: "Meus Processos" },
     { path: "/clientes", icon: Users, label: "Clientes" },
     { path: "/equipe", icon: UserCheck, label: "Equipe" },
@@ -65,7 +65,7 @@ export const AppSidebar = () => {
     { path: "/documentos", icon: FileArchive, label: "Documentos" },
     { path: "/relatorios", icon: BarChart2, label: "Relatórios" },
     { path: "/configuracoes", icon: Settings, label: "Configurações" },
-    // APENAS adiciona o item Admin se for o email correto
+    // APENAS adiciona o item Admin se for webercostag@gmail.com
     ...(isAdmin ? [{ path: "/admin", icon: Shield, label: "Admin" }] : []),
   ];
 
