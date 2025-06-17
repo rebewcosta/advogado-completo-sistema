@@ -1,3 +1,4 @@
+
 // src/components/AppSidebar.tsx
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -100,6 +101,11 @@ export const AppSidebar = () => {
     return nome.substring(0, 2).toUpperCase();
   };
 
+  // Obter a URL da logo do escritório dos metadados do usuário
+  const getLogoUrl = () => {
+    return user?.user_metadata?.logo_url || null;
+  };
+
   return (
     <Sidebar className="border-r border-gray-200">
       <SidebarHeader className="bg-lawyer-dark border-b border-gray-700">
@@ -161,7 +167,7 @@ export const AppSidebar = () => {
             <DropdownMenuTrigger asChild>
               <div className="flex items-center gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 transition-colors w-full">
                 <Avatar className={`${isMobile ? 'h-8 w-8' : 'h-10 w-10'}`}>
-                  <AvatarImage src="" />
+                  <AvatarImage src={getLogoUrl() || ""} alt="Logo do escritório" />
                   <AvatarFallback className="bg-lawyer-primary text-white text-xs font-semibold">
                     {getUserInitials()}
                   </AvatarFallback>
