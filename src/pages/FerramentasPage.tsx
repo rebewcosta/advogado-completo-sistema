@@ -1,7 +1,6 @@
-
 import React from 'react';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
-import { Wrench, Calculator, MapPin, DollarSign, Calendar, Shield, FileText, QrCode } from 'lucide-react';
+import { Wrench, Calculator, MapPin, DollarSign, Calendar, Shield, FileText, QrCode, Mail } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PrazosCalculadora } from '@/components/prazos/PrazosCalculadora';
 import { ConsultaCep } from '@/components/correios/ConsultaCep';
@@ -10,6 +9,7 @@ import { ConsultaFeriados } from '@/components/ferramentas/ConsultaFeriados';
 import { ValidadorCpfCnpj } from '@/components/ferramentas/ValidadorCpfCnpj';
 import { GeradorPeticoes } from '@/components/ferramentas/GeradorPeticoes';
 import { GeradorQrCode } from '@/components/ferramentas/GeradorQrCode';
+import { GeradorAssinatura } from '@/components/ferramentas/GeradorAssinatura';
 
 const FerramentasPage: React.FC = () => {
   const [selectedTool, setSelectedTool] = React.useState<string | null>(null);
@@ -70,6 +70,14 @@ const FerramentasPage: React.FC = () => {
       icon: QrCode,
       component: GeradorQrCode,
       color: 'from-indigo-500 to-indigo-600'
+    },
+    {
+      id: 'assinatura',
+      title: 'Gerador de Assinatura de E-mail',
+      description: 'Crie assinaturas profissionais para seus e-mails',
+      icon: Mail,
+      component: GeradorAssinatura,
+      color: 'from-teal-500 to-teal-600'
     }
   ];
 
@@ -156,6 +164,7 @@ const FerramentasPage: React.FC = () => {
                 <li>• Geração de QR Codes profissionais</li>
                 <li>• Consultas rápidas de CEP</li>
                 <li>• Modelos de petições padronizados</li>
+                <li>• Assinaturas de e-mail personalizadas</li>
               </ul>
             </div>
           </div>
