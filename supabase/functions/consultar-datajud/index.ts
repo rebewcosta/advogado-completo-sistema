@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -117,13 +116,13 @@ serve(async (req) => {
     let termoFinal: string;
     let tipoFinal: string;
 
-    // Tratar consulta por OAB
+    // Tratar consulta por OAB - melhorar estratégia de busca
     if (tipo_consulta === 'oab') {
       if (!oab_numero || !oab_uf) {
         throw new Error('Número da OAB e UF são obrigatórios para consulta por OAB');
       }
-      termoFinal = `${oab_numero}/${oab_uf}`;
-      tipoFinal = 'nome'; // Buscar por advogado nos processos
+      termoFinal = oab_numero; // Usar apenas o número da OAB
+      tipoFinal = 'oab'; // Usar tipo específico para OAB
     } else {
       if (!termo || !termo.trim()) {
         throw new Error('Termo de busca é obrigatório');
@@ -134,12 +133,13 @@ serve(async (req) => {
 
     console.log('Termo final:', termoFinal);
     console.log('Tipo final:', tipoFinal);
+    console.log('UF para busca:', oab_uf);
 
     const termoLimpo = sanitizarTermo(termoFinal, tipoFinal);
     console.log('Termo sanitizado:', termoLimpo);
 
     // Verificar cache primeiro
-    const cacheKey = `${tipoFinal}_${termoLimpo}_${tribunal || 'todos'}`;
+    const cacheKey = `${tipoFinal}_${termoLimpo}_${oab_uf || ''}_${tribunal || 'todos'}`;
     const resultadoCache = await verificarCache(cacheKey);
     
     if (resultadoCache) {
@@ -157,10 +157,18 @@ serve(async (req) => {
       );
     }
 
-    // Determinar tribunais para buscar
+    // Determinar tribunais para buscar - incluir tribunal específico do estado
     let tribunaisParaBuscar: string[];
     
-    if (tribunal === 'principais') {
+    if (tipo_consulta === 'oab' && oab_uf) {
+      // Para busca por OAB, priorizar tribunal do estado
+      const tribunalEstado = `TJ${oab_uf}`;
+      if (TRIBUNAL_INDICES[tribunalEstado as keyof typeof TRIBUNAL_INDICES]) {
+        tribunaisParaBuscar = [tribunalEstado, 'TJSP', 'TJRJ', 'TJMG'];
+      } else {
+        tribunaisParaBuscar = ['TJSP', 'TJRJ', 'TJMG'];
+      }
+    } else if (tribunal === 'principais') {
       tribunaisParaBuscar = ['TJSP', 'TJRJ', 'TJMG'];
     } else if (tribunal && tribunal !== 'todos' && TRIBUNAL_INDICES[tribunal as keyof typeof TRIBUNAL_INDICES]) {
       tribunaisParaBuscar = [tribunal];
@@ -187,7 +195,7 @@ serve(async (req) => {
       tribunaisConsultados.push(tribunalCode);
       
       try {
-        const resultado = await buscarNoTribunalComRetry(tipoFinal, termoLimpo, indiceApi, tribunalCode);
+        const resultado = await buscarNoTribunalComRetry(tipoFinal, termoLimpo, indiceApi, tribunalCode, oab_uf);
         if (resultado && Array.isArray(resultado) && resultado.length > 0) {
           console.log(`✅ ${tribunalCode}: ${resultado.length} resultado(s)`);
           return resultado;
@@ -223,7 +231,7 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           processos: [],
-          message: `Nenhum processo encontrado na base oficial do CNJ DataJud para "${termoFinal}".`,
+          message: `Nenhum processo encontrado na base oficial do CNJ DataJud para OAB ${oab_numero}/${oab_uf}.`,
           tribunais_consultados: tribunaisConsultados,
           total_encontrados: 0,
           fonte: 'api_cnj'
@@ -271,11 +279,11 @@ serve(async (req) => {
   }
 });
 
-async function buscarNoTribunalComRetry(tipo: string, termo: string, indiceApi: string, tribunalCode: string, maxRetries = 2) {
+async function buscarNoTribunalComRetry(tipo: string, termo: string, indiceApi: string, tribunalCode: string, uf?: string, maxRetries = 2) {
   for (let tentativa = 1; tentativa <= maxRetries; tentativa++) {
     try {
       console.log(`📡 Tentativa ${tentativa} para ${tribunalCode}`);
-      return await buscarNoTribunal(tipo, termo, indiceApi, tribunalCode);
+      return await buscarNoTribunal(tipo, termo, indiceApi, tribunalCode, uf);
     } catch (error) {
       console.error(`❌ Tentativa ${tentativa} falhou para ${tribunalCode}:`, error.message);
       
@@ -289,10 +297,10 @@ async function buscarNoTribunalComRetry(tipo: string, termo: string, indiceApi: 
   }
 }
 
-async function buscarNoTribunal(tipo: string, termo: string, indiceApi: string, tribunalCode: string) {
+async function buscarNoTribunal(tipo: string, termo: string, indiceApi: string, tribunalCode: string, uf?: string) {
   const url = `https://api-publica.datajud.cnj.jus.br/${indiceApi}/_search`;
   
-  let query = construirQuery(tipo, termo);
+  let query = construirQuery(tipo, termo, uf);
 
   console.log(`📡 URL: ${url}`);
   console.log(`📋 Query ${tipo} para "${termo}":`, JSON.stringify(query, null, 2));
@@ -344,8 +352,72 @@ async function buscarNoTribunal(tipo: string, termo: string, indiceApi: string, 
   }
 }
 
-function construirQuery(tipo: string, termo: string): any {
-  if (tipo === 'numero') {
+function construirQuery(tipo: string, termo: string, uf?: string): any {
+  if (tipo === 'oab') {
+    // Busca específica por OAB - estratégia aprimorada
+    return {
+      query: {
+        bool: {
+          should: [
+            // Busca exata por número OAB
+            {
+              term: {
+                "partes.advogados.numeroOAB": {
+                  value: termo,
+                  boost: 4
+                }
+              }
+            },
+            // Busca por número OAB com UF
+            {
+              term: {
+                "partes.advogados.numeroOAB": {
+                  value: `${termo}/${uf}`,
+                  boost: 5
+                }
+              }
+            },
+            // Busca por número OAB sem formatação
+            {
+              wildcard: {
+                "partes.advogados.numeroOAB": {
+                  value: `*${termo}*`,
+                  boost: 3
+                }
+              }
+            },
+            // Busca em campos alternativos
+            {
+              multi_match: {
+                query: `${termo}/${uf}`,
+                fields: [
+                  "partes.advogados.numeroOAB^3",
+                  "partes.advogados.oab^2"
+                ],
+                type: "phrase"
+              }
+            },
+            // Busca menos específica
+            {
+              multi_match: {
+                query: termo,
+                fields: [
+                  "partes.advogados.numeroOAB^2",
+                  "partes.advogados.oab^1"
+                ],
+                type: "phrase"
+              }
+            }
+          ],
+          minimum_should_match: 1
+        }
+      },
+      size: 20,
+      sort: [
+        { "_score": { "order": "desc" } }
+      ]
+    };
+  } else if (tipo === 'numero') {
     // Busca por número de processo - conforme documentação CNJ
     const numeroFormatado = formatarNumeroProcesso(termo);
     return {
@@ -525,6 +597,8 @@ function sanitizarTermo(termo: string, tipo: string): string {
       return termo.replace(/\D/g, '');
     case 'numero':
       return termo.replace(/[.\-]/g, '');
+    case 'oab':
+      return termo.replace(/[^\d]/g, ''); // Apenas números para OAB
     case 'nome':
       return termo.replace(/[^\w\sÀ-ÿ]/g, '').trim();
     default:
