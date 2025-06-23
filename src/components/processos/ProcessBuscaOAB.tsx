@@ -45,25 +45,36 @@ const ProcessBuscaOAB: React.FC<ProcessBuscaOABProps> = ({
     }
 
     setIsLoading(true);
+    setBuscaRealizada(false);
+    
     try {
+      console.log('Iniciando busca por OAB:', { numeroOAB: numeroOAB.trim(), ufOAB: ufOAB.trim().toUpperCase() });
+      
       const { data, error } = await supabase.functions.invoke('consultar-datajud', {
         body: {
           tipo_consulta: 'oab',
           oab_numero: numeroOAB.trim(),
-          oab_uf: ufOAB.trim().toUpperCase()
+          oab_uf: ufOAB.trim().toUpperCase(),
+          tribunal: 'principais'
         }
       });
 
-      if (error) throw error;
+      console.log('Resposta da API:', data);
 
-      if (data?.processos && Array.isArray(data.processos)) {
+      if (error) {
+        console.error('Erro na invocação:', error);
+        throw new Error(error.message || 'Erro na consulta');
+      }
+
+      if (data?.success && data?.processos && Array.isArray(data.processos)) {
         const processosFormatados: ProcessoBuscado[] = data.processos.map((p: any) => ({
-          numero: p.numeroProcesso || p.numero || 'N/A',
-          tipo: p.classeProcessual || p.tipo || 'Não informado',
-          vara: p.orgaoJulgador || p.vara || 'Não informado',
-          status: p.situacao || p.status || 'Em andamento',
-          cliente: p.partes?.find((parte: any) => parte.tipo === 'REQUERENTE')?.nome || 'Não informado',
-          dataDistribuicao: p.dataAjuizamento || p.dataDistribuicao
+          numero: p.numero_processo || p.numeroProcesso || p.numero || 'N/A',
+          tipo: p.classe || p.classeProcessual || p.tipo || 'Não informado',
+          vara: p.orgao_julgador || p.orgaoJulgador || p.vara || 'Não informado',
+          status: p.status || p.situacao || 'Em andamento',
+          cliente: p.partes?.find((parte: any) => parte.tipo === 'REQUERENTE' || parte.polo === 'REQUERENTE')?.nome || 
+                   p.partes?.[0]?.nome || 'Não informado',
+          dataDistribuicao: p.data_ajuizamento || p.dataAjuizamento || p.dataDistribuicao
         }));
 
         setProcessos(processosFormatados);
@@ -76,20 +87,23 @@ const ProcessBuscaOAB: React.FC<ProcessBuscaOABProps> = ({
       } else {
         setProcessos([]);
         setBuscaRealizada(true);
+        
+        const message = data?.message || `Não foram encontrados processos para OAB ${numeroOAB}/${ufOAB}.`;
         toast({
           title: "Nenhum processo encontrado",
-          description: `Não foram encontrados processos para OAB ${numeroOAB}/${ufOAB}.`
+          description: message
         });
       }
     } catch (error: any) {
       console.error('Erro ao buscar processos:', error);
+      setProcessos([]);
+      setBuscaRealizada(true);
+      
       toast({
         title: "Erro na consulta",
         description: error.message || "Não foi possível consultar os processos via OAB.",
         variant: "destructive"
       });
-      setProcessos([]);
-      setBuscaRealizada(true);
     } finally {
       setIsLoading(false);
     }
@@ -218,7 +232,6 @@ const ProcessBuscaOAB: React.FC<ProcessBuscaOABProps> = ({
                         size="sm"
                         variant="outline"
                         onClick={() => {
-                          // Aqui poderia abrir um modal com mais detalhes
                           toast({
                             title: "Detalhes do processo",
                             description: `${processo.numero} - ${processo.tipo}`

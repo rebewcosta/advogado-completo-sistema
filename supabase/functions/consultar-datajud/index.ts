@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -10,8 +11,10 @@ const corsHeaders = {
 const CNJ_API_KEY = 'cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==';
 
 interface ConsultaRequest {
-  tipo: 'numero' | 'nome' | 'documento';
-  termo: string;
+  tipo_consulta: 'numero' | 'nome' | 'documento' | 'oab';
+  termo?: string;
+  oab_numero?: string;
+  oab_uf?: string;
   tribunal?: string;
 }
 
@@ -99,22 +102,44 @@ serve(async (req) => {
   }
 
   try {
-    const { tipo, termo, tribunal }: ConsultaRequest = await req.json();
-    
+    const requestBody = await req.json();
     console.log('=== NOVA CONSULTA DATAJUD CNJ ===');
-    console.log('Tipo:', tipo);
+    console.log('Request body:', JSON.stringify(requestBody, null, 2));
+
+    const { tipo_consulta, termo, oab_numero, oab_uf, tribunal } = requestBody as ConsultaRequest;
+    
+    console.log('Tipo consulta:', tipo_consulta);
     console.log('Termo:', termo);
+    console.log('OAB numero:', oab_numero);
+    console.log('OAB UF:', oab_uf);
     console.log('Tribunal:', tribunal);
 
-    if (!termo || !termo.trim()) {
-      throw new Error('Termo de busca é obrigatório');
+    let termoFinal: string;
+    let tipoFinal: string;
+
+    // Tratar consulta por OAB
+    if (tipo_consulta === 'oab') {
+      if (!oab_numero || !oab_uf) {
+        throw new Error('Número da OAB e UF são obrigatórios para consulta por OAB');
+      }
+      termoFinal = `${oab_numero}/${oab_uf}`;
+      tipoFinal = 'nome'; // Buscar por advogado nos processos
+    } else {
+      if (!termo || !termo.trim()) {
+        throw new Error('Termo de busca é obrigatório');
+      }
+      termoFinal = termo.trim();
+      tipoFinal = tipo_consulta || 'numero';
     }
 
-    const termoLimpo = sanitizarTermo(termo.trim(), tipo);
+    console.log('Termo final:', termoFinal);
+    console.log('Tipo final:', tipoFinal);
+
+    const termoLimpo = sanitizarTermo(termoFinal, tipoFinal);
     console.log('Termo sanitizado:', termoLimpo);
 
     // Verificar cache primeiro
-    const cacheKey = `${tipo}_${termoLimpo}_${tribunal || 'todos'}`;
+    const cacheKey = `${tipoFinal}_${termoLimpo}_${tribunal || 'todos'}`;
     const resultadoCache = await verificarCache(cacheKey);
     
     if (resultadoCache) {
@@ -122,7 +147,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          data: resultadoCache.dados,
+          processos: resultadoCache.dados,
           fonte: 'cache',
           cache_timestamp: resultadoCache.timestamp,
           tribunais_consultados: resultadoCache.tribunais || [],
@@ -162,7 +187,7 @@ serve(async (req) => {
       tribunaisConsultados.push(tribunalCode);
       
       try {
-        const resultado = await buscarNoTribunalComRetry(tipo, termoLimpo, indiceApi, tribunalCode);
+        const resultado = await buscarNoTribunalComRetry(tipoFinal, termoLimpo, indiceApi, tribunalCode);
         if (resultado && Array.isArray(resultado) && resultado.length > 0) {
           console.log(`✅ ${tribunalCode}: ${resultado.length} resultado(s)`);
           return resultado;
@@ -197,8 +222,8 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          data: null,
-          message: `Nenhum processo encontrado na base oficial do CNJ DataJud para "${termo}".`,
+          processos: [],
+          message: `Nenhum processo encontrado na base oficial do CNJ DataJud para "${termoFinal}".`,
           tribunais_consultados: tribunaisConsultados,
           total_encontrados: 0,
           fonte: 'api_cnj'
@@ -220,7 +245,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        data: resultadosOrdenados,
+        processos: resultadosOrdenados,
         tribunais_consultados: tribunaisConsultados,
         total_encontrados: resultadosOrdenados.length,
         fonte: 'api_cnj'
@@ -235,6 +260,7 @@ serve(async (req) => {
       JSON.stringify({ 
         success: false, 
         error: error.message,
+        processos: [],
         debug: 'Erro na função de consulta DataJud CNJ'
       }),
       { 
