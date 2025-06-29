@@ -42,7 +42,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   
   const calcularEspacoDisponivel = async () => {
     // This would normally calculate available space
-    return espacoDisponivel || 50 * 1024 * 1024; // 50MB default
+    return espacoDisponivel || 10 * 1024 * 1024; // 10MB default
   };
   
   const { uploadDocumento, isUploading, uploadError } = useDocumentUpload(
@@ -51,8 +51,8 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
   );
 
   const handleFileSelect = (file: File) => {
-    if (file.size > 50 * 1024 * 1024) { // 50MB limit
-      alert('Arquivo muito grande. O tamanho máximo é 50MB.');
+    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+      alert('Arquivo muito grande. O tamanho máximo é 10MB.');
       return;
     }
     setSelectedFile(file);
@@ -116,7 +116,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs">
                       <p>
-                        Faça o upload de documentos para organizar e gerenciar seus arquivos. Arquivos até 50MB são suportados.
+                        Faça o upload de documentos para organizar e gerenciar seus arquivos. Arquivos até 10MB são suportados.
                       </p>
                     </TooltipContent>
                   </Tooltip>
@@ -188,7 +188,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
                           Selecionar arquivo
                         </Button>
                         <p className="text-xs text-gray-500 mt-2">
-                          Tamanho máximo: 50MB
+                          Tamanho máximo: 10MB
                         </p>
                       </div>
                     )}
