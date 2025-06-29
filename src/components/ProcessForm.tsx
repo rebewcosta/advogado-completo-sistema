@@ -20,11 +20,10 @@ import {
 } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Plus, X, Info, Search } from 'lucide-react';
+import { CalendarIcon, Plus, X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from "@/lib/utils";
 import ClienteModalSimples from '@/components/processos/ClienteModalSimples';
-import ProcessBuscaOAB from '@/components/processos/ProcessBuscaOAB';
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -66,7 +65,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   const [status, setStatus] = useState<'Em andamento' | 'Concluído' | 'Suspenso'>("Em andamento");
   const [prazoDate, setPrazoDate] = useState<Date | undefined>(undefined);
   const [showClienteModal, setShowClienteModal] = useState(false);
-  const [showBuscaOAB, setShowBuscaOAB] = useState(false);
   const [isSavingCliente, setIsSavingCliente] = useState(false);
 
   const stringToDate = (dateString?: string): Date | undefined => {
@@ -99,19 +97,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
       setPrazoDate(undefined);
     }
   }, [processoParaEditar, isEdit]);
-
-  const handleProcessoSelecionadoOAB = (processo: any) => {
-    setNumero(processo.numero);
-    setTipo(processo.tipo);
-    setVara(processo.vara);
-    setStatus(processo.status as 'Em andamento' | 'Concluído' | 'Suspenso');
-    setShowBuscaOAB(false);
-    
-    toast({
-      title: "Processo selecionado",
-      description: `Dados do processo ${processo.numero} foram preenchidos automaticamente.`
-    });
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,34 +158,6 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
     }
   };
 
-  if (showBuscaOAB) {
-    return (
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
-        <div className="h-full flex flex-col rounded-xl overflow-hidden">
-          <div className="p-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-white text-xl font-semibold">Buscar Processos via OAB</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowBuscaOAB(false)}
-                className="text-white hover:bg-white/20"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-          </div>
-          <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
-            <ProcessBuscaOAB
-              onProcessSelect={handleProcessoSelecionadoOAB}
-              onClose={() => setShowBuscaOAB(false)}
-            />
-          </div>
-        </div>
-      </DialogContent>
-    );
-  }
-
   return (
     <>
       <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
@@ -221,32 +178,19 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
                       <p>
                         {isEdit 
                           ? "Atualize as informações do processo. Campos com * são obrigatórios."
-                          : "Cadastre um novo processo preenchendo todos os campos obrigatórios ou busque via OAB."}
+                          : "Cadastre um novo processo preenchendo todos os campos obrigatórios."}
                       </p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
-                <div className="flex items-center gap-2">
-                  {!isEdit && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setShowBuscaOAB(true)}
-                      className="text-white hover:bg-white/20"
-                    >
-                      <Search className="h-4 w-4 mr-2" />
-                      Buscar via OAB
-                    </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={onCancel}
-                    className="text-white hover:bg-white/20 -mr-2 -mt-2"
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onCancel}
+                  className="text-white hover:bg-white/20 -mr-2 -mt-2"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
               </div>
             </TooltipProvider>
           </div>
