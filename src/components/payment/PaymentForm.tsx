@@ -57,11 +57,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       const dominio = getDominio();
       console.log('Iniciando checkout com email:', email, 'clientReferenceId:', clientReferenceId, 'dominio:', dominio);
 
+      // Usar sempre o valor correto de R$ 37,00
       const checkoutData = {
-        nomePlano: 'Plano Mensal JusGestão',
-        valor: 3700, // R$ 37,00 em centavos
+        nomePlano: 'JusGestão - Plano Mensal',
+        valor: 3700, // R$ 37,00 em centavos - valor fixo correto
         emailCliente: email,
-        modo: process.env.NODE_ENV === 'production' ? 'production' : 'test',
         dominio,
         clientReferenceId: clientReferenceId || email
       };
@@ -90,9 +90,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       toast({
         title: "Redirecionando para o pagamento",
-        description: "Você será redirecionado para a página de pagamento do Stripe.",
+        description: `Você será redirecionado para pagar R$ 37,00/mês via Stripe.`,
       });
 
+      // Redirecionar para o Stripe Checkout
       window.location.href = data.url;
 
     } catch (error) {
@@ -151,7 +152,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             ) : (
               <span className="flex items-center">
                 <CreditCard className="mr-2 h-5 w-5" />
-                Ir para Pagamento Seguro - R$ 37,00
+                Pagar R$ 37,00/mês - Acesso Completo
               </span>
             )}
           </Button>

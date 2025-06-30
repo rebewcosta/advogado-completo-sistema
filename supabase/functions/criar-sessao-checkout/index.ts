@@ -17,9 +17,14 @@ serve(async (req) => {
 
   try {
     // Obter os dados do corpo da solicitação
-    // Estamos em ambiente de produção, usando a chave live
     const { nomePlano, valor, emailCliente, dominio } = await req.json();
-    const modo = 'production'; // Ambiente de produção
+    
+    // Detectar ambiente baseado no dominio ou headers
+    const isProduction = !dominio?.includes('localhost') && 
+                        !dominio?.includes('lovable.app') && 
+                        !req.headers.get("origin")?.includes('localhost');
+    
+    const modo = isProduction ? 'production' : 'test';
     
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
@@ -46,13 +51,13 @@ serve(async (req) => {
       );
     }
     
-    // Log para verificar se estamos usando a chave de produção
-    console.log(`Iniciando Stripe no modo PRODUÇÃO`);
+    // Log para verificar o modo de operação
+    console.log(`Iniciando Stripe no modo: ${modo.toUpperCase()}`);
     
-    // Verificar se estamos usando uma chave de produção
-    if (stripeSecretKey.startsWith('sk_test_')) {
+    // Verificar se estamos usando a chave correta para o ambiente
+    if (isProduction && stripeSecretKey.startsWith('sk_test_')) {
       console.warn("ATENÇÃO: Estamos usando uma chave de TESTE no modo de PRODUÇÃO!");
-    } else if (stripeSecretKey.startsWith('sk_live_')) {
+    } else if (isProduction && stripeSecretKey.startsWith('sk_live_')) {
       console.log("Confirmado: Usando chave de PRODUÇÃO corretamente.");
     }
     
@@ -63,14 +68,16 @@ serve(async (req) => {
     console.log("Criando sessão de checkout...");
     
     // Determinar as URLs de sucesso e cancelamento
-    // Usar o domínio fornecido ou o origin do cabeçalho da requisição
-    const baseUrl = dominio || req.headers.get("origin") || "https://seu-dominio.com.br";
+    const baseUrl = dominio || req.headers.get("origin") || "https://sisjusgestao.com.br";
     const successUrl = `${baseUrl}/pagamento?success=true`;
     const cancelUrl = `${baseUrl}/pagamento?canceled=true`;
     
     console.log(`URLs de redirecionamento: success=${successUrl}, cancel=${cancelUrl}`);
     
-    // Criar a sessão de checkout com redirecionamento para a página de sucesso
+    // Usar o valor correto de R$ 37,00 (3700 centavos)
+    const valorCorreto = 3700; // R$ 37,00 em centavos
+    
+    // Criar a sessão de checkout com o valor correto
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       customer_email: emailCliente,
@@ -79,9 +86,10 @@ serve(async (req) => {
           price_data: {
             currency: "brl", // Moeda brasileira
             product_data: {
-              name: nomePlano,
+              name: nomePlano || "JusGestão - Plano Mensal",
+              description: "Sistema completo de gestão para advogados",
             },
-            unit_amount: valor, // Valor em centavos (3700 = R$ 37,00)
+            unit_amount: valorCorreto, // R$ 37,00 em centavos
             recurring: {
               interval: "month", // Assinatura mensal
             },
@@ -92,13 +100,23 @@ serve(async (req) => {
       mode: "subscription", // Modo de assinatura
       success_url: successUrl,
       cancel_url: cancelUrl,
+      metadata: {
+        email_cliente: emailCliente,
+        plano: nomePlano,
+        valor: valorCorreto.toString(),
+      },
     });
 
     console.log(`Sessão de checkout criada: ${session.id}, URL: ${session.url}`);
 
     // Retornar o ID da sessão e URL
     return new Response(
-      JSON.stringify({ sessionId: session.id, url: session.url }),
+      JSON.stringify({ 
+        sessionId: session.id, 
+        url: session.url,
+        modo: modo,
+        valor: valorCorreto 
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error) {

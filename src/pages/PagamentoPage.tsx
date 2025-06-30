@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -16,15 +17,17 @@ const PagamentoPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { signUp, user } = useAuth();
-  const isTestEnvironment = process.env.NODE_ENV !== 'production';
+  
+  // Detectar se estamos em produção baseado no domínio
+  const isProduction = !window.location.hostname.includes('localhost') && 
+                      !window.location.hostname.includes('lovable.app');
 
   // Dados de registro vindos da página de cadastro
   const registrationData = location.state?.registrationData;
   const clientReferenceId = location.state?.clientReferenceId;
 
   useEffect(() => {
-    // Debug logs to help identify issues
-    console.log("PagamentoPage mounted");
+    console.log("PagamentoPage mounted - Modo:", isProduction ? "PRODUÇÃO" : "TESTE");
     console.log("Registration data:", registrationData);
     console.log("Location state:", location.state);
     
@@ -40,14 +43,13 @@ const PagamentoPage = () => {
         setStep(2); // Mostrar tela de sucesso
         toast({
           title: "Pagamento Confirmado!",
-          description: "Sua assinatura foi atualizada. Pode levar alguns instantes para o sistema refletir a mudança.",
+          description: "Sua assinatura de R$ 37,00/mês foi ativada. Verifique seu email para confirmar sua conta.",
         });
       } else {
-        // Se não houver registrationData nem clientReferenceId, é um fluxo inesperado
         console.warn("Sucesso no pagamento, mas sem dados de registro ou ID de cliente de referência.");
         toast({
           title: "Pagamento Concluído",
-          description: "Seu pagamento foi processado. Se você estava criando uma nova conta, pode haver um atraso na ativação. Contate o suporte se necessário.",
+          description: "Seu pagamento de R$ 37,00/mês foi processado. Verifique seu email para ativar sua conta.",
         });
         setStep(2);
       }
@@ -65,7 +67,7 @@ const PagamentoPage = () => {
          navigate(-1); // Volta para a página anterior
       }
     }
-  }, [location.search, registrationData, clientReferenceId, navigate, toast]);
+  }, [location.search, registrationData, clientReferenceId, navigate, toast, isProduction]);
 
   const handlePostPaymentSignUp = async () => {
     if (!registrationData) {
@@ -76,16 +78,31 @@ const PagamentoPage = () => {
     setIsSubmittingUser(true);
     try {
       console.log("Finalizando cadastro após pagamento para:", registrationData.email);
+      
+      // IMPORTANTE: signUp não deve logar o usuário automaticamente
+      // O usuário precisa confirmar o email primeiro
       await signUp(registrationData.email, registrationData.password, { 
         nome: registrationData.nome,
-        emailRedirectTo: `${window.location.origin}/login` 
+        telefone: registrationData.telefone,
+        oab: registrationData.oab,
+        empresa: registrationData.empresa,
+        plano: registrationData.plano,
+        emailRedirectTo: `${window.location.origin}/login?confirmed=true`
       });
+      
       setStep(2); // Mostrar tela de sucesso do pagamento
+      
+      toast({
+        title: "Cadastro Realizado!",
+        description: "Seu pagamento foi confirmado. Verifique seu email para ativar sua conta antes de fazer login.",
+        duration: 8000,
+      });
+      
     } catch (error) {
       console.error("Erro ao criar conta após pagamento:", error);
       toast({
         title: "Erro ao Finalizar Cadastro",
-        description: "Houve um problema ao criar sua conta após o pagamento. Seu pagamento foi processado. Por favor, contate o suporte com seu email para finalizarmos a ativação da sua conta.",
+        description: "Houve um problema ao criar sua conta após o pagamento. Seu pagamento foi processado. Por favor, contate o suporte.",
         variant: "destructive",
         duration: 10000,
       });
@@ -111,7 +128,7 @@ const PagamentoPage = () => {
             <Link 
               to={registrationData ? "/cadastro" : "/"} 
               className="flex items-center text-lawyer-primary hover:underline mb-6"
-              state={registrationData ? { prefill: registrationData } : undefined} // Para repopular o cadastro
+              state={registrationData ? { prefill: registrationData } : undefined}
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
               {registrationData ? "Voltar para o cadastro" : "Voltar para a home"}
@@ -127,30 +144,33 @@ const PagamentoPage = () => {
                   : "Complete seu pagamento para ativar sua assinatura."
                 }
               </p>
-              {process.env.NODE_ENV === 'production' ? (
-                <div className="mt-2 inline-block px-4 py-1 bg-green-100 text-green-800 text-sm font-medium rounded-full">
-                  Ambiente de Produção
-                </div>
-              ) : (
-                <div className="mt-2 inline-block px-4 py-1 bg-yellow-100 text-yellow-800 text-sm font-medium rounded-full">
-                  Ambiente de Teste
-                </div>
-              )}
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-medium text-blue-800">
+                  💰 Valor: <strong>R$ 37,00 por mês</strong>
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  {isProduction ? "Ambiente de Produção - Pagamento Real" : "Ambiente de Teste"}
+                </p>
+              </div>
             </div>
             
-            {isTestEnvironment && <TestEnvironmentWarning />}
+            {!isProduction && <TestEnvironmentWarning />}
             
             <PlanInfoBox />
             
             <PaymentForm 
               onProcessingChange={setPaymentFormProcessing}
-              isTestEnvironment={isTestEnvironment}
+              isTestEnvironment={!isProduction}
               initialEmail={registrationData?.email || user?.email}
               clientReferenceId={user ? user.id : registrationData?.email}
             />
             
             <div className="mt-6 text-center text-sm text-gray-500">
-              <p>Seu pagamento é seguro e processado em ambiente criptografado pelo Stripe.</p>
+              <p>Seu pagamento é seguro e processado pelo Stripe.</p>
+              <p className="mt-1 font-medium text-red-600">
+                ⚠️ Após o pagamento, você receberá um email de confirmação. 
+                Confirme seu email antes de tentar fazer login.
+              </p>
             </div>
           </div>
         )}
