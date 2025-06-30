@@ -57,7 +57,7 @@ serve(async (req) => {
     // Verificar se estamos usando a chave correta para o ambiente
     if (isProduction && stripeSecretKey.startsWith('sk_test_')) {
       console.warn("ATENÇÃO: Estamos usando uma chave de TESTE no modo de PRODUÇÃO!");
-    } else if (isProduction && stripeSecretKey.startsWith('sk_live_')) {
+    } else if (isProduction && stripeSecretKey.startsWith('rk_live_')) {
       console.log("Confirmado: Usando chave de PRODUÇÃO corretamente.");
     }
     
@@ -77,23 +77,20 @@ serve(async (req) => {
     // Usar o valor correto de R$ 37,00 (3700 centavos)
     const valorCorreto = 3700; // R$ 37,00 em centavos
     
-    // Criar a sessão de checkout com o valor correto
+    // Determinar o Price ID baseado no ambiente
+    const priceId = isProduction 
+      ? 'price_1RfoO5Kr3xy0fCEP5COgihuw' // Seu Price ID de produção
+      : 'price_1QQKh6FJ3Y1S0P0BSZVwNKa6'; // Price ID de teste
+    
+    console.log(`Usando Price ID: ${priceId} (modo: ${modo})`);
+    
+    // Criar a sessão de checkout usando o Price ID configurado
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       customer_email: emailCliente,
       line_items: [
         {
-          price_data: {
-            currency: "brl", // Moeda brasileira
-            product_data: {
-              name: nomePlano || "JusGestão - Plano Mensal",
-              description: "Sistema completo de gestão para advogados",
-            },
-            unit_amount: valorCorreto, // R$ 37,00 em centavos
-            recurring: {
-              interval: "month", // Assinatura mensal
-            },
-          },
+          price: priceId, // Usar o Price ID correto
           quantity: 1,
         },
       ],
@@ -115,7 +112,8 @@ serve(async (req) => {
         sessionId: session.id, 
         url: session.url,
         modo: modo,
-        valor: valorCorreto 
+        valor: valorCorreto,
+        priceId: priceId
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );

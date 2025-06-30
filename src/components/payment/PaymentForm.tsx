@@ -88,9 +88,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       console.log('Sessão de checkout criada com sucesso:', data);
 
+      const isProduction = !window.location.hostname.includes('localhost') && 
+                          !window.location.hostname.includes('lovable.app');
+
       toast({
         title: "Redirecionando para o pagamento",
-        description: `Você será redirecionado para pagar R$ 37,00/mês via Stripe.`,
+        description: `Você será redirecionado para pagar R$ 37,00/mês via Stripe ${isProduction ? '(PRODUÇÃO)' : '(TESTE)'}.`,
       });
 
       // Redirecionar para o Stripe Checkout
