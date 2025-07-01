@@ -1,17 +1,114 @@
 
 project_id = "lqprcsquknlegzmzdoct"
 
-[functions.gerar-alertas]
-verify_jwt = false
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "auth", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+port = 54320
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://localhost:3000", "https://sisjusgestao.com.br"]
+jwt_expiry = 3600
+enable_signup = true
+email_confirm = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+
+[db]
+port = 54322
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[realtime]
+enabled = true
+port = 54323
+ip_version = "IPv4"
+
+[studio]
+enabled = true
+port = 54324
+api_url = "http://localhost:54321"
+
+[inbucket]
+enabled = true
+port = 54325
+site_url = "http://localhost:54325"
+
+[storage]
+enabled = true
+port = 54326
+file_size_limit = "50MiB"
+
+[analytics]
+enabled = false
+port = 54327
+vector_port = 54328
+gw_port = 54329
 
 [functions.criar-sessao-checkout]
-verify_jwt = false
+verify_jwt = true
 
 [functions.criar-portal-cliente]
-verify_jwt = false
-
-[functions.verificar-assinatura]
-verify_jwt = false
+verify_jwt = true
 
 [functions.webhook-stripe]
 verify_jwt = false
+
+[functions.verificar-assinatura]
+verify_jwt = true
+
+[functions.consultar-cnpj]
+verify_jwt = true
+
+[functions.consultar-cpf]
+verify_jwt = true
+
+[functions.consultar-datajud]
+verify_jwt = true
+
+[functions.create-special-user]
+verify_jwt = true
+
+[functions.gerar-alertas]
+verify_jwt = false
+
+[functions.lembretes-eventos-agenda]
+verify_jwt = false
+
+[functions.monitorar-publicacoes]
+verify_jwt = true
+
+[functions.request-finance-pin-reset]
+verify_jwt = true
+
+[functions.reset-finance-pin-with-token]
+verify_jwt = false
+
+[functions.send-password-reset-email]
+verify_jwt = false
+
+[functions.set-finance-pin]
+verify_jwt = true
+
+[functions.verify-finance-pin]
+verify_jwt = true
+
+[functions.verify-finance-pin-reset-token]
+verify_jwt = false
+
+[edge_runtime]
+policy = "per_worker"
+inspector_port = 8083

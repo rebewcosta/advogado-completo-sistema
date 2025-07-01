@@ -1,203 +1,187 @@
 
-import { serve } from "https://deno.land/std@0.184.0/http/server.ts";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@11.1.0";
+import Stripe from "https://esm.sh/stripe@14.21.0";
 
-const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY") || "";
-const stripeWebhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET") || "";
-const customDomain = Deno.env.get("CUSTOM_DOMAIN") || "sisjusgestao.com.br";
-
-const stripe = new Stripe(stripeSecretKey, {
-  apiVersion: "2023-10-16",
-  httpClient: Stripe.createFetchHttpClient(),
-});
-
-// Cabeçalhos CORS para permitir requisições de qualquer origem
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Cliente Supabase com chave de serviço para operações admin
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
-
-serve(async (req: Request) => {
-  // Tratar requisições OPTIONS (CORS preflight)
+serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders, status: 200 });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Verificar se é uma requisição POST
-    if (req.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Método não permitido" }), {
-        status: 405,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    console.log("🔄 Webhook Stripe recebido");
+
+    const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
+
+    if (!stripeSecretKey || !webhookSecret) {
+      console.error("❌ Configurações do Stripe não encontradas");
+      return new Response("Configuração inválida", { status: 500 });
     }
 
-    // Obter o cabeçalho com a assinatura do Stripe
-    const signature = req.headers.get("stripe-signature");
-    if (!signature) {
-      return new Response(JSON.stringify({ error: "Assinatura Stripe ausente" }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2023-10-16",
+    });
 
-    // Obter o corpo da requisição como texto
+    // Verificar assinatura do webhook
     const body = await req.text();
-    
-    // Validar a assinatura do webhook
-    let event;
+    const signature = req.headers.get("stripe-signature");
+
+    if (!signature) {
+      console.error("❌ Assinatura do webhook não encontrada");
+      return new Response("Assinatura inválida", { status: 400 });
+    }
+
+    let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret);
+      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      console.log(`✅ Evento válido: ${event.type}`);
     } catch (err) {
-      console.error(`Erro na verificação da assinatura do webhook: ${err.message}`);
-      return new Response(JSON.stringify({ error: `Assinatura inválida: ${err.message}` }), {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("❌ Erro ao verificar webhook:", err);
+      return new Response("Webhook inválido", { status: 400 });
     }
 
-    // Processar diferentes tipos de eventos do Stripe
-    console.log(`Evento recebido: ${event.type}`);
+    // Criar cliente Supabase com service role para bypass de RLS
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { persistSession: false } }
+    );
 
-    // Extrair dados comuns
-    const { id: stripe_event_id, type: event_type, created: event_timestamp } = event;
-    
-    // Log do evento recebido na tabela de log (optional, você pode criar essa tabela depois)
-    // await supabaseAdmin.from("stripe_events_log").insert({ 
-    //   stripe_event_id,
-    //   event_type,
-    //   event_timestamp,
-    //   event_data: event.data.object
-    // });
-
-    // Processar eventos com base no tipo
+    // Processar eventos do Stripe
     switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        // Processar checkout completado
-        console.log("Checkout completado:", session.id);
-        
-        if (session.client_reference_id) {
-          // O client_reference_id deve conter o user_id
-          const userId = session.client_reference_id;
-          
-          // Verificar se é uma assinatura
-          if (session.subscription) {
-            // Registrar a assinatura no banco de dados do usuário
-            // Em um projeto real, você criaria uma tabela 'subscriptions' para armazenar estes dados
-            const subscription = await stripe.subscriptions.retrieve(session.subscription);
-            
-            console.log(`Assinatura ${subscription.id} ativada para o usuário ${userId}`);
-
-            // Atualizar os metadados do usuário para indicar assinatura ativa
-            await supabaseAdmin.auth.admin.updateUserById(userId, {
-              user_metadata: { 
-                subscription_id: subscription.id,
-                subscription_status: subscription.status,
-                current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
-              }
-            });
-          }
-        }
+      case "customer.subscription.created":
+      case "customer.subscription.updated":
+      case "customer.subscription.deleted":
+        await handleSubscriptionEvent(event, supabase);
         break;
-      }
       
-      case "customer.subscription.updated": {
-        const subscription = event.data.object;
-        console.log(`Assinatura atualizada: ${subscription.id}`);
-        
-        // Encontrar o usuário que possui essa assinatura (através de uma consulta ou dos metadados)
-        // Em um caso real, você teria uma tabela de assinaturas para fazer uma busca mais eficiente
-        const { data: users, error } = await supabaseAdmin.auth.admin.listUsers();
-        
-        if (error) {
-          console.error("Erro ao buscar usuários:", error);
-          break;
-        }
-        
-        // Encontrar o usuário com esta assinatura
-        const user = users.users.find(u => 
-          u.user_metadata?.subscription_id === subscription.id
-        );
-        
-        if (user) {
-          // Atualizar o status da assinatura nos metadados do usuário
-          await supabaseAdmin.auth.admin.updateUserById(user.id, {
-            user_metadata: { 
-              subscription_id: subscription.id,
-              subscription_status: subscription.status,
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
-            }
-          });
-          
-          console.log(`Status da assinatura atualizado para o usuário ${user.id}: ${subscription.status}`);
-        } else {
-          console.warn(`Usuário não encontrado para a assinatura ${subscription.id}`);
-        }
+      case "invoice.payment_succeeded":
+      case "invoice.payment_failed":
+        await handleInvoiceEvent(event, supabase);
         break;
-      }
-      
-      case "customer.subscription.deleted": {
-        const subscription = event.data.object;
-        console.log(`Assinatura cancelada: ${subscription.id}`);
         
-        // Encontrar o usuário que possui essa assinatura
-        const { data: users, error } = await supabaseAdmin.auth.admin.listUsers();
-        
-        if (error) {
-          console.error("Erro ao buscar usuários:", error);
-          break;
-        }
-        
-        // Encontrar o usuário com esta assinatura
-        const user = users.users.find(u => 
-          u.user_metadata?.subscription_id === subscription.id
-        );
-        
-        if (user) {
-          // Atualizar os metadados do usuário para indicar que não possui mais assinatura
-          await supabaseAdmin.auth.admin.updateUserById(user.id, {
-            user_metadata: { 
-              subscription_id: subscription.id,
-              subscription_status: "canceled",
-              current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
-            }
-          });
-          
-          console.log(`Assinatura marcada como cancelada para o usuário ${user.id}`);
-        } else {
-          console.warn(`Usuário não encontrado para a assinatura ${subscription.id}`);
-        }
-        break;
-      }
-      
-      // Outros eventos que você pode querer tratar:
-      // case "invoice.payment_succeeded":
-      // case "invoice.payment_failed":
-      // case "customer.created":
-      // etc.
-
       default:
-        console.log(`Evento não tratado: ${event.type}`);
+        console.log(`ℹ️ Evento não processado: ${event.type}`);
     }
 
-    // Responder com sucesso
-    return new Response(JSON.stringify({ received: true }), {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response("OK", { status: 200 });
+
   } catch (error) {
-    console.error(`Erro no webhook: ${error.message}`);
-    return new Response(JSON.stringify({ error: `Erro interno: ${error.message}` }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    console.error("❌ Erro no webhook:", error);
+    return new Response("Erro interno", { status: 500 });
   }
 });
+
+async function handleSubscriptionEvent(event: Stripe.Event, supabase: any) {
+  const subscription = event.data.object as Stripe.Subscription;
+  const customerId = subscription.customer as string;
+
+  console.log(`🔄 Processando assinatura: ${subscription.id} - Status: ${subscription.status}`);
+
+  try {
+    // Buscar cliente no Stripe para obter email
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+      apiVersion: "2023-10-16",
+    });
+    
+    const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+    
+    if (!customer.email) {
+      console.error("❌ Email do cliente não encontrado");
+      return;
+    }
+
+    // Buscar usuário no Supabase pelo email
+    const { data: user, error: userError } = await supabase.auth.admin.getUserByEmail(customer.email);
+    
+    if (userError || !user) {
+      console.error("❌ Usuário não encontrado:", customer.email);
+      return;
+    }
+
+    console.log(`✅ Usuário encontrado: ${user.id}`);
+
+    // Preparar dados de atualização
+    const subscriptionData = {
+      subscription_status: subscription.status,
+      stripe_customer_id: customerId,
+      current_period_end: subscription.current_period_end,
+      subscription_id: subscription.id,
+      updated_at: new Date().toISOString()
+    };
+
+    // Atualizar metadados do usuário
+    const { error: updateError } = await supabase.auth.admin.updateUserById(
+      user.id,
+      {
+        user_metadata: {
+          ...user.user_metadata,
+          ...subscriptionData
+        }
+      }
+    );
+
+    if (updateError) {
+      console.error("❌ Erro ao atualizar usuário:", updateError);
+    } else {
+      console.log("✅ Usuário atualizado com sucesso");
+    }
+
+    // Log da ação
+    console.log(`📝 Assinatura ${subscription.status}: ${customer.email}`);
+
+  } catch (error) {
+    console.error("❌ Erro ao processar assinatura:", error);
+  }
+}
+
+async function handleInvoiceEvent(event: Stripe.Event, supabase: any) {
+  const invoice = event.data.object as Stripe.Invoice;
+  const customerId = invoice.customer as string;
+
+  console.log(`🧾 Processando fatura: ${invoice.id} - Status: ${invoice.status}`);
+
+  try {
+    // Buscar cliente no Stripe
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+      apiVersion: "2023-10-16",
+    });
+    
+    const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
+    
+    if (!customer.email) {
+      console.error("❌ Email do cliente não encontrado na fatura");
+      return;
+    }
+
+    // Se pagamento falhou, marcar como past_due
+    if (event.type === "invoice.payment_failed") {
+      const { data: user } = await supabase.auth.admin.getUserByEmail(customer.email);
+      
+      if (user) {
+        await supabase.auth.admin.updateUserById(
+          user.id,
+          {
+            user_metadata: {
+              ...user.user_metadata,
+              subscription_status: 'past_due',
+              payment_failed_at: new Date().toISOString()
+            }
+          }
+        );
+        console.log(`⚠️ Pagamento falhou para: ${customer.email}`);
+      }
+    }
+
+    console.log(`✅ Fatura processada: ${customer.email}`);
+
+  } catch (error) {
+    console.error("❌ Erro ao processar fatura:", error);
+  }
+}

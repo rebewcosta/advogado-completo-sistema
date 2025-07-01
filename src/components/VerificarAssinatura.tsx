@@ -13,7 +13,14 @@ const VerificarAssinatura: React.FC = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  const publicOrLowAccessRoutes = ['/dashboard', '/perfil', '/configuracoes', '/admin', '/pagamento', '/pagamento-sucesso'];
+  const publicOrLowAccessRoutes = [
+    '/dashboard', 
+    '/perfil', 
+    '/configuracoes', 
+    '/admin', 
+    '/pagamento', 
+    '/pagamento-sucesso'
+  ];
 
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
@@ -25,6 +32,7 @@ const VerificarAssinatura: React.FC = () => {
 
       setIsLoading(true);
 
+      // Verificar se é uma rota que não precisa de assinatura
       const isPermittedWithoutSubscription = publicOrLowAccessRoutes.some(route =>
         location.pathname.startsWith(route)
       );
@@ -35,36 +43,36 @@ const VerificarAssinatura: React.FC = () => {
         return;
       }
 
-      // Check admin access
-      if (user.email === "webercostag@gmail.com") {
-        setAccessGranted(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // Check special access
-      if (user.user_metadata?.special_access === true) {
-        setAccessGranted(true);
-        setIsLoading(false);
-        return;
-      }
-
-      // Check subscription via Edge Function
       try {
+        console.log("Verificando assinatura via edge function...");
+        
         const { data: funcResponse, error: funcError } = await supabase.functions.invoke('verificar-assinatura');
 
         if (funcError) {
-          toast({ title: "Erro", description: "Falha ao verificar status da sua conta.", variant: "destructive" });
+          console.error("Erro ao verificar assinatura:", funcError);
+          toast({ 
+            title: "Erro", 
+            description: "Falha ao verificar status da sua conta.", 
+            variant: "destructive" 
+          });
           setAccessGranted(false);
         } else {
+          console.log("Resposta da verificação:", funcResponse);
+          
           if (funcResponse?.subscribed === true) {
             setAccessGranted(true);
           } else {
+            console.log("Acesso negado - assinatura não ativa");
             setAccessGranted(false);
           }
         }
       } catch (e) {
-        toast({ title: "Erro de Comunicação", description: "Não foi possível verificar o status da sua conta.", variant: "destructive" });
+        console.error("Erro de comunicação:", e);
+        toast({ 
+          title: "Erro de Comunicação", 
+          description: "Não foi possível verificar o status da sua conta.", 
+          variant: "destructive" 
+        });
         setAccessGranted(false);
       } finally {
         setIsLoading(false);
@@ -85,7 +93,16 @@ const VerificarAssinatura: React.FC = () => {
   if (accessGranted) {
     return <Outlet />;
   } else {
-    return <Navigate to="/perfil" state={{ from: location, message: "Você precisa de uma assinatura ativa ou acesso especial para esta página." }} replace />;
+    return (
+      <Navigate 
+        to="/perfil" 
+        state={{ 
+          from: location, 
+          message: "Você precisa de uma assinatura ativa ou acesso especial para esta página." 
+        }} 
+        replace 
+      />
+    );
   }
 };
 

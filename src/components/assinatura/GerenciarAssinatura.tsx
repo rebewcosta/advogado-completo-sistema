@@ -1,19 +1,20 @@
+
 // src/components/assinatura/GerenciarAssinatura.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import StatusAssinatura from '@/components/StatusAssinatura'; // Será atualizado no Passo 4
+import StatusAssinatura from '@/components/StatusAssinatura';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Gift, Crown, ExternalLink, ShoppingCart, RefreshCw } from 'lucide-react'; // Novos ícones
+import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 // Definindo um tipo para a resposta esperada da função SQL
 interface AssinaturaInfo {
-  status: 'ativa' | 'pendente' | 'inativa' | 'admin' | 'amigo'; // Status para o componente StatusAssinatura
+  status: 'ativa' | 'pendente' | 'inativa' | 'admin' | 'amigo';
   proximo_faturamento: string | null;
-  account_type: 'premium' | 'admin' | 'amigo' | 'pendente' | 'none'; // Tipo de conta detalhado
-  message: string; // Mensagem descritiva
+  account_type: 'premium' | 'admin' | 'amigo' | 'pendente' | 'none';
+  message: string;
 }
 
 const GerenciarAssinatura = () => {
@@ -28,6 +29,7 @@ const GerenciarAssinatura = () => {
   const fetchSubscriptionStatus = useCallback(async () => {
     setIsLoadingStatus(true);
     setErrorMessage(null);
+    
     if (!user || !session) {
       setAssinaturaInfo({
         status: 'inativa',
@@ -40,6 +42,8 @@ const GerenciarAssinatura = () => {
     }
 
     try {
+      console.log("Verificando status da assinatura para usuário:", user.id);
+      
       const { data, error } = await supabase.rpc('verificar_status_assinatura', {
         p_user_id: user.id
       });
@@ -50,22 +54,27 @@ const GerenciarAssinatura = () => {
       }
 
       if (data) {
-        setAssinaturaInfo(data as unknown as AssinaturaInfo);
         console.log("Dados da assinatura recebidos:", data);
+        setAssinaturaInfo(data as unknown as AssinaturaInfo);
       } else {
         throw new Error("Nenhuma informação de assinatura retornada.");
       }
 
     } catch (error: any) {
       console.error("Erro ao buscar status da assinatura:", error);
-      setErrorMessage(error.message || "Erro ao carregar status da assinatura.");
+      const errorMsg = error.message || "Erro ao carregar status da assinatura.";
+      setErrorMessage(errorMsg);
       setAssinaturaInfo({
         status: 'inativa',
         proximo_faturamento: null,
         account_type: 'none',
-        message: error.message || "Erro ao carregar status da assinatura."
+        message: errorMsg
       });
-      toast({ title: "Erro ao Carregar Assinatura", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Erro ao Carregar Assinatura", 
+        description: errorMsg, 
+        variant: "destructive" 
+      });
     } finally {
       setIsLoadingStatus(false);
     }
@@ -78,19 +87,33 @@ const GerenciarAssinatura = () => {
   const handleAbrirPortalCliente = async () => {
     setIsPortalLoading(true);
     setErrorMessage(null);
+    
     try {
+      console.log("Abrindo portal do cliente...");
+      
       const { data, error } = await supabase.functions.invoke('criar-portal-cliente');
 
-      if (error) throw new Error(error.message || "Erro ao invocar função do portal.");
+      if (error) {
+        console.error("Erro ao invocar função do portal:", error);
+        throw new Error(error.message || "Erro ao invocar função do portal.");
+      }
+      
       if (data && data.url) {
+        console.log("URL do portal recebida:", data.url);
         window.location.href = data.url;
       } else {
+        console.error("URL do portal não recebida:", data);
         throw new Error("URL do portal do cliente não recebida.");
       }
     } catch (error: any) {
       console.error("Erro ao abrir portal do cliente:", error);
-      setErrorMessage(error.message || "Erro ao abrir o portal do cliente.");
-      toast({ title: "Erro Portal Cliente", description: error.message, variant: "destructive" });
+      const errorMsg = error.message || "Erro ao abrir o portal do cliente.";
+      setErrorMessage(errorMsg);
+      toast({ 
+        title: "Erro Portal Cliente", 
+        description: errorMsg, 
+        variant: "destructive" 
+      });
     } finally {
       setIsPortalLoading(false);
     }
@@ -123,12 +146,12 @@ const GerenciarAssinatura = () => {
     );
   }
   
-  // Mapeamento para o componente StatusAssinatura (que espera 'ativa', 'pendente', 'inativa')
+  // Mapeamento para o componente StatusAssinatura
   let statusParaComponente: 'ativa' | 'pendente' | 'inativa' = 'inativa';
   if (assinaturaInfo.account_type === 'premium' && assinaturaInfo.status === 'ativa') {
     statusParaComponente = 'ativa';
   } else if (assinaturaInfo.account_type === 'admin' || assinaturaInfo.account_type === 'amigo') {
-    statusParaComponente = 'ativa'; // Visualmente, são ativos
+    statusParaComponente = 'ativa';
   } else if (assinaturaInfo.status === 'pendente') {
     statusParaComponente = 'pendente';
   }
@@ -145,7 +168,6 @@ const GerenciarAssinatura = () => {
         <StatusAssinatura
           status={statusParaComponente}
           dataProximoFaturamento={assinaturaInfo.proximo_faturamento}
-          // Passando o tipo de conta para customização no StatusAssinatura
           accountType={assinaturaInfo.account_type} 
           customMessage={assinaturaInfo.message}
           plano={
@@ -153,15 +175,32 @@ const GerenciarAssinatura = () => {
             assinaturaInfo.account_type === 'amigo' ? 'Assinatura Amiga (Cortesia)' :
             'JusGestão Premium'
           }
-          onAbrirPortalCliente={ (assinaturaInfo.account_type === 'premium' || assinaturaInfo.status === 'pendente' ) ? handleAbrirPortalCliente : undefined}
+          onAbrirPortalCliente={
+            (assinaturaInfo.account_type === 'premium' || assinaturaInfo.status === 'pendente') 
+              ? handleAbrirPortalCliente 
+              : undefined
+          }
           isPortalLoading={isPortalLoading}
         />
-         {errorMessage && !isLoadingStatus && (
+        
+        {errorMessage && !isLoadingStatus && (
           <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 flex items-center text-sm">
             <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
             <p>{errorMessage}</p>
           </div>
         )}
+        
+        <div className="mt-4 flex gap-2">
+          <Button 
+            onClick={fetchSubscriptionStatus} 
+            variant="outline" 
+            size="sm"
+            disabled={isLoadingStatus}
+          >
+            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingStatus ? 'animate-spin' : ''}`}/>
+            Atualizar Status
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

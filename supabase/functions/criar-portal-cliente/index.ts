@@ -16,101 +16,93 @@ serve(async (req) => {
   }
 
   try {
-    // Obter a chave do Stripe do ambiente
+    console.log("Iniciando criação do portal do cliente...");
+
+    // Obter chave do Stripe
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
-      console.error("Chave de API do Stripe não configurada");
+      console.error("Chave secreta do Stripe não configurada");
       return new Response(
-        JSON.stringify({ error: "Chave de API do Stripe não configurada. Verifique as configurações do Edge Function." }),
+        JSON.stringify({ error: "Configuração do Stripe não encontrada" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
 
-    // Inicializar cliente do Supabase
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") as string;
-    const supabaseKey = Deno.env.get("SUPABASE_ANON_KEY") as string;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Criar cliente Supabase
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
 
-    // Obter o token JWT da solicitação
+    // Verificar autenticação
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
-        JSON.stringify({ error: "Nenhum token de autenticação fornecido." }),
+        JSON.stringify({ error: "Token de autorização necessário" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
     }
 
-    // Verificar o usuário usando o token
     const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError) {
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+
+    if (userError || !userData.user?.email) {
+      console.error("Erro de autenticação:", userError);
       return new Response(
-        JSON.stringify({ error: `Erro de autenticação: ${userError.message}` }),
+        JSON.stringify({ error: "Usuário não autenticado" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
     }
 
-    const user = userData.user;
-    if (!user?.email) {
-      return new Response(
-        JSON.stringify({ error: "Usuário não autenticado ou email não disponível." }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
+    console.log("Usuário autenticado:", userData.user.email);
 
-    // Inicializar o Stripe
+    // Inicializar Stripe
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
 
-    // Procurar o cliente do Stripe com base no email
-    const customers = await stripe.customers.list({ email: user.email, limit: 1 });
-    
-    if (customers.data.length === 0) {
-      // Se o cliente não existir, criar um novo
-      const newCustomer = await stripe.customers.create({
-        email: user.email,
-        name: user.user_metadata?.nome || undefined,
-        metadata: {
-          user_id: user.id
-        }
-      });
-      
-      // Criar uma nova sessão do portal do cliente
-      const session = await stripe.billingPortal.sessions.create({
-        customer: newCustomer.id,
-        return_url: `${req.headers.get("origin")}/perfil`,
-      });
-      
-      return new Response(
-        JSON.stringify({ url: session.url }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
-    }
-    
-    // Cliente existe, criar sessão do portal
-    const customerId = customers.data[0].id;
-    const session = await stripe.billingPortal.sessions.create({
-      customer: customerId,
-      return_url: `${req.headers.get("origin")}/perfil`,
+    // Buscar cliente no Stripe
+    const customers = await stripe.customers.list({
+      email: userData.user.email,
+      limit: 1
     });
 
+    if (customers.data.length === 0) {
+      console.error("Cliente não encontrado no Stripe para:", userData.user.email);
+      return new Response(
+        JSON.stringify({ error: "Cliente não encontrado no Stripe. Faça uma assinatura primeiro." }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 404 }
+      );
+    }
+
+    const customerId = customers.data[0].id;
+    console.log("Cliente encontrado no Stripe:", customerId);
+
+    // Determinar URL de retorno
+    const returnUrl = req.headers.get("origin") || "https://sisjusgestao.com.br";
+    
+    // Criar sessão do portal do cliente
+    const portalSession = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: `${returnUrl}/configuracoes`,
+    });
+
+    console.log("Portal do cliente criado:", portalSession.id);
+
     return new Response(
-      JSON.stringify({ url: session.url }),
+      JSON.stringify({ url: portalSession.url }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
+
   } catch (error) {
-    console.error("Erro ao criar sessão do portal do cliente:", error);
+    console.error("Erro ao criar portal do cliente:", error);
     
-    // Retornar detalhes de erro mais específicos para facilitar o debug
     const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor";
-    const errorDetails = error instanceof Error && error.stack ? error.stack : undefined;
     
     return new Response(
       JSON.stringify({ 
         error: errorMessage,
-        details: errorDetails,
-        message: "Houve um erro ao processar a solicitação do portal do cliente. Por favor, verifique os logs para mais detalhes."
+        message: "Erro ao abrir o portal de gerenciamento. Tente novamente." 
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
