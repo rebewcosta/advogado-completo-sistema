@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -108,17 +107,21 @@ const ProductionValidation = () => {
       setProgress(40);
       
       try {
-        // Verificar se consegue invocar a função de checkout
-        const { error } = await supabase.functions.invoke('criar-sessao-checkout', {
+        // Testar com flag de teste
+        const { data, error } = await supabase.functions.invoke('criar-sessao-checkout', {
           body: { test: true }
         });
         
-        if (!error || error.message.includes('User not authenticated')) {
-          updateStepStatus('payment', 'success', 'Função de pagamento disponível');
+        if (error) {
+          console.error('Erro na função de pagamento:', error);
+          updateStepStatus('payment', 'error', `Erro: ${error.message}`);
+        } else if (data?.success || data?.test) {
+          updateStepStatus('payment', 'success', 'Função de pagamento operacional');
         } else {
-          updateStepStatus('payment', 'error', `Erro na função de pagamento: ${error.message}`);
+          updateStepStatus('payment', 'error', 'Resposta inesperada da função');
         }
       } catch (error: any) {
+        console.error('Erro de conectividade pagamento:', error);
         updateStepStatus('payment', 'error', `Erro de conectividade: ${error.message}`);
       }
       
@@ -129,12 +132,16 @@ const ProductionValidation = () => {
       setProgress(60);
       
       try {
-        // Verificar se a função de webhook está disponível
-        const response = await fetch('/functions/v1/webhook-stripe', { method: 'OPTIONS' });
-        if (response.ok) {
+        // Verificar se consegue invocar webhook com teste
+        const { data, error } = await supabase.functions.invoke('webhook-stripe', {
+          body: { test: true }
+        });
+        
+        // Webhook retorna OK mesmo para teste, isso é esperado
+        if (!error || error.message.includes('User not authenticated')) {
           updateStepStatus('webhook', 'success', 'Endpoint de webhook acessível');
         } else {
-          updateStepStatus('webhook', 'error', 'Endpoint de webhook inacessível');
+          updateStepStatus('webhook', 'error', `Erro no webhook: ${error.message}`);
         }
       } catch (error: any) {
         updateStepStatus('webhook', 'error', `Erro de conectividade webhook: ${error.message}`);

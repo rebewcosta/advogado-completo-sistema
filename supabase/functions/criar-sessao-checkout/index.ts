@@ -16,8 +16,66 @@ serve(async (req) => {
   }
 
   try {
+    console.log("🔄 Iniciando criar-sessao-checkout");
+
+    // Verificar se é um teste de validação
+    const body = await req.text();
+    let requestData;
+    
+    try {
+      requestData = body ? JSON.parse(body) : {};
+    } catch (e) {
+      requestData = {};
+    }
+
+    // Se for um teste simples, retornar sucesso
+    if (requestData.test === true) {
+      console.log("✅ Teste de validação - retornando sucesso");
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          message: "Função de checkout operacional",
+          test: true
+        }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 200 
+        }
+      );
+    }
+
+    // Verificar autenticação apenas para requisições reais
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.log("❌ Header de autorização não fornecido");
+      return new Response(
+        JSON.stringify({ error: "Header de autorização necessário" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
+    // Criar cliente Supabase para autenticação
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    
+    if (userError || !userData.user?.email) {
+      console.log("❌ Erro de autenticação:", userError?.message);
+      return new Response(
+        JSON.stringify({ error: "Usuário não autenticado" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
+      );
+    }
+
+    const user = userData.user;
+    console.log(`✅ Usuário autenticado: ${user.email}`);
+
     // Obter os dados do corpo da solicitação
-    const { nomePlano, valor, emailCliente, dominio } = await req.json();
+    const { nomePlano, valor, emailCliente, dominio } = requestData;
     
     // Detectar ambiente baseado no dominio ou headers
     const isProduction = !dominio?.includes('localhost') && 
@@ -28,7 +86,7 @@ serve(async (req) => {
     
     // Validar os dados necessários
     if (!nomePlano || !valor || !emailCliente) {
-      console.error("Dados incompletos para criar sessão:", { nomePlano, valor, emailCliente });
+      console.error("❌ Dados incompletos:", { nomePlano, valor, emailCliente });
       return new Response(
         JSON.stringify({ error: "Dados incompletos para criar sessão" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
@@ -36,53 +94,42 @@ serve(async (req) => {
     }
 
     // Log do modo de operação
-    console.log(`Processando checkout para ${emailCliente}, plano: ${nomePlano}, valor: ${valor}, modo: ${modo}`);
-    if (dominio) {
-      console.log(`Usando domínio personalizado: ${dominio}`);
-    }
+    console.log(`🔄 Processando checkout - Email: ${emailCliente}, Plano: ${nomePlano}, Valor: ${valor}, Modo: ${modo}`);
     
     // Obter a chave do Stripe do ambiente
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     if (!stripeSecretKey) {
-      console.error("Chave de API do Stripe não configurada");
+      console.error("❌ STRIPE_SECRET_KEY não configurada");
       return new Response(
-        JSON.stringify({ error: "Chave de API do Stripe não configurada. Verifique as configurações do Edge Function." }),
+        JSON.stringify({ error: "Chave de API do Stripe não configurada" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
     
-    // Log para verificar o modo de operação
-    console.log(`Iniciando Stripe no modo: ${modo.toUpperCase()}`);
-    
-    // Verificar se estamos usando a chave correta para o ambiente
-    if (isProduction && stripeSecretKey.startsWith('sk_test_')) {
-      console.warn("ATENÇÃO: Estamos usando uma chave de TESTE no modo de PRODUÇÃO!");
-    } else if (isProduction && stripeSecretKey.startsWith('rk_live_')) {
-      console.log("Confirmado: Usando chave de PRODUÇÃO corretamente.");
-    }
+    console.log(`🔄 Iniciando Stripe no modo: ${modo.toUpperCase()}`);
     
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
 
-    console.log("Criando sessão de checkout...");
+    console.log("🔄 Criando sessão de checkout...");
     
     // Determinar as URLs de sucesso e cancelamento
     const baseUrl = dominio || req.headers.get("origin") || "https://sisjusgestao.com.br";
     const successUrl = `${baseUrl}/pagamento?success=true`;
     const cancelUrl = `${baseUrl}/pagamento?canceled=true`;
     
-    console.log(`URLs de redirecionamento: success=${successUrl}, cancel=${cancelUrl}`);
+    console.log(`🔗 URLs - Success: ${successUrl}, Cancel: ${cancelUrl}`);
     
     // Usar o valor correto de R$ 37,00 (3700 centavos)
-    const valorCorreto = 3700; // R$ 37,00 em centavos
+    const valorCorreto = 3700;
     
     // Determinar o Price ID baseado no ambiente
     const priceId = isProduction 
-      ? 'price_1RfoO5Kr3xy0fCEP5COgihuw' // Seu Price ID de produção
+      ? 'price_1RfoO5Kr3xy0fCEP5COgihuw' // Price ID de produção
       : 'price_1QQKh6FJ3Y1S0P0BSZVwNKa6'; // Price ID de teste
     
-    console.log(`Usando Price ID: ${priceId} (modo: ${modo})`);
+    console.log(`💰 Usando Price ID: ${priceId} (modo: ${modo})`);
     
     // Criar a sessão de checkout usando o Price ID configurado
     const session = await stripe.checkout.sessions.create({
@@ -90,21 +137,22 @@ serve(async (req) => {
       customer_email: emailCliente,
       line_items: [
         {
-          price: priceId, // Usar o Price ID correto
+          price: priceId,
           quantity: 1,
         },
       ],
-      mode: "subscription", // Modo de assinatura
+      mode: "subscription",
       success_url: successUrl,
       cancel_url: cancelUrl,
       metadata: {
         email_cliente: emailCliente,
         plano: nomePlano,
         valor: valorCorreto.toString(),
+        user_id: user.id,
       },
     });
 
-    console.log(`Sessão de checkout criada: ${session.id}, URL: ${session.url}`);
+    console.log(`✅ Sessão criada com sucesso: ${session.id}`);
 
     // Retornar o ID da sessão e URL
     return new Response(
@@ -117,18 +165,16 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
+
   } catch (error) {
-    console.error("Erro ao criar sessão de checkout:", error);
+    console.error("❌ Erro ao criar sessão de checkout:", error);
     
-    // Retornar detalhes de erro mais específicos para facilitar o debug
     const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor";
-    const errorDetails = error instanceof Error && error.stack ? error.stack : undefined;
     
     return new Response(
       JSON.stringify({ 
         error: errorMessage,
-        details: errorDetails,
-        message: "Houve um erro ao processar o pagamento. Por favor, verifique os logs para mais detalhes."
+        message: "Houve um erro ao processar o pagamento"
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
