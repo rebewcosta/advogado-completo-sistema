@@ -70,6 +70,9 @@ verify_jwt = false
 [functions.verificar-assinatura]
 verify_jwt = true
 
+[functions.system-health]
+verify_jwt = false
+
 [functions.consultar-cnpj]
 verify_jwt = true
 
