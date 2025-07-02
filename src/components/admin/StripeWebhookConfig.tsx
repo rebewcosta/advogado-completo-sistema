@@ -77,6 +77,14 @@ const StripeWebhookConfig = () => {
           )}
         </div>
 
+        {/* Alerta sobre nova política */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Nova Política:</strong> Assinaturas inadimplentes são canceladas automaticamente após <strong>5 dias</strong> de atraso no pagamento.
+          </AlertDescription>
+        </Alert>
+
         {/* Instruções de configuração */}
         <Alert>
           <AlertCircle className="h-4 w-4" />
@@ -113,6 +121,20 @@ const StripeWebhookConfig = () => {
           </div>
         </div>
 
+        {/* Configuração adicional para 5 dias */}
+        <div className="space-y-3 pt-4 border-t">
+          <h4 className="font-medium">Configurações Adicionais no Stripe:</h4>
+          <div className="text-sm space-y-2">
+            <p><strong>1. Configurações de Cobrança:</strong></p>
+            <ul className="list-disc list-inside ml-4 space-y-1">
+              <li>Acesse "Configurações" → "Cobrança" no Stripe Dashboard</li>
+              <li>Defina tentativas de cobrança para <strong>2 tentativas máximo</strong></li>
+              <li>Intervalo entre tentativas: <strong>2 dias</strong></li>
+              <li>Isso resultará em cancelamento automático em ~5 dias</li>
+            </ul>
+          </div>
+        </div>
+
         {/* Instruções passo a passo */}
         <div className="space-y-3 pt-4 border-t">
           <h4 className="font-medium">Passos para Configuração:</h4>
@@ -121,6 +143,7 @@ const StripeWebhookConfig = () => {
             <li>Clique em "Add endpoint"</li>
             <li>Cole a URL do webhook acima</li>
             <li>Selecione os eventos listados acima</li>
+            <li>Configure as tentativas de cobrança (máximo 2 com 2 dias de intervalo)</li>
             <li>Salve e ative o webhook</li>
           </ol>
         </div>

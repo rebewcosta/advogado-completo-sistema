@@ -58,12 +58,12 @@ serve(async (req) => {
       case "customer.subscription.created":
       case "customer.subscription.updated":
       case "customer.subscription.deleted":
-        await handleSubscriptionEvent(event, supabase);
+        await handleSubscriptionEvent(event, supabase, stripe);
         break;
       
       case "invoice.payment_succeeded":
       case "invoice.payment_failed":
-        await handleInvoiceEvent(event, supabase);
+        await handleInvoiceEvent(event, supabase, stripe);
         break;
         
       default:
@@ -78,18 +78,13 @@ serve(async (req) => {
   }
 });
 
-async function handleSubscriptionEvent(event: Stripe.Event, supabase: any) {
+async function handleSubscriptionEvent(event: Stripe.Event, supabase: any, stripe: Stripe) {
   const subscription = event.data.object as Stripe.Subscription;
   const customerId = subscription.customer as string;
 
   console.log(`🔄 Processando assinatura: ${subscription.id} - Status: ${subscription.status}`);
 
   try {
-    // Buscar cliente no Stripe para obter email
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2023-10-16",
-    });
-    
     const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
     
     if (!customer.email) {
@@ -97,7 +92,6 @@ async function handleSubscriptionEvent(event: Stripe.Event, supabase: any) {
       return;
     }
 
-    // Buscar usuário no Supabase pelo email
     const { data: user, error: userError } = await supabase.auth.admin.getUserByEmail(customer.email);
     
     if (userError || !user) {
@@ -107,7 +101,7 @@ async function handleSubscriptionEvent(event: Stripe.Event, supabase: any) {
 
     console.log(`✅ Usuário encontrado: ${user.id}`);
 
-    // Preparar dados de atualização
+    // Preparar dados de atualização com política mais rígida
     const subscriptionData = {
       subscription_status: subscription.status,
       stripe_customer_id: customerId,
@@ -115,6 +109,19 @@ async function handleSubscriptionEvent(event: Stripe.Event, supabase: any) {
       subscription_id: subscription.id,
       updated_at: new Date().toISOString()
     };
+
+    // Se status é past_due, marcar timestamp para controle de 5 dias
+    if (subscription.status === 'past_due') {
+      subscriptionData.past_due_since = new Date().toISOString();
+      console.log(`⚠️ Assinatura em atraso marcada para cancelamento em 5 dias: ${customer.email}`);
+    }
+
+    // Se cancelada, limpar dados e marcar motivo
+    if (subscription.status === 'canceled') {
+      subscriptionData.canceled_at = new Date().toISOString();
+      subscriptionData.cancellation_reason = event.type === 'customer.subscription.deleted' ? 'automatic_nonpayment' : 'manual';
+      console.log(`❌ Assinatura cancelada: ${customer.email}`);
+    }
 
     // Atualizar metadados do usuário
     const { error: updateError } = await supabase.auth.admin.updateUserById(
@@ -133,26 +140,18 @@ async function handleSubscriptionEvent(event: Stripe.Event, supabase: any) {
       console.log("✅ Usuário atualizado com sucesso");
     }
 
-    // Log da ação
-    console.log(`📝 Assinatura ${subscription.status}: ${customer.email}`);
-
   } catch (error) {
     console.error("❌ Erro ao processar assinatura:", error);
   }
 }
 
-async function handleInvoiceEvent(event: Stripe.Event, supabase: any) {
+async function handleInvoiceEvent(event: Stripe.Event, supabase: any, stripe: Stripe) {
   const invoice = event.data.object as Stripe.Invoice;
   const customerId = invoice.customer as string;
 
   console.log(`🧾 Processando fatura: ${invoice.id} - Status: ${invoice.status}`);
 
   try {
-    // Buscar cliente no Stripe
-    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
-      apiVersion: "2023-10-16",
-    });
-    
     const customer = await stripe.customers.retrieve(customerId) as Stripe.Customer;
     
     if (!customer.email) {
@@ -160,7 +159,7 @@ async function handleInvoiceEvent(event: Stripe.Event, supabase: any) {
       return;
     }
 
-    // Se pagamento falhou, marcar como past_due
+    // Se pagamento falhou, iniciar contagem de 5 dias
     if (event.type === "invoice.payment_failed") {
       const { data: user } = await supabase.auth.admin.getUserByEmail(customer.email);
       
@@ -171,11 +170,33 @@ async function handleInvoiceEvent(event: Stripe.Event, supabase: any) {
             user_metadata: {
               ...user.user_metadata,
               subscription_status: 'past_due',
-              payment_failed_at: new Date().toISOString()
+              payment_failed_at: new Date().toISOString(),
+              past_due_since: new Date().toISOString() // Marca início da inadimplência
             }
           }
         );
-        console.log(`⚠️ Pagamento falhou para: ${customer.email}`);
+        console.log(`⚠️ Pagamento falhou - Iniciando contagem de 5 dias: ${customer.email}`);
+      }
+    }
+
+    // Se pagamento foi bem-sucedido após falha, limpar flags
+    if (event.type === "invoice.payment_succeeded") {
+      const { data: user } = await supabase.auth.admin.getUserByEmail(customer.email);
+      
+      if (user && user.user_metadata?.past_due_since) {
+        await supabase.auth.admin.updateUserById(
+          user.id,
+          {
+            user_metadata: {
+              ...user.user_metadata,
+              subscription_status: 'active',
+              payment_failed_at: null,
+              past_due_since: null,
+              payment_recovered_at: new Date().toISOString()
+            }
+          }
+        );
+        console.log(`✅ Pagamento recuperado - Inadimplência cancelada: ${customer.email}`);
       }
     }
 
