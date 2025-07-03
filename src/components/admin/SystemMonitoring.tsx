@@ -72,38 +72,121 @@ const SystemMonitoring = () => {
       // Buscar usuários com atividade nos últimos 5 minutos (considerados online)
       const cincoMinutosAtras = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       
-      // Usar apenas tabelas válidas do banco de dados
-      const tabelasValidas = [
-        'clientes',
-        'processos', 
-        'tarefas',
-        'transacoes_financeiras',
-        'agenda_eventos',
-        'documentos'
-      ];
-
       const usuariosAtivosIds = new Set<string>();
 
-      // Verificar atividade em cada tabela
-      for (const tabela of tabelasValidas) {
-        try {
-          const { data } = await supabase
-            .from(tabela)
-            .select('user_id, updated_at')
-            .gte('updated_at', cincoMinutosAtras)
-            .limit(100);
+      // Verificar atividade em cada tabela de forma type-safe
+      try {
+        // Clientes
+        const { data: clientesData } = await supabase
+          .from('clientes')
+          .select('user_id, updated_at')
+          .gte('updated_at', cincoMinutosAtras)
+          .limit(100);
 
-          if (data) {
-            data.forEach(item => {
-              if (item.user_id) {
-                usuariosAtivosIds.add(item.user_id);
-              }
-            });
-          }
-        } catch (error) {
-          // Continuar mesmo se uma tabela falhar
-          console.log(`Erro ao verificar ${tabela}:`, error);
+        if (clientesData) {
+          clientesData.forEach(item => {
+            if (item.user_id) {
+              usuariosAtivosIds.add(item.user_id);
+            }
+          });
         }
+      } catch (error) {
+        console.log('Erro ao verificar clientes:', error);
+      }
+
+      try {
+        // Processos
+        const { data: processosData } = await supabase
+          .from('processos')
+          .select('user_id, updated_at')
+          .gte('updated_at', cincoMinutosAtras)
+          .limit(100);
+
+        if (processosData) {
+          processosData.forEach(item => {
+            if (item.user_id) {
+              usuariosAtivosIds.add(item.user_id);
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Erro ao verificar processos:', error);
+      }
+
+      try {
+        // Tarefas
+        const { data: tarefasData } = await supabase
+          .from('tarefas')
+          .select('user_id, updated_at')
+          .gte('updated_at', cincoMinutosAtras)
+          .limit(100);
+
+        if (tarefasData) {
+          tarefasData.forEach(item => {
+            if (item.user_id) {
+              usuariosAtivosIds.add(item.user_id);
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Erro ao verificar tarefas:', error);
+      }
+
+      try {
+        // Transações Financeiras
+        const { data: transacoesData } = await supabase
+          .from('transacoes_financeiras')
+          .select('user_id, updated_at')
+          .gte('updated_at', cincoMinutosAtras)
+          .limit(100);
+
+        if (transacoesData) {
+          transacoesData.forEach(item => {
+            if (item.user_id) {
+              usuariosAtivosIds.add(item.user_id);
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Erro ao verificar transações:', error);
+      }
+
+      try {
+        // Agenda Eventos
+        const { data: agendaData } = await supabase
+          .from('agenda_eventos')
+          .select('user_id, updated_at')
+          .gte('updated_at', cincoMinutosAtras)
+          .limit(100);
+
+        if (agendaData) {
+          agendaData.forEach(item => {
+            if (item.user_id) {
+              usuariosAtivosIds.add(item.user_id);
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Erro ao verificar agenda:', error);
+      }
+
+      try {
+        // Documentos
+        const { data: documentosData } = await supabase
+          .from('documentos')
+          .select('user_id, created_at')
+          .gte('created_at', cincoMinutosAtras)
+          .limit(100);
+
+        if (documentosData) {
+          documentosData.forEach(item => {
+            if (item.user_id) {
+              usuariosAtivosIds.add(item.user_id);
+            }
+          });
+        }
+      } catch (error) {
+        console.log('Erro ao verificar documentos:', error);
       }
 
       // Para cada usuário ativo, buscar detalhes no profiles
