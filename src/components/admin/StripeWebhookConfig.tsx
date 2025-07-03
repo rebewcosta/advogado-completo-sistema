@@ -22,9 +22,11 @@ const StripeWebhookConfig = () => {
       const webhookEndpoint = `${baseUrl}/functions/v1/webhook-stripe`;
       setWebhookUrl(webhookEndpoint);
       
-      // Simular verificação (em produção, isso seria uma chamada real)
+      // Verificar se já foi marcado como configurado anteriormente
+      const isConfigured = localStorage.getItem('webhook-stripe-configured') === 'true';
+      
       setTimeout(() => {
-        setWebhookStatus('missing'); // Para mostrar as instruções inicialmente
+        setWebhookStatus(isConfigured ? 'configured' : 'missing');
       }, 1000);
     };
 
@@ -36,6 +38,24 @@ const StripeWebhookConfig = () => {
     toast({
       title: "URL copiada!",
       description: "URL do webhook copiada para a área de transferência.",
+    });
+  };
+
+  const handleMarkAsConfigured = () => {
+    setWebhookStatus('configured');
+    localStorage.setItem('webhook-stripe-configured', 'true');
+    toast({
+      title: "Webhook Configurado!",
+      description: "Webhook marcado como configurado com sucesso.",
+    });
+  };
+
+  const handleReset = () => {
+    setWebhookStatus('missing');
+    localStorage.removeItem('webhook-stripe-configured');
+    toast({
+      title: "Status Resetado",
+      description: "Status do webhook foi resetado.",
     });
   };
 
@@ -58,22 +78,36 @@ const StripeWebhookConfig = () => {
       <CardContent className="space-y-4">
         
         {/* Status atual */}
-        <div className="flex items-center gap-2">
-          <span className="font-medium">Status:</span>
-          {webhookStatus === 'checking' && (
-            <Badge variant="secondary">Verificando...</Badge>
-          )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Status:</span>
+            {webhookStatus === 'checking' && (
+              <Badge variant="secondary">Verificando...</Badge>
+            )}
+            {webhookStatus === 'configured' && (
+              <Badge variant="default" className="bg-green-100 text-green-800">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Configurado
+              </Badge>
+            )}
+            {webhookStatus === 'missing' && (
+              <Badge variant="destructive">
+                <AlertCircle className="h-3 w-3 mr-1" />
+                Configuração Necessária
+              </Badge>
+            )}
+          </div>
+          
+          {/* Botão de reset para admins */}
           {webhookStatus === 'configured' && (
-            <Badge variant="default" className="bg-green-100 text-green-800">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              Configurado
-            </Badge>
-          )}
-          {webhookStatus === 'missing' && (
-            <Badge variant="destructive">
-              <AlertCircle className="h-3 w-3 mr-1" />
-              Configuração Necessária
-            </Badge>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleReset}
+              className="text-xs"
+            >
+              Reset Status
+            </Button>
           )}
         </div>
 
@@ -86,12 +120,23 @@ const StripeWebhookConfig = () => {
         </Alert>
 
         {/* Instruções de configuração */}
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Configuração Manual Obrigatória:</strong> Configure o webhook no Dashboard do Stripe para ativar os pagamentos automáticos.
-          </AlertDescription>
-        </Alert>
+        {webhookStatus !== 'configured' && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Configuração Manual Obrigatória:</strong> Configure o webhook no Dashboard do Stripe para ativar os pagamentos automáticos.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {webhookStatus === 'configured' && (
+          <Alert>
+            <CheckCircle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Webhook Configurado!</strong> O webhook está configurado e funcionando corretamente.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* URL do Webhook */}
         <div className="space-y-2">
@@ -164,14 +209,17 @@ const StripeWebhookConfig = () => {
               Abrir Dashboard Stripe
             </a>
           </Button>
-          <Button 
-            variant="outline"
-            onClick={() => setWebhookStatus('configured')}
-            className="flex-1"
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Marcar como Configurado
-          </Button>
+          
+          {webhookStatus !== 'configured' && (
+            <Button 
+              variant="outline"
+              onClick={handleMarkAsConfigured}
+              className="flex-1"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Marcar como Configurado
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

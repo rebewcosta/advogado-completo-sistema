@@ -72,10 +72,8 @@ const SystemMonitoring = () => {
       // Buscar usuários com atividade nos últimos 5 minutos (considerados online)
       const cincoMinutosAtras = new Date(Date.now() - 5 * 60 * 1000).toISOString();
       
-      // Como não podemos acessar auth.users diretamente, vamos usar uma abordagem alternativa
-      // Buscar atividade recente em várias tabelas para detectar usuários ativos
-      
-      const tabelas = [
+      // Usar apenas tabelas válidas do banco de dados
+      const tabelasValidas = [
         'clientes',
         'processos', 
         'tarefas',
@@ -87,7 +85,7 @@ const SystemMonitoring = () => {
       const usuariosAtivosIds = new Set<string>();
 
       // Verificar atividade em cada tabela
-      for (const tabela of tabelas) {
+      for (const tabela of tabelasValidas) {
         try {
           const { data } = await supabase
             .from(tabela)
