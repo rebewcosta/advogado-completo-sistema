@@ -7,7 +7,8 @@ import ProductionValidation from './ProductionValidation';
 import CreateUserAccount from './CreateUserAccount';
 import CriarContaEspecial from './CriarContaEspecial';
 import SecurityMonitoring from './SecurityMonitoring';
-import { Settings, Activity, CheckSquare, Users, UserPlus, Shield } from 'lucide-react';
+import AvisosTab from '../configuracoes/AvisosTab';
+import { Settings, Activity, CheckSquare, Users, UserPlus, Shield, Bell } from 'lucide-react';
 
 const AdminPanelComplete = () => {
   return (
@@ -20,7 +21,7 @@ const AdminPanelComplete = () => {
       </div>
 
       <Tabs defaultValue="config" className="w-full">
-        <TabsList className="grid w-full grid-cols-6">
+        <TabsList className="grid w-full grid-cols-7">
           <TabsTrigger value="config" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Configurações
@@ -44,6 +45,10 @@ const AdminPanelComplete = () => {
           <TabsTrigger value="security" className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
             Segurança
+          </TabsTrigger>
+          <TabsTrigger value="avisos" className="flex items-center gap-2">
+            <Bell className="h-4 w-4" />
+            Avisos
           </TabsTrigger>
         </TabsList>
 
@@ -69,6 +74,10 @@ const AdminPanelComplete = () => {
 
         <TabsContent value="security" className="mt-6">
           <SecurityMonitoring />
+        </TabsContent>
+
+        <TabsContent value="avisos" className="mt-6">
+          <AvisosTab />
         </TabsContent>
       </Tabs>
     </div>
