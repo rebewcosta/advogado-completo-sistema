@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +14,8 @@ import {
   Eye,
   TrendingUp,
   Users,
-  CreditCard
+  CreditCard,
+  UserCheck
 } from 'lucide-react';
 
 interface SystemStatus {
@@ -33,10 +33,18 @@ interface LogEntry {
 }
 
 interface RealMetrics {
-  usuariosAtivos: number;
+  usuariosOnline: number;
+  usuariosAtivos24h: number;
   totalUsuarios: number;
   pagamentosHoje: number;
   taxaSucesso: number;
+}
+
+interface UsuarioOnline {
+  id: string;
+  email: string;
+  ultimaAtividade: string;
+  status: 'online' | 'idle';
 }
 
 const SystemMonitoring = () => {
@@ -48,32 +56,119 @@ const SystemMonitoring = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [realMetrics, setRealMetrics] = useState<RealMetrics>({
-    usuariosAtivos: 0,
+    usuariosOnline: 0,
+    usuariosAtivos24h: 0,
     totalUsuarios: 0,
     pagamentosHoje: 0,
     taxaSucesso: 0
   });
+  const [usuariosOnline, setUsuariosOnline] = useState<UsuarioOnline[]>([]);
   const { toast } = useToast();
+
+  const detectarUsuariosOnline = async () => {
+    try {
+      addLog('info', 'Online Detection', 'Iniciando detecção de usuários online...');
+
+      // Buscar usuários com atividade nos últimos 5 minutos (considerados online)
+      const cincoMinutosAtras = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
+      // Como não podemos acessar auth.users diretamente, vamos usar uma abordagem alternativa
+      // Buscar atividade recente em várias tabelas para detectar usuários ativos
+      
+      const tabelas = [
+        'clientes',
+        'processos', 
+        'tarefas',
+        'transacoes_financeiras',
+        'agenda_eventos',
+        'documentos'
+      ];
+
+      const usuariosAtivosIds = new Set<string>();
+
+      // Verificar atividade em cada tabela
+      for (const tabela of tabelas) {
+        try {
+          const { data } = await supabase
+            .from(tabela)
+            .select('user_id, updated_at')
+            .gte('updated_at', cincoMinutosAtras)
+            .limit(100);
+
+          if (data) {
+            data.forEach(item => {
+              if (item.user_id) {
+                usuariosAtivosIds.add(item.user_id);
+              }
+            });
+          }
+        } catch (error) {
+          // Continuar mesmo se uma tabela falhar
+          console.log(`Erro ao verificar ${tabela}:`, error);
+        }
+      }
+
+      // Para cada usuário ativo, buscar detalhes no profiles
+      const usuariosDetalhes: UsuarioOnline[] = [];
+      
+      for (const userId of usuariosAtivosIds) {
+        try {
+          // Buscar o perfil mais recente deste usuário
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, updated_at')
+            .eq('id', userId)
+            .single();
+
+          if (profile) {
+            // Simular email baseado no ID (já que não temos acesso ao auth.users)
+            const emailSimulado = `user_${userId.substring(0, 8)}@system.local`;
+            
+            usuariosDetalhes.push({
+              id: userId,
+              email: emailSimulado,
+              ultimaAtividade: profile.updated_at || new Date().toISOString(),
+              status: 'online'
+            });
+          }
+        } catch (error) {
+          // Continuar mesmo se um usuário específico falhar
+          console.log(`Erro ao buscar detalhes do usuário ${userId}:`, error);
+        }
+      }
+
+      setUsuariosOnline(usuariosDetalhes);
+      
+      addLog('info', 'Online Detection', `${usuariosDetalhes.length} usuários online detectados`);
+      return usuariosDetalhes.length;
+
+    } catch (error: any) {
+      addLog('error', 'Online Detection', 'Erro na detecção de usuários online', { error: error.message });
+      return 0;
+    }
+  };
 
   const fetchRealMetrics = async () => {
     try {
       addLog('info', 'Metrics', 'Buscando métricas reais do sistema...');
 
-      // 1. Buscar total de usuários registrados
-      const { data: allUsers, error: usersError } = await supabase.functions.invoke('system-health');
+      // 1. Detectar usuários online
+      const usuariosOnlineCount = await detectarUsuariosOnline();
+
+      // 2. Buscar usuários ativos (com atividade nas últimas 24h)
+      const vinteQuatroHorasAtras = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
       
-      // 2. Buscar usuários ativos (logados nas últimas 24h)
       const { count: activeUsersCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
-        .gte('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+        .gte('updated_at', vinteQuatroHorasAtras);
 
       // 3. Buscar total de usuários
       const { count: totalUsersCount } = await supabase
         .from('profiles') 
         .select('*', { count: 'exact', head: true });
 
-      // 4. Buscar transações de hoje (como proxy para pagamentos)
+      // 4. Buscar transações de hoje
       const hoje = new Date().toISOString().split('T')[0];
       const { count: todayTransactions } = await supabase
         .from('transacoes_financeiras')
@@ -82,7 +177,7 @@ const SystemMonitoring = () => {
         .eq('tipo_transacao', 'Receita')
         .eq('status_pagamento', 'Recebido');
 
-      // 5. Calcular taxa de sucesso baseada em transações bem-sucedidas vs tentativas
+      // 5. Calcular taxa de sucesso
       const { count: successfulTransactions } = await supabase
         .from('transacoes_financeiras')
         .select('*', { count: 'exact', head: true })
@@ -97,13 +192,14 @@ const SystemMonitoring = () => {
       const taxaSucesso = totalTransactions > 0 ? (successfulTransactions / totalTransactions) * 100 : 100;
 
       setRealMetrics({
-        usuariosAtivos: activeUsersCount || 0,
+        usuariosOnline: usuariosOnlineCount,
+        usuariosAtivos24h: activeUsersCount || 0,
         totalUsuarios: totalUsersCount || 0,
         pagamentosHoje: todayTransactions || 0,
         taxaSucesso: Math.round(taxaSucesso * 10) / 10
       });
 
-      addLog('info', 'Metrics', `Métricas atualizadas: ${activeUsersCount || 0} usuários ativos, ${todayTransactions || 0} pagamentos hoje`);
+      addLog('info', 'Metrics', `Métricas atualizadas: ${usuariosOnlineCount} online, ${activeUsersCount || 0} ativos 24h`);
 
     } catch (error: any) {
       addLog('error', 'Metrics', 'Erro ao buscar métricas reais', { error: error.message });
@@ -199,8 +295,8 @@ const SystemMonitoring = () => {
   useEffect(() => {
     checkSystemHealth();
     
-    // Atualizar status a cada 5 minutos
-    const interval = setInterval(checkSystemHealth, 5 * 60 * 1000);
+    // Atualizar status a cada 2 minutos para detecção mais frequente
+    const interval = setInterval(checkSystemHealth, 2 * 60 * 1000);
     
     return () => clearInterval(interval);
   }, []);
@@ -271,8 +367,9 @@ const SystemMonitoring = () => {
 
       {/* Métricas e Logs */}
       <Tabs defaultValue="metrics" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="metrics">Métricas</TabsTrigger>
+          <TabsTrigger value="online">Usuários Online</TabsTrigger>
           <TabsTrigger value="logs">Logs</TabsTrigger>
           <TabsTrigger value="tests">Testes</TabsTrigger>
         </TabsList>
@@ -282,10 +379,21 @@ const SystemMonitoring = () => {
             <Card>
               <CardContent className="p-4">
                 <div className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-green-500" />
+                  <span className="text-sm font-medium">Usuários Online</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600">{realMetrics.usuariosOnline}</p>
+                <p className="text-xs text-gray-500">Ativos nos últimos 5min</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2">
                   <Users className="h-4 w-4 text-blue-500" />
                   <span className="text-sm font-medium">Usuários Ativos</span>
                 </div>
-                <p className="text-2xl font-bold text-blue-600">{realMetrics.usuariosAtivos}</p>
+                <p className="text-2xl font-bold text-blue-600">{realMetrics.usuariosAtivos24h}</p>
                 <p className="text-xs text-gray-500">Últimas 24h</p>
               </CardContent>
             </Card>
@@ -318,12 +426,53 @@ const SystemMonitoring = () => {
               <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
                 <strong>Dados Reais em Tempo Real:</strong>
                 <ul className="mt-2 space-y-1 list-disc list-inside">
-                  <li>Usuários ativos: Baseado em perfis atualizados nas últimas 24h</li>
+                  <li>Usuários online: Detectados por atividade nos últimos 5 minutos</li>
+                  <li>Usuários ativos: Perfis atualizados nas últimas 24h</li>
                   <li>Pagamentos: Receitas confirmadas hoje no sistema</li>
                   <li>Taxa de sucesso: Transações bem-sucedidas vs tentativas (7 dias)</li>
-                  <li>Atualização automática a cada 5 minutos</li>
+                  <li>Atualização automática a cada 2 minutos</li>
                 </ul>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="online">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Usuários Online ({realMetrics.usuariosOnline})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-96">
+                <div className="space-y-2">
+                  {usuariosOnline.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">Nenhum usuário online no momento</p>
+                  ) : (
+                    usuariosOnline.map((usuario, index) => (
+                      <div key={index} className="border-b pb-2 last:border-b-0">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span className="font-medium">{usuario.email}</span>
+                            <Badge variant="outline" className="text-xs">
+                              {usuario.status}
+                            </Badge>
+                          </div>
+                          <span className="text-xs text-gray-500">
+                            {new Date(usuario.ultimaAtividade).toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-500 ml-4">
+                          ID: {usuario.id.substring(0, 8)}...
+                        </p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </TabsContent>
@@ -387,7 +536,8 @@ const SystemMonitoring = () => {
               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
                 <strong>Testes Automáticos:</strong>
                 <ul className="mt-2 space-y-1 list-disc list-inside">
-                  <li>Verificação de conectividade a cada 5 minutos</li>
+                  <li>Verificação de conectividade a cada 2 minutos</li>
+                  <li>Detecção de usuários online em tempo real</li>
                   <li>Teste de webhooks do Stripe</li>
                   <li>Validação de métricas reais</li>
                   <li>Monitoramento de tempo de resposta</li>
