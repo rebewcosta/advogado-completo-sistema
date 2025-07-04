@@ -22,11 +22,11 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
             <GlobalHooksProvider />
             <Routes>
               <PublicRoutes />
@@ -40,9 +40,9 @@ function App() {
               <OtherRoutes />
               <AdminRoutes />
             </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }

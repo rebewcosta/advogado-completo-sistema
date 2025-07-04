@@ -1,4 +1,8 @@
 
+import { useAuthContext } from './auth/AuthContext';
+
+export const useAuth = () => {
+  return useAuthContext();
+};
+
 export { AuthProvider } from './auth/AuthProvider';
-export { useAuthContext as useAuth } from './auth/AuthContext';
-export type { AuthContextType } from './auth/types';
