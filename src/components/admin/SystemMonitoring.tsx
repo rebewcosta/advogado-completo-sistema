@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -47,6 +46,9 @@ interface ErrorLog {
   timestamp: string;
   severity: 'error' | 'warning' | 'info';
   resolved: boolean;
+  created_at?: string;
+  stack_trace?: string | null;
+  user_agent?: string | null;
 }
 
 interface SystemMetrics {
@@ -114,16 +116,32 @@ const SystemMonitoring = () => {
 
       if (error) throw error;
       
-      setErrors(errorsData || []);
+      // Map the data to match our interface
+      const mappedErrors: ErrorLog[] = (errorsData || []).map(error => ({
+        id: error.id,
+        user_id: error.user_id,
+        error_type: error.error_type,
+        error_message: error.error_message,
+        component_name: error.component_name,
+        url: error.url,
+        timestamp: error.timestamp,
+        severity: error.severity as 'error' | 'warning' | 'info',
+        resolved: error.resolved,
+        created_at: error.created_at,
+        stack_trace: error.stack_trace,
+        user_agent: error.user_agent
+      }));
       
-      const recent24h = errorsData?.filter(error => {
+      setErrors(mappedErrors);
+      
+      const recent24h = mappedErrors.filter(error => {
         const errorDate = new Date(error.timestamp);
         const now = new Date();
         const timeDiff = now.getTime() - errorDate.getTime();
         return timeDiff < 24 * 60 * 60 * 1000; // 24 horas
       }).length || 0;
       
-      const unresolved = errorsData?.filter(error => !error.resolved).length || 0;
+      const unresolved = mappedErrors.filter(error => !error.resolved).length || 0;
       
       setMetrics(prev => ({
         ...prev,
