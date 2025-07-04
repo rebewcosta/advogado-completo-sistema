@@ -23,8 +23,6 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
         <BrowserRouter>
           <AuthProvider>
             <GlobalHooksProvider />
@@ -42,6 +40,8 @@ function App() {
             </Routes>
           </AuthProvider>
         </BrowserRouter>
+        <Toaster />
+        <Sonner />
       </TooltipProvider>
     </QueryClientProvider>
   );
