@@ -1,20 +1,18 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import GlobalHooksProvider from "@/components/GlobalHooksProvider";
-import PublicRoutes from "@/components/routes/PublicRoutes";
-import ProtectedRoutes from "@/components/routes/ProtectedRoutes";
-import ClientesRoutes from "@/components/routes/ClientesRoutes";
-import ProcessosRoutes from "@/components/routes/ProcessosRoutes";
-import TarefasRoutes from "@/components/routes/TarefasRoutes";
-import FinanceiroRoutes from "@/components/routes/FinanceiroRoutes";
-import AgendaRoutes from "@/components/routes/AgendaRoutes";
-import EquipeRoutes from "@/components/routes/EquipeRoutes";
-import OtherRoutes from "@/components/routes/OtherRoutes";  
-import AdminRoutes from "@/components/routes/AdminRoutes";
+import Index from "@/pages/Index";
+import Login from "@/pages/LoginPage";
+import Register from "@/pages/CadastroPage";
+import PasswordReset from "@/pages/RecuperarSenhaPage";
+import NotFound from "@/pages/NotFound";
+import Dashboard from "@/pages/DashboardPage";
+import Configuracoes from "@/pages/ConfiguracoesPage";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,18 +29,33 @@ function App() {
       <TooltipProvider>
         <BrowserRouter>
           <AuthProvider>
-            <GlobalHooksProvider />
             <Routes>
-              <PublicRoutes />
-              <ProtectedRoutes />
-              <ClientesRoutes />
-              <ProcessosRoutes />
-              <TarefasRoutes />
-              <FinanceiroRoutes />
-              <AgendaRoutes />
-              <EquipeRoutes />
-              <OtherRoutes />
-              <AdminRoutes />
+              {/* Public Routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/password-reset" element={<PasswordReset />} />
+              
+              {/* Protected Routes */}
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/configuracoes"
+                element={
+                  <ProtectedRoute>
+                    <Configuracoes />
+                  </ProtectedRoute>
+                }
+              />
+              
+              {/* Catch all */}
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </AuthProvider>
         </BrowserRouter>
