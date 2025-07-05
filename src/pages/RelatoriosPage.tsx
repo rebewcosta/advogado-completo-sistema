@@ -1,75 +1,38 @@
 
 import React from 'react';
-import AdminLayout from '@/components/AdminLayout';
-import { BarChart3 } from 'lucide-react';
-import SharedPageHeader from '@/components/shared/SharedPageHeader';
-import { useRelatoriosData } from '@/hooks/useRelatoriosData';
-import RelatoriosLoadingState from '@/components/relatorios/RelatoriosLoadingState';
-import RelatoriosErrorState from '@/components/relatorios/RelatoriosErrorState';
-import MetricsCardsSection from '@/components/relatorios/MetricsCardsSection';
-import RelatoriosChartsSection from '@/components/relatorios/RelatoriosChartsSection';
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from '@/components/AppSidebar';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart3 } from "lucide-react";
 
 const RelatoriosPage = () => {
-  const {
-    isLoading,
-    error,
-    monthlyFinancialData,
-    processStatusData,
-    taskStatusData,
-    activeClientsCount,
-    totalRevenue,
-    totalExpenses,
-    totalProcesses,
-    fetchData
-  } = useRelatoriosData();
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  if (isLoading) {
-    return <RelatoriosLoadingState />;
-  }
-
-  if (error && !isLoading) {
-    return <RelatoriosErrorState error={error} onRetry={fetchData} />;
-  }
-
   return (
-    <AdminLayout>
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 p-4 md:p-6 lg:p-8">
-        <SharedPageHeader
-          title="Relatórios Gerenciais"
-          description="Visualize o desempenho e as métricas chave do seu escritório."
-          pageIcon={<BarChart3 />}
-          showActionButton={false}
-        />
-
-        <MetricsCardsSection
-          totalRevenue={totalRevenue}
-          activeClientsCount={activeClientsCount}
-          totalProcesses={totalProcesses}
-          totalExpenses={totalExpenses}
-          formatCurrency={formatCurrency}
-        />
-
-        <RelatoriosChartsSection
-          monthlyFinancialData={monthlyFinancialData}
-          processStatusData={processStatusData}
-          taskStatusData={taskStatusData}
-          totalRevenue={totalRevenue}
-          totalExpenses={totalExpenses}
-          activeClientsCount={activeClientsCount}
-          totalProcesses={totalProcesses}
-          formatCurrency={formatCurrency}
-        />
+    <SidebarProvider>
+      <div className="flex h-screen w-full bg-gray-50">
+        <AppSidebar />
+        <div className="flex-1 overflow-auto min-w-0">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <BarChart3 className="h-8 w-8 text-blue-600" />
+              <h1 className="text-3xl font-bold text-gray-900">Relatórios</h1>
+            </div>
+            
+            <div className="grid gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Relatórios Gerenciais</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Gere relatórios e análises do seu escritório.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
       </div>
-    </AdminLayout>
+    </SidebarProvider>
   );
 };
 
