@@ -1,95 +1,100 @@
+
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useAuth } from '@/hooks/useAuth';
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import VisaoGeralContent from '@/components/dashboard/VisaoGeralContent';
-import FinanceiroContent from '@/components/dashboard/FinanceiroContent';
-import ProcessosContent from '@/components/dashboard/ProcessosContent';
-import AgendaContent from '@/components/dashboard/AgendaContent';
-import ListaAvisos from '@/components/avisos/ListaAvisos';
-import { Briefcase, Calendar as CalendarIcon, DollarSign as DollarSignIcon, BarChartHorizontalBig } from 'lucide-react';
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { AppSidebar } from '@/components/AppSidebar';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { BarChart3, Users, FileText, DollarSign } from "lucide-react";
 
 const DashboardPage = () => {
-  const { user, signOut } = useAuth();
-
-  const getUserFirstName = () => {
-    if (user?.user_metadata?.nome) {
-      const fullName = user.user_metadata.nome;
-      return fullName.split(' ')[0];
-    }
-    return user?.email?.split('@')[0] || 'Usuário';
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 md:p-6 lg:p-8">
-      <DashboardHeader
-        user={user}
-        getUserFirstName={getUserFirstName}
-        handleSignOut={handleSignOut}
-      />
+    <SidebarProvider>
+      <div className="flex h-screen w-full bg-gray-50">
+        <AppSidebar />
+        <div className="flex-1 overflow-auto min-w-0">
+          <div className="p-6">
+            <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Processos</CardTitle>
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum processo cadastrado
+                  </p>
+                </CardContent>
+              </Card>
 
-      <Tabs defaultValue="visao-geral" className="mt-8">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-xl mb-8 shadow-lg border border-white/50 h-auto">
-          <TabsTrigger
-            value="visao-geral"
-            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-          >
-            <BarChartHorizontalBig className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
-            <span className="truncate">Visão</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="financeiro"
-            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500 data-[state=active]:to-green-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-          >
-            <DollarSignIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
-            <span className="truncate">Financ.</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="processos"
-            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-violet-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-          >
-            <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
-            <span className="truncate">Process.</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="agenda"
-            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-500 data-[state=active]:to-red-500 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-          >
-            <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
-            <span className="truncate">Agenda</span>
-          </TabsTrigger>
-        </TabsList>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum cliente cadastrado
+                  </p>
+                </CardContent>
+              </Card>
 
-        <div className="bg-white/40 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-white/50">
-          <TabsContent value="visao-geral" className="mt-0">
-            <VisaoGeralContent />
-          </TabsContent>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Receita Mensal</CardTitle>
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">R$ 0,00</div>
+                  <p className="text-xs text-muted-foreground">
+                    Nenhuma transação registrada
+                  </p>
+                </CardContent>
+              </Card>
 
-          <TabsContent value="financeiro" className="mt-0">
-            <FinanceiroContent />
-          </TabsContent>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Prazos Próximos</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">0</div>
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum prazo próximo
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
 
-          <TabsContent value="processos" className="mt-0">
-            <ProcessosContent />
-          </TabsContent>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Atividades Recentes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma atividade recente encontrada.
+                  </p>
+                </CardContent>
+              </Card>
 
-          <TabsContent value="agenda" className="mt-0">
-            <AgendaContent />
-          </TabsContent>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Próximos Compromissos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Nenhum compromisso agendado.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
-      </Tabs>
-
-      {/* Lista de avisos - aparece sempre no canto superior direito */}
-      <ListaAvisos />
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
