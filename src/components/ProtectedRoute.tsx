@@ -1,8 +1,9 @@
 
 import { useEffect, useState, ReactNode } from 'react';
 import { Navigate, useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { Spinner } from '@/components/ui/spinner';
+import { useUserRole } from '@/hooks/useUserRole';
 
 interface ProtectedRouteProps {
   children?: ReactNode;
@@ -18,10 +19,40 @@ const ProtectedRoute = ({
   redirectPath = '/login',
 }: ProtectedRouteProps) => {
   const location = useLocation();
-  const { user, loading } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { role, loading: roleLoading, isAdmin } = useUserRole();
 
-  // Show loading while checking auth
-  if (loading) {
+  useEffect(() => {
+    const checkAuth = async () => {
+      setIsLoading(true);
+      
+      try {
+        const { data } = await supabase.auth.getSession();
+        const authenticated = !!data.session;
+        setIsAuthenticated(authenticated);
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const authListener = supabase.auth.onAuthStateChange((event, session) => {
+      setIsAuthenticated(!!session);
+      setIsLoading(false);
+    });
+
+    checkAuth();
+    
+    return () => {
+      authListener.data.subscription.unsubscribe();
+    };
+  }, []);
+
+  // Show loading while checking auth or role
+  if (isLoading || (isAuthenticated && roleLoading)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner size="lg" />
@@ -30,17 +61,17 @@ const ProtectedRoute = ({
   }
 
   // Check authentication requirement
-  if (requireAuth && !user) {
+  if (requireAuth && !isAuthenticated) {
     return <Navigate to={redirectPath} state={{ from: location }} replace />;
   }
 
-  // Check admin requirement (simplified for now)
-  if (requireAdmin && (!user || user.email !== 'webercostag@gmail.com')) {
+  // Check admin requirement using new role system
+  if (requireAdmin && !isAdmin()) {
     return <Navigate to="/dashboard" replace />;
   }
 
   // If no auth required but user is authenticated, redirect to dashboard
-  if (!requireAuth && user) {
+  if (!requireAuth && isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
   }
 

@@ -1,38 +1,25 @@
 
 import React from 'react';
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from '@/components/AppSidebar';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search } from "lucide-react";
+import { Search } from 'lucide-react';
+import AdminLayout from '@/components/AdminLayout';
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
+import DataJudPageContent from '@/components/datajud/DataJudPageContent';
 
-const DataJudPage = () => {
+const DataJudPage: React.FC = () => {
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full bg-gray-50">
-        <AppSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Search className="h-8 w-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-900">DataJud</h1>
-            </div>
-            
-            <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Consultas Processuais</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Consulte processos e jurisprudências.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+    <AdminLayout>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="p-4 md:p-6 lg:p-8">
+          <SharedPageHeader
+            title="Consulta DataJud CNJ"
+            description="Acesse dados oficiais dos processos judiciais através da API pública do CNJ"
+            pageIcon={<Search />}
+            showActionButton={false}
+          />
+          <DataJudPageContent />
         </div>
       </div>
-    </SidebarProvider>
+    </AdminLayout>
   );
 };
 

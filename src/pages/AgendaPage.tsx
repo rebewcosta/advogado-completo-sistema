@@ -1,38 +1,157 @@
 
-import React from 'react';
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { AppSidebar } from '@/components/AppSidebar';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import React, { useState } from 'react';
+import AdminLayout from '@/components/AdminLayout';
+import { Calendar } from 'lucide-react';
+import { Spinner } from '@/components/ui/spinner';
+import SharedPageHeader from '@/components/shared/SharedPageHeader';
+import AgendaFilters from '@/components/agenda/AgendaFilters';
+import AgendaEventTabs from '@/components/agenda/AgendaEventTabs';
+import AgendaEventForm from '@/components/AgendaEventForm';
+import { useAgendaEvents } from '@/hooks/useAgendaEvents';
+import type { AgendaEvent } from '@/types/agenda';
 
 const AgendaPage = () => {
+  const {
+    events,
+    isLoading,
+    isRefreshing,
+    handleSaveEvent,
+    handleUpdateEvent,
+    handleDeleteEvent,
+    handleRefresh
+  } = useAgendaEvents();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("todos");
+  const [activeTab, setActiveTab] = useState("lista");
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<AgendaEvent | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+
+  const handleSaveEventWrapper = async (eventData: any) => {
+    if (selectedEvent) {
+      const success = await handleUpdateEvent(selectedEvent.id, eventData);
+      if (success) {
+        setIsFormOpen(false);
+        setSelectedEvent(null);
+      }
+      return success;
+    } else {
+      const success = await handleSaveEvent(eventData);
+      if (success) {
+        setIsFormOpen(false);
+        setSelectedEvent(null);
+      }
+      return success;
+    }
+  };
+
+  const handleEditEvent = (event: AgendaEvent) => {
+    setSelectedEvent(event);
+    setIsFormOpen(true);
+  };
+
+  const handleViewEvent = (event: AgendaEvent) => {
+    setSelectedEvent(event);
+    setIsFormOpen(true);
+  };
+
+  // Filtrar eventos
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         event.descricao_evento?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === "todos" || event.status_evento === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
+  // Convert selectedEvent to the correct format for the form
+  const convertEventForForm = (event: AgendaEvent | null) => {
+    if (!event) return null;
+    
+    // Ensure prioridade is one of the expected values
+    const validPrioridade = (prio: string): 'baixa' | 'média' | 'alta' => {
+      if (prio === 'baixa' || prio === 'média' || prio === 'alta') {
+        return prio;
+      }
+      return 'média'; // default fallback
+    };
+    
+    return {
+      titulo: event.titulo,
+      descricao_evento: event.descricao_evento,
+      data_hora_inicio: new Date(event.data_hora_inicio),
+      duracao_minutos: event.duracao_minutos,
+      local_evento: event.local_evento,
+      cliente_associado_id: event.cliente_associado_id,
+      processo_associado_id: event.processo_associado_id,
+      prioridade: validPrioridade(event.prioridade),
+      tipo_evento: event.tipo_evento,
+      status_evento: event.status_evento,
+      id: event.id
+    };
+  };
+
+  if (isLoading && events.length === 0) {
+    return (
+      <AdminLayout>
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex flex-col justify-center items-center">
+          <Spinner size="lg" />
+          <span className="text-gray-500 mt-3">Carregando agenda...</span>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full bg-gray-50">
-        <AppSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
-          <div className="p-6">
-            <div className="flex items-center gap-3 mb-6">
-              <Calendar className="h-8 w-8 text-blue-600" />
-              <h1 className="text-3xl font-bold text-gray-900">Agenda</h1>
-            </div>
-            
-            <div className="grid gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Eventos da Agenda</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Gerencie seus compromissos e eventos.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
+    <AdminLayout>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+        <div className="p-4 md:p-6 lg:p-8">
+          <SharedPageHeader
+            title="Agenda de Compromissos"
+            description="Organize seus prazos, audiências e reuniões."
+            pageIcon={<Calendar />}
+            isLoading={isLoading || isRefreshing}
+          />
+
+          <AgendaFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            onAddEvent={() => {
+              setSelectedEvent(null);
+              setIsFormOpen(true);
+            }}
+            onRefresh={handleRefresh}
+            isLoading={isRefreshing}
+          />
+
+          <AgendaEventTabs
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            filteredEvents={filteredEvents}
+            selectedDate={selectedDate}
+            onDateSelect={setSelectedDate}
+            onEditEvent={handleEditEvent}
+            onViewEvent={handleViewEvent}
+            onDeleteEvent={handleDeleteEvent}
+            isLoading={isLoading}
+            isRefreshing={isRefreshing}
+          />
+
+          <AgendaEventForm
+            isOpen={isFormOpen}
+            onOpenChange={setIsFormOpen}
+            onSave={handleSaveEventWrapper}
+            initialEventData={convertEventForForm(selectedEvent)}
+            clientes={[]}
+            processos={[]}
+          />
         </div>
       </div>
-    </SidebarProvider>
+    </AdminLayout>
   );
 };
 

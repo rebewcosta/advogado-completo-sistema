@@ -897,51 +897,6 @@ export type Database = {
         }
         Relationships: []
       }
-      system_error_logs: {
-        Row: {
-          component_name: string | null
-          created_at: string | null
-          error_message: string
-          error_type: string
-          id: string
-          resolved: boolean | null
-          severity: string | null
-          stack_trace: string | null
-          timestamp: string | null
-          url: string | null
-          user_agent: string | null
-          user_id: string | null
-        }
-        Insert: {
-          component_name?: string | null
-          created_at?: string | null
-          error_message: string
-          error_type: string
-          id?: string
-          resolved?: boolean | null
-          severity?: string | null
-          stack_trace?: string | null
-          timestamp?: string | null
-          url?: string | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          component_name?: string | null
-          created_at?: string | null
-          error_message?: string
-          error_type?: string
-          id?: string
-          resolved?: boolean | null
-          severity?: string | null
-          stack_trace?: string | null
-          timestamp?: string | null
-          url?: string | null
-          user_agent?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
       tarefas: {
         Row: {
           cliente_id: string | null
@@ -1062,42 +1017,6 @@ export type Database = {
           },
         ]
       }
-      user_profiles: {
-        Row: {
-          created_at: string | null
-          email: string | null
-          id: string
-          is_online: boolean | null
-          last_seen: string | null
-          nome_completo: string | null
-          oab: string | null
-          telefone: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          email?: string | null
-          id: string
-          is_online?: boolean | null
-          last_seen?: string | null
-          nome_completo?: string | null
-          oab?: string | null
-          telefone?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          is_online?: boolean | null
-          last_seen?: string | null
-          nome_completo?: string | null
-          oab?: string | null
-          telefone?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -1183,14 +1102,6 @@ export type Database = {
           _role: Database["public"]["Enums"]["app_role"]
         }
         Returns: boolean
-      }
-      mark_users_offline: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
-      update_user_online_status: {
-        Args: { user_uuid: string }
-        Returns: undefined
       }
       verificar_status_assinatura: {
         Args: { p_user_id: string }
