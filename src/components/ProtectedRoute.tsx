@@ -24,30 +24,48 @@ const ProtectedRoute = ({
   const { role, loading: roleLoading, isAdmin } = useUserRole();
 
   useEffect(() => {
+    let mounted = true;
+
     const checkAuth = async () => {
-      setIsLoading(true);
-      
       try {
-        const { data } = await supabase.auth.getSession();
-        const authenticated = !!data.session;
-        setIsAuthenticated(authenticated);
+        setIsLoading(true);
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Auth check error:', error);
+          if (mounted) {
+            setIsAuthenticated(false);
+          }
+        } else {
+          if (mounted) {
+            setIsAuthenticated(!!session);
+          }
+        }
       } catch (error) {
         console.error('Auth check error:', error);
-        setIsAuthenticated(false);
+        if (mounted) {
+          setIsAuthenticated(false);
+        }
       } finally {
-        setIsLoading(false);
+        if (mounted) {
+          setIsLoading(false);
+        }
       }
     };
 
-    const authListener = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      setIsLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (mounted) {
+        setIsAuthenticated(!!session);
+        setIsLoading(false);
+      }
     });
 
     checkAuth();
     
     return () => {
-      authListener.data.subscription.unsubscribe();
+      mounted = false;
+      subscription.unsubscribe();
     };
   }, []);
 

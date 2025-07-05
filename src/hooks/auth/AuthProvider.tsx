@@ -23,34 +23,72 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    setLoading(true);
+    let mounted = true;
 
-    const setAuthState = (newSession: Session | null) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setLoading(false);
+    const initializeAuth = async () => {
+      try {
+        setLoading(true);
+
+        // Limpar qualquer estado de auth anterior
+        const clearAuthState = () => {
+          Object.keys(localStorage).forEach((key) => {
+            if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+              localStorage.removeItem(key);
+            }
+          });
+        };
+
+        // Verificar se há uma sessão válida
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Auth: Error getting initial session:", error);
+          clearAuthState();
+          if (mounted) {
+            setSession(null);
+            setUser(null);
+          }
+        } else if (mounted) {
+          setSession(initialSession);
+          setUser(initialSession?.user ?? null);
+        }
+      } catch (error) {
+        console.error("Auth: Initialization error:", error);
+        if (mounted) {
+          setSession(null);
+          setUser(null);
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     };
 
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setAuthState(initialSession);
-    }).catch(error => {
-      console.error("Auth: Error getting initial session");
-      setAuthState(null);
-    });
-
+    // Configurar listener de mudanças de estado
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, currentSession) => {
-        setAuthState(currentSession);
+      async (event, currentSession) => {
+        console.log("Auth state change:", event, currentSession?.user?.email);
+        
+        if (mounted) {
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+          setLoading(false);
+        }
       }
     );
 
+    initializeAuth();
+
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
 
   const signIn = async (email: string, password: string) => {
     try {
+      setLoading(true);
       const { data } = await handleSignIn(email, password);
 
       if (data.user && data.session) {
@@ -58,17 +96,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         navigate(from, { replace: true });
       }
     } catch (error: any) {
+      console.error("SignIn error:", error);
       toast({
         title: "Erro de autenticação",
-        description: error.message,
+        description: error.message || "Erro ao fazer login",
         variant: "destructive"
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, metadata?: object) => {
     try {
+      setLoading(true);
       const { data } = await handleSignUp(email, password, metadata);
 
       if (data.user && data.session) {
@@ -91,28 +133,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     } catch (error: any) {
+      console.error("SignUp error:", error);
       toast({
         title: "Erro ao criar conta",
-        description: error.message,
+        description: error.message || "Erro ao criar conta",
         variant: "destructive"
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
     try {
+      setLoading(true);
       await handleSignOut();
       setUser(null);
       setSession(null);
       navigate('/', { replace: true });
     } catch (error: any) {
+      console.error("SignOut error:", error);
       toast({
         title: "Erro ao desconectar",
         description: error.message || "Ocorreu um erro no servidor ao tentar sair.",
         variant: "destructive"
       });
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -120,6 +169,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await handleRefreshSession();
     } catch (error) {
+      console.error("Refresh session error:", error);
       throw error;
     }
   };
@@ -132,6 +182,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         description: functionResponse?.message || `Conta para ${email} criada.`
       });
     } catch (error: any) {
+      console.error("Create special account error:", error);
       toast({ 
         title: "Erro ao Criar Conta Especial", 
         description: error.message, 
@@ -145,6 +196,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       return await handleCheckEmailExists(email);
     } catch (error: any) {
+      console.error("Check email exists error:", error);
       toast({ 
         title: "Erro ao verificar email", 
         description: error.message, 
