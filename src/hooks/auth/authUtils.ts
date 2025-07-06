@@ -74,8 +74,12 @@ export const handleCheckEmailExists = async (email: string): Promise<boolean> =>
       return false; // Em caso de erro, assume que não existe para permitir a criação
     }
     
-    // Se data.count for maior que 0, o email já existe
-    return (data && data > 0);
+    // Se data for um array, pegar o primeiro elemento e acessar count
+    // Se for um número direto, usar diretamente
+    const count = Array.isArray(data) ? (data[0]?.count || 0) : (data?.count || 0);
+    
+    // Se count for maior que 0, o email já existe
+    return count > 0;
   } catch (error) {
     console.error('Erro na verificação de email:', error);
     return false; // Em caso de erro, assume que não existe para permitir a criação
