@@ -63,22 +63,21 @@ export const handleCreateSpecialAccount = async (email: string, password: string
 };
 
 export const handleCheckEmailExists = async (email: string): Promise<boolean> => {
-  // Esta função pode ser usada para verificar se um email já existe
-  // Implementação básica - você pode melhorar conforme necessário
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password: 'dummy-password-to-check-existence'
+    // Usar a função do banco de dados para verificar se o email existe
+    const { data, error } = await supabase.rpc('get_user_by_email', { 
+      email_to_check: email 
     });
     
-    // Se o erro for "Invalid login credentials", o email existe mas a senha está errada
-    // Se o erro for "User not found" ou similar, o email não existe
-    if (error?.message?.includes('Invalid login credentials')) {
-      return true; // Email existe
+    if (error) {
+      console.error('Erro ao verificar email:', error);
+      return false; // Em caso de erro, assume que não existe para permitir a criação
     }
     
-    return false; // Email não existe
+    // Se data.count for maior que 0, o email já existe
+    return (data && data > 0);
   } catch (error) {
-    return false;
+    console.error('Erro na verificação de email:', error);
+    return false; // Em caso de erro, assume que não existe para permitir a criação
   }
 };

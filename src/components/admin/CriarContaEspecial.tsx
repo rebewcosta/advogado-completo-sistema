@@ -41,8 +41,12 @@ const CriarContaEspecial = () => {
     setIsLoading(true);
     
     try {
+      console.log(`Tentando criar conta especial para: ${presetEmail}`);
+      
       // Verificar se o email já existe
+      console.log('Verificando se email já existe...');
       const emailExists = await checkEmailExists(presetEmail);
+      console.log(`Email ${presetEmail} já existe:`, emailExists);
       
       if (emailExists) {
         toast({
@@ -54,6 +58,7 @@ const CriarContaEspecial = () => {
         return;
       }
       
+      console.log('Criando conta especial...');
       await createSpecialAccount(presetEmail, presetPassword, { 
         nome: presetNome, 
         special_access: true,
@@ -75,8 +80,13 @@ const CriarContaEspecial = () => {
         description: `Uma conta com acesso especial foi criada para ${presetEmail}.`,
       });
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar conta especial:', error);
+      toast({
+        title: "Erro ao criar conta especial",
+        description: error.message || 'Ocorreu um erro inesperado',
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -87,8 +97,12 @@ const CriarContaEspecial = () => {
     setIsLoading(true);
     
     try {
+      console.log(`Tentando criar conta especial para: ${email}`);
+      
       // Verificar se o email já existe
+      console.log('Verificando se email já existe...');
       const emailExists = await checkEmailExists(email);
+      console.log(`Email ${email} já existe:`, emailExists);
       
       if (emailExists) {
         toast({
@@ -100,6 +114,7 @@ const CriarContaEspecial = () => {
         return;
       }
       
+      console.log('Criando conta especial...');
       await createSpecialAccount(email, password, { 
         nome, 
         special_access: true,
@@ -125,8 +140,13 @@ const CriarContaEspecial = () => {
         title: "Conta especial criada com sucesso",
         description: `Uma conta com acesso especial foi criada para ${email}.`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao criar conta especial:', error);
+      toast({
+        title: "Erro ao criar conta especial",
+        description: error.message || 'Ocorreu um erro inesperado',
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
