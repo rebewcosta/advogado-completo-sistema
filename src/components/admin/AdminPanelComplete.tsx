@@ -7,8 +7,9 @@ import ProductionValidation from './ProductionValidation';
 import CreateUserAccount from './CreateUserAccount';
 import CriarContaEspecial from './CriarContaEspecial';
 import SecurityMonitoring from './SecurityMonitoring';
+import UserActivityMonitoring from './UserActivityMonitoring';
 import AvisosTab from '../configuracoes/AvisosTab';
-import { Settings, Activity, CheckSquare, Users, UserPlus, Shield, Bell } from 'lucide-react';
+import { Settings, Activity, CheckSquare, Users, UserPlus, Shield, Bell, UserCheck } from 'lucide-react';
 
 const AdminPanelComplete = () => {
   return (
@@ -21,14 +22,18 @@ const AdminPanelComplete = () => {
       </div>
 
       <Tabs defaultValue="config" className="w-full">
-        <TabsList className="grid w-full grid-cols-7">
+        <TabsList className="grid w-full grid-cols-8">
           <TabsTrigger value="config" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
             Configurações
           </TabsTrigger>
           <TabsTrigger value="monitoring" className="flex items-center gap-2">
             <Activity className="h-4 w-4" />
-            Monitoramento
+            Sistema
+          </TabsTrigger>
+          <TabsTrigger value="user-activity" className="flex items-center gap-2">
+            <UserCheck className="h-4 w-4" />
+            Usuários Online
           </TabsTrigger>
           <TabsTrigger value="validation" className="flex items-center gap-2">
             <CheckSquare className="h-4 w-4" />
@@ -58,6 +63,10 @@ const AdminPanelComplete = () => {
 
         <TabsContent value="monitoring" className="mt-6">
           <SystemMonitoring />
+        </TabsContent>
+
+        <TabsContent value="user-activity" className="mt-6">
+          <UserActivityMonitoring />
         </TabsContent>
 
         <TabsContent value="validation" className="mt-6">
