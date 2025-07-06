@@ -74,9 +74,14 @@ export const handleCheckEmailExists = async (email: string): Promise<boolean> =>
       return false; // Em caso de erro, assume que não existe para permitir a criação
     }
     
-    // Se data for um array, pegar o primeiro elemento e acessar count
-    // Se for um número direto, usar diretamente
-    const count = Array.isArray(data) ? (data[0]?.count || 0) : (data?.count || 0);
+    // A função get_user_by_email retorna um array de objetos com propriedade count
+    // Verificamos se é um array e pegamos o primeiro item, ou se já é um objeto direto
+    let count = 0;
+    if (Array.isArray(data) && data.length > 0) {
+      count = data[0].count || 0;
+    } else if (data && typeof data === 'object' && 'count' in data) {
+      count = (data as { count: number }).count || 0;
+    }
     
     // Se count for maior que 0, o email já existe
     return count > 0;
