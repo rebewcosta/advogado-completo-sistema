@@ -14,6 +14,7 @@ interface StatusAssinaturaProps {
   plano?: string;
   onAbrirPortalCliente?: () => void;
   isPortalLoading?: boolean;
+  hideActionButtons?: boolean; // Nova prop para esconder botões quando há gerenciamento avançado
 }
 
 const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({ 
@@ -24,6 +25,7 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
   plano = "JusGestão",
   onAbrirPortalCliente,
   isPortalLoading = false,
+  hideActionButtons = false,
 }) => {
   const navigate = useNavigate();
 
@@ -74,7 +76,6 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
     description = customMessage || "Você não possui uma assinatura ativa no momento.";
   }
 
-
   return (
     <div className={cn("p-4 sm:p-6 rounded-lg border", bgColor)}>
       <div className="flex items-start">
@@ -107,36 +108,40 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
             </div>
           )}
           
-          {/* Botão de Gerenciar Assinatura (apenas para pagantes) */}
-          {onAbrirPortalCliente && (status === 'ativa' || status === 'pendente') && accountType === 'premium' && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={onAbrirPortalCliente}
-              disabled={isPortalLoading}
-              className="mt-4 text-xs border-gray-300 text-gray-700 hover:bg-gray-100"
-            >
-              {isPortalLoading ? (
-                <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
-              ) : (
-                <ExternalLink className="mr-1.5 h-3 w-3" />
+          {/* Só mostra botões se não estiver sendo gerenciado externamente */}
+          {!hideActionButtons && (
+            <>
+              {/* Botão de Gerenciar Assinatura (apenas para pagantes) */}
+              {onAbrirPortalCliente && (status === 'ativa' || status === 'pendente') && accountType === 'premium' && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={onAbrirPortalCliente}
+                  disabled={isPortalLoading}
+                  className="mt-4 text-xs border-gray-300 text-gray-700 hover:bg-gray-100"
+                >
+                  {isPortalLoading ? (
+                    <Loader2 className="mr-1.5 h-3 w-3 animate-spin" />
+                  ) : (
+                    <ExternalLink className="mr-1.5 h-3 w-3" />
+                  )}
+                  {isPortalLoading ? "Abrindo..." : "Gerenciar Assinatura no Stripe"}
+                </Button>
               )}
-              {isPortalLoading ? "Abrindo..." : "Gerenciar Assinatura no Stripe"}
-            </Button>
-          )}
 
-          {/* Botão para Assinar (apenas para inativos/none) */}
-          {status === 'inativa' && accountType === 'none' && (
-             <Button 
-                onClick={handleAssinar}
-                className="mt-4 bg-lawyer-primary hover:bg-lawyer-primary/90 text-white text-xs sm:text-sm"
-                size="sm"
-              >
-                <ShoppingCart className="mr-1.5 h-4 w-4" />
-                Assinar Agora
-              </Button>
+              {/* Botão para Assinar (apenas para inativos/none) */}
+              {status === 'inativa' && accountType === 'none' && (
+                 <Button 
+                    onClick={handleAssinar}
+                    className="mt-4 bg-lawyer-primary hover:bg-lawyer-primary/90 text-white text-xs sm:text-sm"
+                    size="sm"
+                  >
+                    <ShoppingCart className="mr-1.5 h-4 w-4" />
+                    Assinar Agora
+                  </Button>
+              )}
+            </>
           )}
-
         </div>
       </div>
     </div>

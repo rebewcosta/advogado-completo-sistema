@@ -1,4 +1,3 @@
-
 // src/components/assinatura/GerenciarAssinatura.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusAssinatura from '@/components/StatusAssinatura';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, CreditCard, ShoppingCart } from 'lucide-react';
 
 // Definindo um tipo para a resposta esperada da função SQL
 interface AssinaturaInfo {
@@ -25,6 +24,7 @@ const GerenciarAssinatura = () => {
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
+  const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
 
   const fetchSubscriptionStatus = useCallback(async () => {
     setIsLoadingStatus(true);
@@ -100,7 +100,7 @@ const GerenciarAssinatura = () => {
       
       if (data && data.url) {
         console.log("URL do portal recebida:", data.url);
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
       } else {
         console.error("URL do portal não recebida:", data);
         throw new Error("URL do portal do cliente não recebida.");
@@ -116,6 +116,41 @@ const GerenciarAssinatura = () => {
       });
     } finally {
       setIsPortalLoading(false);
+    }
+  };
+
+  const handleNovaAssinatura = async () => {
+    setIsCheckoutLoading(true);
+    setErrorMessage(null);
+    
+    try {
+      console.log("Iniciando nova assinatura...");
+      
+      const { data, error } = await supabase.functions.invoke('criar-sessao-checkout');
+
+      if (error) {
+        console.error("Erro ao criar sessão de checkout:", error);
+        throw new Error(error.message || "Erro ao criar sessão de pagamento.");
+      }
+      
+      if (data && data.url) {
+        console.log("URL do checkout recebida:", data.url);
+        window.open(data.url, '_blank');
+      } else {
+        console.error("URL do checkout não recebida:", data);
+        throw new Error("URL de pagamento não recebida.");
+      }
+    } catch (error: any) {
+      console.error("Erro ao iniciar nova assinatura:", error);
+      const errorMsg = error.message || "Erro ao iniciar nova assinatura.";
+      setErrorMessage(errorMsg);
+      toast({ 
+        title: "Erro ao Assinar", 
+        description: errorMsg, 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsCheckoutLoading(false);
     }
   };
   
@@ -156,6 +191,9 @@ const GerenciarAssinatura = () => {
     statusParaComponente = 'pendente';
   }
 
+  const isSpecialAccount = assinaturaInfo.account_type === 'admin' || assinaturaInfo.account_type === 'amigo';
+  const isInactiveAccount = assinaturaInfo.account_type === 'none' && statusParaComponente === 'inativa';
+
   return (
     <Card className="shadow-md rounded-lg">
       <CardHeader>
@@ -175,12 +213,7 @@ const GerenciarAssinatura = () => {
             assinaturaInfo.account_type === 'amigo' ? 'Assinatura Amiga (Cortesia)' :
             'JusGestão Premium'
           }
-          onAbrirPortalCliente={
-            (assinaturaInfo.account_type === 'premium' || assinaturaInfo.status === 'pendente') 
-              ? handleAbrirPortalCliente 
-              : undefined
-          }
-          isPortalLoading={isPortalLoading}
+          hideActionButtons={true}
         />
         
         {errorMessage && !isLoadingStatus && (
@@ -190,16 +223,71 @@ const GerenciarAssinatura = () => {
           </div>
         )}
         
-        <div className="mt-4 flex gap-2">
-          <Button 
-            onClick={fetchSubscriptionStatus} 
-            variant="outline" 
-            size="sm"
-            disabled={isLoadingStatus}
-          >
-            <RefreshCw className={`mr-2 h-4 w-4 ${isLoadingStatus ? 'animate-spin' : ''}`}/>
-            Atualizar Status
-          </Button>
+        {/* Seção de Ações Avançadas */}
+        <div className="mt-6 space-y-4">
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-medium text-gray-700 mb-3">Gerenciar Assinatura</h3>
+            
+            <div className="grid gap-3 sm:grid-cols-2">
+              {/* Botão Portal do Cliente - Sempre disponível para contas premium/pendentes */}
+              {!isSpecialAccount && (
+                <Button 
+                  onClick={handleAbrirPortalCliente}
+                  disabled={isPortalLoading}
+                  variant="outline"
+                  className="flex items-center gap-2 text-sm"
+                >
+                  {isPortalLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <CreditCard className="h-4 w-4" />
+                  )}
+                  {isPortalLoading ? "Abrindo..." : "Portal do Cliente"}
+                </Button>
+              )}
+
+              {/* Botão Nova Assinatura - Para contas inativas */}
+              {isInactiveAccount && (
+                <Button 
+                  onClick={handleNovaAssinatura}
+                  disabled={isCheckoutLoading}
+                  className="flex items-center gap-2 text-sm bg-lawyer-primary hover:bg-lawyer-primary/90"
+                >
+                  {isCheckoutLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ShoppingCart className="h-4 w-4" />
+                  )}
+                  {isCheckoutLoading ? "Processando..." : "Nova Assinatura"}
+                </Button>
+              )}
+
+              {/* Botão Atualizar Status */}
+              <Button 
+                onClick={fetchSubscriptionStatus} 
+                variant="outline" 
+                size="sm"
+                disabled={isLoadingStatus}
+                className="flex items-center gap-2 text-sm"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoadingStatus ? 'animate-spin' : ''}`}/>
+                Atualizar Status
+              </Button>
+            </div>
+          </div>
+
+          {/* Informações de Ajuda */}
+          {!isSpecialAccount && (
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <h4 className="text-sm font-medium text-blue-800 mb-2">Como resolver problemas de pagamento:</h4>
+              <ul className="text-xs text-blue-700 space-y-1">
+                <li>• <strong>Cartão vencido/bloqueado:</strong> Use o "Portal do Cliente" para atualizar</li>
+                <li>• <strong>Fatura em aberto:</strong> Acesse o portal para pagar pendências</li>
+                <li>• <strong>Assinatura cancelada:</strong> Crie uma "Nova Assinatura"</li>
+                <li>• <strong>Status incorreto:</strong> Use "Atualizar Status" após resolver no Stripe</li>
+              </ul>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
