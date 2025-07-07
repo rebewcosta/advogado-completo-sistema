@@ -7,14 +7,14 @@ import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface StatusAssinaturaProps {
-  status: 'ativa' | 'pendente' | 'inativa'; // Status visual básico
-  accountType?: 'premium' | 'admin' | 'amigo' | 'pendente' | 'none'; // Tipo de conta detalhado
+  status: 'ativa' | 'pendente' | 'inativa';
+  accountType?: 'premium' | 'admin' | 'amigo' | 'pendente' | 'none';
   customMessage?: string;
   dataProximoFaturamento?: string | null;
   plano?: string;
   onAbrirPortalCliente?: () => void;
   isPortalLoading?: boolean;
-  hideActionButtons?: boolean; // Nova prop para esconder botões quando há gerenciamento avançado
+  hideActionButtons?: boolean;
 }
 
 const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({ 
@@ -41,6 +41,7 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
   let planDisplay = plano;
   let description = customMessage || "Verifique os detalhes abaixo.";
 
+  // Configurações visuais baseadas no tipo de conta
   if (accountType === 'admin') {
     IconComponent = Crown;
     titleColor = "text-indigo-700";
@@ -65,14 +66,15 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
     iconColor = "text-green-600";
     planDisplay = "JusGestão Premium";
     description = "Sua assinatura está ativa e você tem acesso a todos os recursos.";
-  } else if (status === 'pendente') {
+  } else if (status === 'pendente' || accountType === 'pendente') {
     IconComponent = Clock;
     titleColor = "text-yellow-700";
     bgColor = "bg-yellow-50 border-yellow-200";
     iconBgColor = "bg-yellow-100";
     iconColor = "text-yellow-600";
-    description = customMessage || "Seu pagamento está sendo processado ou há uma pendência. Verifique seu email ou o portal do cliente.";
-  } else { // Inativa ou 'none'
+    description = customMessage || "Seu pagamento está sendo processado ou há uma pendência. Verifique o portal do cliente.";
+  } else {
+    // Inativa ou 'none'
     description = customMessage || "Você não possui uma assinatura ativa no momento.";
   }
 
@@ -95,24 +97,25 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
             {description}
           </p>
 
+          {/* Detalhes da assinatura premium */}
           {(status === 'ativa' || status === 'pendente') && accountType === 'premium' && (
             <div className="mt-3 space-y-1 text-xs sm:text-sm">
               <p>
                 <span className="font-medium text-gray-700">Plano:</span> {planDisplay}
               </p>
               {dataProximoFaturamento && (
-                <p >
+                <p>
                   <span className="font-medium text-gray-700">Próxima cobrança:</span> {dataProximoFaturamento}
                 </p>
               )}
             </div>
           )}
           
-          {/* Só mostra botões se não estiver sendo gerenciado externamente */}
+          {/* Botões de ação - só aparecem se não estiver sendo gerenciado externamente */}
           {!hideActionButtons && (
             <>
-              {/* Botão de Gerenciar Assinatura (apenas para pagantes) */}
-              {onAbrirPortalCliente && (status === 'ativa' || status === 'pendente') && accountType === 'premium' && (
+              {/* Botão de Gerenciar Assinatura */}
+              {onAbrirPortalCliente && !['admin', 'amigo'].includes(accountType || '') && (
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -125,11 +128,11 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
                   ) : (
                     <ExternalLink className="mr-1.5 h-3 w-3" />
                   )}
-                  {isPortalLoading ? "Abrindo..." : "Gerenciar Assinatura no Stripe"}
+                  {isPortalLoading ? "Abrindo..." : "Gerenciar no Stripe"}
                 </Button>
               )}
 
-              {/* Botão para Assinar (apenas para inativos/none) */}
+              {/* Botão para Assinar */}
               {status === 'inativa' && accountType === 'none' && (
                  <Button 
                     onClick={handleAssinar}

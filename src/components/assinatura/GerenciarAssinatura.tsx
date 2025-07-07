@@ -1,3 +1,4 @@
+
 // src/components/assinatura/GerenciarAssinatura.tsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -42,26 +43,26 @@ const GerenciarAssinatura = () => {
     }
 
     try {
-      console.log("Verificando status da assinatura para usuário:", user.id);
+      console.log("🔄 Verificando status da assinatura para usuário:", user.id);
       
       const { data, error } = await supabase.rpc('verificar_status_assinatura', {
         p_user_id: user.id
       });
 
       if (error) {
-        console.error("Erro RPC verificar_status_assinatura:", error);
+        console.error("❌ Erro RPC verificar_status_assinatura:", error);
         throw new Error(error.message || "Falha ao buscar dados da assinatura.");
       }
 
       if (data) {
-        console.log("Dados da assinatura recebidos:", data);
+        console.log("✅ Dados da assinatura recebidos:", data);
         setAssinaturaInfo(data as unknown as AssinaturaInfo);
       } else {
         throw new Error("Nenhuma informação de assinatura retornada.");
       }
 
     } catch (error: any) {
-      console.error("Erro ao buscar status da assinatura:", error);
+      console.error("❌ Erro ao buscar status da assinatura:", error);
       const errorMsg = error.message || "Erro ao carregar status da assinatura.";
       setErrorMessage(errorMsg);
       setAssinaturaInfo({
@@ -89,24 +90,28 @@ const GerenciarAssinatura = () => {
     setErrorMessage(null);
     
     try {
-      console.log("Abrindo portal do cliente...");
+      console.log("🔄 Abrindo portal do cliente...");
       
       const { data, error } = await supabase.functions.invoke('criar-portal-cliente');
 
       if (error) {
-        console.error("Erro ao invocar função do portal:", error);
+        console.error("❌ Erro ao invocar função do portal:", error);
         throw new Error(error.message || "Erro ao invocar função do portal.");
       }
       
       if (data && data.url) {
-        console.log("URL do portal recebida:", data.url);
+        console.log("✅ URL do portal recebida:", data.url);
         window.open(data.url, '_blank');
+        toast({
+          title: "Portal do Cliente",
+          description: "Redirecionando para o portal de gerenciamento...",
+        });
       } else {
-        console.error("URL do portal não recebida:", data);
+        console.error("❌ URL do portal não recebida:", data);
         throw new Error("URL do portal do cliente não recebida.");
       }
     } catch (error: any) {
-      console.error("Erro ao abrir portal do cliente:", error);
+      console.error("❌ Erro ao abrir portal do cliente:", error);
       const errorMsg = error.message || "Erro ao abrir o portal do cliente.";
       setErrorMessage(errorMsg);
       toast({ 
@@ -124,24 +129,35 @@ const GerenciarAssinatura = () => {
     setErrorMessage(null);
     
     try {
-      console.log("Iniciando nova assinatura...");
+      console.log("🔄 Iniciando nova assinatura...");
       
-      const { data, error } = await supabase.functions.invoke('criar-sessao-checkout');
+      const { data, error } = await supabase.functions.invoke('criar-sessao-checkout', {
+        body: {
+          nomePlano: "JusGestão Premium",
+          valor: 3700,
+          emailCliente: user?.email,
+          dominio: window.location.origin
+        }
+      });
 
       if (error) {
-        console.error("Erro ao criar sessão de checkout:", error);
+        console.error("❌ Erro ao criar sessão de checkout:", error);
         throw new Error(error.message || "Erro ao criar sessão de pagamento.");
       }
       
       if (data && data.url) {
-        console.log("URL do checkout recebida:", data.url);
+        console.log("✅ URL do checkout recebida:", data.url);
         window.open(data.url, '_blank');
+        toast({
+          title: "Nova Assinatura",
+          description: "Redirecionando para o pagamento...",
+        });
       } else {
-        console.error("URL do checkout não recebida:", data);
+        console.error("❌ URL do checkout não recebida:", data);
         throw new Error("URL de pagamento não recebida.");
       }
     } catch (error: any) {
-      console.error("Erro ao iniciar nova assinatura:", error);
+      console.error("❌ Erro ao iniciar nova assinatura:", error);
       const errorMsg = error.message || "Erro ao iniciar nova assinatura.";
       setErrorMessage(errorMsg);
       toast({ 
@@ -193,6 +209,7 @@ const GerenciarAssinatura = () => {
 
   const isSpecialAccount = assinaturaInfo.account_type === 'admin' || assinaturaInfo.account_type === 'amigo';
   const isInactiveAccount = assinaturaInfo.account_type === 'none' && statusParaComponente === 'inativa';
+  const isPremiumOrPending = assinaturaInfo.account_type === 'premium' || assinaturaInfo.account_type === 'pendente';
 
   return (
     <Card className="shadow-md rounded-lg">
@@ -229,7 +246,7 @@ const GerenciarAssinatura = () => {
             <h3 className="text-sm font-medium text-gray-700 mb-3">Gerenciar Assinatura</h3>
             
             <div className="grid gap-3 sm:grid-cols-2">
-              {/* Botão Portal do Cliente - Sempre disponível para contas premium/pendentes */}
+              {/* Botão Portal do Cliente - Disponível para contas premium/pendentes OU canceladas recentemente */}
               {!isSpecialAccount && (
                 <Button 
                   onClick={handleAbrirPortalCliente}
@@ -262,7 +279,7 @@ const GerenciarAssinatura = () => {
                 </Button>
               )}
 
-              {/* Botão Atualizar Status */}
+              {/* Botão Atualizar Status - Sempre disponível */}
               <Button 
                 onClick={fetchSubscriptionStatus} 
                 variant="outline" 
@@ -271,21 +288,39 @@ const GerenciarAssinatura = () => {
                 className="flex items-center gap-2 text-sm"
               >
                 <RefreshCw className={`h-4 w-4 ${isLoadingStatus ? 'animate-spin' : ''}`}/>
-                Atualizar Status
+                {isLoadingStatus ? "Atualizando..." : "Atualizar Status"}
               </Button>
             </div>
           </div>
 
-          {/* Informações de Ajuda */}
+          {/* Informações de Ajuda - Apenas para contas não especiais */}
           {!isSpecialAccount && (
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
-              <h4 className="text-sm font-medium text-blue-800 mb-2">Como resolver problemas de pagamento:</h4>
-              <ul className="text-xs text-blue-700 space-y-1">
-                <li>• <strong>Cartão vencido/bloqueado:</strong> Use o "Portal do Cliente" para atualizar</li>
-                <li>• <strong>Fatura em aberto:</strong> Acesse o portal para pagar pendências</li>
-                <li>• <strong>Assinatura cancelada:</strong> Crie uma "Nova Assinatura"</li>
-                <li>• <strong>Status incorreto:</strong> Use "Atualizar Status" após resolver no Stripe</li>
-              </ul>
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <h4 className="text-sm font-medium text-blue-800 mb-3">💡 Como resolver problemas de pagamento:</h4>
+              <div className="space-y-2 text-xs text-blue-700">
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">📋 Cartão vencido/bloqueado:</span>
+                  <span>Use o "Portal do Cliente" para atualizar seu método de pagamento</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">💳 Fatura em aberto:</span>
+                  <span>Acesse o "Portal do Cliente" para visualizar e pagar pendências</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">❌ Assinatura cancelada:</span>
+                  <span>Clique em "Nova Assinatura" para reativar seu plano</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="font-medium">🔄 Status incorreto:</span>
+                  <span>Use "Atualizar Status" após resolver problemas no Stripe</span>
+                </div>
+              </div>
+              
+              <div className="mt-3 pt-3 border-t border-blue-200">
+                <p className="text-xs text-blue-600 font-medium">
+                  ⏰ <strong>Importante:</strong> Você tem 5 dias para resolver problemas de pagamento antes do cancelamento automático.
+                </p>
+              </div>
             </div>
           )}
         </div>
