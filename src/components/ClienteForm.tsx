@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import ClienteFormHeader from '@/components/clientes/ClienteFormHeader';
 import ClienteFormFields from '@/components/clientes/ClienteFormFields';
 import ClienteFormActions from '@/components/clientes/ClienteFormActions';
-import { useClienteFormValidation } from '@/components/clientes/ClienteFormValidation';
+import { useClienteValidation } from '@/components/clientes/ClienteFormValidation';
 
 interface ClienteFormProps {
   onSave: (cliente: any) => void;
@@ -13,7 +13,7 @@ interface ClienteFormProps {
 }
 
 const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormProps) => {
-  const { validateForm } = useClienteFormValidation();
+  const { validateCliente } = useClienteValidation();
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -71,11 +71,13 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm(formData)) return;
+    
+    const validation = await validateCliente(formData);
+    if (!validation.valid) return;
 
-    onSave(formData);
+    onSave(validation.data);
   };
 
   return (
