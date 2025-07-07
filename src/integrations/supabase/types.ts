@@ -1178,6 +1178,10 @@ export type Database = {
           count: number
         }[]
       }
+      get_user_dashboard_data: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       get_user_storage_usage: {
         Args: { uid: string }
         Returns: number
@@ -1193,9 +1197,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      sanitize_text_input: {
+        Args: { input_text: string }
+        Returns: string
+      }
       update_user_online_status: {
         Args: { user_uuid: string }
         Returns: undefined
+      }
+      validate_user_input: {
+        Args: {
+          input_data: Json
+          required_fields: string[]
+          max_lengths?: Json
+        }
+        Returns: Json
       }
       verificar_status_assinatura: {
         Args: { p_user_id: string }

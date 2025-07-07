@@ -73,6 +73,9 @@ verify_jwt = true
 [functions.system-health]
 verify_jwt = false
 
+[functions.validate-input]
+verify_jwt = true
+
 [functions.consultar-cnpj]
 verify_jwt = true
 
@@ -86,6 +89,9 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.gerar-alertas]
+verify_jwt = false
+
+[functions.gerenciar-inadimplencia]
 verify_jwt = false
 
 [functions.lembretes-eventos-agenda]

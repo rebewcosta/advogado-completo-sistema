@@ -1,134 +1,90 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    console.log("🏥 Iniciando verificação de saúde do sistema...");
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
 
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const startTime = Date.now()
+    
+    // Testar conexão com banco
+    const { data: dbTest, error: dbError } = await supabase
+      .from('user_profiles')
+      .select('count')
+      .limit(1)
 
-    const healthChecks = {
-      database: false,
-      auth: false,
-      functions: false,
-      stripe: false,
-      timestamp: new Date().toISOString()
-    };
+    const dbLatency = Date.now() - startTime
 
-    // Teste 1: Conexão com banco de dados
-    try {
-      const { data, error } = await supabaseClient
-        .from('profiles')
-        .select('count', { count: 'exact', head: true });
-      
-      if (!error) {
-        healthChecks.database = true;
-        console.log("✅ Banco de dados: OK");
-      } else {
-        console.log("❌ Banco de dados: ERROR -", error.message);
+    // Testar função dashboard otimizada
+    const dashboardStart = Date.now()
+    const { data: dashboardTest, error: dashboardError } = await supabase.rpc('get_user_dashboard_data', {
+      p_user_id: '00000000-0000-0000-0000-000000000000' // UUID fake para teste
+    })
+    const dashboardLatency = Date.now() - dashboardStart
+
+    // Verificar CRON job
+    const { data: cronJobs, error: cronError } = await supabase
+      .from('cron.job')
+      .select('*')
+      .eq('jobname', 'gerenciar-inadimplencia-diaria')
+
+    const healthStatus = {
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      checks: {
+        database: {
+          status: dbError ? 'error' : 'ok',
+          latency: `${dbLatency}ms`,
+          error: dbError?.message
+        },
+        dashboard_function: {
+          status: dashboardError ? 'error' : 'ok',
+          latency: `${dashboardLatency}ms`,
+          error: dashboardError?.message
+        },
+        cron_job: {
+          status: cronError || !cronJobs?.length ? 'error' : 'ok',
+          active: cronJobs?.length > 0,
+          error: cronError?.message
+        }
       }
-    } catch (error) {
-      console.log("❌ Banco de dados: EXCEPTION -", error);
     }
 
-    // Teste 2: Sistema de autenticação
-    try {
-      const { data: { users }, error } = await supabaseClient.auth.admin.listUsers({
-        page: 1,
-        perPage: 1
-      });
-      
-      if (!error) {
-        healthChecks.auth = true;
-        console.log("✅ Autenticação: OK");
-      } else {
-        console.log("❌ Autenticação: ERROR -", error.message);
+    // Determinar status geral
+    const hasErrors = Object.values(healthStatus.checks).some(check => check.status === 'error')
+    healthStatus.status = hasErrors ? 'degraded' : 'healthy'
+
+    return new Response(
+      JSON.stringify(healthStatus),
+      { 
+        status: hasErrors ? 503 : 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
-    } catch (error) {
-      console.log("❌ Autenticação: EXCEPTION -", error);
-    }
-
-    // Teste 3: Edge Functions
-    try {
-      const { data, error } = await supabaseClient.functions.invoke('verificar-assinatura', {
-        body: { test: true }
-      });
-      
-      // Se não der erro de rede, consideramos OK
-      healthChecks.functions = true;
-      console.log("✅ Edge Functions: OK");
-    } catch (error) {
-      console.log("❌ Edge Functions: EXCEPTION -", error);
-    }
-
-    // Teste 4: Configurações Stripe
-    try {
-      const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-      const webhookSecret = Deno.env.get("STRIPE_WEBHOOK_SECRET");
-      
-      if (stripeKey && webhookSecret) {
-        healthChecks.stripe = true;
-        console.log("✅ Stripe: OK");
-      } else {
-        console.log("❌ Stripe: Chaves não configuradas");
-      }
-    } catch (error) {
-      console.log("❌ Stripe: EXCEPTION -", error);
-    }
-
-    // Calcular status geral
-    const totalChecks = Object.keys(healthChecks).length - 1; // -1 para excluir timestamp
-    const successfulChecks = Object.values(healthChecks).filter(check => check === true).length;
-    const healthPercentage = (successfulChecks / totalChecks) * 100;
-
-    let overallStatus = 'down';
-    if (healthPercentage === 100) {
-      overallStatus = 'operational';
-    } else if (healthPercentage >= 50) {
-      overallStatus = 'degraded';
-    }
-
-    const response = {
-      status: overallStatus,
-      health_percentage: healthPercentage,
-      checks: healthChecks,
-      summary: {
-        total: totalChecks,
-        passed: successfulChecks,
-        failed: totalChecks - successfulChecks
-      }
-    };
-
-    console.log(`🎯 Status geral: ${overallStatus} (${healthPercentage}%)`);
-
-    return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
+    )
 
   } catch (error) {
-    console.error("💥 Erro na verificação de saúde:", error);
-    
-    return new Response(JSON.stringify({
-      status: 'down',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    console.error('Erro no health check:', error)
+    return new Response(
+      JSON.stringify({ 
+        status: 'error', 
+        error: 'Sistema indisponível',
+        timestamp: new Date().toISOString()
+      }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
   }
-});
+})
