@@ -57,7 +57,7 @@ const SuportePage = () => {
                   JusGestão é uma plataforma completa de gestão para escritórios de advocacia, que permite 
                   gerenciar processos, clientes, agenda, documentos, financeiro e muito mais. Desenvolvido 
                   especificamente para as necessidades do profissional jurídico brasileiro, inclui recursos 
-                  como monitoramento de publicações, controle de prazos, relatórios financeiros, gestão de equipe 
+                  como controle de prazos, relatórios financeiros, gestão de equipe, consulta DataJud CNJ 
                   e integração com ferramentas essenciais para advogados.
                 </AccordionContent>
               </AccordionItem>
@@ -68,11 +68,21 @@ const SuportePage = () => {
                   A assinatura do JusGestão custa R$ 37,00 por mês, com acesso completo a todas as funcionalidades. 
                   Não há taxas de configuração, custos ocultos ou limitações de uso. O pagamento é mensal via cartão 
                   de crédito e você pode cancelar a qualquer momento sem multa ou fidelidade. Oferecemos 7 dias de 
-                  teste gratuito para você conhecer todas as funcionalidades.
+                  teste gratuito SEM CARTÃO DE CRÉDITO para você conhecer todas as funcionalidades.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-3">
+                <AccordionTrigger>Como funciona o teste gratuito?</AccordionTrigger>
+                <AccordionContent>
+                  Oferecemos 7 dias de teste gratuito com acesso completo a todas as funcionalidades, 
+                  SEM NECESSIDADE DE CARTÃO DE CRÉDITO! Basta se cadastrar e começar a usar imediatamente. 
+                  Durante o período de teste, você pode cadastrar clientes, processos, usar todas as ferramentas 
+                  e explorar o sistema completamente. Após os 7 dias, você pode escolher assinar para continuar usando.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-4">
                 <AccordionTrigger>Como posso cancelar minha assinatura?</AccordionTrigger>
                 <AccordionContent>
                   Para cancelar sua assinatura, acesse a seção "Configurações" no menu lateral, depois clique na 
@@ -82,7 +92,7 @@ const SuportePage = () => {
                 </AccordionContent>
               </AccordionItem>
               
-              <AccordionItem value="item-4">
+              <AccordionItem value="item-5">
                 <AccordionTrigger>O sistema é compatível com dispositivos móveis?</AccordionTrigger>
                 <AccordionContent>
                   Sim, o JusGestão é totalmente responsivo e funciona perfeitamente em computadores, tablets e 
@@ -92,8 +102,8 @@ const SuportePage = () => {
                 </AccordionContent>
               </AccordionItem>
               
-              <AccordionItem value="item-5">
-                <AccordionTrigger>Quanto espaço de armazenamento eu tenho?</AccordionTrigger>
+              <AccordionItem value="item-6">
+                <AccordionTrigger>Quanto espaço de armazenamento tenho?</AccordionTrigger>
                 <AccordionContent>
                   Cada conta possui 25MB de armazenamento inicial para documentos, suficiente para milhares de 
                   arquivos PDF, imagens e documentos do escritório. O sistema monitora seu uso e exibe alertas 
@@ -102,23 +112,13 @@ const SuportePage = () => {
                 </AccordionContent>
               </AccordionItem>
               
-              <AccordionItem value="item-6">
-                <AccordionTrigger>Posso gerenciar múltiplos escritórios ou sócios?</AccordionTrigger>
-                <AccordionContent>
-                  Sim! O JusGestão possui um sistema completo de gestão de equipe. Você pode cadastrar membros 
-                  da equipe, delegar tarefas, acompanhar produtividade e definir níveis de acesso. Cada membro 
-                  pode ter suas próprias responsabilidades e o sistema mantém registro de todas as atividades 
-                  para controle e relatórios de produtividade.
-                </AccordionContent>
-              </AccordionItem>
-              
               <AccordionItem value="item-7">
-                <AccordionTrigger>Como funciona o monitoramento de publicações?</AccordionTrigger>
+                <AccordionTrigger>Como funciona a consulta DataJud CNJ?</AccordionTrigger>
                 <AccordionContent>
-                  O sistema monitora automaticamente diários oficiais de todo o Brasil em busca de publicações 
-                  relacionadas aos seus casos. Você configura nomes de advogados, números OAB, nomes de escritório 
-                  e palavras-chave, e o sistema busca diariamente por coincidências. Quando encontra algo relevante, 
-                  você recebe alertas automáticos e pode marcar publicações como importantes ou já lidas.
+                  O JusGestão integra com a API oficial do DataJud CNJ, permitindo consultar processos judiciais 
+                  diretamente dos tribunais brasileiros. Você pode buscar por número de processo, CPF/CNPJ das partes, 
+                  nome dos advogados e acompanhar movimentações processuais em tempo real. É uma ferramenta poderosa 
+                  para acompanhamento processual e pesquisa jurisprudencial.
                 </AccordionContent>
               </AccordionItem>
               
@@ -133,22 +133,22 @@ const SuportePage = () => {
               </AccordionItem>
               
               <AccordionItem value="item-9">
-                <AccordionTrigger>Como solicitar novas funcionalidades?</AccordionTrigger>
+                <AccordionTrigger>Posso gerenciar múltiplos colaboradores?</AccordionTrigger>
                 <AccordionContent>
-                  Valorizamos muito o feedback dos nossos usuários! Entre em contato pelo email 
-                  suporte@sisjusgestao.com.br com suas sugestões e necessidades específicas. Nossa equipe 
-                  avalia todas as solicitações e as inclui no roadmap de desenvolvimento. Muitas funcionalidades 
-                  atuais foram criadas baseadas em sugestões dos nossos usuários.
+                  Sim! O JusGestão possui um sistema completo de gestão de equipe. Você pode cadastrar membros 
+                  da equipe, delegar tarefas, acompanhar produtividade e definir níveis de acesso. Cada membro 
+                  pode ter suas próprias responsabilidades e o sistema mantém registro de todas as atividades 
+                  para controle e relatórios de produtividade.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-10">
-                <AccordionTrigger>O sistema integra com ferramentas externas?</AccordionTrigger>
+                <AccordionTrigger>Quais ferramentas jurídicas estão disponíveis?</AccordionTrigger>
                 <AccordionContent>
-                  Sim! O JusGestão integra com várias ferramentas essenciais: consulta de CEP pelos Correios, 
-                  consulta de CNPJs via ReceitaWS, sistema DataJud para busca processual, calculadoras jurídicas 
-                  e geradores de documentos. Também temos integrações com sistemas de pagamento e estamos 
-                  constantemente desenvolvendo novas integrações baseadas nas necessidades dos usuários.
+                  O sistema inclui diversas ferramentas: consulta de CEP pelos Correios, consulta de CNPJs e CPFs, 
+                  calculadoras de prazos processuais, gerador de QR Code, conversor de documentos, gerador de 
+                  assinatura eletrônica, consulta de feriados forenses e muito mais. Também temos integrações 
+                  com sistemas de pagamento e estamos constantemente desenvolvendo novas ferramentas.
                 </AccordionContent>
               </AccordionItem>
               
@@ -163,12 +163,12 @@ const SuportePage = () => {
               </AccordionItem>
               
               <AccordionItem value="item-12">
-                <AccordionTrigger>Posso testar o sistema antes de assinar?</AccordionTrigger>
+                <AccordionTrigger>Como solicitar novas funcionalidades?</AccordionTrigger>
                 <AccordionContent>
-                  Sim! Oferecemos 7 dias de teste gratuito com acesso completo a todas as funcionalidades. 
-                  Durante o período de teste, você pode cadastrar clientes, processos, usar todas as ferramentas 
-                  e explorar o sistema completamente. Não é necessário cartão de crédito para iniciar o teste 
-                  e você pode cancelar a qualquer momento sem cobrança.
+                  Valorizamos muito o feedback dos nossos usuários! Entre em contato pelo email 
+                  suporte@sisjusgestao.com.br com suas sugestões e necessidades específicas. Nossa equipe 
+                  avalia todas as solicitações e as inclui no roadmap de desenvolvimento. Muitas funcionalidades 
+                  atuais foram criadas baseadas em sugestões dos nossos usuários.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

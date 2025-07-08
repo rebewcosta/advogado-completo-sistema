@@ -1,16 +1,17 @@
 
 // src/components/StatusAssinatura.tsx
 import React from 'react';
-import { Check, Clock, AlertTriangle, ExternalLink, Gift, Crown, ShoppingCart, Loader2 } from 'lucide-react';
+import { Check, Clock, AlertTriangle, ExternalLink, Gift, Crown, ShoppingCart, Loader2, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/lib/utils';
 
 interface StatusAssinaturaProps {
   status: 'ativa' | 'pendente' | 'inativa';
-  accountType?: 'premium' | 'admin' | 'amigo' | 'pendente' | 'none';
+  accountType?: 'premium' | 'admin' | 'amigo' | 'pendente' | 'none' | 'trial';
   customMessage?: string;
   dataProximoFaturamento?: string | null;
+  trialDaysRemaining?: number | null;
   plano?: string;
   onAbrirPortalCliente?: () => void;
   isPortalLoading?: boolean;
@@ -22,6 +23,7 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
   accountType = 'none',
   customMessage,
   dataProximoFaturamento,
+  trialDaysRemaining,
   plano = "JusGestão",
   onAbrirPortalCliente,
   isPortalLoading = false,
@@ -58,6 +60,14 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
     iconColor = "text-pink-600";
     planDisplay = "Assinatura Amiga (Cortesia)";
     description = "Acesso de cortesia especial concedido. Aproveite!";
+  } else if (accountType === 'trial') {
+    IconComponent = Timer;
+    titleColor = "text-blue-700";
+    bgColor = "bg-blue-50 border-blue-200";
+    iconBgColor = "bg-blue-100";
+    iconColor = "text-blue-600";
+    planDisplay = "Período de Teste Gratuito";
+    description = `Você está no período de teste gratuito! ${trialDaysRemaining || 0} dias restantes para explorar todas as funcionalidades.`;
   } else if (status === 'ativa' && accountType === 'premium') {
     IconComponent = Check;
     titleColor = "text-green-700";
@@ -88,6 +98,7 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
           <h3 className={cn("text-md sm:text-lg font-semibold", titleColor)}>
             { accountType === 'admin' ? 'Acesso Administrador' :
               accountType === 'amigo' ? 'Assinatura Amiga' :
+              accountType === 'trial' ? 'Teste Gratuito' :
               status === 'ativa' ? 'Assinatura Ativa' :
               status === 'pendente' ? 'Assinatura Pendente' :
               'Assinatura Inativa'
@@ -97,13 +108,24 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
             {description}
           </p>
 
-          {/* Detalhes da assinatura premium */}
-          {(status === 'ativa' || status === 'pendente') && accountType === 'premium' && (
+          {/* Detalhes da assinatura */}
+          {(status === 'ativa' || status === 'pendente' || accountType === 'trial') && (
             <div className="mt-3 space-y-1 text-xs sm:text-sm">
               <p>
                 <span className="font-medium text-gray-700">Plano:</span> {planDisplay}
               </p>
-              {dataProximoFaturamento && (
+              {accountType === 'trial' && trialDaysRemaining !== null && (
+                <p>
+                  <span className="font-medium text-gray-700">Dias restantes:</span> 
+                  <span className={cn("ml-1 font-semibold", 
+                    trialDaysRemaining <= 2 ? "text-red-600" : 
+                    trialDaysRemaining <= 5 ? "text-yellow-600" : "text-blue-600"
+                  )}>
+                    {trialDaysRemaining} dias
+                  </span>
+                </p>
+              )}
+              {dataProximoFaturamento && accountType === 'premium' && (
                 <p>
                   <span className="font-medium text-gray-700">Próxima cobrança:</span> {dataProximoFaturamento}
                 </p>
@@ -115,7 +137,7 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
           {!hideActionButtons && (
             <>
               {/* Botão de Gerenciar Assinatura */}
-              {onAbrirPortalCliente && !['admin', 'amigo'].includes(accountType || '') && (
+              {onAbrirPortalCliente && !['admin', 'amigo', 'trial'].includes(accountType || '') && (
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -132,15 +154,20 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
                 </Button>
               )}
 
-              {/* Botão para Assinar */}
-              {status === 'inativa' && accountType === 'none' && (
+              {/* Botão para Assinar - aparece para trial e contas inativas */}
+              {(status === 'inativa' && accountType === 'none') || accountType === 'trial' && (
                  <Button 
                     onClick={handleAssinar}
-                    className="mt-4 bg-lawyer-primary hover:bg-lawyer-primary/90 text-white text-xs sm:text-sm"
+                    className={cn(
+                      "mt-4 text-white text-xs sm:text-sm",
+                      accountType === 'trial' 
+                        ? "bg-blue-600 hover:bg-blue-700" 
+                        : "bg-lawyer-primary hover:bg-lawyer-primary/90"
+                    )}
                     size="sm"
                   >
                     <ShoppingCart className="mr-1.5 h-4 w-4" />
-                    Assinar Agora
+                    {accountType === 'trial' ? 'Assinar Agora' : 'Assinar Agora'}
                   </Button>
               )}
             </>

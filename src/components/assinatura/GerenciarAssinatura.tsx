@@ -16,7 +16,8 @@ import { Loader2, AlertCircle, RefreshCw, CreditCard, ShoppingCart, CheckCircle 
 interface AssinaturaInfo {
   status: 'ativa' | 'pendente' | 'inativa' | 'admin' | 'amigo';
   proximo_faturamento: string | null;
-  account_type: 'premium' | 'admin' | 'amigo' | 'pendente' | 'none';
+  account_type: 'premium' | 'admin' | 'amigo' | 'pendente' | 'none' | 'trial';
+  trial_days_remaining?: number | null;
   message: string;
 }
 
@@ -49,18 +50,27 @@ const GerenciarAssinatura = () => {
     try {
       console.log("🔄 Verificando status da assinatura para usuário:", user.id);
       
-      const { data, error } = await supabase.rpc('verificar_status_assinatura', {
-        p_user_id: user.id
-      });
+      const { data, error } = await supabase.functions.invoke('verificar-assinatura');
 
       if (error) {
-        console.error("❌ Erro RPC verificar_status_assinatura:", error);
+        console.error("❌ Erro ao verificar assinatura:", error);
         throw new Error(error.message || "Falha ao buscar dados da assinatura.");
       }
 
       if (data) {
         console.log("✅ Dados da assinatura recebidos:", data);
-        setAssinaturaInfo(data as unknown as AssinaturaInfo);
+        
+        // Mapear a resposta da edge function para o formato esperado
+        const mappedData: AssinaturaInfo = {
+          status: data.subscribed ? 'ativa' : 'inativa',
+          proximo_faturamento: data.subscription_end ? 
+            new Date(data.subscription_end).toLocaleDateString('pt-BR') : null,
+          account_type: data.account_type || 'none',
+          trial_days_remaining: data.trial_days_remaining,
+          message: data.message || 'Status verificado com sucesso.'
+        };
+        
+        setAssinaturaInfo(mappedData);
         setLastRefresh(new Date());
         
         if (showSuccessToast) {
@@ -224,13 +234,14 @@ const GerenciarAssinatura = () => {
   let statusParaComponente: 'ativa' | 'pendente' | 'inativa' = 'inativa';
   if (assinaturaInfo.account_type === 'premium' && assinaturaInfo.status === 'ativa') {
     statusParaComponente = 'ativa';
-  } else if (assinaturaInfo.account_type === 'admin' || assinaturaInfo.account_type === 'amigo') {
+  } else if (assinaturaInfo.account_type === 'admin' || assinaturaInfo.account_type === 'amigo' || assinaturaInfo.account_type === 'trial') {
     statusParaComponente = 'ativa';
   } else if (assinaturaInfo.status === 'pendente') {
     statusParaComponente = 'pendente';
   }
 
   const isSpecialAccount = assinaturaInfo.account_type === 'admin' || assinaturaInfo.account_type === 'amigo';
+  const isTrialAccount = assinaturaInfo.account_type === 'trial';
   const isInactiveAccount = assinaturaInfo.account_type === 'none' && statusParaComponente === 'inativa';
   const isPremiumOrPending = assinaturaInfo.account_type === 'premium' || assinaturaInfo.account_type === 'pendente';
 
@@ -248,10 +259,12 @@ const GerenciarAssinatura = () => {
             status={statusParaComponente}
             dataProximoFaturamento={assinaturaInfo.proximo_faturamento}
             accountType={assinaturaInfo.account_type} 
+            trialDaysRemaining={assinaturaInfo.trial_days_remaining}
             customMessage={assinaturaInfo.message}
             plano={
               assinaturaInfo.account_type === 'admin' ? 'Acesso Administrador' :
               assinaturaInfo.account_type === 'amigo' ? 'Assinatura Amiga (Cortesia)' :
+              assinaturaInfo.account_type === 'trial' ? 'Período de Teste Gratuito' :
               'JusGestão Premium'
             }
             hideActionButtons={true}
@@ -282,7 +295,7 @@ const GerenciarAssinatura = () => {
               
               <div className="grid gap-3 sm:grid-cols-2">
                 {/* Botão Portal do Cliente - Disponível para contas premium/pendentes */}
-                {!isSpecialAccount && (
+                {!isSpecialAccount && !isTrialAccount && (
                   <Button 
                     onClick={handleAbrirPortalCliente}
                     disabled={isPortalLoading}
@@ -298,8 +311,8 @@ const GerenciarAssinatura = () => {
                   </Button>
                 )}
 
-                {/* Botão Nova Assinatura - Para contas inativas - MAIS VISÍVEL */}
-                {isInactiveAccount && (
+                {/* Botão Nova Assinatura - Para contas inativas ou trial */}
+                {(isInactiveAccount || isTrialAccount) && (
                   <Button 
                     onClick={handleNovaAssinatura}
                     disabled={isCheckoutLoading}
@@ -311,7 +324,8 @@ const GerenciarAssinatura = () => {
                     ) : (
                       <ShoppingCart className="h-4 w-4" />
                     )}
-                    {isCheckoutLoading ? "Processando..." : "🚀 Renovar Assinatura"}
+                    {isCheckoutLoading ? "Processando..." : 
+                     isTrialAccount ? "🚀 Assinar Agora" : "🚀 Renovar Assinatura"}
                   </Button>
                 )}
 
@@ -356,6 +370,10 @@ const GerenciarAssinatura = () => {
                 <h4 className="text-sm font-medium text-blue-800 mb-3">🔧 Problemas Comuns:</h4>
                 <div className="space-y-3 text-sm text-blue-700">
                   <div className="flex items-start gap-2">
+                    <span className="font-medium">🎁 Teste Gratuito:</span>
+                    <span>Você tem 7 dias para testar todas as funcionalidades sem custo!</span>
+                  </div>
+                  <div className="flex items-start gap-2">
                     <span className="font-medium">📋 Cartão vencido/bloqueado:</span>
                     <span>Use o "Portal do Cliente" para atualizar seu método de pagamento</span>
                   </div>
@@ -374,6 +392,13 @@ const GerenciarAssinatura = () => {
                 </div>
               </div>
               
+              <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                <h4 className="text-sm font-medium text-green-800 mb-2">🎉 Teste Gratuito de 7 Dias:</h4>
+                <p className="text-sm text-green-700">
+                  Novos usuários têm acesso completo por 7 dias sem precisar inserir cartão de crédito!
+                </p>
+              </div>
+
               <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
                 <p className="text-sm text-yellow-800 font-medium">
                   ⏰ <strong>Importante:</strong> Você tem 5 dias para resolver problemas de pagamento antes do cancelamento automático.
@@ -383,7 +408,7 @@ const GerenciarAssinatura = () => {
               <div className="bg-green-50 border border-green-200 rounded-md p-4">
                 <h4 className="text-sm font-medium text-green-800 mb-2">📞 Contato Direto:</h4>
                 <p className="text-sm text-green-700">
-                  📧 suporte@jusgestao.com.br<br />
+                  📧 suporte@sisjusgestao.com.br<br />
                   🌐 Responda qualquer email automático que receber
                 </p>
               </div>

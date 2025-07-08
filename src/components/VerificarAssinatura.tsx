@@ -10,6 +10,10 @@ const VerificarAssinatura: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [accessGranted, setAccessGranted] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
+  const [trialInfo, setTrialInfo] = useState<{daysRemaining: number | null, isInTrial: boolean}>({
+    daysRemaining: null,
+    isInTrial: false
+  });
   const { user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
@@ -64,11 +68,30 @@ const VerificarAssinatura: React.FC = () => {
           
           if (funcResponse?.subscribed === true) {
             setAccessGranted(true);
-            setSubscriptionStatus('active');
+            setSubscriptionStatus(funcResponse.account_type || 'active');
+            
+            // Definir informações do trial
+            if (funcResponse.account_type === 'trial') {
+              setTrialInfo({
+                daysRemaining: funcResponse.trial_days_remaining,
+                isInTrial: true
+              });
+              
+              // Mostrar toast informativo sobre o trial
+              toast({
+                title: "Período de Teste Gratuito",
+                description: `Você tem ${funcResponse.trial_days_remaining} dias restantes do seu teste gratuito.`,
+                duration: 5000,
+              });
+            }
           } else {
             console.log("Acesso negado - assinatura não ativa");
             setAccessGranted(false);
             setSubscriptionStatus(funcResponse?.account_type || 'inactive');
+            setTrialInfo({
+              daysRemaining: 0,
+              isInTrial: false
+            });
           }
         }
       } catch (e) {
@@ -99,14 +122,16 @@ const VerificarAssinatura: React.FC = () => {
   if (accessGranted) {
     return <Outlet />;
   } else {
-    // Se a conta foi cancelada, redirecionar para a página específica
+    // Se a conta foi cancelada ou trial expirado, redirecionar para a página específica
     if (subscriptionStatus === 'none' || subscriptionStatus === 'inactive') {
       return (
         <Navigate 
           to="/conta-cancelada" 
           state={{ 
             from: location, 
-            message: "Sua conta foi cancelada. Reative para continuar usando o sistema." 
+            message: trialInfo.daysRemaining === 0 ? 
+              "Seu período de teste gratuito expirou. Assine para continuar usando o sistema." :
+              "Sua conta foi cancelada. Reative para continuar usando o sistema."
           }} 
           replace 
         />
