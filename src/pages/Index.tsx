@@ -7,6 +7,7 @@ import FeaturesSection from '../components/FeaturesSection';
 import AboutSection from '../components/AboutSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import PricingSection from '../components/PricingSection';
+import FaqSection from '../components/FaqSection';
 import CtaSection from '../components/CtaSection';
 import MobileHeader from '../components/MobileHeader';
 import { useAuth } from '@/hooks/useAuth';
@@ -63,6 +64,7 @@ const Index = () => {
         <AboutSection />
         <TestimonialsSection />
         <PricingSection />
+        <FaqSection />
         <CtaSection />
       </main>
       <Footer />

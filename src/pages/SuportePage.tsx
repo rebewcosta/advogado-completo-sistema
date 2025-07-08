@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -53,33 +54,40 @@ const SuportePage = () => {
               <AccordionItem value="item-1">
                 <AccordionTrigger>O que é o JusGestão?</AccordionTrigger>
                 <AccordionContent>
-                  JusGestão é uma plataforma completa para gestão de escritórios de advocacia, que permite 
+                  JusGestão é uma plataforma completa de gestão para escritórios de advocacia, que permite 
                   gerenciar processos, clientes, agenda, documentos, financeiro e muito mais. Desenvolvido 
-                  especificamente para as necessidades do profissional jurídico brasileiro.
+                  especificamente para as necessidades do profissional jurídico brasileiro, inclui recursos 
+                  como monitoramento de publicações, controle de prazos, relatórios financeiros, gestão de equipe 
+                  e integração com ferramentas essenciais para advogados.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-2">
                 <AccordionTrigger>Quanto custa a assinatura do JusGestão?</AccordionTrigger>
                 <AccordionContent>
-                  A assinatura do JusGestão custa R$ 127,00 por mês, com acesso completo a todas as funcionalidades. 
-                  Não há taxas de configuração ou custos ocultos. O pagamento é mensal e você pode cancelar a qualquer momento.
+                  A assinatura do JusGestão custa R$ 37,00 por mês, com acesso completo a todas as funcionalidades. 
+                  Não há taxas de configuração, custos ocultos ou limitações de uso. O pagamento é mensal via cartão 
+                  de crédito e você pode cancelar a qualquer momento sem multa ou fidelidade. Oferecemos 7 dias de 
+                  teste gratuito para você conhecer todas as funcionalidades.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-3">
                 <AccordionTrigger>Como posso cancelar minha assinatura?</AccordionTrigger>
                 <AccordionContent>
-                  Para cancelar sua assinatura, acesse a seção "Perfil" em seu painel, e depois clique em "Gerenciar Assinatura". 
-                  Você será redirecionado para o portal do cliente onde poderá cancelar a assinatura. O acesso permanecerá 
-                  disponível até o final do período já pago.
+                  Para cancelar sua assinatura, acesse a seção "Configurações" no menu lateral, depois clique na 
+                  aba "Assinatura" e em seguida no botão "Portal do Cliente". Você será redirecionado para o portal 
+                  seguro do Stripe onde poderá cancelar sua assinatura. O acesso permanecerá disponível até o final 
+                  do período já pago. Não há multa ou taxa de cancelamento.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-4">
                 <AccordionTrigger>O sistema é compatível com dispositivos móveis?</AccordionTrigger>
                 <AccordionContent>
-                  Sim, o JusGestão é totalmente responsivo e funciona em computadores, tablets e smartphones, 
+                  Sim, o JusGestão é totalmente responsivo e funciona perfeitamente em computadores, tablets e 
+                  smartphones. Você pode instalar como um aplicativo (PWA) diretamente no seu dispositivo móvel 
+                  para ter acesso rápido. Todas as funcionalidades estão disponíveis em qualquer dispositivo, 
                   permitindo que você gerencie seu escritório de qualquer lugar, a qualquer momento.
                 </AccordionContent>
               </AccordionItem>
@@ -87,24 +95,80 @@ const SuportePage = () => {
               <AccordionItem value="item-5">
                 <AccordionTrigger>Quanto espaço de armazenamento eu tenho?</AccordionTrigger>
                 <AccordionContent>
-                  Cada conta possui 25MB de armazenamento para documentos. Caso necessite de mais espaço, 
-                  entre em contato conosco para discutir opções de armazenamento adicional.
+                  Cada conta possui 25MB de armazenamento inicial para documentos, suficiente para milhares de 
+                  arquivos PDF, imagens e documentos do escritório. O sistema monitora seu uso e exibe alertas 
+                  quando necessário. Caso necessite de mais espaço, entre em contato conosco para discutir 
+                  opções de armazenamento adicional personalizado para seu escritório.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-6">
-                <AccordionTrigger>Como faço para solicitar novas funcionalidades?</AccordionTrigger>
+                <AccordionTrigger>Posso gerenciar múltiplos escritórios ou sócios?</AccordionTrigger>
                 <AccordionContent>
-                  Valorizamos o feedback dos nossos usuários! Entre em contato pelo email suporte@sisjusgestao.com.br 
-                  com suas sugestões. Nossa equipe avalia todas as solicitações para inclusão em futuras atualizações.
+                  Sim! O JusGestão possui um sistema completo de gestão de equipe. Você pode cadastrar membros 
+                  da equipe, delegar tarefas, acompanhar produtividade e definir níveis de acesso. Cada membro 
+                  pode ter suas próprias responsabilidades e o sistema mantém registro de todas as atividades 
+                  para controle e relatórios de produtividade.
                 </AccordionContent>
               </AccordionItem>
               
               <AccordionItem value="item-7">
-                <AccordionTrigger>É possível integrar o JusGestão com outros sistemas?</AccordionTrigger>
+                <AccordionTrigger>Como funciona o monitoramento de publicações?</AccordionTrigger>
                 <AccordionContent>
-                  Atualmente trabalhamos para desenvolver integrações com sistemas judiciais e plataformas populares. 
-                  Se você precisa de uma integração específica, entre em contato conosco para verificarmos a viabilidade.
+                  O sistema monitora automaticamente diários oficiais de todo o Brasil em busca de publicações 
+                  relacionadas aos seus casos. Você configura nomes de advogados, números OAB, nomes de escritório 
+                  e palavras-chave, e o sistema busca diariamente por coincidências. Quando encontra algo relevante, 
+                  você recebe alertas automáticos e pode marcar publicações como importantes ou já lidas.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-8">
+                <AccordionTrigger>O sistema possui controle financeiro?</AccordionTrigger>
+                <AccordionContent>
+                  Sim, o JusGestão possui um módulo financeiro completo e seguro. Você pode registrar receitas, 
+                  despesas, honorários, associar transações a clientes e processos específicos. O sistema gera 
+                  relatórios detalhados, gráficos de desempenho financeiro e possui proteção por PIN para 
+                  informações sensíveis. Todos os dados são criptografados e seguros.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-9">
+                <AccordionTrigger>Como solicitar novas funcionalidades?</AccordionTrigger>
+                <AccordionContent>
+                  Valorizamos muito o feedback dos nossos usuários! Entre em contato pelo email 
+                  suporte@sisjusgestao.com.br com suas sugestões e necessidades específicas. Nossa equipe 
+                  avalia todas as solicitações e as inclui no roadmap de desenvolvimento. Muitas funcionalidades 
+                  atuais foram criadas baseadas em sugestões dos nossos usuários.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-10">
+                <AccordionTrigger>O sistema integra com ferramentas externas?</AccordionTrigger>
+                <AccordionContent>
+                  Sim! O JusGestão integra com várias ferramentas essenciais: consulta de CEP pelos Correios, 
+                  consulta de CNPJs via ReceitaWS, sistema DataJud para busca processual, calculadoras jurídicas 
+                  e geradores de documentos. Também temos integrações com sistemas de pagamento e estamos 
+                  constantemente desenvolvendo novas integrações baseadas nas necessidades dos usuários.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-11">
+                <AccordionTrigger>Meus dados estão seguros?</AccordionTrigger>
+                <AccordionContent>
+                  Absolutamente! O JusGestão utiliza criptografia de ponta a ponta, servidores seguros na nuvem, 
+                  backups automáticos diários e proteção por PIN para dados financeiros. Seguimos as melhores 
+                  práticas de segurança da indústria e estamos em conformidade com a LGPD. Seus dados nunca são 
+                  compartilhados com terceiros e você tem controle total sobre suas informações.
+                </AccordionContent>
+              </AccordionItem>
+              
+              <AccordionItem value="item-12">
+                <AccordionTrigger>Posso testar o sistema antes de assinar?</AccordionTrigger>
+                <AccordionContent>
+                  Sim! Oferecemos 7 dias de teste gratuito com acesso completo a todas as funcionalidades. 
+                  Durante o período de teste, você pode cadastrar clientes, processos, usar todas as ferramentas 
+                  e explorar o sistema completamente. Não é necessário cartão de crédito para iniciar o teste 
+                  e você pode cancelar a qualquer momento sem cobrança.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
@@ -120,7 +184,6 @@ const SuportePage = () => {
               <input type="hidden" name="_next" value="https://sisjusgestao.com.br/suporte?email_enviado=true" />
               <input type="hidden" name="_subject" value="Nova Mensagem de Contato - Suporte JusGestão" />
               <input type="hidden" name="_template" value="table" />
-
 
               <div className="grid gap-4">
                 <div>
