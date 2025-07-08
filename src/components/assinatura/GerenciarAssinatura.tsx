@@ -10,7 +10,7 @@ import StatusAssinatura from '@/components/StatusAssinatura';
 import HistoricoPagamentos from '@/components/assinatura/HistoricoPagamentos';
 import ContaCancelada from '@/components/assinatura/ContaCancelada';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, RefreshCw, CreditCard, ShoppingCart } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, CreditCard, ShoppingCart, CheckCircle } from 'lucide-react';
 
 // Definindo um tipo para a resposta esperada da função SQL
 interface AssinaturaInfo {
@@ -29,8 +29,9 @@ const GerenciarAssinatura = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isPortalLoading, setIsPortalLoading] = useState(false);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState(false);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
 
-  const fetchSubscriptionStatus = useCallback(async () => {
+  const fetchSubscriptionStatus = useCallback(async (showSuccessToast = false) => {
     setIsLoadingStatus(true);
     setErrorMessage(null);
     
@@ -60,6 +61,15 @@ const GerenciarAssinatura = () => {
       if (data) {
         console.log("✅ Dados da assinatura recebidos:", data);
         setAssinaturaInfo(data as unknown as AssinaturaInfo);
+        setLastRefresh(new Date());
+        
+        if (showSuccessToast) {
+          toast({
+            title: "Status Atualizado",
+            description: "Informações da assinatura atualizadas com sucesso.",
+            duration: 3000,
+          });
+        }
       } else {
         throw new Error("Nenhuma informação de assinatura retornada.");
       }
@@ -172,6 +182,10 @@ const GerenciarAssinatura = () => {
       setIsCheckoutLoading(false);
     }
   };
+
+  const handleRefreshStatus = () => {
+    fetchSubscriptionStatus(true);
+  };
   
   if (isLoadingStatus) {
     return (
@@ -191,7 +205,7 @@ const GerenciarAssinatura = () => {
           <AlertCircle className="h-8 w-8 text-red-500 mb-3" />
           <p className="text-red-700 font-medium">Não foi possível carregar as informações da assinatura.</p>
           <p className="text-sm text-red-600 mt-1">{errorMessage || "Tente novamente mais tarde."}</p>
-           <Button onClick={fetchSubscriptionStatus} variant="outline" size="sm" className="mt-4">
+           <Button onClick={handleRefreshStatus} variant="outline" size="sm" className="mt-4">
             <RefreshCw className="mr-2 h-4 w-4"/>
             Tentar Novamente
           </Button>
@@ -253,7 +267,18 @@ const GerenciarAssinatura = () => {
           {/* Seção de Ações Avançadas */}
           <div className="mt-6 space-y-4">
             <div className="border-t pt-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">Ações Rápidas</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-gray-700">Ações Rápidas</h3>
+                {lastRefresh && (
+                  <div className="flex items-center text-xs text-gray-500">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Atualizado: {lastRefresh.toLocaleTimeString('pt-BR', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </div>
+                )}
+              </div>
               
               <div className="grid gap-3 sm:grid-cols-2">
                 {/* Botão Portal do Cliente - Disponível para contas premium/pendentes */}
@@ -292,7 +317,7 @@ const GerenciarAssinatura = () => {
 
                 {/* Botão Atualizar Status - Sempre disponível */}
                 <Button 
-                  onClick={fetchSubscriptionStatus} 
+                  onClick={handleRefreshStatus} 
                   variant="outline" 
                   size="sm"
                   disabled={isLoadingStatus}
