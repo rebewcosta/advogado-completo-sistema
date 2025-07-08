@@ -358,7 +358,7 @@ const GerenciarAssinatura = () => {
               <div className="bg-green-50 border border-green-200 rounded-md p-4">
                 <h4 className="text-sm font-medium text-green-800 mb-2">📞 Contato Direto:</h4>
                 <p className="text-sm text-green-700">
-                  📧 suporte@jusgestao.com.br<br>
+                  📧 suporte@jusgestao.com.br<br />
                   🌐 Responda qualquer email automático que receber
                 </p>
               </div>
