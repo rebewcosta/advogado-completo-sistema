@@ -33,6 +33,7 @@ import EmailsTransacionaisPage from './pages/EmailsTransacionaisPage';
 import PublicacoesPage from './pages/PublicacoesPage';
 import DataJudPage from './pages/DataJudPage';
 import FerramentasPage from './pages/FerramentasPage';
+import ContaCanceladaPage from './pages/ContaCanceladaPage';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -85,6 +86,7 @@ function App() {
                   <Route path="/termos-privacidade" element={<PublicLayout><TermosPrivacidadePage /></PublicLayout>} />
                   <Route path="/pagamento" element={<PublicLayout><PagamentoPage /></PublicLayout>} />
                   <Route path="/payment-success" element={<PublicLayout><PaymentSuccessPage /></PublicLayout>} />
+                  <Route path="/conta-cancelada" element={<PublicLayout><ContaCanceladaPage /></PublicLayout>} />
 
                   {/* Rotas protegidas apenas com sidebar */}
                   <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><DashboardPage /></ProtectedLayout></ProtectedRoute>} />

@@ -5,7 +5,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import StatusAssinatura from '@/components/StatusAssinatura';
+import HistoricoPagamentos from '@/components/assinatura/HistoricoPagamentos';
+import ContaCancelada from '@/components/assinatura/ContaCancelada';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertCircle, RefreshCw, CreditCard, ShoppingCart } from 'lucide-react';
 
@@ -196,6 +199,12 @@ const GerenciarAssinatura = () => {
       </Card>
     );
   }
+
+  // Se a conta foi cancelada, mostrar o componente dedicado
+  if (assinaturaInfo.account_type === 'none' && assinaturaInfo.status === 'inativa' && 
+      assinaturaInfo.message.includes('cancelada')) {
+    return <ContaCancelada onRenovarAssinatura={handleNovaAssinatura} />;
+  }
   
   // Mapeamento para o componente StatusAssinatura
   let statusParaComponente: 'ativa' | 'pendente' | 'inativa' = 'inativa';
@@ -212,120 +221,152 @@ const GerenciarAssinatura = () => {
   const isPremiumOrPending = assinaturaInfo.account_type === 'premium' || assinaturaInfo.account_type === 'pendente';
 
   return (
-    <Card className="shadow-md rounded-lg">
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold text-gray-800">Minha Assinatura</CardTitle>
-        <CardDescription className="text-sm text-gray-500">
-          Detalhes sobre seu plano e acesso ao JusGestão.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <StatusAssinatura
-          status={statusParaComponente}
-          dataProximoFaturamento={assinaturaInfo.proximo_faturamento}
-          accountType={assinaturaInfo.account_type} 
-          customMessage={assinaturaInfo.message}
-          plano={
-            assinaturaInfo.account_type === 'admin' ? 'Acesso Administrador' :
-            assinaturaInfo.account_type === 'amigo' ? 'Assinatura Amiga (Cortesia)' :
-            'JusGestão Premium'
-          }
-          hideActionButtons={true}
-        />
-        
-        {errorMessage && !isLoadingStatus && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 flex items-center text-sm">
-            <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
-            <p>{errorMessage}</p>
-          </div>
-        )}
-        
-        {/* Seção de Ações Avançadas */}
-        <div className="mt-6 space-y-4">
-          <div className="border-t pt-4">
-            <h3 className="text-sm font-medium text-gray-700 mb-3">Gerenciar Assinatura</h3>
-            
-            <div className="grid gap-3 sm:grid-cols-2">
-              {/* Botão Portal do Cliente - Disponível para contas premium/pendentes OU canceladas recentemente */}
-              {!isSpecialAccount && (
+    <div className="space-y-6">
+      <Card className="shadow-md rounded-lg">
+        <CardHeader>
+          <CardTitle className="text-xl font-semibold text-gray-800">Minha Assinatura</CardTitle>
+          <CardDescription className="text-sm text-gray-500">
+            Detalhes sobre seu plano e acesso ao JusGestão.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <StatusAssinatura
+            status={statusParaComponente}
+            dataProximoFaturamento={assinaturaInfo.proximo_faturamento}
+            accountType={assinaturaInfo.account_type} 
+            customMessage={assinaturaInfo.message}
+            plano={
+              assinaturaInfo.account_type === 'admin' ? 'Acesso Administrador' :
+              assinaturaInfo.account_type === 'amigo' ? 'Assinatura Amiga (Cortesia)' :
+              'JusGestão Premium'
+            }
+            hideActionButtons={true}
+          />
+          
+          {errorMessage && !isLoadingStatus && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-red-700 flex items-center text-sm">
+              <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+              <p>{errorMessage}</p>
+            </div>
+          )}
+          
+          {/* Seção de Ações Avançadas */}
+          <div className="mt-6 space-y-4">
+            <div className="border-t pt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-3">Ações Rápidas</h3>
+              
+              <div className="grid gap-3 sm:grid-cols-2">
+                {/* Botão Portal do Cliente - Disponível para contas premium/pendentes */}
+                {!isSpecialAccount && (
+                  <Button 
+                    onClick={handleAbrirPortalCliente}
+                    disabled={isPortalLoading}
+                    variant="outline"
+                    className="flex items-center gap-2 text-sm"
+                  >
+                    {isPortalLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <CreditCard className="h-4 w-4" />
+                    )}
+                    {isPortalLoading ? "Abrindo..." : "Portal do Cliente"}
+                  </Button>
+                )}
+
+                {/* Botão Nova Assinatura - Para contas inativas - MAIS VISÍVEL */}
+                {isInactiveAccount && (
+                  <Button 
+                    onClick={handleNovaAssinatura}
+                    disabled={isCheckoutLoading}
+                    className="flex items-center gap-2 text-sm bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-semibold shadow-lg"
+                    size="lg"
+                  >
+                    {isCheckoutLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ShoppingCart className="h-4 w-4" />
+                    )}
+                    {isCheckoutLoading ? "Processando..." : "🚀 Renovar Assinatura"}
+                  </Button>
+                )}
+
+                {/* Botão Atualizar Status - Sempre disponível */}
                 <Button 
-                  onClick={handleAbrirPortalCliente}
-                  disabled={isPortalLoading}
-                  variant="outline"
+                  onClick={fetchSubscriptionStatus} 
+                  variant="outline" 
+                  size="sm"
+                  disabled={isLoadingStatus}
                   className="flex items-center gap-2 text-sm"
                 >
-                  {isPortalLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <CreditCard className="h-4 w-4" />
-                  )}
-                  {isPortalLoading ? "Abrindo..." : "Portal do Cliente"}
+                  <RefreshCw className={`h-4 w-4 ${isLoadingStatus ? 'animate-spin' : ''}`}/>
+                  {isLoadingStatus ? "Atualizando..." : "Atualizar Status"}
                 </Button>
-              )}
-
-              {/* Botão Nova Assinatura - Para contas inativas */}
-              {isInactiveAccount && (
-                <Button 
-                  onClick={handleNovaAssinatura}
-                  disabled={isCheckoutLoading}
-                  className="flex items-center gap-2 text-sm bg-lawyer-primary hover:bg-lawyer-primary/90"
-                >
-                  {isCheckoutLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ShoppingCart className="h-4 w-4" />
-                  )}
-                  {isCheckoutLoading ? "Processando..." : "Nova Assinatura"}
-                </Button>
-              )}
-
-              {/* Botão Atualizar Status - Sempre disponível */}
-              <Button 
-                onClick={fetchSubscriptionStatus} 
-                variant="outline" 
-                size="sm"
-                disabled={isLoadingStatus}
-                className="flex items-center gap-2 text-sm"
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoadingStatus ? 'animate-spin' : ''}`}/>
-                {isLoadingStatus ? "Atualizando..." : "Atualizar Status"}
-              </Button>
+              </div>
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Informações de Ajuda - Apenas para contas não especiais */}
-          {!isSpecialAccount && (
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <h4 className="text-sm font-medium text-blue-800 mb-3">💡 Como resolver problemas de pagamento:</h4>
-              <div className="space-y-2 text-xs text-blue-700">
-                <div className="flex items-start gap-2">
-                  <span className="font-medium">📋 Cartão vencido/bloqueado:</span>
-                  <span>Use o "Portal do Cliente" para atualizar seu método de pagamento</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-medium">💳 Fatura em aberto:</span>
-                  <span>Acesse o "Portal do Cliente" para visualizar e pagar pendências</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-medium">❌ Assinatura cancelada:</span>
-                  <span>Clique em "Nova Assinatura" para reativar seu plano</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-medium">🔄 Status incorreto:</span>
-                  <span>Use "Atualizar Status" após resolver problemas no Stripe</span>
+      {/* Tabs para histórico e informações adicionais */}
+      <Tabs defaultValue="historico" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="historico">Histórico de Pagamentos</TabsTrigger>
+          <TabsTrigger value="ajuda">Central de Ajuda</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="historico" className="space-y-4">
+          <HistoricoPagamentos />
+        </TabsContent>
+        
+        <TabsContent value="ajuda" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">💡 Central de Ajuda</CardTitle>
+              <CardDescription>
+                Resolva problemas comuns de pagamento e assinatura
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+                <h4 className="text-sm font-medium text-blue-800 mb-3">🔧 Problemas Comuns:</h4>
+                <div className="space-y-3 text-sm text-blue-700">
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium">📋 Cartão vencido/bloqueado:</span>
+                    <span>Use o "Portal do Cliente" para atualizar seu método de pagamento</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium">💳 Fatura em aberto:</span>
+                    <span>Acesse o "Portal do Cliente" para visualizar e pagar pendências</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium">❌ Assinatura cancelada:</span>
+                    <span>Clique em "Renovar Assinatura" para reativar seu plano</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <span className="font-medium">🔄 Status incorreto:</span>
+                    <span>Use "Atualizar Status" após resolver problemas no Stripe</span>
+                  </div>
                 </div>
               </div>
               
-              <div className="mt-3 pt-3 border-t border-blue-200">
-                <p className="text-xs text-blue-600 font-medium">
+              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                <p className="text-sm text-yellow-800 font-medium">
                   ⏰ <strong>Importante:</strong> Você tem 5 dias para resolver problemas de pagamento antes do cancelamento automático.
                 </p>
               </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+
+              <div className="bg-green-50 border border-green-200 rounded-md p-4">
+                <h4 className="text-sm font-medium text-green-800 mb-2">📞 Contato Direto:</h4>
+                <p className="text-sm text-green-700">
+                  📧 suporte@jusgestao.com.br<br>
+                  🌐 Responda qualquer email automático que receber
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 };
 

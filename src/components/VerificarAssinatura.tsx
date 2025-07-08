@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 const VerificarAssinatura: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [accessGranted, setAccessGranted] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
   const { user } = useAuth();
   const location = useLocation();
   const { toast } = useToast();
@@ -19,7 +20,8 @@ const VerificarAssinatura: React.FC = () => {
     '/configuracoes', 
     '/admin', 
     '/pagamento', 
-    '/pagamento-sucesso'
+    '/pagamento-sucesso',
+    '/conta-cancelada'
   ];
 
   useEffect(() => {
@@ -56,14 +58,17 @@ const VerificarAssinatura: React.FC = () => {
             variant: "destructive" 
           });
           setAccessGranted(false);
+          setSubscriptionStatus('error');
         } else {
           console.log("Resposta da verificação:", funcResponse);
           
           if (funcResponse?.subscribed === true) {
             setAccessGranted(true);
+            setSubscriptionStatus('active');
           } else {
             console.log("Acesso negado - assinatura não ativa");
             setAccessGranted(false);
+            setSubscriptionStatus(funcResponse?.account_type || 'inactive');
           }
         }
       } catch (e) {
@@ -74,6 +79,7 @@ const VerificarAssinatura: React.FC = () => {
           variant: "destructive" 
         });
         setAccessGranted(false);
+        setSubscriptionStatus('error');
       } finally {
         setIsLoading(false);
       }
@@ -93,6 +99,21 @@ const VerificarAssinatura: React.FC = () => {
   if (accessGranted) {
     return <Outlet />;
   } else {
+    // Se a conta foi cancelada, redirecionar para a página específica
+    if (subscriptionStatus === 'none' || subscriptionStatus === 'inactive') {
+      return (
+        <Navigate 
+          to="/conta-cancelada" 
+          state={{ 
+            from: location, 
+            message: "Sua conta foi cancelada. Reative para continuar usando o sistema." 
+          }} 
+          replace 
+        />
+      );
+    }
+    
+    // Para outros casos, redirecionar para o perfil
     return (
       <Navigate 
         to="/perfil" 
