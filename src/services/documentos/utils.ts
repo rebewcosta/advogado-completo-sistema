@@ -1,3 +1,4 @@
+
 // Utilitários para o serviço de documentos
 
 // Constantes de armazenamento
