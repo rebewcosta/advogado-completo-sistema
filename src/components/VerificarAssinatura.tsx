@@ -18,7 +18,8 @@ const VerificarAssinatura: React.FC = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  const publicOrLowAccessRoutes = [
+  // CONTROLE RIGOROSO: Apenas estas rotas são permitidas sem assinatura
+  const publicRoutes = [
     '/dashboard', 
     '/perfil', 
     '/configuracoes', 
@@ -31,75 +32,103 @@ const VerificarAssinatura: React.FC = () => {
   useEffect(() => {
     const checkSubscriptionStatus = async () => {
       if (!user) {
+        console.log("❌ Usuário não autenticado - bloqueando acesso");
         setAccessGranted(false);
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
+      console.log(`🔍 Verificando acesso para rota: ${location.pathname}`);
 
-      // Verificar se é uma rota que não precisa de assinatura
-      const isPermittedWithoutSubscription = publicOrLowAccessRoutes.some(route =>
+      // Verificar se é uma rota pública permitida
+      const isPublicRoute = publicRoutes.some(route =>
         location.pathname.startsWith(route)
       );
 
-      if (isPermittedWithoutSubscription) {
+      if (isPublicRoute) {
+        console.log("✅ Rota pública - acesso permitido");
         setAccessGranted(true);
         setIsLoading(false);
         return;
       }
 
       try {
-        console.log("Verificando assinatura via edge function...");
+        console.log("🔄 Verificando status de assinatura via edge function...");
         
         const { data: funcResponse, error: funcError } = await supabase.functions.invoke('verificar-assinatura');
 
         if (funcError) {
-          console.error("Erro ao verificar assinatura:", funcError);
+          console.error("❌ Erro ao verificar assinatura:", funcError);
           toast({ 
-            title: "Erro", 
-            description: "Falha ao verificar status da sua conta.", 
+            title: "Erro de Verificação", 
+            description: "Não foi possível verificar sua assinatura. Acesso negado por segurança.", 
             variant: "destructive" 
           });
           setAccessGranted(false);
           setSubscriptionStatus('error');
         } else {
-          console.log("Resposta da verificação:", funcResponse);
+          console.log("📊 Resposta da verificação:", funcResponse);
           
-          if (funcResponse?.subscribed === true) {
+          // CONTROLE RIGOROSO: Verificar se tem acesso válido
+          const hasValidAccess = funcResponse?.subscribed === true;
+          const accountType = funcResponse?.account_type;
+          
+          if (hasValidAccess) {
+            console.log(`✅ Acesso concedido - Tipo: ${accountType}`);
             setAccessGranted(true);
-            setSubscriptionStatus(funcResponse.account_type || 'active');
+            setSubscriptionStatus(accountType || 'active');
             
-            // Definir informações do trial
-            if (funcResponse.account_type === 'trial') {
+            // Informações do trial
+            if (accountType === 'trial') {
+              const daysRemaining = funcResponse.trial_days_remaining || 0;
               setTrialInfo({
-                daysRemaining: funcResponse.trial_days_remaining,
+                daysRemaining,
                 isInTrial: true
               });
               
-              // Mostrar toast informativo sobre o trial
-              toast({
-                title: "Período de Teste Gratuito",
-                description: `Você tem ${funcResponse.trial_days_remaining} dias restantes do seu teste gratuito.`,
-                duration: 5000,
-              });
+              // Alertas por dias restantes
+              if (daysRemaining <= 1) {
+                toast({
+                  title: "⚠️ Trial Expirando Hoje!",
+                  description: "Seu período de teste expira hoje. Assine agora para continuar usando o sistema.",
+                  variant: "destructive",
+                  duration: 8000,
+                });
+              } else if (daysRemaining <= 3) {
+                toast({
+                  title: "⚠️ Trial Expirando Em Breve",
+                  description: `Restam apenas ${daysRemaining} dias do seu teste gratuito. Assine para continuar.`,
+                  variant: "destructive",
+                  duration: 6000,
+                });
+              }
             }
           } else {
-            console.log("Acesso negado - assinatura não ativa");
+            console.log("❌ ACESSO NEGADO - Sem assinatura válida");
             setAccessGranted(false);
-            setSubscriptionStatus(funcResponse?.account_type || 'inactive');
+            setSubscriptionStatus(accountType || 'inactive');
             setTrialInfo({
               daysRemaining: 0,
               isInTrial: false
             });
+
+            // Toast de aviso crítico
+            toast({ 
+              title: "🔒 Acesso Bloqueado", 
+              description: funcResponse?.message || "Você precisa de uma assinatura ativa para acessar esta funcionalidade.", 
+              variant: "destructive",
+              duration: 8000
+            });
           }
         }
       } catch (e) {
-        console.error("Erro de comunicação:", e);
+        console.error("❌ Erro crítico de comunicação:", e);
         toast({ 
-          title: "Erro de Comunicação", 
-          description: "Não foi possível verificar o status da sua conta.", 
-          variant: "destructive" 
+          title: "Erro Crítico", 
+          description: "Falha na comunicação com o servidor. Acesso negado por segurança.", 
+          variant: "destructive",
+          duration: 10000
         });
         setAccessGranted(false);
         setSubscriptionStatus('error');
@@ -113,8 +142,11 @@ const VerificarAssinatura: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Spinner size="lg" />
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="text-center">
+          <Spinner size="lg" />
+          <p className="mt-4 text-gray-600 font-medium">Verificando seus privilégios de acesso...</p>
+        </div>
       </div>
     );
   }
@@ -122,29 +154,56 @@ const VerificarAssinatura: React.FC = () => {
   if (accessGranted) {
     return <Outlet />;
   } else {
-    // Se a conta foi cancelada ou trial expirado, redirecionar para a página específica
+    // REDIRECIONAMENTO RIGOROSO baseado no status
+    const currentPath = location.pathname;
+    
+    // Se trial expirado ou sem assinatura
     if (subscriptionStatus === 'none' || subscriptionStatus === 'inactive') {
+      console.log(`🚫 Redirecionando de ${currentPath} para conta-cancelada - Status: ${subscriptionStatus}`);
+      
+      const message = trialInfo.daysRemaining === 0 ? 
+        "🔒 Seu período de teste de 7 dias expirou! Assine agora para continuar usando todas as funcionalidades do JusGestão." :
+        "🔒 Sua conta foi cancelada. Reative sua assinatura para continuar usando o sistema.";
+      
       return (
         <Navigate 
           to="/conta-cancelada" 
           state={{ 
             from: location, 
-            message: trialInfo.daysRemaining === 0 ? 
-              "Seu período de teste gratuito expirou. Assine para continuar usando o sistema." :
-              "Sua conta foi cancelada. Reative para continuar usando o sistema."
+            message,
+            reason: 'expired_trial'
           }} 
           replace 
         />
       );
     }
     
-    // Para outros casos, redirecionar para o perfil
+    // Para status de erro ou problemas de pagamento
+    if (subscriptionStatus === 'error' || subscriptionStatus === 'pending') {
+      console.log(`🚫 Redirecionando de ${currentPath} para perfil - Status: ${subscriptionStatus}`);
+      
+      return (
+        <Navigate 
+          to="/perfil" 
+          state={{ 
+            from: location, 
+            message: subscriptionStatus === 'error' ? 
+              "❌ Erro ao verificar sua assinatura. Verifique sua conta e tente novamente." :
+              "⚠️ Seu pagamento está pendente. Acesse o portal do cliente para resolver."
+          }} 
+          replace 
+        />
+      );
+    }
+    
+    // Fallback para qualquer outro caso
+    console.log(`🚫 Redirecionamento fallback de ${currentPath} para perfil`);
     return (
       <Navigate 
         to="/perfil" 
         state={{ 
           from: location, 
-          message: "Você precisa de uma assinatura ativa ou acesso especial para esta página." 
+          message: "🔒 Acesso restrito. Verifique o status da sua assinatura." 
         }} 
         replace 
       />
