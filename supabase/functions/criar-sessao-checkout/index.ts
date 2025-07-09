@@ -44,6 +44,12 @@ serve(async (req) => {
       );
     }
 
+    // Criar cliente Supabase com anon key para autenticação
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+    );
+
     // Verificar autenticação apenas para requisições reais
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
@@ -53,12 +59,6 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
       );
     }
-
-    // Criar cliente Supabase para autenticação
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
 
     const token = authHeader.replace("Bearer ", "");
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
@@ -80,7 +80,8 @@ serve(async (req) => {
     // Detectar ambiente baseado no dominio ou headers
     const isProduction = !dominio?.includes('localhost') && 
                         !dominio?.includes('lovable.app') && 
-                        !req.headers.get("origin")?.includes('localhost');
+                        !req.headers.get("origin")?.includes('localhost') &&
+                        !req.headers.get("origin")?.includes('lovableproject.com');
     
     const modo = isProduction ? 'production' : 'test';
     

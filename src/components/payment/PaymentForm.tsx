@@ -54,6 +54,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         throw new Error("Por favor, insira um endereço de email válido.");
       }
 
+      // Verificar se o usuário está logado
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Você precisa estar logado para fazer o pagamento. Por favor, faça login novamente.");
+      }
+
       const dominio = getDominio();
       console.log('Iniciando checkout com email:', email, 'clientReferenceId:', clientReferenceId, 'dominio:', dominio);
 
@@ -66,8 +72,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         clientReferenceId: clientReferenceId || email
       };
 
+      console.log('Dados do checkout:', checkoutData);
+      console.log('Token de autenticação:', session.access_token ? 'Presente' : 'Ausente');
+
       const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
-        body: checkoutData
+        body: checkoutData,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
 
       if (invokeError) {
@@ -89,7 +101,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       console.log('Sessão de checkout criada com sucesso:', data);
 
       const isProduction = !window.location.hostname.includes('localhost') && 
-                          !window.location.hostname.includes('lovable.app');
+                          !window.location.hostname.includes('lovable.app') &&
+                          !window.location.hostname.includes('lovableproject.com');
 
       toast({
         title: "Redirecionando para o pagamento",
