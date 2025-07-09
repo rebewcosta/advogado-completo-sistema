@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Navigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AdminPanelComplete from '@/components/admin/AdminPanelComplete';
 import MonitoramentoPagamentos from '@/components/admin/MonitoramentoPagamentos';
 
@@ -33,7 +35,25 @@ const AdminPage = () => {
           <MonitoramentoPagamentos />
         </TabsContent>
 
-        {/* ... keep existing code (other TabsContent) the same ... */}
+        <TabsContent value="criar-conta" className="space-y-6">
+          <AdminPanelComplete />
+        </TabsContent>
+
+        <TabsContent value="validacao" className="space-y-6">
+          <AdminPanelComplete />
+        </TabsContent>
+
+        <TabsContent value="seguranca" className="space-y-6">
+          <AdminPanelComplete />
+        </TabsContent>
+
+        <TabsContent value="sistema" className="space-y-6">
+          <AdminPanelComplete />
+        </TabsContent>
+
+        <TabsContent value="webhook" className="space-y-6">
+          <AdminPanelComplete />
+        </TabsContent>
       </Tabs>
     </div>
   );
