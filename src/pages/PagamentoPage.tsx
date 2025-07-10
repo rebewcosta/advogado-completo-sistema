@@ -20,7 +20,8 @@ const PagamentoPage = () => {
   
   // Detectar se estamos em produção baseado no domínio
   const isProduction = !window.location.hostname.includes('localhost') && 
-                      !window.location.hostname.includes('lovable.app');
+                      !window.location.hostname.includes('lovable.app') &&
+                      !window.location.hostname.includes('lovableproject.com');
 
   // Dados de registro vindos da página de cadastro
   const registrationData = location.state?.registrationData;
@@ -43,13 +44,13 @@ const PagamentoPage = () => {
         setStep(2); // Mostrar tela de sucesso
         toast({
           title: "Pagamento Confirmado!",
-          description: "Sua assinatura de R$ 37,00/mês foi ativada. Verifique seu email para confirmar sua conta.",
+          description: "Sua assinatura de R$ 37,00/mês foi ativada com sucesso!",
         });
       } else {
         console.warn("Sucesso no pagamento, mas sem dados de registro ou ID de cliente de referência.");
         toast({
           title: "Pagamento Concluído",
-          description: "Seu pagamento de R$ 37,00/mês foi processado. Verifique seu email para ativar sua conta.",
+          description: "Seu pagamento de R$ 37,00/mês foi processado. Você receberá um email de confirmação em breve.",
         });
         setStep(2);
       }
@@ -93,8 +94,8 @@ const PagamentoPage = () => {
       setStep(2); // Mostrar tela de sucesso do pagamento
       
       toast({
-        title: "Cadastro Realizado!",
-        description: "Seu pagamento foi confirmado. Verifique seu email para ativar sua conta antes de fazer login.",
+        title: "Cadastro Realizado com Sucesso!",
+        description: "Seu pagamento foi confirmado e sua conta foi criada! Verifique seu email para ativá-la antes de fazer login.",
         duration: 8000,
       });
       
@@ -140,7 +141,7 @@ const PagamentoPage = () => {
               </h2>
               <p className="mt-2 text-gray-600">
                 {registrationData 
-                  ? "Complete seu pagamento para criar e ativar sua conta."
+                  ? "Complete seu pagamento para criar e ativar sua conta com 7 dias de teste grátis."
                   : "Complete seu pagamento para ativar sua assinatura."
                 }
               </p>
@@ -151,6 +152,11 @@ const PagamentoPage = () => {
                 <p className="text-xs text-blue-600 mt-1">
                   {isProduction ? "Ambiente de Produção - Pagamento Real" : "Ambiente de Teste"}
                 </p>
+                {registrationData && (
+                  <p className="text-xs text-green-600 mt-1">
+                    🎁 <strong>Inclui 7 dias de teste grátis!</strong>
+                  </p>
+                )}
               </div>
             </div>
             
@@ -167,6 +173,11 @@ const PagamentoPage = () => {
             
             <div className="mt-6 text-center text-sm text-gray-500">
               <p>Seu pagamento é seguro e processado pelo Stripe.</p>
+              {registrationData && (
+                <p className="mt-1 font-medium text-green-600">
+                  ✅ Após o pagamento, você terá 7 dias de teste grátis para explorar todas as funcionalidades.
+                </p>
+              )}
               <p className="mt-1 font-medium text-red-600">
                 ⚠️ Após o pagamento, você receberá um email de confirmação. 
                 Confirme seu email antes de tentar fazer login.

@@ -44,36 +44,6 @@ serve(async (req) => {
       );
     }
 
-    // Criar cliente Supabase com anon key para autenticação
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? ""
-    );
-
-    // Verificar autenticação apenas para requisições reais
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      console.log("❌ Header de autorização não fornecido");
-      return new Response(
-        JSON.stringify({ error: "Header de autorização necessário" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    
-    if (userError || !userData.user?.email) {
-      console.log("❌ Erro de autenticação:", userError?.message);
-      return new Response(
-        JSON.stringify({ error: "Usuário não autenticado" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 401 }
-      );
-    }
-
-    const user = userData.user;
-    console.log(`✅ Usuário autenticado: ${user.email}`);
-
     // Obter os dados do corpo da solicitação
     const { nomePlano, valor, emailCliente, dominio } = requestData;
     
@@ -96,6 +66,33 @@ serve(async (req) => {
 
     // Log do modo de operação
     console.log(`🔄 Processando checkout - Email: ${emailCliente}, Plano: ${nomePlano}, Valor: ${valor}, Modo: ${modo}`);
+
+    // Verificar autenticação opcional (para usuários já logados)
+    let user = null;
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader) {
+      console.log("🔄 Token de autenticação detectado, verificando usuário...");
+      try {
+        const supabase = createClient(
+          Deno.env.get("SUPABASE_URL") ?? "",
+          Deno.env.get("SUPABASE_ANON_KEY") ?? ""
+        );
+
+        const token = authHeader.replace("Bearer ", "");
+        const { data: userData, error: userError } = await supabase.auth.getUser(token);
+        
+        if (!userError && userData.user?.email) {
+          user = userData.user;
+          console.log(`✅ Usuário autenticado detectado: ${user.email}`);
+        } else {
+          console.log("⚠️ Token inválido ou usuário não encontrado, continuando como novo usuário");
+        }
+      } catch (e) {
+        console.log("⚠️ Erro ao verificar token, continuando como novo usuário:", e);
+      }
+    } else {
+      console.log("📝 Nenhum token de autenticação - processando como novo usuário");
+    }
     
     // Obter a chave do Stripe do ambiente
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
@@ -149,7 +146,8 @@ serve(async (req) => {
         email_cliente: emailCliente,
         plano: nomePlano,
         valor: valorCorreto.toString(),
-        user_id: user.id,
+        user_id: user?.id || 'novo_usuario',
+        is_new_user: user ? 'false' : 'true'
       },
     });
 
