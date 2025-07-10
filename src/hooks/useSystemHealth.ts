@@ -27,25 +27,43 @@ export const useSystemHealth = () => {
     setIsLoading(true);
     
     try {
+      console.log('🔍 Iniciando verificação de saúde do sistema...');
+      
       const { data, error } = await supabase.functions.invoke('system-health');
       
       if (error) {
-        console.error('Erro no health check:', error);
+        console.error('❌ Erro na chamada da função:', error);
         setHealth({
           status: 'error',
           timestamp: new Date().toISOString(),
           checks: {
-            database: { status: 'error', error: 'Não foi possível verificar' },
-            dashboard_function: { status: 'error', error: 'Não foi possível verificar' },
-            cron_job: { status: 'error', error: 'Não foi possível verificar' }
+            database: { status: 'error', error: 'Erro de comunicação com servidor' },
+            dashboard_function: { status: 'error', error: 'Erro de comunicação com servidor' },
+            cron_job: { status: 'error', error: 'Erro de comunicação com servidor' }
           }
         });
         return;
       }
 
+      if (!data) {
+        console.error('❌ Nenhuma resposta recebida');
+        setHealth({
+          status: 'error',
+          timestamp: new Date().toISOString(),
+          checks: {
+            database: { status: 'error', error: 'Servidor não respondeu' },
+            dashboard_function: { status: 'error', error: 'Servidor não respondeu' },
+            cron_job: { status: 'error', error: 'Servidor não respondeu' }
+          }
+        });
+        return;
+      }
+
+      console.log('✅ Dados de saúde recebidos:', data);
       setHealth(data as SystemHealth);
+      
     } catch (error) {
-      console.error('Erro no health check:', error);
+      console.error('❌ Erro na verificação de saúde:', error);
       setHealth({
         status: 'error',
         timestamp: new Date().toISOString(),
