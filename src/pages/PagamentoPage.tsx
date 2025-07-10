@@ -43,14 +43,16 @@ const PagamentoPage = () => {
         console.log("Pagamento bem-sucedido para usuário existente (ID):", clientReferenceId);
         setStep(2); // Mostrar tela de sucesso
         toast({
-          title: "Pagamento Confirmado!",
-          description: "Sua assinatura de R$ 37,00/mês foi ativada com sucesso!",
+          title: "Assinatura Ativada!",
+          description: "Sua assinatura foi ativada com 7 dias de teste gratuito! Você só será cobrado após o período de teste.",
+          duration: 8000,
         });
       } else {
         console.warn("Sucesso no pagamento, mas sem dados de registro ou ID de cliente de referência.");
         toast({
-          title: "Pagamento Concluído",
-          description: "Seu pagamento de R$ 37,00/mês foi processado. Você receberá um email de confirmação em breve.",
+          title: "Assinatura Ativada",
+          description: "Sua assinatura foi ativada com 7 dias de teste gratuito! Você receberá um email de confirmação em breve.",
+          duration: 8000,
         });
         setStep(2);
       }
@@ -58,7 +60,7 @@ const PagamentoPage = () => {
     if (params.get('canceled') === 'true') {
       toast({
         title: "Pagamento cancelado",
-        description: "Você cancelou o processo de pagamento.",
+        description: "Você cancelou o processo de assinatura.",
         variant: "destructive"
       });
       // Se o usuário cancelou e estava vindo do cadastro, envia de volta com os dados preenchidos
@@ -78,7 +80,7 @@ const PagamentoPage = () => {
 
     setIsSubmittingUser(true);
     try {
-      console.log("Finalizando cadastro após pagamento para:", registrationData.email);
+      console.log("Finalizando cadastro após ativação da assinatura para:", registrationData.email);
       
       // IMPORTANTE: signUp não deve logar o usuário automaticamente
       // O usuário precisa confirmar o email primeiro
@@ -94,16 +96,16 @@ const PagamentoPage = () => {
       setStep(2); // Mostrar tela de sucesso do pagamento
       
       toast({
-        title: "Cadastro Realizado com Sucesso!",
-        description: "Seu pagamento foi confirmado e sua conta foi criada! Verifique seu email para ativá-la antes de fazer login.",
-        duration: 8000,
+        title: "🎉 Cadastro e Assinatura Realizados!",
+        description: "Sua assinatura foi ativada com 7 dias de teste gratuito! Verifique seu email para ativar sua conta antes de fazer login. Você só será cobrado após o período de teste.",
+        duration: 12000,
       });
       
     } catch (error) {
-      console.error("Erro ao criar conta após pagamento:", error);
+      console.error("Erro ao criar conta após ativação da assinatura:", error);
       toast({
         title: "Erro ao Finalizar Cadastro",
-        description: "Houve um problema ao criar sua conta após o pagamento. Seu pagamento foi processado. Por favor, contate o suporte.",
+        description: "Houve um problema ao criar sua conta após a ativação da assinatura. Sua assinatura foi processada. Por favor, contate o suporte.",
         variant: "destructive",
         duration: 10000,
       });
@@ -121,7 +123,7 @@ const PagamentoPage = () => {
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-lawyer-primary"></div>
                </div>
                <p className="text-lg text-gray-700">Finalizando seu cadastro, aguarde...</p>
-               <p className="text-sm text-gray-500 mt-2">Seu pagamento foi confirmado. Estamos criando sua conta.</p>
+               <p className="text-sm text-gray-500 mt-2">Sua assinatura foi ativada com 7 dias de teste gratuito.</p>
            </div>
         )}
         {!isSubmittingUser && step === 1 && (
@@ -137,26 +139,24 @@ const PagamentoPage = () => {
             
             <div className="text-center mb-8">
               <h2 className="text-3xl font-extrabold text-gray-900">
-                Pagamento da Assinatura
+                Ativar Assinatura
               </h2>
               <p className="mt-2 text-gray-600">
                 {registrationData 
-                  ? "Complete seu pagamento para criar e ativar sua conta com 7 dias de teste grátis."
-                  : "Complete seu pagamento para ativar sua assinatura."
+                  ? "Ative sua assinatura e comece com 7 dias de teste grátis!"
+                  : "Ative sua assinatura e comece com 7 dias de teste grátis!"
                 }
               </p>
-              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-medium text-blue-800">
-                  💰 Valor: <strong>R$ 37,00 por mês</strong>
+              <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-sm font-medium text-green-800">
+                  🎁 <strong>7 DIAS DE TESTE GRATUITO!</strong>
                 </p>
-                <p className="text-xs text-blue-600 mt-1">
-                  {isProduction ? "Ambiente de Produção - Pagamento Real" : "Ambiente de Teste"}
+                <p className="text-xs text-green-700 mt-1">
+                  Você só será cobrado R$ 37,00/mês após o período de teste de 7 dias.
                 </p>
-                {registrationData && (
-                  <p className="text-xs text-green-600 mt-1">
-                    🎁 <strong>Inclui 7 dias de teste grátis!</strong>
-                  </p>
-                )}
+                <p className="text-xs text-green-600 mt-1">
+                  {isProduction ? "Ambiente de Produção - Cobrança Real após teste" : "Ambiente de Teste"}
+                </p>
               </div>
             </div>
             
@@ -168,20 +168,20 @@ const PagamentoPage = () => {
               onProcessingChange={setPaymentFormProcessing}
               isTestEnvironment={!isProduction}
               initialEmail={registrationData?.email || user?.email}
-              clientReferenceId={user ? user.id : registrationData?.email}
+              clientReferenceId={user ? user.id : (registrationData?.email || clientReferenceId)}
             />
             
             <div className="mt-6 text-center text-sm text-gray-500">
-              <p>Seu pagamento é seguro e processado pelo Stripe.</p>
+              <p className="font-semibold text-green-600 mb-2">
+                ✅ <strong>Sem cobrança pelos primeiros 7 dias!</strong>
+              </p>
+              <p>Após o período de teste, você será cobrado R$ 37,00/mês via Stripe.</p>
+              <p className="mt-1">Você pode cancelar a qualquer momento durante o teste sem ser cobrado.</p>
               {registrationData && (
-                <p className="mt-1 font-medium text-green-600">
-                  ✅ Após o pagamento, você terá 7 dias de teste grátis para explorar todas as funcionalidades.
+                <p className="mt-2 font-medium text-blue-600">
+                  ✉️ Após ativar a assinatura, confirme seu email para acessar o sistema.
                 </p>
               )}
-              <p className="mt-1 font-medium text-red-600">
-                ⚠️ Após o pagamento, você receberá um email de confirmação. 
-                Confirme seu email antes de tentar fazer login.
-              </p>
             </div>
           </div>
         )}

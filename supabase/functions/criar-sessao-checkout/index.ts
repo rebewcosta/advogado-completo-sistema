@@ -45,7 +45,7 @@ serve(async (req) => {
     }
 
     // Obter os dados do corpo da solicitação
-    const { nomePlano, valor, emailCliente, dominio } = requestData;
+    const { nomePlano, valor, emailCliente, dominio, clientReferenceId } = requestData;
     
     // Detectar ambiente baseado no dominio ou headers
     const isProduction = !dominio?.includes('localhost') && 
@@ -129,8 +129,8 @@ serve(async (req) => {
     
     console.log(`💰 Usando Price ID: ${priceId} (modo: ${modo})`);
     
-    // Criar a sessão de checkout usando o Price ID configurado
-    const session = await stripe.checkout.sessions.create({
+    // **CORREÇÃO CRÍTICA: Configurar 7 dias de teste gratuito**
+    const sessionConfig = {
       payment_method_types: ["card"],
       customer_email: emailCliente,
       line_items: [
@@ -142,16 +142,37 @@ serve(async (req) => {
       mode: "subscription",
       success_url: successUrl,
       cancel_url: cancelUrl,
+      // **ADICIONADO: Configuração do período de teste de 7 dias**
+      subscription_data: {
+        trial_period_days: 7, // 7 dias de teste gratuito
+        metadata: {
+          email_cliente: emailCliente,
+          plano: nomePlano,
+          valor: valorCorreto.toString(),
+          user_id: user?.id || 'novo_usuario',
+          is_new_user: user ? 'false' : 'true',
+          client_reference_id: clientReferenceId || emailCliente
+        }
+      },
       metadata: {
         email_cliente: emailCliente,
         plano: nomePlano,
         valor: valorCorreto.toString(),
         user_id: user?.id || 'novo_usuario',
-        is_new_user: user ? 'false' : 'true'
+        is_new_user: user ? 'false' : 'true',
+        client_reference_id: clientReferenceId || emailCliente
       },
-    });
+      // **ADICIONADO: Configurar cobrança apenas após o trial**
+      billing_address_collection: 'required',
+      // **IMPORTANTE: Permitir códigos promocionais se necessário**
+      allow_promotion_codes: true,
+    };
 
-    console.log(`✅ Sessão criada com sucesso: ${session.id}`);
+    // Criar a sessão de checkout com período de teste
+    const session = await stripe.checkout.sessions.create(sessionConfig);
+
+    console.log(`✅ Sessão criada com sucesso: ${session.id} - COM 7 DIAS DE TESTE GRATUITO`);
+    console.log(`🎁 Trial configurado: 7 dias gratuitos antes da primeira cobrança`);
 
     // Retornar o ID da sessão e URL
     return new Response(
@@ -160,7 +181,9 @@ serve(async (req) => {
         url: session.url,
         modo: modo,
         valor: valorCorreto,
-        priceId: priceId
+        priceId: priceId,
+        trialDays: 7,
+        message: "Sessão criada com 7 dias de teste gratuito"
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
