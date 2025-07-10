@@ -129,7 +129,7 @@ serve(async (req) => {
     
     console.log(`💰 Usando Price ID: ${priceId} (modo: ${modo})`);
     
-    // **CORREÇÃO CRÍTICA: Configurar 7 dias de teste gratuito**
+    // **CONFIGURAÇÃO CRÍTICA: 7 dias de teste gratuito OBRIGATÓRIO**
     const sessionConfig = {
       payment_method_types: ["card"],
       customer_email: emailCliente,
@@ -142,16 +142,23 @@ serve(async (req) => {
       mode: "subscription",
       success_url: successUrl,
       cancel_url: cancelUrl,
-      // **ADICIONADO: Configuração do período de teste de 7 dias**
+      // **CRÍTICO: Configuração do período de teste de 7 dias**
       subscription_data: {
-        trial_period_days: 7, // 7 dias de teste gratuito
+        trial_period_days: 7, // 7 dias de teste gratuito OBRIGATÓRIO
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: 'cancel' // Cancela se não tiver cartão após trial
+          }
+        },
         metadata: {
           email_cliente: emailCliente,
           plano: nomePlano,
           valor: valorCorreto.toString(),
           user_id: user?.id || 'novo_usuario',
           is_new_user: user ? 'false' : 'true',
-          client_reference_id: clientReferenceId || emailCliente
+          client_reference_id: clientReferenceId || emailCliente,
+          trial_days: '7',
+          trial_start: new Date().toISOString()
         }
       },
       metadata: {
@@ -160,19 +167,28 @@ serve(async (req) => {
         valor: valorCorreto.toString(),
         user_id: user?.id || 'novo_usuario',
         is_new_user: user ? 'false' : 'true',
-        client_reference_id: clientReferenceId || emailCliente
+        client_reference_id: clientReferenceId || emailCliente,
+        trial_days: '7',
+        trial_start: new Date().toISOString()
       },
-      // **ADICIONADO: Configurar cobrança apenas após o trial**
+      // **IMPORTANTE: Coleta de endereço obrigatória**
       billing_address_collection: 'required',
-      // **IMPORTANTE: Permitir códigos promocionais se necessário**
+      // **IMPORTANTE: Permitir códigos promocionais**
       allow_promotion_codes: true,
+      // **CRÍTICO: Configurar coleta de forma de pagamento durante trial**
+      payment_method_collection: 'if_required',
+      // **IMPORTANTE: Termos de serviço**
+      consent_collection: {
+        terms_of_service: 'required'
+      }
     };
 
-    // Criar a sessão de checkout com período de teste
+    // Criar a sessão de checkout com período de teste OBRIGATÓRIO
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
-    console.log(`✅ Sessão criada com sucesso: ${session.id} - COM 7 DIAS DE TESTE GRATUITO`);
-    console.log(`🎁 Trial configurado: 7 dias gratuitos antes da primeira cobrança`);
+    console.log(`✅ Sessão criada com sucesso: ${session.id} - COM 7 DIAS DE TESTE GRATUITO OBRIGATÓRIO`);
+    console.log(`🎁 Trial configurado: 7 dias gratuitos GARANTIDOS antes da primeira cobrança`);
+    console.log(`💳 Primeira cobrança apenas após: ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}`);
 
     // Retornar o ID da sessão e URL
     return new Response(
@@ -183,7 +199,8 @@ serve(async (req) => {
         valor: valorCorreto,
         priceId: priceId,
         trialDays: 7,
-        message: "Sessão criada com 7 dias de teste gratuito"
+        trialEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        message: "Sessão criada com 7 dias de teste gratuito GARANTIDO - SEM cobrança nos primeiros 7 dias"
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );

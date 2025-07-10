@@ -1,5 +1,4 @@
 
-// src/components/StatusAssinatura.tsx
 import React from 'react';
 import { Check, Clock, AlertTriangle, ExternalLink, Gift, Crown, ShoppingCart, Loader2, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -62,12 +61,29 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
     description = "Acesso de cortesia especial concedido. Aproveite!";
   } else if (accountType === 'trial') {
     IconComponent = Timer;
-    titleColor = "text-blue-700";
-    bgColor = "bg-blue-50 border-blue-200";
-    iconBgColor = "bg-blue-100";
-    iconColor = "text-blue-600";
-    planDisplay = "Período de Teste Gratuito";
-    description = `Você está no período de teste gratuito! ${trialDaysRemaining || 0} dias restantes para explorar todas as funcionalidades.`;
+    titleColor = "text-green-700";
+    bgColor = "bg-green-50 border-green-200";
+    iconBgColor = "bg-green-100";
+    iconColor = "text-green-600";
+    planDisplay = "🎁 Período de Teste GRATUITO";
+    
+    if (trialDaysRemaining !== null) {
+      if (trialDaysRemaining > 1) {
+        description = `🎉 Você está no período de teste GRATUITO! ${trialDaysRemaining} dias restantes para explorar todas as funcionalidades sem pagar nada.`;
+      } else if (trialDaysRemaining === 1) {
+        description = `⏰ ÚLTIMO DIA do seu teste gratuito! Assine hoje para continuar usando o sistema sem interrupção.`;
+        titleColor = "text-orange-700";
+        bgColor = "bg-orange-50 border-orange-200";
+        iconBgColor = "bg-orange-100";
+        iconColor = "text-orange-600";
+      } else {
+        description = `⏰ Seu teste gratuito expira hoje! Assine agora para continuar usando o sistema.`;
+        titleColor = "text-red-700";
+        bgColor = "bg-red-50 border-red-200";
+        iconBgColor = "bg-red-100";
+        iconColor = "text-red-600";
+      }
+    }
   } else if (status === 'ativa' && accountType === 'premium') {
     IconComponent = Check;
     titleColor = "text-green-700";
@@ -82,7 +98,7 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
     bgColor = "bg-yellow-50 border-yellow-200";
     iconBgColor = "bg-yellow-100";
     iconColor = "text-yellow-600";
-    description = customMessage || "Seu pagamento está sendo processado ou há uma pendência. Verifique o portal do cliente.";
+    description = customMessage || "Seu pagamento está sendo processado ou há uma pendência. Acesse o portal do cliente para resolver.";
   } else {
     // Inativa ou 'none'
     description = customMessage || "Você não possui uma assinatura ativa no momento.";
@@ -98,7 +114,7 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
           <h3 className={cn("text-md sm:text-lg font-semibold", titleColor)}>
             { accountType === 'admin' ? 'Acesso Administrador' :
               accountType === 'amigo' ? 'Assinatura Amiga' :
-              accountType === 'trial' ? 'Teste Gratuito' :
+              accountType === 'trial' ? '🎁 Teste Gratuito Ativo' :
               status === 'ativa' ? 'Assinatura Ativa' :
               status === 'pendente' ? 'Assinatura Pendente' :
               'Assinatura Inativa'
@@ -115,15 +131,24 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
                 <span className="font-medium text-gray-700">Plano:</span> {planDisplay}
               </p>
               {accountType === 'trial' && trialDaysRemaining !== null && (
-                <p>
-                  <span className="font-medium text-gray-700">Dias restantes:</span> 
-                  <span className={cn("ml-1 font-semibold", 
-                    trialDaysRemaining <= 2 ? "text-red-600" : 
-                    trialDaysRemaining <= 5 ? "text-yellow-600" : "text-blue-600"
-                  )}>
-                    {trialDaysRemaining} dias
-                  </span>
-                </p>
+                <div className="space-y-1">
+                  <p>
+                    <span className="font-medium text-gray-700">Dias restantes do teste:</span> 
+                    <span className={cn("ml-1 font-bold", 
+                      trialDaysRemaining <= 1 ? "text-red-600" : 
+                      trialDaysRemaining <= 2 ? "text-orange-600" : 
+                      trialDaysRemaining <= 5 ? "text-yellow-600" : "text-green-600"
+                    )}>
+                      {trialDaysRemaining} dias
+                    </span>
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    💳 Primeira cobrança: R$ 37,00 após o período gratuito
+                  </p>
+                  <p className="text-xs font-medium text-blue-600">
+                    🚫 Cancele a qualquer momento durante o teste sem ser cobrado
+                  </p>
+                </div>
               )}
               {dataProximoFaturamento && accountType === 'premium' && (
                 <p>
@@ -137,7 +162,7 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
           {!hideActionButtons && (
             <>
               {/* Botão de Gerenciar Assinatura */}
-              {onAbrirPortalCliente && !['admin', 'amigo', 'trial'].includes(accountType || '') && (
+              {onAbrirPortalCliente && !['admin', 'amigo'].includes(accountType || '') && (
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -154,20 +179,27 @@ const StatusAssinatura: React.FC<StatusAssinaturaProps> = ({
                 </Button>
               )}
 
-              {/* Botão para Assinar - aparece para trial e contas inativas */}
-              {(status === 'inativa' && accountType === 'none') || accountType === 'trial' && (
+              {/* Botão para Assinar - aparece para trial próximo do fim e contas inativas */}
+              {((status === 'inativa' && accountType === 'none') || (accountType === 'trial' && (trialDaysRemaining || 0) <= 3)) && (
                  <Button 
                     onClick={handleAssinar}
                     className={cn(
                       "mt-4 text-white text-xs sm:text-sm",
                       accountType === 'trial' 
-                        ? "bg-blue-600 hover:bg-blue-700" 
+                        ? (trialDaysRemaining || 0) <= 1 
+                          ? "bg-red-600 hover:bg-red-700 animate-pulse" 
+                          : "bg-orange-600 hover:bg-orange-700"
                         : "bg-lawyer-primary hover:bg-lawyer-primary/90"
                     )}
                     size="sm"
                   >
                     <ShoppingCart className="mr-1.5 h-4 w-4" />
-                    {accountType === 'trial' ? 'Assinar Agora' : 'Assinar Agora'}
+                    {accountType === 'trial' 
+                      ? (trialDaysRemaining || 0) <= 1 
+                        ? '🚨 Assinar AGORA - Último Dia!' 
+                        : '⏰ Assinar Antes do Fim'
+                      : 'Assinar Agora'
+                    }
                   </Button>
               )}
             </>

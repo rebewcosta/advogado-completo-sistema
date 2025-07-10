@@ -59,35 +59,39 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       const { data: { session } } = await supabase.auth.getSession();
       
       const dominio = getDominio();
-      console.log('Iniciando ativação de assinatura com email:', email, 'clientReferenceId:', clientReferenceId, 'dominio:', dominio);
+      console.log('🚀 Iniciando processo de pagamento com 7 dias de teste GRATUITO');
+      console.log('📧 Email:', email);
+      console.log('🆔 Client Reference ID:', clientReferenceId);
+      console.log('🌐 Dominio:', dominio);
 
-      // Usar sempre o valor correto de R$ 37,00 com 7 dias de teste gratuito
+      // **CRÍTICO: Configuração com 7 dias de teste gratuito OBRIGATÓRIO**
       const checkoutData = {
-        nomePlano: 'JusGestão - Teste Gratuito + Assinatura Mensal',
+        nomePlano: 'JusGestão - 7 DIAS GRATUITOS + R$ 37/mês',
         valor: 3700, // R$ 37,00 em centavos - será cobrado APENAS após 7 dias
         emailCliente: email,
         dominio,
         clientReferenceId: clientReferenceId || email
       };
 
-      console.log('Dados do checkout com teste gratuito:', checkoutData);
+      console.log('💎 Dados do checkout com 7 dias GRATUITOS:', checkoutData);
 
       // Se tem sessão ativa, incluir token de autenticação
       const headers: Record<string, string> = {};
       if (session?.access_token) {
         headers.Authorization = `Bearer ${session.access_token}`;
-        console.log('Token de autenticação incluído');
+        console.log('🔐 Token de autenticação incluído');
       } else {
-        console.log('Processando como novo usuário sem sessão ativa');
+        console.log('👤 Processando como novo usuário sem sessão ativa');
       }
 
+      console.log('📡 Chamando função de checkout...');
       const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
         body: checkoutData,
         headers: Object.keys(headers).length > 0 ? headers : undefined,
       });
 
       if (invokeError) {
-        console.error('Erro ao criar sessão de checkout (invokeError):', invokeError);
+        console.error('❌ Erro ao criar sessão de checkout (invokeError):', invokeError);
         let detailedErrorMessage = invokeError.message;
         if (invokeError.context && typeof invokeError.context === 'object' && 'message' in invokeError.context) {
             detailedErrorMessage = (invokeError.context as any).message || detailedErrorMessage;
@@ -98,11 +102,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       }
 
       if (!data || !data.url) {
-        console.error('Resposta inválida da API de checkout:', data);
+        console.error('❌ Resposta inválida da API de checkout:', data);
         throw new Error('Resposta inválida da API de checkout: ' + JSON.stringify(data));
       }
 
-      console.log('Sessão de checkout criada com sucesso (com 7 dias de teste):', data);
+      console.log('✅ Sessão de checkout criada com SUCESSO:', data);
+      console.log('🎁 CONFIRMADO: 7 dias de teste gratuito configurados!');
+      console.log('📅 Data de fim do trial:', new Date(data.trialEnd).toLocaleDateString('pt-BR'));
 
       const isProduction = !window.location.hostname.includes('localhost') && 
                           !window.location.hostname.includes('lovable.app') &&
@@ -110,15 +116,18 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       toast({
         title: "🎉 Redirecionando para ativação da assinatura",
-        description: `Você será redirecionado para o Stripe para ativar sua assinatura com 7 DIAS DE TESTE GRATUITO! ${isProduction ? '(PRODUÇÃO)' : '(TESTE)'}`,
-        duration: 8000,
+        description: `Você será redirecionado para o Stripe para ativar sua assinatura com 7 DIAS GRATUITOS! Primeira cobrança apenas em ${new Date(data.trialEnd).toLocaleDateString('pt-BR')}. ${isProduction ? '(PRODUÇÃO)' : '(TESTE)'}`,
+        duration: 10000,
       });
 
-      // Redirecionar para o Stripe Checkout
-      window.location.href = data.url;
+      // **CRÍTICO: Aguardar 2 segundos para o usuário ler a mensagem**
+      setTimeout(() => {
+        console.log('🔗 Redirecionando para Stripe Checkout:', data.url);
+        window.location.href = data.url;
+      }, 2000);
 
     } catch (error) {
-      console.error('Erro na ativação da assinatura:', error);
+      console.error('❌ Erro na ativação da assinatura:', error);
       let errorMessage = "Erro ao processar ativação da assinatura";
       if (error instanceof Error) errorMessage = error.message;
       else if (typeof error === 'object' && error !== null && 'message' in error) errorMessage = String((error as any).message);
@@ -126,10 +135,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       
       setErrorDetails(errorMessage);
       toast({
-        title: "Erro na ativação da assinatura",
+        title: "❌ Erro na ativação da assinatura",
         description: `Houve um problema ao processar sua assinatura. Detalhes: ${errorMessage}`,
         variant: "destructive",
-        duration: 7000,
+        duration: 10000,
       });
       setIsProcessing(false);
       onProcessingChange(false);
@@ -139,6 +148,21 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   return (
     <form onSubmit={handleSubmitPayment}>
       <div className="space-y-6">
+        {/* Banner de destaque para os 7 dias gratuitos */}
+        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-green-800 mb-2">
+              🎁 7 DIAS COMPLETAMENTE GRATUITOS!
+            </h3>
+            <p className="text-sm text-green-700 mb-1">
+              <strong>✅ SEM cobrança pelos primeiros 7 dias</strong>
+            </p>
+            <p className="text-xs text-green-600">
+              Após o período gratuito: R$ 37,00/mês • Cancele quando quiser
+            </p>
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label htmlFor="email_assinatura" className="text-sm font-medium text-gray-700">
             Email para Assinatura
@@ -174,13 +198,21 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
             ) : (
               <span className="flex items-center justify-center">
                 <CreditCard className="mr-2 h-5 w-5" />
-                🎁 Começar Teste Gratuito de 7 Dias
+                🎁 COMEÇAR 7 DIAS GRATUITOS
               </span>
             )}
           </Button>
-          <p className="text-center text-xs text-gray-500 mt-2">
-            <strong>Sem cobrança pelos primeiros 7 dias!</strong> Após o teste, R$ 37,00/mês.
-          </p>
+          <div className="text-center mt-3 space-y-1">
+            <p className="text-sm font-bold text-green-700">
+              ✅ <strong>TOTALMENTE GRATUITO pelos primeiros 7 dias!</strong>
+            </p>
+            <p className="text-xs text-gray-600">
+              Após o período gratuito: R$ 37,00/mês • Cancele a qualquer momento
+            </p>
+            <p className="text-xs text-blue-600 font-medium">
+              💳 Cartão será cadastrado mas não será cobrado nos primeiros 7 dias
+            </p>
+          </div>
         </div>
 
         {errorDetails && (
