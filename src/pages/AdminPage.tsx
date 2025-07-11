@@ -86,9 +86,9 @@ const AdminPage = () => {
             <span className="text-xs">Segurança</span>
           </TabsTrigger>
           
-          <TabsTrigger value="webhook" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-teal-500 data-[state=active]:text-white">
-            <Webhook className="h-5 w-5" />
-            <span className="text-xs">Webhook</span>
+          <TabsTrigger value="avisos" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-yellow-500 data-[state=active]:text-white">
+            <Bell className="h-5 w-5" />
+            <span className="text-xs">Avisos</span>
           </TabsTrigger>
         </TabsList>
 
@@ -212,23 +212,8 @@ const AdminPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="webhook" className="mt-6">
+        <TabsContent value="avisos" className="mt-6">
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Webhook className="h-6 w-6 text-teal-500" />
-                  Configuração do Webhook Stripe
-                </CardTitle>
-                <CardDescription>
-                  Configuração e monitoramento dos webhooks do Stripe
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <StripeWebhookConfig />
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -241,6 +226,21 @@ const AdminPage = () => {
               </CardHeader>
               <CardContent>
                 <AvisosTab />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Webhook className="h-6 w-6 text-teal-500" />
+                  Configuração do Webhook Stripe
+                </CardTitle>
+                <CardDescription>
+                  Configuração e monitoramento dos webhooks do Stripe
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <StripeWebhookConfig />
               </CardContent>
             </Card>
           </div>
