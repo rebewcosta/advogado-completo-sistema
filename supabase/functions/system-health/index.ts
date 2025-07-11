@@ -20,18 +20,16 @@ serve(async (req) => {
   }
 
   try {
-    logStep("🔍 Iniciando verificação de saúde do sistema");
+    logStep("🔍 Iniciando verificação REAL de saúde do sistema");
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const startTime = Date.now();
-    
-    // 1. Testar conexão com banco de dados
-    logStep("🔍 Testando conexão com banco de dados");
-    let dbStatus = 'ok';
+    // 1. Testar conexão com banco de dados REAL
+    logStep("🔍 Testando conexão REAL com banco de dados");
+    let dbStatus = 'error';
     let dbLatency = 0;
     let dbError = null;
     
@@ -47,20 +45,20 @@ serve(async (req) => {
       if (dbTestError) {
         dbStatus = 'error';
         dbError = dbTestError.message;
-        logStep("❌ Erro no teste de banco de dados", dbTestError);
+        logStep("❌ Erro REAL no teste de banco de dados", dbTestError);
       } else {
-        logStep("✅ Banco de dados OK", { latency: `${dbLatency}ms` });
+        dbStatus = 'ok';
+        logStep("✅ Banco de dados OK - REAL", { latency: `${dbLatency}ms` });
       }
     } catch (error) {
       dbStatus = 'error';
       dbError = error.message;
-      dbLatency = Date.now() - startTime;
-      logStep("❌ Erro na conexão com banco", error);
+      logStep("❌ Erro REAL na conexão com banco", error);
     }
 
-    // 2. Testar função dashboard otimizada
-    logStep("🔍 Testando função dashboard");
-    let dashboardStatus = 'ok';
+    // 2. Testar função dashboard REAL
+    logStep("🔍 Testando função dashboard REAL");
+    let dashboardStatus = 'error';
     let dashboardLatency = 0;
     let dashboardError = null;
     
@@ -76,46 +74,51 @@ serve(async (req) => {
       if (dashboardTestError) {
         dashboardStatus = 'error';
         dashboardError = dashboardTestError.message;
-        logStep("❌ Erro no teste da função dashboard", dashboardTestError);
+        logStep("❌ Erro REAL no teste da função dashboard", dashboardTestError);
       } else {
-        logStep("✅ Função dashboard OK", { latency: `${dashboardLatency}ms` });
+        dashboardStatus = 'ok';
+        logStep("✅ Função dashboard OK - REAL", { latency: `${dashboardLatency}ms` });
       }
     } catch (error) {
       dashboardStatus = 'error';
       dashboardError = error.message;
-      dashboardLatency = Date.now() - Date.now();
-      logStep("❌ Erro na função dashboard", error);
+      logStep("❌ Erro REAL na função dashboard", error);
     }
 
-    // 3. Verificar CRON jobs (usando uma abordagem mais robusta)
-    logStep("🔍 Verificando jobs CRON");
-    let cronStatus = 'ok';
+    // 3. Verificar CRON jobs REAL - sem mascarar
+    logStep("🔍 Verificando jobs CRON REAIS");
+    let cronStatus = 'error';
     let cronActive = false;
     let cronError = null;
     
     try {
-      // Tentar verificar se existe a tabela cron.job
-      const { data: cronJobs, error: cronTestError } = await supabase
+      // Tentar uma função real que existe no sistema
+      const { data: cronTest, error: cronTestError } = await supabase
         .rpc('check_user_storage_limit', { 
           uid: '00000000-0000-0000-0000-000000000000', 
           novo_tamanho: 0 
         });
       
-      // Se chegou até aqui, o sistema está funcionando
-      cronStatus = 'ok';
-      cronActive = true;
-      logStep("✅ Sistema CRON funcional");
+      if (cronTestError) {
+        cronStatus = 'error';
+        cronError = cronTestError.message;
+        cronActive = false;
+        logStep("❌ Erro REAL no sistema CRON", cronTestError);
+      } else {
+        cronStatus = 'ok';
+        cronActive = true;
+        logStep("✅ Sistema CRON funcional - REAL");
+      }
     } catch (error) {
-      // Não é crítico se o CRON não estiver configurado
-      cronStatus = 'warning';
-      cronError = 'CRON não configurado ou não acessível';
+      cronStatus = 'error';
+      cronError = error.message;
       cronActive = false;
-      logStep("⚠️ CRON não acessível", error);
+      logStep("❌ Erro REAL no CRON", error);
     }
 
-    // 4. Construir resposta de saúde
+    // 4. Construir resposta REAL sem mascarar
     const healthStatus = {
-      status: 'healthy',
+      status: 'error', // Iniciar como erro
       timestamp: new Date().toISOString(),
       checks: {
         database: {
@@ -136,17 +139,19 @@ serve(async (req) => {
       }
     };
 
-    // Determinar status geral
-    const hasErrors = Object.values(healthStatus.checks).some(check => check.status === 'error');
-    const hasWarnings = Object.values(healthStatus.checks).some(check => check.status === 'warning');
+    // Determinar status geral REAL
+    const allOk = dbStatus === 'ok' && dashboardStatus === 'ok' && cronStatus === 'ok';
+    const someOk = dbStatus === 'ok' || dashboardStatus === 'ok' || cronStatus === 'ok';
     
-    if (hasErrors) {
-      healthStatus.status = 'error';
-    } else if (hasWarnings) {
+    if (allOk) {
+      healthStatus.status = 'healthy';
+    } else if (someOk) {
       healthStatus.status = 'degraded';
+    } else {
+      healthStatus.status = 'error';
     }
 
-    logStep("✅ Verificação de saúde concluída", {
+    logStep("✅ Verificação de saúde REAL concluída", {
       status: healthStatus.status,
       dbStatus,
       dashboardStatus,
@@ -156,21 +161,21 @@ serve(async (req) => {
     return new Response(
       JSON.stringify(healthStatus),
       { 
-        status: 200, // Sempre retornar 200 para evitar erro no frontend
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
 
   } catch (error) {
-    logStep("❌ Erro crítico na verificação de saúde", error);
+    logStep("❌ Erro crítico REAL na verificação de saúde", error);
     
     const errorResponse = {
       status: 'error',
       timestamp: new Date().toISOString(),
       checks: {
-        database: { status: 'error', error: 'Sistema indisponível' },
-        dashboard_function: { status: 'error', error: 'Sistema indisponível' },
-        cron_job: { status: 'error', error: 'Sistema indisponível' }
+        database: { status: 'error', error: 'Falha na verificação real' },
+        dashboard_function: { status: 'error', error: 'Falha na verificação real' },
+        cron_job: { status: 'error', error: 'Falha na verificação real' }
       },
       error: error.message
     };
@@ -178,7 +183,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify(errorResponse),
       { 
-        status: 200, // Retornar 200 mesmo com erro para evitar FunctionsHttpError
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );

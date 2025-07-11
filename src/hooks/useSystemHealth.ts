@@ -27,50 +27,53 @@ export const useSystemHealth = () => {
     setIsLoading(true);
     
     try {
-      console.log('🔍 Iniciando verificação de saúde do sistema...');
+      console.log('🔍 Iniciando verificação REAL de saúde do sistema...');
       
       const { data, error } = await supabase.functions.invoke('system-health');
       
       if (error) {
-        console.error('❌ Erro na chamada da função:', error);
+        console.error('❌ Erro REAL na chamada da função:', error);
+        // NÃO mascarar o erro - mostrar o erro real
         setHealth({
           status: 'error',
           timestamp: new Date().toISOString(),
           checks: {
-            database: { status: 'error', error: 'Erro de comunicação com servidor' },
-            dashboard_function: { status: 'error', error: 'Erro de comunicação com servidor' },
-            cron_job: { status: 'error', error: 'Erro de comunicação com servidor' }
+            database: { status: 'error', error: `Erro real: ${error.message}` },
+            dashboard_function: { status: 'error', error: `Erro real: ${error.message}` },
+            cron_job: { status: 'error', error: `Erro real: ${error.message}` }
           }
         });
         return;
       }
 
       if (!data) {
-        console.error('❌ Nenhuma resposta recebida');
+        console.error('❌ Nenhuma resposta REAL recebida');
+        // NÃO mascarar - mostrar que realmente não há resposta
         setHealth({
           status: 'error',
           timestamp: new Date().toISOString(),
           checks: {
-            database: { status: 'error', error: 'Servidor não respondeu' },
-            dashboard_function: { status: 'error', error: 'Servidor não respondeu' },
-            cron_job: { status: 'error', error: 'Servidor não respondeu' }
+            database: { status: 'error', error: 'Servidor não respondeu (real)' },
+            dashboard_function: { status: 'error', error: 'Servidor não respondeu (real)' },
+            cron_job: { status: 'error', error: 'Servidor não respondeu (real)' }
           }
         });
         return;
       }
 
-      console.log('✅ Dados de saúde recebidos:', data);
+      console.log('✅ Dados de saúde REAIS recebidos:', data);
       setHealth(data as SystemHealth);
       
     } catch (error) {
-      console.error('❌ Erro na verificação de saúde:', error);
+      console.error('❌ Erro REAL na verificação de saúde:', error);
+      // NÃO mascarar - mostrar o erro real que aconteceu
       setHealth({
         status: 'error',
         timestamp: new Date().toISOString(),
         checks: {
-          database: { status: 'error', error: 'Sistema indisponível' },
-          dashboard_function: { status: 'error', error: 'Sistema indisponível' },
-          cron_job: { status: 'error', error: 'Sistema indisponível' }
+          database: { status: 'error', error: `Erro real do sistema: ${error}` },
+          dashboard_function: { status: 'error', error: `Erro real do sistema: ${error}` },
+          cron_job: { status: 'error', error: `Erro real do sistema: ${error}` }
         }
       });
     } finally {
@@ -80,7 +83,7 @@ export const useSystemHealth = () => {
 
   useEffect(() => {
     checkHealth();
-    // Verificar health a cada 5 minutos
+    // Verificar health a cada 5 minutos para monitoramento real
     const interval = setInterval(checkHealth, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
