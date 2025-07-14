@@ -90,72 +90,67 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       console.log('📡 Chamando função de checkout...');
       
-      try {
-        const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
-          body: checkoutData,
-          headers: Object.keys(headers).length > 1 ? headers : undefined,
-        });
+      // Chamar a função do Supabase
+      const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
+        body: checkoutData,
+        headers: Object.keys(headers).length > 1 ? headers : undefined,
+      });
 
-        console.log('📡 Resposta da função:', { data, invokeError });
+      console.log('📡 Resposta da função:', { data, invokeError });
 
-        if (invokeError) {
-          console.error('❌ Erro ao criar sessão de checkout (invokeError):', invokeError);
-          
-          let detailedErrorMessage = 'Erro ao processar pagamento';
-          if (invokeError.message) {
-            if (invokeError.message.includes('Edge Function returned a non-2xx status code')) {
-              detailedErrorMessage = 'Erro interno do servidor. Tente novamente em alguns instantes.';
-            } else {
-              detailedErrorMessage = invokeError.message;
-            }
-          }
-          
-          throw new Error(detailedErrorMessage);
-        }
-
-        if (!data) {
-          console.error('❌ Nenhum dado retornado da API de checkout');
-          throw new Error('Nenhuma resposta da API de checkout');
-        }
-
-        // Verificar se há erro na resposta
-        if (data.error) {
-          console.error('❌ Erro na resposta da API:', data.error);
-          throw new Error(`Erro do servidor: ${data.error}`);
-        }
-
-        if (!data.url) {
-          console.error('❌ URL de checkout não retornada:', data);
-          throw new Error('URL de checkout não foi gerada');
-        }
-
-        console.log('✅ Sessão de checkout criada com SUCESSO:', data);
-        console.log('🎁 CONFIRMADO: 7 dias de teste gratuito configurados!');
+      if (invokeError) {
+        console.error('❌ Erro ao criar sessão de checkout (invokeError):', invokeError);
         
-        if (data.trialEnd) {
-          console.log('📅 Data de fim do trial:', new Date(data.trialEnd).toLocaleDateString('pt-BR'));
+        let detailedErrorMessage = 'Erro ao processar pagamento';
+        if (invokeError.message) {
+          if (invokeError.message.includes('Edge Function returned a non-2xx status code')) {
+            detailedErrorMessage = 'Erro interno do servidor. Tente novamente em alguns instantes.';
+          } else {
+            detailedErrorMessage = invokeError.message;
+          }
         }
-
-        const isProduction = !window.location.hostname.includes('localhost') && 
-                            !window.location.hostname.includes('lovable.app') &&
-                            !window.location.hostname.includes('lovableproject.com');
-
-        toast({
-          title: "🎉 Redirecionando para ativação da assinatura",
-          description: `Você será redirecionado para o Stripe para ativar sua assinatura com 7 DIAS GRATUITOS! Primeira cobrança apenas em ${data.trialEnd ? new Date(data.trialEnd).toLocaleDateString('pt-BR') : '7 dias'}. CANCELE A QUALQUER MOMENTO durante o teste sem ser cobrado. ${isProduction ? '(PRODUÇÃO)' : '(TESTE)'}`,
-          duration: 12000,
-        });
-
-        // **CRÍTICO: Aguardar 3 segundos para o usuário ler a mensagem completa**
-        setTimeout(() => {
-          console.log('🔗 Redirecionando para Stripe Checkout:', data.url);
-          window.location.href = data.url;
-        }, 3000);
-
-      } catch (functionError) {
-        console.error('❌ Erro na chamada da função:', functionError);
-        throw functionError;
+        
+        throw new Error(detailedErrorMessage);
       }
+
+      if (!data) {
+        console.error('❌ Nenhum dado retornado da API de checkout');
+        throw new Error('Nenhuma resposta da API de checkout');
+      }
+
+      // Verificar se há erro na resposta
+      if (data.error) {
+        console.error('❌ Erro na resposta da API:', data.error);
+        throw new Error(`Erro do servidor: ${data.error}`);
+      }
+
+      if (!data.url) {
+        console.error('❌ URL de checkout não retornada:', data);
+        throw new Error('URL de checkout não foi gerada');
+      }
+
+      console.log('✅ Sessão de checkout criada com SUCESSO:', data);
+      console.log('🎁 CONFIRMADO: 7 dias de teste gratuito configurados!');
+      
+      if (data.trialEnd) {
+        console.log('📅 Data de fim do trial:', new Date(data.trialEnd).toLocaleDateString('pt-BR'));
+      }
+
+      const isProduction = !window.location.hostname.includes('localhost') && 
+                          !window.location.hostname.includes('lovable.app') &&
+                          !window.location.hostname.includes('lovableproject.com');
+
+      toast({
+        title: "🎉 Redirecionando para ativação da assinatura",
+        description: `Você será redirecionado para o Stripe para ativar sua assinatura com 7 DIAS GRATUITOS! Primeira cobrança apenas em ${data.trialEnd ? new Date(data.trialEnd).toLocaleDateString('pt-BR') : '7 dias'}. CANCELE A QUALQUER MOMENTO durante o teste sem ser cobrado. ${isProduction ? '(PRODUÇÃO)' : '(TESTE)'}`,
+        duration: 12000,
+      });
+
+      // **CRÍTICO: Aguardar 3 segundos para o usuário ler a mensagem completa**
+      setTimeout(() => {
+        console.log('🔗 Redirecionando para Stripe Checkout:', data.url);
+        window.location.href = data.url;
+      }, 3000);
 
     } catch (error) {
       console.error('❌ Erro na ativação da assinatura:', error);

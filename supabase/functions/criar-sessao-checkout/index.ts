@@ -179,11 +179,6 @@ serve(async (req) => {
       // **CRÍTICO: Configuração do período de teste de 7 dias**
       subscription_data: {
         trial_period_days: 7, // 7 dias de teste gratuito OBRIGATÓRIO
-        trial_settings: {
-          end_behavior: {
-            missing_payment_method: 'cancel' // IMPORTANTE: Cancela automaticamente se não tiver cartão após trial
-          }
-        },
         metadata: {
           email_cliente: emailCliente,
           plano: nomePlano || 'JusGestão Premium',
