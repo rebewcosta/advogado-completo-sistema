@@ -25,6 +25,7 @@ serve(async (req) => {
     try {
       requestData = body ? JSON.parse(body) : {};
     } catch (e) {
+      console.error("❌ Erro ao fazer parse do JSON:", e);
       requestData = {};
     }
 
@@ -47,25 +48,26 @@ serve(async (req) => {
     // Obter os dados do corpo da solicitação
     const { nomePlano, valor, emailCliente, dominio, clientReferenceId } = requestData;
     
-    // Detectar ambiente baseado no dominio ou headers
-    const isProduction = !dominio?.includes('localhost') && 
-                        !dominio?.includes('lovable.app') && 
-                        !req.headers.get("origin")?.includes('localhost') &&
-                        !req.headers.get("origin")?.includes('lovableproject.com');
-    
-    const modo = isProduction ? 'production' : 'test';
+    console.log("📧 Dados recebidos:", { nomePlano, valor, emailCliente, dominio, clientReferenceId });
     
     // Validar os dados necessários
-    if (!nomePlano || !valor || !emailCliente) {
-      console.error("❌ Dados incompletos:", { nomePlano, valor, emailCliente });
+    if (!emailCliente) {
+      console.error("❌ Email do cliente não fornecido");
       return new Response(
-        JSON.stringify({ error: "Dados incompletos para criar sessão" }),
+        JSON.stringify({ error: "Email é obrigatório para criar sessão de checkout" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
 
-    // Log do modo de operação
-    console.log(`🔄 Processando checkout - Email: ${emailCliente}, Plano: ${nomePlano}, Valor: ${valor}, Modo: ${modo}`);
+    // Detectar ambiente baseado no dominio ou headers
+    const origin = req.headers.get("origin") || dominio || "";
+    const isProduction = !origin.includes('localhost') && 
+                        !origin.includes('lovable.app') && 
+                        !origin.includes('lovableproject.com');
+    
+    const modo = isProduction ? 'production' : 'test';
+    
+    console.log(`🔄 Processando checkout - Email: ${emailCliente}, Modo: ${modo}`);
 
     // Verificar autenticação opcional (para usuários já logados)
     let user = null;
@@ -113,7 +115,7 @@ serve(async (req) => {
     console.log("🔄 Criando sessão de checkout...");
     
     // Determinar as URLs de sucesso e cancelamento
-    const baseUrl = dominio || req.headers.get("origin") || "https://sisjusgestao.com.br";
+    const baseUrl = origin || req.headers.get("origin") || "https://sisjusgestao.com.br";
     const successUrl = `${baseUrl}/pagamento?success=true`;
     const cancelUrl = `${baseUrl}/pagamento?canceled=true`;
     
@@ -130,7 +132,7 @@ serve(async (req) => {
     console.log(`💰 Usando Price ID: ${priceId} (modo: ${modo})`);
     
     // **CONFIGURAÇÃO CRÍTICA: 7 dias de teste gratuito OBRIGATÓRIO**
-    const sessionConfig = {
+    const sessionConfig: any = {
       payment_method_types: ["card"],
       customer_email: emailCliente,
       line_items: [
@@ -152,19 +154,19 @@ serve(async (req) => {
         },
         metadata: {
           email_cliente: emailCliente,
-          plano: nomePlano,
+          plano: nomePlano || 'JusGestão Premium',
           valor: valorCorreto.toString(),
           user_id: user?.id || 'novo_usuario',
           is_new_user: user ? 'false' : 'true',
           client_reference_id: clientReferenceId || emailCliente,
           trial_days: '7',
           trial_start: new Date().toISOString(),
-          auto_cancel_if_no_payment: 'true' // Metadado para controle
+          auto_cancel_if_no_payment: 'true'
         }
       },
       metadata: {
         email_cliente: emailCliente,
-        plano: nomePlano,
+        plano: nomePlano || 'JusGestão Premium',
         valor: valorCorreto.toString(),
         user_id: user?.id || 'novo_usuario',
         is_new_user: user ? 'false' : 'true',
@@ -216,12 +218,25 @@ serve(async (req) => {
   } catch (error) {
     console.error("❌ Erro ao criar sessão de checkout:", error);
     
-    const errorMessage = error instanceof Error ? error.message : "Erro interno do servidor";
+    let errorMessage = "Erro interno do servidor";
+    let errorDetails = "";
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorDetails = error.stack || "";
+    } else if (typeof error === 'string') {
+      errorMessage = error;
+    } else if (error && typeof error === 'object') {
+      errorMessage = JSON.stringify(error);
+    }
+    
+    console.error("❌ Detalhes do erro:", { errorMessage, errorDetails });
     
     return new Response(
       JSON.stringify({ 
         error: errorMessage,
-        message: "Houve um erro ao processar o pagamento"
+        message: "Houve um erro ao processar o pagamento. Tente novamente em alguns instantes.",
+        details: errorDetails
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
     );
