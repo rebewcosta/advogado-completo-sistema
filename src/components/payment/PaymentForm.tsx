@@ -109,6 +109,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       console.log('✅ Sessão de checkout criada com SUCESSO:', data);
       console.log('🎁 CONFIRMADO: 7 dias de teste gratuito configurados!');
       console.log('📅 Data de fim do trial:', new Date(data.trialEnd).toLocaleDateString('pt-BR'));
+      console.log('🚫 Cancelamento automático configurado:', data.cancelPolicy);
 
       const isProduction = !window.location.hostname.includes('localhost') && 
                           !window.location.hostname.includes('lovable.app') &&
@@ -116,15 +117,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       toast({
         title: "🎉 Redirecionando para ativação da assinatura",
-        description: `Você será redirecionado para o Stripe para ativar sua assinatura com 7 DIAS GRATUITOS! Primeira cobrança apenas em ${new Date(data.trialEnd).toLocaleDateString('pt-BR')}. ${isProduction ? '(PRODUÇÃO)' : '(TESTE)'}`,
-        duration: 10000,
+        description: `Você será redirecionado para o Stripe para ativar sua assinatura com 7 DIAS GRATUITOS! Primeira cobrança apenas em ${new Date(data.trialEnd).toLocaleDateString('pt-BR')}. CANCELE A QUALQUER MOMENTO durante o teste sem ser cobrado. ${isProduction ? '(PRODUÇÃO)' : '(TESTE)'}`,
+        duration: 12000,
       });
 
-      // **CRÍTICO: Aguardar 2 segundos para o usuário ler a mensagem**
+      // **CRÍTICO: Aguardar 3 segundos para o usuário ler a mensagem completa**
       setTimeout(() => {
         console.log('🔗 Redirecionando para Stripe Checkout:', data.url);
         window.location.href = data.url;
-      }, 2000);
+      }, 3000);
 
     } catch (error) {
       console.error('❌ Erro na ativação da assinatura:', error);
@@ -149,17 +150,25 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     <form onSubmit={handleSubmitPayment}>
       <div className="space-y-6">
         {/* Banner de destaque para os 7 dias gratuitos */}
-        <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
-          <div className="text-center">
-            <h3 className="text-lg font-bold text-green-800 mb-2">
+        <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
+          <div className="text-center space-y-3">
+            <h3 className="text-xl font-bold text-green-800 mb-3">
               🎁 7 DIAS COMPLETAMENTE GRATUITOS!
             </h3>
-            <p className="text-sm text-green-700 mb-1">
-              <strong>✅ SEM cobrança pelos primeiros 7 dias</strong>
-            </p>
-            <p className="text-xs text-green-600">
-              Após o período gratuito: R$ 37,00/mês • Cancele quando quiser
-            </p>
+            <div className="space-y-2">
+              <p className="text-sm font-bold text-green-700">
+                ✅ <strong>SEM cobrança pelos primeiros 7 dias</strong>
+              </p>
+              <p className="text-sm font-semibold text-green-700">
+                🚫 <strong>CANCELE A QUALQUER MOMENTO durante o teste - SEM COBRANÇA</strong>
+              </p>
+              <p className="text-sm text-green-600">
+                💳 Se não cancelar, será cobrado R$ 37,00/mês apenas após o período gratuito
+              </p>
+              <p className="text-xs text-green-600 font-medium">
+                ⚠️ <strong>IMPORTANTE:</strong> Seu cartão será cadastrado mas NÃO será cobrado durante o teste
+              </p>
+            </div>
           </div>
         </div>
 
@@ -193,7 +202,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                Processando...
+                Redirecionando em instantes...
               </span>
             ) : (
               <span className="flex items-center justify-center">
@@ -202,15 +211,21 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
               </span>
             )}
           </Button>
-          <div className="text-center mt-3 space-y-1">
+          <div className="text-center mt-4 space-y-2">
             <p className="text-sm font-bold text-green-700">
               ✅ <strong>TOTALMENTE GRATUITO pelos primeiros 7 dias!</strong>
             </p>
+            <p className="text-sm font-bold text-red-600">
+              🚫 <strong>CANCELE A QUALQUER MOMENTO durante o teste sem ser cobrado</strong>
+            </p>
             <p className="text-xs text-gray-600">
-              Após o período gratuito: R$ 37,00/mês • Cancele a qualquer momento
+              Após o período gratuito: R$ 37,00/mês • Cancele quando quiser
             </p>
             <p className="text-xs text-blue-600 font-medium">
-              💳 Cartão será cadastrado mas não será cobrado nos primeiros 7 dias
+              💳 Cartão será cadastrado mas NÃO será cobrado nos primeiros 7 dias
+            </p>
+            <p className="text-xs text-orange-600 font-bold">
+              ⚠️ Se não cancelar durante o teste, será cobrado automaticamente
             </p>
           </div>
         </div>

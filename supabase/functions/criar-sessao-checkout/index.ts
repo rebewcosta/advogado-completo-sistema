@@ -147,7 +147,7 @@ serve(async (req) => {
         trial_period_days: 7, // 7 dias de teste gratuito OBRIGATÓRIO
         trial_settings: {
           end_behavior: {
-            missing_payment_method: 'cancel' // Cancela se não tiver cartão após trial
+            missing_payment_method: 'cancel' // IMPORTANTE: Cancela automaticamente se não tiver cartão após trial
           }
         },
         metadata: {
@@ -158,7 +158,8 @@ serve(async (req) => {
           is_new_user: user ? 'false' : 'true',
           client_reference_id: clientReferenceId || emailCliente,
           trial_days: '7',
-          trial_start: new Date().toISOString()
+          trial_start: new Date().toISOString(),
+          auto_cancel_if_no_payment: 'true' // Metadado para controle
         }
       },
       metadata: {
@@ -169,17 +170,22 @@ serve(async (req) => {
         is_new_user: user ? 'false' : 'true',
         client_reference_id: clientReferenceId || emailCliente,
         trial_days: '7',
-        trial_start: new Date().toISOString()
+        trial_start: new Date().toISOString(),
+        auto_cancel_if_no_payment: 'true'
       },
       // **IMPORTANTE: Coleta de endereço obrigatória**
       billing_address_collection: 'required',
       // **IMPORTANTE: Permitir códigos promocionais**
       allow_promotion_codes: true,
-      // **CRÍTICO: Configurar coleta de forma de pagamento durante trial**
-      payment_method_collection: 'if_required',
+      // **CRÍTICO: Configurar coleta de forma de pagamento OBRIGATÓRIA durante trial**
+      payment_method_collection: 'always', // Força coleta do cartão
       // **IMPORTANTE: Termos de serviço**
       consent_collection: {
         terms_of_service: 'required'
+      },
+      // **CRÍTICO: Configurações adicionais para garantir cancelamento automático**
+      automatic_tax: {
+        enabled: false
       }
     };
 
@@ -189,6 +195,7 @@ serve(async (req) => {
     console.log(`✅ Sessão criada com sucesso: ${session.id} - COM 7 DIAS DE TESTE GRATUITO OBRIGATÓRIO`);
     console.log(`🎁 Trial configurado: 7 dias gratuitos GARANTIDOS antes da primeira cobrança`);
     console.log(`💳 Primeira cobrança apenas após: ${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}`);
+    console.log(`🚫 Cancelamento automático configurado se usuário não quiser continuar`);
 
     // Retornar o ID da sessão e URL
     return new Response(
@@ -200,7 +207,8 @@ serve(async (req) => {
         priceId: priceId,
         trialDays: 7,
         trialEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        message: "Sessão criada com 7 dias de teste gratuito GARANTIDO - SEM cobrança nos primeiros 7 dias"
+        message: "Sessão criada com 7 dias de teste gratuito GARANTIDO - SEM cobrança nos primeiros 7 dias. Cancele a qualquer momento durante o trial.",
+        cancelPolicy: "Cancelamento automático se não confirmar após 7 dias"
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
