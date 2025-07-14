@@ -32,7 +32,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   }, [initialEmail]);
 
   const isValidEmail = (emailToValidate: string) => {
-    return /\S+@\S+\.\S+/.test(emailToValidate);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToValidate);
   };
 
   const getDominio = () => {
@@ -46,7 +46,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     setErrorDetails('');
 
     try {
-      if (!email) {
+      // Validação básica do email
+      if (!email || !email.trim()) {
         throw new Error("Email é necessário para prosseguir com a assinatura.");
       }
 
@@ -68,9 +69,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       const checkoutData = {
         nomePlano: 'JusGestão - 7 DIAS GRATUITOS + R$ 37/mês',
         valor: 3700, // R$ 37,00 em centavos - será cobrado APENAS após 7 dias
-        emailCliente: email,
+        emailCliente: email.trim(),
         dominio,
-        clientReferenceId: clientReferenceId || email
+        clientReferenceId: clientReferenceId || email.trim()
       };
 
       console.log('💎 Dados do checkout com 7 dias GRATUITOS:', checkoutData);
@@ -92,7 +93,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       try {
         const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
           body: checkoutData,
-          headers: Object.keys(headers).length > 0 ? headers : undefined,
+          headers: Object.keys(headers).length > 1 ? headers : undefined,
         });
 
         console.log('📡 Resposta da função:', { data, invokeError });
@@ -102,7 +103,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           
           let detailedErrorMessage = 'Erro ao processar pagamento';
           if (invokeError.message) {
-            detailedErrorMessage = invokeError.message;
+            if (invokeError.message.includes('Edge Function returned a non-2xx status code')) {
+              detailedErrorMessage = 'Erro interno do servidor. Tente novamente em alguns instantes.';
+            } else {
+              detailedErrorMessage = invokeError.message;
+            }
           }
           
           throw new Error(detailedErrorMessage);
@@ -113,14 +118,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
           throw new Error('Nenhuma resposta da API de checkout');
         }
 
+        // Verificar se há erro na resposta
+        if (data.error) {
+          console.error('❌ Erro na resposta da API:', data.error);
+          throw new Error(`Erro do servidor: ${data.error}`);
+        }
+
         if (!data.url) {
           console.error('❌ URL de checkout não retornada:', data);
-          
-          // Se houver erro específico na resposta
-          if (data.error) {
-            throw new Error(`Erro do Stripe: ${data.error}`);
-          }
-          
           throw new Error('URL de checkout não foi gerada');
         }
 
@@ -169,6 +174,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         variant: "destructive",
         duration: 10000,
       });
+    } finally {
       setIsProcessing(false);
       onProcessingChange(false);
     }
@@ -220,7 +226,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         <div className="pt-4">
           <Button
             type="submit"
-            disabled={isProcessing || !email}
+            disabled={isProcessing || !email || !email.trim()}
             className="w-full text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
             size="lg"
           >

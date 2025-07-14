@@ -26,7 +26,10 @@ serve(async (req) => {
       requestData = body ? JSON.parse(body) : {};
     } catch (e) {
       console.error("❌ Erro ao fazer parse do JSON:", e);
-      requestData = {};
+      return new Response(
+        JSON.stringify({ error: "Dados JSON inválidos" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
     }
 
     // Se for um teste simples, retornar sucesso
@@ -51,10 +54,20 @@ serve(async (req) => {
     console.log("📧 Dados recebidos:", { nomePlano, valor, emailCliente, dominio, clientReferenceId });
     
     // Validar os dados necessários
-    if (!emailCliente) {
-      console.error("❌ Email do cliente não fornecido");
+    if (!emailCliente || !emailCliente.trim()) {
+      console.error("❌ Email do cliente não fornecido ou vazio");
       return new Response(
         JSON.stringify({ error: "Email é obrigatório para criar sessão de checkout" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+      );
+    }
+
+    // Validar formato do email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailCliente)) {
+      console.error("❌ Email inválido:", emailCliente);
+      return new Response(
+        JSON.stringify({ error: "Email fornecido não é válido" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
@@ -115,7 +128,7 @@ serve(async (req) => {
     console.log("🔄 Criando sessão de checkout...");
     
     // Determinar as URLs de sucesso e cancelamento
-    const baseUrl = origin || req.headers.get("origin") || "https://sisjusgestao.com.br";
+    const baseUrl = origin || req.headers.get("referer") || "https://sisjusgestao.com.br";
     const successUrl = `${baseUrl}/pagamento?success=true`;
     const cancelUrl = `${baseUrl}/pagamento?canceled=true`;
     
@@ -131,10 +144,29 @@ serve(async (req) => {
     
     console.log(`💰 Usando Price ID: ${priceId} (modo: ${modo})`);
     
-    // **CONFIGURAÇÃO CRÍTICA: 7 dias de teste gratuito OBRIGATÓRIO**
-    const sessionConfig: any = {
+    // Verificar se o cliente já existe no Stripe
+    let stripeCustomerId = null;
+    try {
+      const existingCustomers = await stripe.customers.list({
+        email: emailCliente,
+        limit: 1
+      });
+      
+      if (existingCustomers.data.length > 0) {
+        stripeCustomerId = existingCustomers.data[0].id;
+        console.log(`✅ Cliente existente encontrado: ${stripeCustomerId}`);
+      } else {
+        console.log("📝 Novo cliente será criado no Stripe");
+      }
+    } catch (error) {
+      console.log("⚠️ Erro ao verificar cliente existente:", error);
+    }
+    
+    // **CONFIGURAÇÃO CRÍTICA: Session de checkout com 7 dias de teste gratuito OBRIGATÓRIO**
+    const sessionConfig = {
       payment_method_types: ["card"],
-      customer_email: emailCliente,
+      customer: stripeCustomerId,
+      customer_email: stripeCustomerId ? undefined : emailCliente,
       line_items: [
         {
           price: priceId,
@@ -191,6 +223,8 @@ serve(async (req) => {
       }
     };
 
+    console.log("🔄 Configuração da sessão:", JSON.stringify(sessionConfig, null, 2));
+
     // Criar a sessão de checkout com período de teste OBRIGATÓRIO
     const session = await stripe.checkout.sessions.create(sessionConfig);
 
@@ -224,6 +258,16 @@ serve(async (req) => {
     if (error instanceof Error) {
       errorMessage = error.message;
       errorDetails = error.stack || "";
+      
+      // Verificar se é um erro específico do Stripe
+      if (error.message.includes('No such price')) {
+        errorMessage = "Erro na configuração do preço do Stripe";
+        errorDetails = "O Price ID configurado não foi encontrado no Stripe";
+      } else if (error.message.includes('Invalid email')) {
+        errorMessage = "Email inválido fornecido";
+      } else if (error.message.includes('customer')) {
+        errorMessage = "Erro ao processar dados do cliente";
+      }
     } else if (typeof error === 'string') {
       errorMessage = error;
     } else if (error && typeof error === 'object') {
