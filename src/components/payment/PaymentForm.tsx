@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { CreditCard } from 'lucide-react';
+import { CreditCard, AlertCircle, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,149 +23,154 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const [email, setEmail] = useState(initialEmail || '');
   const [errorDetails, setErrorDetails] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
     if (initialEmail) {
       setEmail(initialEmail);
+      setValidationError('');
     }
   }, [initialEmail]);
 
-  const isValidEmail = (emailToValidate: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailToValidate);
+  const validateEmail = (emailToValidate: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(emailToValidate.trim());
   };
 
-  const getDominio = () => {
-    return window.location.origin;
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEmail = e.target.value;
+    setEmail(newEmail);
+    setValidationError('');
+    setErrorDetails('');
+    
+    if (newEmail && !validateEmail(newEmail)) {
+      setValidationError('Por favor, insira um email válido');
+    }
   };
 
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Limpar estados de erro
+    setErrorDetails('');
+    setValidationError('');
+    
+    // Validações finais
+    const emailTrimmed = email.trim();
+    if (!emailTrimmed) {
+      setValidationError("Email é obrigatório");
+      return;
+    }
+
+    if (!validateEmail(emailTrimmed)) {
+      setValidationError("Por favor, insira um email válido");
+      return;
+    }
+
     setIsProcessing(true);
     onProcessingChange(true);
-    setErrorDetails('');
 
     try {
-      // Validação básica do email
-      if (!email || !email.trim()) {
-        throw new Error("Email é necessário para prosseguir com a assinatura.");
-      }
+      console.log('🚀 [PAYMENT] Iniciando processo de pagamento');
+      console.log('📧 [PAYMENT] Email:', emailTrimmed);
+      console.log('🏷️ [PAYMENT] Environment:', isTestEnvironment ? 'TEST' : 'PRODUCTION');
 
-      if (!isValidEmail(email)) {
-        throw new Error("Por favor, insira um endereço de email válido.");
-      }
-
-      // Para novos usuários vindos do cadastro, não precisamos verificar se estão logados
-      // O sistema criará a conta após a assinatura ser ativada
+      // Obter sessão atual para incluir token se disponível
       const { data: { session } } = await supabase.auth.getSession();
       
-      const dominio = getDominio();
-      console.log('🚀 Iniciando processo de pagamento com 7 dias de teste GRATUITO');
-      console.log('📧 Email:', email);
-      console.log('🆔 Client Reference ID:', clientReferenceId);
-      console.log('🌐 Dominio:', dominio);
-
-      // **CRÍTICO: Configuração com 7 dias de teste gratuito OBRIGATÓRIO**
+      // Preparar dados para envio
       const checkoutData = {
-        nomePlano: 'JusGestão - 7 DIAS GRATUITOS + R$ 37/mês',
-        valor: 3700, // R$ 37,00 em centavos - será cobrado APENAS após 7 dias
-        emailCliente: email.trim(),
-        dominio,
-        clientReferenceId: clientReferenceId || email.trim()
+        nomePlano: 'JusGestão Premium - 7 DIAS GRATUITOS',
+        valor: 3700,
+        emailCliente: emailTrimmed,
+        dominio: window.location.origin,
+        clientReferenceId: clientReferenceId || emailTrimmed
       };
 
-      console.log('💎 Dados do checkout com 7 dias GRATUITOS:', checkoutData);
+      console.log('📦 [PAYMENT] Dados do checkout:', checkoutData);
 
-      // Se tem sessão ativa, incluir token de autenticação
+      // Configurar headers
       const headers: Record<string, string> = {
         'Content-Type': 'application/json'
       };
       
       if (session?.access_token) {
         headers.Authorization = `Bearer ${session.access_token}`;
-        console.log('🔐 Token de autenticação incluído');
+        console.log('🔐 [PAYMENT] Token de autenticação incluído');
       } else {
-        console.log('👤 Processando como novo usuário sem sessão ativa');
+        console.log('👤 [PAYMENT] Processando como usuário anônimo');
       }
 
-      console.log('📡 Chamando função de checkout...');
+      console.log('📡 [PAYMENT] Chamando função criar-sessao-checkout...');
       
-      // Chamar a função do Supabase
+      // Chamar função do Supabase
       const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
         body: checkoutData,
         headers: Object.keys(headers).length > 1 ? headers : undefined,
       });
 
-      console.log('📡 Resposta da função:', { data, invokeError });
+      console.log('📨 [PAYMENT] Resposta recebida:', { data, invokeError });
 
+      // Verificar erros da invocação
       if (invokeError) {
-        console.error('❌ Erro ao criar sessão de checkout (invokeError):', invokeError);
-        
-        let detailedErrorMessage = 'Erro ao processar pagamento';
-        if (invokeError.message) {
-          if (invokeError.message.includes('Edge Function returned a non-2xx status code')) {
-            detailedErrorMessage = 'Erro interno do servidor. Tente novamente em alguns instantes.';
-          } else {
-            detailedErrorMessage = invokeError.message;
-          }
-        }
-        
-        throw new Error(detailedErrorMessage);
+        console.error('❌ [PAYMENT] Erro na invocação:', invokeError);
+        throw new Error(invokeError.message || 'Erro ao processar pagamento');
       }
 
+      // Verificar se dados foram retornados
       if (!data) {
-        console.error('❌ Nenhum dado retornado da API de checkout');
-        throw new Error('Nenhuma resposta da API de checkout');
+        console.error('❌ [PAYMENT] Nenhum dado retornado');
+        throw new Error('Nenhuma resposta do servidor');
       }
 
-      // Verificar se há erro na resposta
+      // Verificar erros na resposta
       if (data.error) {
-        console.error('❌ Erro na resposta da API:', data.error);
-        throw new Error(`Erro do servidor: ${data.error}`);
+        console.error('❌ [PAYMENT] Erro na resposta:', data.error);
+        throw new Error(data.error);
       }
 
+      // Verificar URL de checkout
       if (!data.url) {
-        console.error('❌ URL de checkout não retornada:', data);
+        console.error('❌ [PAYMENT] URL de checkout não encontrada:', data);
         throw new Error('URL de checkout não foi gerada');
       }
 
-      console.log('✅ Sessão de checkout criada com SUCESSO:', data);
-      console.log('🎁 CONFIRMADO: 7 dias de teste gratuito configurados!');
-      
-      if (data.trialEnd) {
-        console.log('📅 Data de fim do trial:', new Date(data.trialEnd).toLocaleDateString('pt-BR'));
-      }
+      console.log('✅ [PAYMENT] Checkout criado com sucesso!');
+      console.log('🔗 [PAYMENT] URL:', data.url);
+      console.log('🎁 [PAYMENT] Trial configurado:', data.trialDays, 'dias');
 
-      const isProduction = !window.location.hostname.includes('localhost') && 
-                          !window.location.hostname.includes('lovable.app') &&
-                          !window.location.hostname.includes('lovableproject.com');
-
+      // Mostrar toast de sucesso
       toast({
-        title: "🎉 Redirecionando para ativação da assinatura",
-        description: `Você será redirecionado para o Stripe para ativar sua assinatura com 7 DIAS GRATUITOS! Primeira cobrança apenas em ${data.trialEnd ? new Date(data.trialEnd).toLocaleDateString('pt-BR') : '7 dias'}. CANCELE A QUALQUER MOMENTO durante o teste sem ser cobrado. ${isProduction ? '(PRODUÇÃO)' : '(TESTE)'}`,
-        duration: 12000,
+        title: "🎉 Redirecionando para ativação",
+        description: `Você será redirecionado para ativar sua assinatura com ${data.trialDays || 7} DIAS GRATUITOS! Ambiente: ${data.ambiente || (isTestEnvironment ? 'TESTE' : 'PRODUÇÃO')}`,
+        duration: 8000,
       });
 
-      // **CRÍTICO: Aguardar 3 segundos para o usuário ler a mensagem completa**
+      // Aguardar um pouco e redirecionar
       setTimeout(() => {
-        console.log('🔗 Redirecionando para Stripe Checkout:', data.url);
+        console.log('🔗 [PAYMENT] Redirecionando para:', data.url);
         window.location.href = data.url;
-      }, 3000);
+      }, 2000);
 
     } catch (error) {
-      console.error('❌ Erro na ativação da assinatura:', error);
+      console.error('💥 [PAYMENT] Erro no pagamento:', error);
       
-      let errorMessage = "Erro ao processar ativação da assinatura";
+      let errorMessage = "Erro ao processar pagamento";
+      
       if (error instanceof Error) {
         errorMessage = error.message;
       } else if (typeof error === 'string') {
         errorMessage = error;
+      } else if (error && typeof error === 'object') {
+        errorMessage = JSON.stringify(error);
       }
       
       setErrorDetails(errorMessage);
+      
       toast({
-        title: "❌ Erro na ativação da assinatura",
-        description: `Houve um problema ao processar sua assinatura. Detalhes: ${errorMessage}`,
+        title: "❌ Erro no pagamento",
+        description: `Não foi possível processar sua solicitação: ${errorMessage}`,
         variant: "destructive",
         duration: 10000,
       });
@@ -176,99 +181,107 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmitPayment}>
-      <div className="space-y-6">
-        {/* Banner de destaque para os 7 dias gratuitos */}
-        <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
-          <div className="text-center space-y-3">
-            <h3 className="text-xl font-bold text-green-800 mb-3">
-              🎁 7 DIAS COMPLETAMENTE GRATUITOS!
-            </h3>
-            <div className="space-y-2">
-              <p className="text-sm font-bold text-green-700">
-                ✅ <strong>SEM cobrança pelos primeiros 7 dias</strong>
-              </p>
-              <p className="text-sm font-semibold text-green-700">
-                🚫 <strong>CANCELE A QUALQUER MOMENTO durante o teste - SEM COBRANÇA</strong>
-              </p>
-              <p className="text-sm text-green-600">
-                💳 Se não cancelar, será cobrado R$ 37,00/mês apenas após o período gratuito
-              </p>
-              <p className="text-xs text-green-600 font-medium">
-                ⚠️ <strong>IMPORTANTE:</strong> Seu cartão será cadastrado mas NÃO será cobrado durante o teste
+    <form onSubmit={handleSubmitPayment} className="space-y-6">
+      {/* Banner de destaque */}
+      <div className="p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-lg">
+        <div className="flex items-center justify-center mb-4">
+          <CheckCircle className="h-8 w-8 text-green-600 mr-3" />
+          <h3 className="text-xl font-bold text-green-800">
+            🎁 7 DIAS COMPLETAMENTE GRATUITOS!
+          </h3>
+        </div>
+        <div className="space-y-2 text-center">
+          <p className="text-sm font-bold text-green-700">
+            ✅ SEM cobrança pelos primeiros 7 dias
+          </p>
+          <p className="text-sm font-semibold text-green-700">
+            🚫 CANCELE A QUALQUER MOMENTO durante o teste - SEM COBRANÇA
+          </p>
+          <p className="text-sm text-green-600">
+            💳 Primeira cobrança de R$ 37,00/mês apenas após o período gratuito
+          </p>
+        </div>
+      </div>
+
+      {/* Campo de email */}
+      <div className="space-y-2">
+        <Label htmlFor="email_assinatura" className="text-sm font-medium text-gray-700">
+          Email para Assinatura *
+        </Label>
+        <Input
+          type="email"
+          id="email_assinatura"
+          placeholder="seu.email@exemplo.com"
+          value={email}
+          onChange={handleEmailChange}
+          required
+          className={`w-full ${validationError ? 'border-red-500' : ''}`}
+          disabled={!!initialEmail || isProcessing}
+        />
+        {validationError && (
+          <div className="flex items-center mt-1">
+            <AlertCircle className="h-4 w-4 text-red-500 mr-1" />
+            <p className="text-xs text-red-600">{validationError}</p>
+          </div>
+        )}
+        {initialEmail && (
+          <p className="text-xs text-gray-500">Usando o email informado no cadastro.</p>
+        )}
+      </div>
+
+      {/* Botão de submit */}
+      <div className="pt-4">
+        <Button
+          type="submit"
+          disabled={isProcessing || !email.trim() || !!validationError}
+          className="w-full text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 disabled:opacity-50"
+          size="lg"
+        >
+          {isProcessing ? (
+            <span className="flex items-center justify-center">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Processando...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center">
+              <CreditCard className="mr-2 h-5 w-5" />
+              🎁 COMEÇAR 7 DIAS GRATUITOS
+            </span>
+          )}
+        </Button>
+        
+        {/* Informações adicionais */}
+        <div className="text-center mt-4 space-y-2">
+          <p className="text-sm font-bold text-green-700">
+            ✅ TOTALMENTE GRATUITO pelos primeiros 7 dias!
+          </p>
+          <p className="text-sm font-bold text-red-600">
+            🚫 CANCELE durante o teste sem ser cobrado
+          </p>
+          <p className="text-xs text-gray-600">
+            Ambiente: {isTestEnvironment ? 'TESTE' : 'PRODUÇÃO'}
+          </p>
+        </div>
+      </div>
+
+      {/* Exibição de erros */}
+      {errorDetails && (
+        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+            <div>
+              <p className="text-sm font-semibold text-red-800">Erro no pagamento:</p>
+              <p className="text-sm text-red-700 mt-1">{errorDetails}</p>
+              <p className="text-xs text-gray-600 mt-2">
+                Se o problema persistir, entre em contato com o suporte.
               </p>
             </div>
           </div>
         </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="email_assinatura" className="text-sm font-medium text-gray-700">
-            Email para Assinatura
-          </Label>
-          <Input
-            type="email"
-            id="email_assinatura"
-            placeholder="seu.email@exemplo.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full"
-            disabled={!!initialEmail || isProcessing}
-          />
-          {initialEmail && <p className="text-xs text-gray-500 mt-1">Usando o email informado no cadastro.</p>}
-        </div>
-
-        <div className="pt-4">
-          <Button
-            type="submit"
-            disabled={isProcessing || !email || !email.trim()}
-            className="w-full text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
-            size="lg"
-          >
-            {isProcessing ? (
-              <span className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Redirecionando em instantes...
-              </span>
-            ) : (
-              <span className="flex items-center justify-center">
-                <CreditCard className="mr-2 h-5 w-5" />
-                🎁 COMEÇAR 7 DIAS GRATUITOS
-              </span>
-            )}
-          </Button>
-          <div className="text-center mt-4 space-y-2">
-            <p className="text-sm font-bold text-green-700">
-              ✅ <strong>TOTALMENTE GRATUITO pelos primeiros 7 dias!</strong>
-            </p>
-            <p className="text-sm font-bold text-red-600">
-              🚫 <strong>CANCELE A QUALQUER MOMENTO durante o teste sem ser cobrado</strong>
-            </p>
-            <p className="text-xs text-gray-600">
-              Após o período gratuito: R$ 37,00/mês • Cancele quando quiser
-            </p>
-            <p className="text-xs text-blue-600 font-medium">
-              💳 Cartão será cadastrado mas NÃO será cobrado nos primeiros 7 dias
-            </p>
-            <p className="text-xs text-orange-600 font-bold">
-              ⚠️ Se não cancelar durante o teste, será cobrado automaticamente
-            </p>
-          </div>
-        </div>
-
-        {errorDetails && (
-          <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm font-medium text-red-800 mb-1">Detalhes do erro:</p>
-            <p className="text-sm text-red-700">{errorDetails}</p>
-            <p className="text-xs text-gray-600 mt-2">
-              Se o problema persistir, entre em contato com o suporte.
-            </p>
-          </div>
-        )}
-      </div>
+      )}
     </form>
   );
 };
