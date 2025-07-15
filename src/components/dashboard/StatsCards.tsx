@@ -113,10 +113,10 @@ const StatsCards: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {[1,2,3,4,5,6].map(i => (
           <Card key={i} className="bg-white/70 backdrop-blur-sm border-white/50 shadow-lg">
-            <CardContent className="p-6 flex justify-center items-center">
+            <CardContent className="p-4 sm:p-6 flex justify-center items-center">
               <Spinner />
             </CardContent>
           </Card>
@@ -126,76 +126,76 @@ const StatsCards: React.FC = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       <Card className="bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-emerald-100">Receita do Mês</CardTitle>
-          <TrendingUp className="h-5 w-5 text-emerald-200" />
+          <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-200" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">
             <FinanceValueToggle value={stats.receitaMes} className="text-white" />
           </div>
-          <p className="text-xs text-emerald-100">Valores confirmados</p>
+          <p className="text-xs text-emerald-100 mt-1">Valores confirmados</p>
         </CardContent>
       </Card>
 
       <Card className="bg-gradient-to-br from-red-500 to-pink-600 text-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-red-100">Despesa do Mês</CardTitle>
-          <TrendingDown className="h-5 w-5 text-red-200" />
+          <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 text-red-200" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">
             <FinanceValueToggle value={stats.despesaMes} className="text-white" />
           </div>
-          <p className="text-xs text-red-100">Valores pagos</p>
+          <p className="text-xs text-red-100 mt-1">Valores pagos</p>
         </CardContent>
       </Card>
 
       <Card className="bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-blue-100">Saldo do Mês</CardTitle>
-          <DollarSign className="h-5 w-5 text-blue-200" />
+          <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-blue-200" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">
             <FinanceValueToggle value={stats.saldoMes} className="text-white" />
           </div>
-          <p className="text-xs text-blue-100">Receita - Despesa</p>
+          <p className="text-xs text-blue-100 mt-1">Receita - Despesa</p>
         </CardContent>
       </Card>
 
       <Card className="bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-purple-100">Processos Ativos</CardTitle>
-          <Briefcase className="h-5 w-5 text-purple-200" />
+          <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-purple-200" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.totalProcessosAtivos}</div>
-          <p className="text-xs text-purple-100">Em andamento</p>
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">{stats.totalProcessosAtivos}</div>
+          <p className="text-xs text-purple-100 mt-1">Em andamento</p>
         </CardContent>
       </Card>
 
       <Card className="bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-orange-100">Eventos Hoje</CardTitle>
-          <Calendar className="h-5 w-5 text-orange-200" />
+          <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-orange-200" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.eventosHoje}</div>
-          <p className="text-xs text-orange-100">Compromissos agendados</p>
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">{stats.eventosHoje}</div>
+          <p className="text-xs text-orange-100 mt-1">Compromissos agendados</p>
         </CardContent>
       </Card>
 
       <Card className="bg-gradient-to-br from-teal-500 to-cyan-600 text-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-teal-100">Tarefas Pendentes</CardTitle>
-          <CheckCircle className="h-5 w-5 text-teal-200" />
+          <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-teal-200" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.tarefasPendentes}</div>
-          <p className="text-xs text-teal-100">Para realizar</p>
+        <CardContent className="p-4 sm:p-6 pt-0">
+          <div className="text-xl sm:text-2xl font-bold">{stats.tarefasPendentes}</div>
+          <p className="text-xs text-teal-100 mt-1">Para realizar</p>
         </CardContent>
       </Card>
     </div>
