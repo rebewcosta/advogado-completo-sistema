@@ -7,7 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProfileSettings { 
   name: string; 
   email: string; 
-  dataNascimento: string;
 }
 
 interface OfficeSettings { 
@@ -41,7 +40,7 @@ export const useConfiguracoesState = () => {
   const [isLoadingPinStatus, setIsLoadingPinStatus] = useState(true);
 
   const [profileSettings, setProfileSettings] = useState<ProfileSettings>({
-    name: "", email: "", dataNascimento: "",
+    name: "", email: "",
   });
   
   const [officeSettings, setOfficeSettings] = useState<OfficeSettings>({
@@ -65,7 +64,6 @@ export const useConfiguracoesState = () => {
       setProfileSettings({
         name: user.user_metadata.nome || user.email?.split('@')[0] || "",
         email: user.email || "",
-        dataNascimento: user.user_metadata.data_nascimento || "",
       });
       setOfficeSettings({
         companyName: user.user_metadata.empresa || "Meu Escritório de Advocacia",
@@ -143,7 +141,6 @@ export const useConfiguracoesState = () => {
       const { error } = await supabase.auth.updateUser({
         data: { 
           nome: profileSettings.name || null,
-          data_nascimento: profileSettings.dataNascimento || null,
           telefone: officeSettings.phone || null,
           oab: officeSettings.cnpj || null,
           empresa: officeSettings.companyName || null,
