@@ -56,12 +56,12 @@ const EscritorioTab = ({ officeSettings, setOfficeSettings, onLogoUpdate }: Escr
                 />
             </div>
             <div className="space-y-1.5">
-                <Label htmlFor="cnpj_config_esc" className="text-sm font-medium text-gray-700">CNPJ</Label>
+                <Label htmlFor="oab_config_esc" className="text-sm font-medium text-gray-700">OAB</Label>
                 <Input 
-                id="cnpj_config_esc" 
+                id="oab_config_esc" 
                 value={officeSettings.cnpj}
                 onChange={(e) => setOfficeSettings(prev => ({...prev, cnpj: e.target.value}))}
-                placeholder="00.000.000/0000-00"
+                placeholder="Ex: OAB/SP 123.456"
                 className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
                 />
             </div>
