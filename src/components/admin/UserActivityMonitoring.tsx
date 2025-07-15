@@ -186,6 +186,26 @@ const UserActivityMonitoring = () => {
     return () => clearInterval(interval);
   }, []);
 
+  // Hook para executar a função de marcar usuários offline periodicamente
+  useEffect(() => {
+    const markUsersOffline = async () => {
+      try {
+        await supabase.functions.invoke('mark-users-offline');
+        console.log('✅ Usuários offline marcados com sucesso');
+      } catch (error) {
+        console.error('❌ Erro ao marcar usuários offline:', error);
+      }
+    };
+
+    // Executar imediatamente
+    markUsersOffline();
+
+    // Executar a cada 1 minuto
+    const offlineInterval = setInterval(markUsersOffline, 60 * 1000);
+
+    return () => clearInterval(offlineInterval);
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Estatísticas Gerais */}

@@ -127,6 +127,9 @@ verify_jwt = true
 [functions.enviar-email-assinatura]
 verify_jwt = false
 
+[functions.mark-users-offline]
+verify_jwt = false
+
 [edge_runtime]
 policy = "per_worker"
 inspector_port = 8083

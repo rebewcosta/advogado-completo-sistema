@@ -1197,6 +1197,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      mark_users_offline_after_timeout: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       sanitize_text_input: {
         Args: { input_text: string }
         Returns: string
