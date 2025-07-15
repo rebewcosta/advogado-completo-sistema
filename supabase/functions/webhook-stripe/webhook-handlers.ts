@@ -26,10 +26,21 @@ export async function handleSubscriptionEvent(event: Stripe.Event, supabase: any
       return;
     }
 
-    const { data: user, error: userError } = await supabase.auth.admin.getUserByEmail(customer.email);
+    // Buscar usuário pelo email usando listUsers
+    const { data: usersData, error: userError } = await supabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000 // Usar um limite alto para buscar todos os usuários se necessário
+    });
     
-    if (userError || !user) {
-      logStep("❌ Usuário não encontrado", { email: customer.email, error: userError?.message });
+    if (userError) {
+      logStep("❌ Erro ao buscar usuários", { error: userError.message });
+      return;
+    }
+    
+    const user = usersData.users.find(u => u.email === customer.email);
+    
+    if (!user) {
+      logStep("❌ Usuário não encontrado", { email: customer.email });
       return;
     }
 
@@ -115,7 +126,18 @@ export async function handleInvoiceEvent(event: Stripe.Event, supabase: any, str
       return;
     }
 
-    const { data: user } = await supabase.auth.admin.getUserByEmail(customer.email);
+    // Buscar usuário pelo email usando listUsers
+    const { data: usersData, error: listError } = await supabase.auth.admin.listUsers({
+      page: 1,
+      perPage: 1000
+    });
+    
+    if (listError) {
+      logStep("❌ Erro ao buscar usuários", { error: listError.message });
+      return;
+    }
+    
+    const user = usersData.users.find(u => u.email === customer.email);
     
     if (!user) {
       logStep("❌ Usuário não encontrado para fatura", { email: customer.email });
