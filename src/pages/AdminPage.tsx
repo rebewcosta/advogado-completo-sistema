@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Activity, 
-  CheckSquare, 
+  TestTube2, 
   Users, 
   UserPlus, 
   Shield, 
@@ -21,7 +21,7 @@ import {
 import MonitoramentoPagamentos from '@/components/admin/MonitoramentoPagamentos';
 import SystemMonitoring from '@/components/admin/SystemMonitoring';
 import UserActivityMonitoring from '@/components/admin/UserActivityMonitoring';
-import ProductionValidation from '@/components/admin/ProductionValidation';
+import SystemTesting from '@/components/admin/SystemTesting';
 import CreateUserAccount from '@/components/admin/CreateUserAccount';
 import CriarContaEspecial from '@/components/admin/CriarContaEspecial';
 import SecurityMonitoring from '@/components/admin/SecurityMonitoring';
@@ -66,9 +66,9 @@ const AdminPage = () => {
             <span className="text-xs">Usuários Online</span>
           </TabsTrigger>
           
-          <TabsTrigger value="validacao" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-            <CheckSquare className="h-5 w-5" />
-            <span className="text-xs">Validação</span>
+          <TabsTrigger value="teste-sistema" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+            <TestTube2 className="h-5 w-5" />
+            <span className="text-xs">Teste de Sistema</span>
           </TabsTrigger>
           
           <TabsTrigger value="criar-conta" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-indigo-500 data-[state=active]:text-white">
@@ -144,19 +144,19 @@ const AdminPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="validacao" className="mt-6">
+        <TabsContent value="teste-sistema" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <CheckSquare className="h-6 w-6 text-orange-500" />
-                Validação de Produção
+                <TestTube2 className="h-6 w-6 text-orange-500" />
+                Teste de Sistema
               </CardTitle>
               <CardDescription>
-                Validações de sistema, testes e verificações de integridade
+                Execução de testes abrangentes para verificar o funcionamento do sistema
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ProductionValidation />
+              <SystemTesting />
             </CardContent>
           </Card>
         </TabsContent>
