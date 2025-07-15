@@ -115,26 +115,28 @@ serve(async (req) => {
     // Verificar assinatura Stripe nos metadados
     const subscriptionStatus = user.user_metadata?.subscription_status;
     const currentPeriodEnd = user.user_metadata?.current_period_end;
+    const canceledAt = user.user_metadata?.canceled_at;
     
     let subscriptionEndDate = null;
     if (currentPeriodEnd) {
       try {
         if (currentPeriodEnd.toString().match(/^\d+$/)) {
-          subscriptionEndDate = new Date(parseInt(currentPeriodEnd) * 1000).toISOString();
+          subscriptionEndDate = new Date(parseInt(currentPeriodEnd) * 1000);
         } else {
-          subscriptionEndDate = new Date(currentPeriodEnd).toISOString();
+          subscriptionEndDate = new Date(currentPeriodEnd);
         }
       } catch (e) {
         logStep("Error parsing subscription end date", { currentPeriodEnd });
       }
     }
 
+    // Verificar se assinatura está ativa
     if (subscriptionStatus === 'active' || subscriptionStatus === 'trialing') {
       logStep("Active subscription found");
       return new Response(JSON.stringify({
         subscribed: true,
         account_type: 'premium',
-        subscription_end: subscriptionEndDate,
+        subscription_end: subscriptionEndDate?.toISOString(),
         trial_days_remaining: null,
         message: 'Assinatura Premium ativa'
       }), {
@@ -143,18 +145,109 @@ serve(async (req) => {
       });
     }
 
-    if (subscriptionStatus === 'past_due' || subscriptionStatus === 'incomplete') {
-      logStep("Subscription payment pending");
+    // Verificar se assinatura foi cancelada mas ainda está no período pago
+    if (subscriptionStatus === 'canceled' && subscriptionEndDate && new Date() < subscriptionEndDate) {
+      logStep("Canceled subscription still in grace period", { 
+        endDate: subscriptionEndDate.toISOString(),
+        now: new Date().toISOString()
+      });
+      
+      const daysRemaining = Math.ceil((subscriptionEndDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      
       return new Response(JSON.stringify({
-        subscribed: false,
-        account_type: 'pending',
-        subscription_end: subscriptionEndDate,
+        subscribed: true,
+        account_type: 'canceled_grace',
+        subscription_end: subscriptionEndDate.toISOString(),
         trial_days_remaining: null,
-        message: 'Pagamento da assinatura pendente'
+        days_remaining: daysRemaining,
+        message: `Assinatura cancelada. Acesso liberado até ${subscriptionEndDate.toLocaleDateString('pt-BR')} (${daysRemaining} dias restantes)`
       }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
+    }
+
+    // Se assinatura foi cancelada E já expirou o período pago - BLOQUEAR TOTALMENTE
+    if (subscriptionStatus === 'canceled' && subscriptionEndDate && new Date() >= subscriptionEndDate) {
+      logStep("Canceled subscription expired - blocking access", { 
+        endDate: subscriptionEndDate.toISOString(),
+        now: new Date().toISOString()
+      });
+      
+      return new Response(JSON.stringify({
+        subscribed: false,
+        account_type: 'expired_canceled',
+        subscription_end: subscriptionEndDate.toISOString(),
+        trial_days_remaining: null,
+        message: 'Sua assinatura foi cancelada e o período pago expirou. Reative sua assinatura para continuar.'
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
+
+    // Verificar se está em período de carência por falta de pagamento
+    if (subscriptionStatus === 'past_due' || subscriptionStatus === 'incomplete') {
+      const pastDueSince = user.user_metadata?.past_due_since;
+      
+      if (pastDueSince) {
+        const pastDueDate = new Date(pastDueSince);
+        const gracePeriodEnd = new Date(pastDueDate);
+        gracePeriodEnd.setDate(gracePeriodEnd.getDate() + 5); // 5 dias de carência
+        
+        if (new Date() < gracePeriodEnd) {
+          // Ainda no período de carência
+          const daysRemaining = Math.ceil((gracePeriodEnd.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+          
+          logStep("Subscription in grace period", { 
+            pastDueSince,
+            gracePeriodEnd: gracePeriodEnd.toISOString(),
+            daysRemaining
+          });
+          
+          return new Response(JSON.stringify({
+            subscribed: true,
+            account_type: 'grace_period',
+            subscription_end: subscriptionEndDate?.toISOString(),
+            trial_days_remaining: null,
+            grace_days_remaining: daysRemaining,
+            message: `Pagamento pendente. Sistema será bloqueado em ${daysRemaining} dias se não pagar.`
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        } else {
+          // Período de carência expirou - BLOQUEAR TOTALMENTE
+          logStep("Grace period expired - blocking access", { 
+            pastDueSince,
+            gracePeriodEnd: gracePeriodEnd.toISOString()
+          });
+          
+          return new Response(JSON.stringify({
+            subscribed: false,
+            account_type: 'grace_expired',
+            subscription_end: subscriptionEndDate?.toISOString(),
+            trial_days_remaining: null,
+            message: 'Período de carência de 5 dias expirado. Reative sua assinatura para continuar.'
+          }), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+      } else {
+        // past_due sem data definida - permitir com aviso
+        logStep("Subscription payment pending");
+        return new Response(JSON.stringify({
+          subscribed: false,
+          account_type: 'pending',
+          subscription_end: subscriptionEndDate?.toISOString(),
+          trial_days_remaining: null,
+          message: 'Pagamento da assinatura pendente'
+        }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        });
+      }
     }
 
     // Trial expirado e sem assinatura ativa

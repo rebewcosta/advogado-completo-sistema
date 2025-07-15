@@ -107,6 +107,30 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
                 });
               }
             }
+
+            // Alertas para assinatura cancelada em período de carência
+            if (accountType === 'canceled_grace') {
+              const daysRemaining = funcResponse.days_remaining || 0;
+              if (daysRemaining <= 3) {
+                toast({
+                  title: "⚠️ Assinatura Cancelada!",
+                  description: `Sua assinatura foi cancelada. Acesso será bloqueado em ${daysRemaining} dias. Reative para continuar.`,
+                  variant: "destructive",
+                  duration: 10000,
+                });
+              }
+            }
+
+            // Alertas para período de carência por falta de pagamento
+            if (accountType === 'grace_period') {
+              const graceDays = funcResponse.grace_days_remaining || 0;
+              toast({
+                title: "⚠️ Pagamento Pendente!",
+                description: `Seu pagamento está atrasado. Sistema será bloqueado em ${graceDays} dias se não pagar.`,
+                variant: "destructive",
+                duration: 10000,
+              });
+            }
           } else {
             console.log("❌ ACESSO NEGADO - Sem assinatura válida");
             setAccessGranted(false);
@@ -159,6 +183,40 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
   } else {
     // REDIRECIONAMENTO RIGOROSO baseado no status
     const currentPath = location.pathname;
+    
+    // BLOQUEIO TOTAL - Assinatura cancelada e período pago expirado
+    if (subscriptionStatus === 'expired_canceled') {
+      console.log(`🚫 BLOQUEIO TOTAL - Assinatura cancelada expirada: ${currentPath}`);
+      
+      return (
+        <Navigate 
+          to="/conta-cancelada" 
+          state={{ 
+            from: location, 
+            message: "🔒 Sua assinatura foi cancelada e o período pago expirou. Reative sua assinatura para continuar usando o sistema.",
+            reason: 'expired_canceled'
+          }} 
+          replace 
+        />
+      );
+    }
+
+    // BLOQUEIO TOTAL - Período de carência por falta de pagamento expirado  
+    if (subscriptionStatus === 'grace_expired') {
+      console.log(`🚫 BLOQUEIO TOTAL - Período de carência expirado: ${currentPath}`);
+      
+      return (
+        <Navigate 
+          to="/conta-cancelada" 
+          state={{ 
+            from: location, 
+            message: "🔒 O período de carência de 5 dias para pagamento expirou. Reative sua assinatura para continuar.",
+            reason: 'grace_expired'
+          }} 
+          replace 
+        />
+      );
+    }
     
     // Se trial expirado ou sem assinatura
     if (subscriptionStatus === 'none' || subscriptionStatus === 'inactive') {
