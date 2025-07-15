@@ -46,16 +46,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Listener para detectar quando o usuário sai da página
     const handleBeforeUnload = () => {
+      // Simplificado - apenas marcar como offline
       if (user) {
-        // Usar sendBeacon para garantir que a requisição seja enviada mesmo quando a página está fechando
-        const data = new FormData();
-        data.append('user_id', user.id);
-        data.append('action', 'offline');
-        
-        // Tentar marcar como offline via API
-        navigator.sendBeacon('/api/user-offline', data);
-        
-        // Também atualizar diretamente no Supabase (melhor esforço)
         supabase
           .from('user_profiles')
           .update({
@@ -79,7 +71,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       subscription.unsubscribe();
     };
-  }, [user]);
+  }, []); // Dependência vazia para evitar loops
 
   // Função para atualizar presença do usuário
   const updateUserPresence = async (user: User, isOnline: boolean) => {

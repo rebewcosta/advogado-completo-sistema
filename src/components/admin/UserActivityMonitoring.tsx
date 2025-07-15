@@ -180,31 +180,30 @@ const UserActivityMonitoring = () => {
   useEffect(() => {
     fetchUserActivity();
     
-    // Atualizar a cada 2 minutos
-    const interval = setInterval(fetchUserActivity, 2 * 60 * 1000);
+    // Atualizar a cada 5 minutos (reduzido de 2 minutos)
+    const interval = setInterval(fetchUserActivity, 5 * 60 * 1000);
     
     return () => clearInterval(interval);
-  }, []);
+  }, []); // Remover dependências desnecessárias
 
   // Hook para executar a função de marcar usuários offline periodicamente
   useEffect(() => {
     const markUsersOffline = async () => {
       try {
         await supabase.functions.invoke('mark-users-offline');
-        console.log('✅ Usuários offline marcados com sucesso');
       } catch (error) {
         console.error('❌ Erro ao marcar usuários offline:', error);
       }
     };
 
-    // Executar imediatamente
+    // Executar apenas uma vez no mount, depois deixar o servidor gerenciar
     markUsersOffline();
 
-    // Executar a cada 1 minuto
-    const offlineInterval = setInterval(markUsersOffline, 60 * 1000);
+    // Executar a cada 5 minutos (aumentado de 1 minuto)
+    const offlineInterval = setInterval(markUsersOffline, 5 * 60 * 1000);
 
     return () => clearInterval(offlineInterval);
-  }, []);
+  }, []); // Remover dependências desnecessárias
 
   return (
     <div className="space-y-6">

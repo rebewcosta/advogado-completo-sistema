@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -14,14 +14,36 @@ export const useRealtimePresence = () => {
   const { user } = useAuth();
   const [onlineUsers, setOnlineUsers] = useState<UserPresence[]>([]);
   const [isConnected, setIsConnected] = useState(false);
+  const channelRef = useRef<any>(null);
+  const hasInitialized = useRef(false);
 
-  useEffect(() => {
+  const updatePresence = useCallback(async () => {
     if (!user) return;
 
-    const channelName = 'user_presence_channel';
-    const presenceChannel = supabase.channel(channelName);
+    try {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          nome_completo: user.user_metadata?.nome_completo,
+          last_seen: new Date().toISOString(),
+          is_online: true
+        }, { onConflict: 'id' });
+    } catch (error) {
+      console.error('Erro ao atualizar presença:', error);
+    }
+  }, [user]);
 
-    // Configurar os listeners de presença
+  useEffect(() => {
+    if (!user || hasInitialized.current) return;
+
+    hasInitialized.current = true;
+    const channelName = `user_presence_${Date.now()}`;
+    const presenceChannel = supabase.channel(channelName);
+    channelRef.current = presenceChannel;
+
+    // Configurar apenas o listener essencial
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const presenceState = presenceChannel.presenceState();
@@ -44,7 +66,7 @@ export const useRealtimePresence = () => {
         setIsConnected(true);
       });
 
-    // Fazer subscribe e track da presença do usuário atual
+    // Subscribe e track apenas uma vez
     presenceChannel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         const userPresence = {
@@ -56,34 +78,30 @@ export const useRealtimePresence = () => {
         };
 
         await presenceChannel.track(userPresence);
-        
-        // Atualizar o status na tabela user_profiles apenas uma vez
-        await supabase
-          .from('user_profiles')
-          .upsert({
-            id: user.id,
-            email: user.email,
-            nome_completo: user.user_metadata?.nome_completo,
-            last_seen: new Date().toISOString(),
-            is_online: true
-          }, { onConflict: 'id' });
+        await updatePresence();
       }
     });
 
     // Cleanup
     return () => {
-      // Atualizar status para offline antes de sair
-      supabase
-        .from('user_profiles')
-        .update({
-          is_online: false,
-          last_seen: new Date().toISOString()
-        })
-        .eq('id', user.id);
-      
-      supabase.removeChannel(presenceChannel);
+      hasInitialized.current = false;
+      if (channelRef.current) {
+        // Marcar como offline
+        if (user) {
+          supabase
+            .from('user_profiles')
+            .update({
+              is_online: false,
+              last_seen: new Date().toISOString()
+            })
+            .eq('id', user.id);
+        }
+        
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
-  }, [user]);
+  }, [user, updatePresence]);
 
   return {
     onlineUsers,
