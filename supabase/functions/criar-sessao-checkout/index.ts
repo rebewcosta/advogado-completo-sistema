@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Stripe from "https://esm.sh/stripe@14.21.0";
 
@@ -8,137 +7,215 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-serve(async (req) => {
+interface CheckoutRequest {
+  emailCliente: string;
+}
+
+serve(async (req: Request) => {
+  console.log(`🚀 [CHECKOUT] ${new Date().toISOString()} - Requisição recebida`);
+  console.log(`📋 [CHECKOUT] Método: ${req.method}`);
+  console.log(`📋 [CHECKOUT] Headers: ${JSON.stringify(Object.fromEntries(req.headers.entries()))}`);
+
+  // Handle CORS preflight
   if (req.method === "OPTIONS") {
+    console.log("✅ [CHECKOUT] Respondendo CORS preflight");
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log("🚀 [CHECKOUT] Função iniciada");
-
   try {
-    // Verificar se é POST
+    // Verificar método
     if (req.method !== "POST") {
+      console.error("❌ [CHECKOUT] Método inválido:", req.method);
       return new Response(
-        JSON.stringify({ error: "Método não permitido" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 405 }
+        JSON.stringify({ error: "Apenas POST é permitido" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 405 
+        }
       );
     }
 
-    // Verificar STRIPE_SECRET_KEY
+    // Verificar chave do Stripe
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
+    console.log(`🔑 [CHECKOUT] Stripe key presente: ${stripeSecretKey ? 'SIM' : 'NÃO'}`);
+    
     if (!stripeSecretKey) {
-      console.error("❌ STRIPE_SECRET_KEY não encontrada");
+      console.error("❌ [CHECKOUT] STRIPE_SECRET_KEY não configurada");
       return new Response(
-        JSON.stringify({ error: "Configuração do servidor incompleta" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        JSON.stringify({ error: "Configuração do servidor incompleta - entre em contato com o suporte" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 500 
+        }
       );
     }
 
-    // Ler e validar request body
+    // Ler corpo da requisição
     const body = await req.text();
-    if (!body) {
+    console.log(`📥 [CHECKOUT] Body recebido: ${body}`);
+
+    if (!body || body.trim() === "") {
+      console.error("❌ [CHECKOUT] Body vazio");
       return new Response(
-        JSON.stringify({ error: "Body da requisição vazio" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        JSON.stringify({ error: "Dados da requisição não encontrados" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
       );
     }
 
-    let requestData;
+    // Parse JSON
+    let requestData: CheckoutRequest;
     try {
-      requestData = JSON.parse(body);
-    } catch (error) {
+      requestData = JSON.parse(body) as CheckoutRequest;
+      console.log(`📊 [CHECKOUT] Dados parseados: ${JSON.stringify(requestData)}`);
+    } catch (parseError) {
+      console.error("❌ [CHECKOUT] Erro ao fazer parse do JSON:", parseError);
       return new Response(
-        JSON.stringify({ error: "JSON inválido" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        JSON.stringify({ error: "Dados inválidos - JSON malformado" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
       );
     }
 
+    // Validar email
     const { emailCliente } = requestData;
     
-    // Validar email
-    if (!emailCliente || typeof emailCliente !== 'string') {
+    if (!emailCliente) {
+      console.error("❌ [CHECKOUT] Email não fornecido");
       return new Response(
         JSON.stringify({ error: "Email é obrigatório" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
       );
     }
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(emailCliente.trim())) {
+    if (typeof emailCliente !== 'string') {
+      console.error("❌ [CHECKOUT] Email não é string:", typeof emailCliente);
       return new Response(
-        JSON.stringify({ error: "Email inválido" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        JSON.stringify({ error: "Email deve ser uma string válida" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
       );
     }
 
-    console.log("✅ Email validado:", emailCliente);
+    const emailTrimmed = emailCliente.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailRegex.test(emailTrimmed)) {
+      console.error("❌ [CHECKOUT] Email com formato inválido:", emailTrimmed);
+      return new Response(
+        JSON.stringify({ error: "Formato de email inválido" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
+      );
+    }
+
+    console.log(`✅ [CHECKOUT] Email validado: ${emailTrimmed}`);
 
     // Inicializar Stripe
+    console.log("🔧 [CHECKOUT] Inicializando Stripe...");
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
+    console.log("✅ [CHECKOUT] Stripe inicializado com sucesso");
 
     // Detectar ambiente
-    const origin = req.headers.get("origin") || "";
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     const isProduction = !origin.includes('localhost') && 
                         !origin.includes('lovable.app') && 
-                        !origin.includes('127.0.0.1');
-
-    console.log("🏷️ Ambiente:", isProduction ? "PRODUÇÃO" : "TESTE");
+                        !origin.includes('127.0.0.1') &&
+                        !origin.includes('lovableproject.com');
+    
+    console.log(`🏷️ [CHECKOUT] Origin: ${origin}`);
+    console.log(`🏷️ [CHECKOUT] Ambiente detectado: ${isProduction ? "PRODUÇÃO" : "TESTE"}`);
 
     // URLs de redirecionamento
     const baseUrl = origin || "https://sisjusgestao.com.br";
     const successUrl = `${baseUrl}/payment-success`;
     const cancelUrl = `${baseUrl}/pagamento`;
+    
+    console.log(`🔗 [CHECKOUT] Success URL: ${successUrl}`);
+    console.log(`🔗 [CHECKOUT] Cancel URL: ${cancelUrl}`);
 
-    // Criar sessão de checkout com price_data ao invés de price ID
+    // Configuração da sessão de checkout
     const sessionConfig = {
-      customer_email: emailCliente,
-      payment_method_types: ["card"],
+      customer_email: emailTrimmed,
+      payment_method_types: ["card"] as const,
       line_items: [
         {
           price_data: {
             currency: "brl",
             product_data: {
               name: "JusGestão Premium",
-              description: "Sistema de gestão jurídica completo"
+              description: "Sistema completo de gestão jurídica - 7 dias gratuitos"
             },
-            unit_amount: 3700, // R$ 37,00
+            unit_amount: 3700, // R$ 37,00 em centavos
             recurring: {
-              interval: "month"
+              interval: "month" as const
             }
           },
           quantity: 1
         }
       ],
-      mode: "subscription",
+      mode: "subscription" as const,
       success_url: successUrl,
       cancel_url: cancelUrl,
       subscription_data: {
-        trial_period_days: 7
+        trial_period_days: 7,
+        metadata: {
+          email: emailTrimmed,
+          environment: isProduction ? "production" : "test",
+          trial_days: "7"
+        }
       },
-      allow_promotion_codes: true
+      metadata: {
+        email: emailTrimmed,
+        environment: isProduction ? "production" : "test",
+        trial_days: "7"
+      },
+      allow_promotion_codes: true,
+      billing_address_collection: "auto" as const
     };
 
-    console.log("🔄 Criando sessão de checkout...");
+    console.log(`⚙️ [CHECKOUT] Configuração preparada: ${JSON.stringify(sessionConfig, null, 2)}`);
+
+    // Criar sessão
+    console.log("🔄 [CHECKOUT] Criando sessão no Stripe...");
     const session = await stripe.checkout.sessions.create(sessionConfig);
+    
+    console.log(`✅ [CHECKOUT] Sessão criada com sucesso!`);
+    console.log(`🆔 [CHECKOUT] Session ID: ${session.id}`);
+    console.log(`🔗 [CHECKOUT] Session URL: ${session.url}`);
 
     if (!session.url) {
-      throw new Error("URL da sessão não foi gerada");
+      console.error("❌ [CHECKOUT] URL da sessão não foi gerada");
+      throw new Error("Falha ao gerar URL de checkout");
     }
 
-    console.log("✅ Sessão criada:", session.id);
-    console.log("🔗 URL:", session.url)
+    // Resposta de sucesso
+    const response = {
+      success: true,
+      url: session.url,
+      sessionId: session.id,
+      ambiente: isProduction ? "PRODUÇÃO" : "TESTE",
+      trialDays: 7,
+      message: "Sessão de checkout criada com sucesso! 7 dias gratuitos."
+    };
+
+    console.log(`🎉 [CHECKOUT] Resposta de sucesso: ${JSON.stringify(response)}`);
 
     return new Response(
-      JSON.stringify({
-        url: session.url,
-        sessionId: session.id,
-        success: true,
-        ambiente: isProduction ? 'PRODUÇÃO' : 'TESTE',
-        trialDays: 7,
-        message: "Sessão criada com 7 dias gratuitos!"
-      }),
+      JSON.stringify(response),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" }, 
         status: 200 
@@ -146,15 +223,25 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error("❌ Erro:", error);
+    console.error("💥 [CHECKOUT] ERRO CRÍTICO:", error);
     
-    let errorMessage = "Erro ao processar pagamento";
+    let errorMessage = "Erro interno do servidor";
+    let errorDetails = "";
+    
     if (error instanceof Error) {
       errorMessage = error.message;
+      errorDetails = error.stack || "";
+      console.error(`💥 [CHECKOUT] Stack: ${errorDetails}`);
     }
-    
+
+    console.error(`💥 [CHECKOUT] Retornando erro: ${errorMessage}`);
+
     return new Response(
-      JSON.stringify({ error: errorMessage }),
+      JSON.stringify({ 
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+        details: "Erro ao processar checkout. Entre em contato com o suporte se o problema persistir."
+      }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" }, 
         status: 500 
