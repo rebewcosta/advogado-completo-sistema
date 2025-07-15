@@ -18,8 +18,6 @@ serve(async (req) => {
 
   try {
     console.log("🚀 [CHECKOUT] Iniciando função criar-sessao-checkout");
-    console.log("🌐 [CHECKOUT] Method:", req.method);
-    console.log("🌐 [CHECKOUT] Headers:", Object.fromEntries(req.headers.entries()));
 
     // Verificar método HTTP
     if (req.method !== "POST") {
@@ -33,7 +31,7 @@ serve(async (req) => {
       );
     }
 
-    // Verificar chaves de ambiente CRÍTICAS
+    // Verificar chaves de ambiente
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
@@ -41,7 +39,7 @@ serve(async (req) => {
     if (!stripeSecretKey) {
       console.error("❌ [CHECKOUT] STRIPE_SECRET_KEY não configurada");
       return new Response(
-        JSON.stringify({ error: "Configuração do Stripe não encontrada" }),
+        JSON.stringify({ error: "Chave do Stripe não configurada" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
@@ -49,7 +47,7 @@ serve(async (req) => {
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error("❌ [CHECKOUT] Configurações do Supabase não encontradas");
       return new Response(
-        JSON.stringify({ error: "Configuração do banco de dados não encontrada" }),
+        JSON.stringify({ error: "Configuração do banco não encontrada" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
       );
     }
@@ -71,7 +69,7 @@ serve(async (req) => {
     } catch (parseError) {
       console.error("❌ [CHECKOUT] Erro ao processar JSON:", parseError);
       return new Response(
-        JSON.stringify({ error: "Dados da requisição inválidos ou malformados" }),
+        JSON.stringify({ error: "Dados da requisição inválidos" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
@@ -89,9 +87,9 @@ serve(async (req) => {
 
     // Validação rigorosa do email
     if (!emailCliente || typeof emailCliente !== 'string' || !emailCliente.trim()) {
-      console.error("❌ [CHECKOUT] Email inválido ou não fornecido:", emailCliente);
+      console.error("❌ [CHECKOUT] Email inválido:", emailCliente);
       return new Response(
-        JSON.stringify({ error: "Email é obrigatório e deve ser válido" }),
+        JSON.stringify({ error: "Email é obrigatório" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
@@ -129,7 +127,7 @@ serve(async (req) => {
       }
     }
 
-    // Determinar ambiente de produção
+    // Determinar ambiente
     const origin = req.headers.get("origin") || dominio || "";
     const isProduction = !origin.includes('localhost') && 
                         !origin.includes('lovable.app') && 
@@ -137,33 +135,12 @@ serve(async (req) => {
                         !origin.includes('127.0.0.1');
     
     console.log("🏷️ [CHECKOUT] Ambiente detectado:", isProduction ? "PRODUÇÃO" : "TESTE");
-    console.log("🌐 [CHECKOUT] Origin:", origin);
 
     // Inicializar Stripe
     console.log("💳 [CHECKOUT] Inicializando Stripe...");
     const stripe = new Stripe(stripeSecretKey, {
       apiVersion: "2023-10-16",
     });
-
-    // Verificar/criar cliente no Stripe
-    let stripeCustomerId = null;
-    try {
-      console.log("👤 [CHECKOUT] Verificando cliente existente no Stripe...");
-      const existingCustomers = await stripe.customers.list({
-        email: emailLimpo,
-        limit: 1
-      });
-      
-      if (existingCustomers.data.length > 0) {
-        stripeCustomerId = existingCustomers.data[0].id;
-        console.log("✅ [CHECKOUT] Cliente existente encontrado:", stripeCustomerId);
-      } else {
-        console.log("👤 [CHECKOUT] Novo cliente será criado no checkout");
-      }
-    } catch (customerError) {
-      console.error("⚠️ [CHECKOUT] Erro ao verificar cliente:", customerError);
-      // Continuar sem erro fatal
-    }
 
     // Configurar URLs de sucesso e cancelamento
     const baseUrl = origin || "https://sisjusgestao.com.br";
@@ -181,11 +158,42 @@ serve(async (req) => {
     
     console.log("💰 [CHECKOUT] Price ID selecionado:", priceId, `(${isProduction ? 'PRODUÇÃO' : 'TESTE'})`);
 
+    // Verificar/criar cliente no Stripe
+    let customer = null;
+    try {
+      console.log("👤 [CHECKOUT] Verificando cliente existente no Stripe...");
+      const existingCustomers = await stripe.customers.list({
+        email: emailLimpo,
+        limit: 1
+      });
+      
+      if (existingCustomers.data.length > 0) {
+        customer = existingCustomers.data[0];
+        console.log("✅ [CHECKOUT] Cliente existente encontrado:", customer.id);
+      } else {
+        console.log("👤 [CHECKOUT] Criando novo cliente...");
+        customer = await stripe.customers.create({
+          email: emailLimpo,
+          metadata: {
+            user_id: user?.id || 'novo_usuario',
+            client_reference_id: clientReferenceId || emailLimpo,
+            environment: isProduction ? 'production' : 'test'
+          }
+        });
+        console.log("✅ [CHECKOUT] Novo cliente criado:", customer.id);
+      }
+    } catch (customerError) {
+      console.error("❌ [CHECKOUT] Erro ao gerenciar cliente:", customerError);
+      return new Response(
+        JSON.stringify({ error: "Erro ao processar dados do cliente" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      );
+    }
+
     // Configuração da sessão de checkout com 7 dias de teste
     const sessionConfig = {
+      customer: customer.id,
       payment_method_types: ["card"],
-      customer: stripeCustomerId,
-      customer_email: stripeCustomerId ? undefined : emailLimpo,
       line_items: [
         {
           price: priceId,
@@ -200,7 +208,6 @@ serve(async (req) => {
         metadata: {
           email_cliente: emailLimpo,
           plano: nomePlano || 'JusGestão Premium',
-          valor: '3700',
           user_id: user?.id || 'novo_usuario',
           client_reference_id: clientReferenceId || emailLimpo,
           trial_days: '7',
@@ -210,22 +217,16 @@ serve(async (req) => {
       metadata: {
         email_cliente: emailLimpo,
         plano: nomePlano || 'JusGestão Premium',
-        valor: '3700',
         user_id: user?.id || 'novo_usuario',
         client_reference_id: clientReferenceId || emailLimpo,
         trial_days: '7',
         environment: isProduction ? 'production' : 'test'
       },
-      billing_address_collection: 'auto',
       allow_promotion_codes: true,
-      payment_method_collection: 'always',
-      automatic_tax: {
-        enabled: false
-      }
+      billing_address_collection: 'auto'
     };
 
-    console.log("⚙️ [CHECKOUT] Configuração da sessão:");
-    console.log(JSON.stringify(sessionConfig, null, 2));
+    console.log("⚙️ [CHECKOUT] Configuração da sessão preparada");
 
     // Criar sessão de checkout
     console.log("🔄 [CHECKOUT] Criando sessão no Stripe...");
@@ -236,16 +237,16 @@ serve(async (req) => {
       console.log("🆔 [CHECKOUT] Session ID:", session.id);
       console.log("🔗 [CHECKOUT] Session URL:", session.url);
     } catch (stripeError) {
-      console.error("❌ [CHECKOUT] Erro do Stripe ao criar sessão:", stripeError);
+      console.error("❌ [CHECKOUT] Erro do Stripe:", stripeError);
       
       let errorMessage = "Erro ao processar pagamento";
       if (stripeError instanceof Error) {
         if (stripeError.message.includes('No such price')) {
-          errorMessage = `Price ID não encontrado: ${priceId}. Verifique a configuração do Stripe.`;
+          errorMessage = `Price ID não encontrado: ${priceId}`;
         } else if (stripeError.message.includes('Invalid email')) {
-          errorMessage = "Email fornecido é inválido";
+          errorMessage = "Email inválido";
         } else {
-          errorMessage = `Erro do Stripe: ${stripeError.message}`;
+          errorMessage = `Erro: ${stripeError.message}`;
         }
       }
       
@@ -266,9 +267,7 @@ serve(async (req) => {
       ambiente: isProduction ? 'PRODUÇÃO' : 'TESTE',
       priceId: priceId,
       trialDays: 7,
-      trialEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-      message: "✅ Sessão criada com 7 dias de teste GRATUITO! Primeira cobrança apenas após o período de teste.",
-      valor: 3700,
+      message: "✅ Sessão criada com 7 dias de teste GRATUITO!",
       email: emailLimpo
     };
 
@@ -286,26 +285,10 @@ serve(async (req) => {
     console.error("💥 [CHECKOUT] ERRO FATAL:", error);
     console.error("💥 [CHECKOUT] Stack trace:", error instanceof Error ? error.stack : 'No stack trace');
     
-    let errorMessage = "Erro interno do servidor";
-    let errorCode = "INTERNAL_ERROR";
-    
-    if (error instanceof Error) {
-      errorMessage = error.message;
-      if (error.message.includes('fetch')) {
-        errorCode = "NETWORK_ERROR";
-        errorMessage = "Erro de conexão com o Stripe";
-      } else if (error.message.includes('JSON')) {
-        errorCode = "DATA_ERROR";
-        errorMessage = "Erro nos dados da requisição";
-      }
-    }
-    
     return new Response(
       JSON.stringify({ 
-        error: errorMessage,
-        code: errorCode,
-        message: "Houve um erro ao processar sua solicitação. Nossa equipe foi notificada.",
-        timestamp: new Date().toISOString()
+        error: "Erro interno do servidor",
+        message: "Houve um erro ao processar sua solicitação"
       }),
       { 
         headers: { ...corsHeaders, "Content-Type": "application/json" }, 

@@ -76,7 +76,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       console.log('📧 [PAYMENT] Email:', emailTrimmed);
       console.log('🏷️ [PAYMENT] Environment:', isTestEnvironment ? 'TEST' : 'PRODUCTION');
 
-      // Obter sessão atual para incluir token se disponível
+      // Obter sessão atual
       const { data: { session } } = await supabase.auth.getSession();
       
       // Preparar dados para envio
@@ -98,8 +98,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       if (session?.access_token) {
         headers.Authorization = `Bearer ${session.access_token}`;
         console.log('🔐 [PAYMENT] Token de autenticação incluído');
-      } else {
-        console.log('👤 [PAYMENT] Processando como usuário anônimo');
       }
 
       console.log('📡 [PAYMENT] Chamando função criar-sessao-checkout...');
@@ -107,7 +105,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       // Chamar função do Supabase
       const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
         body: checkoutData,
-        headers: Object.keys(headers).length > 1 ? headers : undefined,
+        headers
       });
 
       console.log('📨 [PAYMENT] Resposta recebida:', { data, invokeError });
@@ -121,7 +119,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       // Verificar se dados foram retornados
       if (!data) {
         console.error('❌ [PAYMENT] Nenhum dado retornado');
-        throw new Error('Nenhuma resposta do servidor');
+        throw new Error('Erro na comunicação com o servidor');
       }
 
       // Verificar erros na resposta
@@ -138,12 +136,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       console.log('✅ [PAYMENT] Checkout criado com sucesso!');
       console.log('🔗 [PAYMENT] URL:', data.url);
-      console.log('🎁 [PAYMENT] Trial configurado:', data.trialDays, 'dias');
 
       // Mostrar toast de sucesso
       toast({
-        title: "🎉 Redirecionando para ativação",
-        description: `Você será redirecionado para ativar sua assinatura com ${data.trialDays || 7} DIAS GRATUITOS! Ambiente: ${data.ambiente || (isTestEnvironment ? 'TESTE' : 'PRODUÇÃO')}`,
+        title: "🎉 Redirecionando para pagamento",
+        description: `Você será redirecionado para ativar sua assinatura com 7 DIAS GRATUITOS! Ambiente: ${data.ambiente || (isTestEnvironment ? 'TESTE' : 'PRODUÇÃO')}`,
         duration: 8000,
       });
 
@@ -162,8 +159,6 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         errorMessage = error.message;
       } else if (typeof error === 'string') {
         errorMessage = error;
-      } else if (error && typeof error === 'object') {
-        errorMessage = JSON.stringify(error);
       }
       
       setErrorDetails(errorMessage);
