@@ -12,19 +12,6 @@ import { Briefcase, Calendar as CalendarIcon, DollarSign as DollarSignIcon, BarC
 const DashboardPage = () => {
   const { user, signOut } = useAuth();
 
-  const getUserFirstName = () => {
-    // Primeiro tentar pegar o nome completo dos metadados
-    if (user?.user_metadata?.nome_completo) {
-      return user.user_metadata.nome_completo;
-    }
-    // Fallback para nome se não tiver nome_completo
-    if (user?.user_metadata?.nome) {
-      return user.user_metadata.nome;
-    }
-    // Último fallback para email
-    return user?.email?.split('@')[0] || 'Usuário';
-  };
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -37,7 +24,6 @@ const DashboardPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 md:p-6 lg:p-8">
       <DashboardHeader
         user={user}
-        getUserFirstName={getUserFirstName}
         handleSignOut={handleSignOut}
       />
 
