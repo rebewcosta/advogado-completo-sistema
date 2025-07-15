@@ -36,7 +36,9 @@ serve(async (req) => {
       throw new Error("Access denied: Admin only");
     }
 
-    const { action } = await req.json();
+    // Ler o body apenas uma vez
+    const body = await req.json();
+    const { action, user_id, expiration_date } = body;
 
     if (action === 'list_trial_users') {
       // Listar usuários em trial
@@ -89,8 +91,6 @@ serve(async (req) => {
     }
 
     if (action === 'set_trial_expiration') {
-      const { user_id, expiration_date } = await req.json();
-      
       if (!user_id || !expiration_date) {
         throw new Error("user_id and expiration_date are required");
       }
@@ -122,8 +122,6 @@ serve(async (req) => {
     }
 
     if (action === 'remove_custom_expiration') {
-      const { user_id } = await req.json();
-      
       if (!user_id) {
         throw new Error("user_id is required");
       }
