@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,6 +13,7 @@ import PlanInfoBox from './PlanInfoBox';
 const RegisterForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -78,32 +80,25 @@ const RegisterForm = () => {
     setIsLoading(true);
     
     try {
-      // Em vez de criar a conta diretamente, redirecionar para a página de pagamento
-      // com os dados do formulário
-      navigate('/pagamento', { 
-        state: { 
-          registrationData: {
-            nome: formData.nome,
-            email: formData.email,
-            senha: formData.senha,
-            telefone: formData.telefone,
-            oab: formData.oab,
-            empresa: formData.empresa || 'Meu Escritório de Advocacia',
-            plano: formData.plano
-          }
-        }
+      // Criar a conta diretamente com 7 dias de trial
+      await signUp(formData.email, formData.senha, {
+        nome_completo: formData.nome,
+        telefone: formData.telefone,
+        oab: formData.oab,
+        empresa: formData.empresa || 'Meu Escritório de Advocacia',
+        plano: formData.plano
       });
 
       toast({
-        title: "Dados validados!",
-        description: "Redirecionando para o pagamento...",
+        title: "🎉 Conta criada com sucesso!",
+        description: "Você tem 7 dias GRÁTIS para testar todas as funcionalidades!",
       });
 
     } catch (error: any) {
-      console.error('Erro na validação:', error);
+      console.error('Erro ao criar conta:', error);
       toast({
-        title: "Erro na validação",
-        description: "Houve um problema. Tente novamente.",
+        title: "Erro ao criar conta",
+        description: error.message || "Houve um problema. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -279,7 +274,7 @@ const RegisterForm = () => {
                       Processando...
                     </>
                   ) : (
-                    'Continuar para Pagamento'
+                    '🎉 Começar 7 Dias Grátis'
                   )}
                 </Button>
                 
