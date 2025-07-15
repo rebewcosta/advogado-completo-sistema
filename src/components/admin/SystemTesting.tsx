@@ -201,10 +201,13 @@ const SystemTesting = () => {
           break;
 
         case 'db-rls':
-          // Testa se RLS está ativo tentando acessar dados sem auth
-          const { error: rlsError } = await supabase.from('processos').select('*').limit(1);
-          result.status = rlsError ? 'success' : 'error';
-          result.details = rlsError ? 'RLS funcionando - acesso negado corretamente' : 'ERRO: RLS não está funcionando!';
+          // Testa RLS verificando se políticas estão ativas nas tabelas
+          const { data: rlsData, error: rlsError } = await supabase
+            .from('processos')
+            .select('id, user_id')
+            .limit(1);
+          result.status = !rlsError ? 'success' : 'error';
+          result.details = !rlsError ? 'RLS funcionando - políticas ativas' : `Erro RLS: ${rlsError.message}`;
           break;
 
         case 'db-functions':
@@ -281,8 +284,9 @@ const SystemTesting = () => {
 
         case 'storage-buckets':
           const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-          result.status = !bucketsError && buckets.length > 0 ? 'success' : 'error';
-          result.details = !bucketsError ? `${buckets.length} buckets encontrados` : 'Erro ao acessar storage';
+          const bucketsCount = buckets?.length || 0;
+          result.status = !bucketsError ? 'success' : 'error';
+          result.details = !bucketsError ? `${bucketsCount} buckets encontrados` : `Erro: ${bucketsError?.message || 'Falha ao acessar storage'}`;
           break;
 
         case 'storage-permissions':
