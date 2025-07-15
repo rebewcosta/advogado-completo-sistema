@@ -91,7 +91,7 @@ const RegisterForm = () => {
 
       toast({
         title: "🎉 Conta criada com sucesso!",
-        description: "Você tem 7 dias GRÁTIS para testar todas as funcionalidades!",
+        description: "Verifique seu email para confirmar a conta. Você tem 7 dias GRÁTIS para testar!",
       });
 
     } catch (error: any) {

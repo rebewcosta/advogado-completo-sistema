@@ -296,19 +296,35 @@ const GerenciarAssinatura = () => {
               <div className="grid gap-3 sm:grid-cols-2">
                 {/* Botão Portal do Cliente - Disponível para contas premium/pendentes */}
                 {!isSpecialAccount && !isTrialAccount && (
-                  <Button 
-                    onClick={handleAbrirPortalCliente}
-                    disabled={isPortalLoading}
-                    variant="outline"
-                    className="flex items-center gap-2 text-sm"
-                  >
-                    {isPortalLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <CreditCard className="h-4 w-4" />
-                    )}
-                    {isPortalLoading ? "Abrindo..." : "Portal do Cliente"}
-                  </Button>
+                  <>
+                    <Button 
+                      onClick={handleAbrirPortalCliente}
+                      disabled={isPortalLoading}
+                      variant="outline"
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      {isPortalLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <CreditCard className="h-4 w-4" />
+                      )}
+                      {isPortalLoading ? "Abrindo..." : "Portal do Cliente"}
+                    </Button>
+                    <Button 
+                      onClick={handleAbrirPortalCliente}
+                      disabled={isPortalLoading}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                    >
+                      {isPortalLoading ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <AlertCircle className="h-3 w-3" />
+                      )}
+                      {isPortalLoading ? "Abrindo..." : "Cancelar Assinatura"}
+                    </Button>
+                  </>
                 )}
 
                 {/* Botão Nova Assinatura - Para contas inativas ou trial */}
