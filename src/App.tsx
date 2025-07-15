@@ -37,6 +37,7 @@ import ContaCanceladaPage from './pages/ContaCanceladaPage';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
+import VerificarAssinatura from './components/VerificarAssinatura';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from '@/components/AppSidebar';
 
@@ -88,24 +89,27 @@ function App() {
                   <Route path="/payment-success" element={<PublicLayout><PaymentSuccessPage /></PublicLayout>} />
                   <Route path="/conta-cancelada" element={<PublicLayout><ContaCanceladaPage /></PublicLayout>} />
 
-                  {/* Rotas protegidas apenas com sidebar */}
-                  <Route path="/dashboard" element={<ProtectedRoute><ProtectedLayout><DashboardPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/meus-processos" element={<ProtectedRoute><ProtectedLayout><MeusProcessosPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/clientes" element={<ProtectedRoute><ProtectedLayout><ClientesPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/equipe" element={<ProtectedRoute><ProtectedLayout><EquipePage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/agenda" element={<ProtectedRoute><ProtectedLayout><AgendaPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/prazos" element={<ProtectedRoute><ProtectedLayout><PrazosPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/tarefas" element={<ProtectedRoute><ProtectedLayout><TarefasPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/ferramentas" element={<ProtectedRoute><ProtectedLayout><FerramentasPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/publicacoes" element={<ProtectedRoute><ProtectedLayout><PublicacoesPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/datajud" element={<ProtectedRoute><ProtectedLayout><DataJudPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/financeiro" element={<ProtectedRoute><ProtectedLayout><FinanceiroPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/documentos" element={<ProtectedRoute><ProtectedLayout><DocumentosPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/relatorios" element={<ProtectedRoute><ProtectedLayout><RelatoriosPage /></ProtectedLayout></ProtectedRoute>} />
+                  {/* Rotas protegidas com verificação de assinatura */}
+                  <Route path="/dashboard" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><DashboardPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/meus-processos" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><MeusProcessosPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/clientes" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><ClientesPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/equipe" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><EquipePage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/agenda" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><AgendaPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/prazos" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><PrazosPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/tarefas" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><TarefasPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/ferramentas" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><FerramentasPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/publicacoes" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><PublicacoesPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/datajud" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><DataJudPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/financeiro" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><FinanceiroPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/documentos" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><DocumentosPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  <Route path="/relatorios" element={<ProtectedRoute><VerificarAssinatura><ProtectedLayout><RelatoriosPage /></ProtectedLayout></VerificarAssinatura></ProtectedRoute>} />
+                  
+                  {/* Rotas que sempre têm acesso (perfil, configurações, admin, pagamento) */}
                   <Route path="/configuracoes" element={<ProtectedRoute><ProtectedLayout><ConfiguracoesPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/perfil" element={<ProtectedRoute><ProtectedLayout><PerfilUsuarioPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/perfil-usuario" element={<ProtectedRoute><ProtectedLayout><PerfilUsuarioPage /></ProtectedLayout></ProtectedRoute>} />
-                  <Route path="/suporte" element={<ProtectedRoute><ProtectedLayout><SuportePage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/admin" element={<ProtectedRoute><ProtectedLayout><AdminPage /></ProtectedLayout></ProtectedRoute>} />
+                  <Route path="/suporte" element={<ProtectedRoute><ProtectedLayout><SuportePage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/redefinir-pin-financeiro" element={<ProtectedRoute><ProtectedLayout><RedefinirPinFinanceiroPage /></ProtectedLayout></ProtectedRoute>} />
                   <Route path="/emails-transacionais" element={<ProtectedRoute><ProtectedLayout><EmailsTransacionaisPage /></ProtectedLayout></ProtectedRoute>} />
 

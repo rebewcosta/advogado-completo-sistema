@@ -6,7 +6,11 @@ import { Spinner } from './ui/spinner';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-const VerificarAssinatura: React.FC = () => {
+interface VerificarAssinaturaProps {
+  children?: React.ReactNode;
+}
+
+const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [accessGranted, setAccessGranted] = useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = useState<string | null>(null);
@@ -20,7 +24,6 @@ const VerificarAssinatura: React.FC = () => {
 
   // CONTROLE RIGOROSO: Apenas estas rotas são permitidas sem assinatura
   const publicRoutes = [
-    '/dashboard', 
     '/perfil', 
     '/configuracoes', 
     '/admin', 
@@ -152,7 +155,7 @@ const VerificarAssinatura: React.FC = () => {
   }
 
   if (accessGranted) {
-    return <Outlet />;
+    return children ? <>{children}</> : <Outlet />;
   } else {
     // REDIRECIONAMENTO RIGOROSO baseado no status
     const currentPath = location.pathname;
