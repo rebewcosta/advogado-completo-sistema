@@ -52,6 +52,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🚀 [PAYMENT FORM] Iniciando processo de pagamento');
+    
     // Limpar estados de erro
     setErrorDetails('');
     setValidationError('');
@@ -72,13 +74,16 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     onProcessingChange(true);
 
     try {
-      console.log('🚀 [PAYMENT] Iniciando processo de pagamento');
-      console.log('📧 [PAYMENT] Email:', emailTrimmed);
-      console.log('🏷️ [PAYMENT] Environment:', isTestEnvironment ? 'TEST' : 'PRODUCTION');
+      console.log('📧 [PAYMENT FORM] Email:', emailTrimmed);
+      console.log('🏷️ [PAYMENT FORM] Environment:', isTestEnvironment ? 'TEST' : 'PRODUCTION');
 
       // Obter sessão atual
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
+      if (sessionError) {
+        console.error('❌ [PAYMENT FORM] Erro ao obter sessão:', sessionError);
+      }
+
       // Preparar dados para envio
       const checkoutData = {
         nomePlano: 'JusGestão Premium - 7 DIAS GRATUITOS',
@@ -88,7 +93,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         clientReferenceId: clientReferenceId || emailTrimmed
       };
 
-      console.log('📦 [PAYMENT] Dados do checkout:', checkoutData);
+      console.log('📦 [PAYMENT FORM] Dados do checkout:', checkoutData);
 
       // Configurar headers
       const headers: Record<string, string> = {
@@ -97,10 +102,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       
       if (session?.access_token) {
         headers.Authorization = `Bearer ${session.access_token}`;
-        console.log('🔐 [PAYMENT] Token de autenticação incluído');
+        console.log('🔐 [PAYMENT FORM] Token de autenticação incluído');
       }
 
-      console.log('📡 [PAYMENT] Chamando função criar-sessao-checkout...');
+      console.log('📡 [PAYMENT FORM] Chamando função criar-sessao-checkout...');
       
       // Chamar função do Supabase
       const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
@@ -108,34 +113,34 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         headers
       });
 
-      console.log('📨 [PAYMENT] Resposta recebida:', { data, invokeError });
+      console.log('📨 [PAYMENT FORM] Resposta recebida:', { data, invokeError });
 
       // Verificar erros da invocação
       if (invokeError) {
-        console.error('❌ [PAYMENT] Erro na invocação:', invokeError);
+        console.error('❌ [PAYMENT FORM] Erro na invocação:', invokeError);
         throw new Error(invokeError.message || 'Erro ao processar pagamento');
       }
 
       // Verificar se dados foram retornados
       if (!data) {
-        console.error('❌ [PAYMENT] Nenhum dado retornado');
+        console.error('❌ [PAYMENT FORM] Nenhum dado retornado');
         throw new Error('Erro na comunicação com o servidor');
       }
 
       // Verificar erros na resposta
       if (data.error) {
-        console.error('❌ [PAYMENT] Erro na resposta:', data.error);
+        console.error('❌ [PAYMENT FORM] Erro na resposta:', data.error);
         throw new Error(data.error);
       }
 
       // Verificar URL de checkout
       if (!data.url) {
-        console.error('❌ [PAYMENT] URL de checkout não encontrada:', data);
+        console.error('❌ [PAYMENT FORM] URL de checkout não encontrada:', data);
         throw new Error('URL de checkout não foi gerada');
       }
 
-      console.log('✅ [PAYMENT] Checkout criado com sucesso!');
-      console.log('🔗 [PAYMENT] URL:', data.url);
+      console.log('✅ [PAYMENT FORM] Checkout criado com sucesso!');
+      console.log('🔗 [PAYMENT FORM] URL:', data.url);
 
       // Mostrar toast de sucesso
       toast({
@@ -146,12 +151,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       // Aguardar um pouco e redirecionar
       setTimeout(() => {
-        console.log('🔗 [PAYMENT] Redirecionando para:', data.url);
+        console.log('🔗 [PAYMENT FORM] Redirecionando para:', data.url);
         window.location.href = data.url;
       }, 2000);
 
     } catch (error) {
-      console.error('💥 [PAYMENT] Erro no pagamento:', error);
+      console.error('💥 [PAYMENT FORM] Erro no pagamento:', error);
       
       let errorMessage = "Erro ao processar pagamento";
       
