@@ -21,17 +21,17 @@ const DashboardPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6 lg:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-4 md:p-6 lg:p-8">
       <DashboardHeader
         user={user}
         handleSignOut={handleSignOut}
       />
 
-      <Tabs defaultValue="visao-geral" className="mt-6 sm:mt-8">
-        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 sm:gap-2 md:gap-3 bg-white/80 backdrop-blur-sm p-1.5 sm:p-2 md:p-3 rounded-xl mb-6 sm:mb-8 shadow-lg border border-white/50 h-auto">
+      <Tabs defaultValue="visao-geral" className="mt-8">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 bg-white/80 backdrop-blur-sm p-2 sm:p-3 rounded-xl mb-8 shadow-lg border border-white/50 h-auto">
           <TabsTrigger
             value="visao-geral"
-            className="flex items-center justify-center gap-1 sm:gap-2 px-1 sm:px-2 md:px-6 py-2 sm:py-3 md:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-lg rounded-lg transition-all duration-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
             <BarChartHorizontalBig className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" /> 
             <span className="truncate">Visão</span>
