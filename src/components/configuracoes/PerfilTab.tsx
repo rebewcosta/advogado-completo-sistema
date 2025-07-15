@@ -14,14 +14,10 @@ interface PerfilTabProps {
   profileSettings: {
     name: string;
     email: string;
-    phone: string;
-    oab: string;
   };
   setProfileSettings: React.Dispatch<React.SetStateAction<{
     name: string;
     email: string;
-    phone: string;
-    oab: string;
   }>>;
 }
 
@@ -56,26 +52,6 @@ const PerfilTab = ({ profileSettings, setProfileSettings }: PerfilTabProps) => {
               className="bg-gray-100 cursor-not-allowed border-gray-300"
             />
             <p className="text-xs text-gray-500">O e-mail de login não pode ser alterado aqui.</p>
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="phone_config_perfil" className="text-sm font-medium text-gray-700">Telefone</Label>
-            <Input 
-              id="phone_config_perfil" 
-              value={profileSettings.phone}
-              onChange={(e) => setProfileSettings({...profileSettings, phone: e.target.value})}
-              placeholder="(00) 00000-0000"
-              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="oab_config_perfil" className="text-sm font-medium text-gray-700">Número OAB</Label>
-            <Input 
-              id="oab_config_perfil" 
-              value={profileSettings.oab}
-              onChange={(e) => setProfileSettings({...profileSettings, oab: e.target.value})}
-              placeholder="00000/UF"
-              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
-            />
           </div>
         </div>
         {/* O botão de salvar foi movido para o ConfiguracoesHeader */}

@@ -18,6 +18,7 @@ interface OfficeSettings {
   cnpj: string;
   address: string;
   website: string;
+  phone: string;
   logo_url?: string | null;
 }
 
@@ -72,6 +73,16 @@ const EscritorioTab = ({ officeSettings, setOfficeSettings, onLogoUpdate }: Escr
                 value={officeSettings.address}
                 onChange={(e) => setOfficeSettings(prev => ({...prev, address: e.target.value}))}
                 placeholder="Rua, Número, Bairro, Cidade - UF, CEP"
+                className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+                />
+            </div>
+            <div className="space-y-1.5">
+                <Label htmlFor="phone_config_esc" className="text-sm font-medium text-gray-700">Telefone</Label>
+                <Input 
+                id="phone_config_esc" 
+                value={officeSettings.phone}
+                onChange={(e) => setOfficeSettings(prev => ({...prev, phone: e.target.value}))}
+                placeholder="(00) 00000-0000"
                 className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
                 />
             </div>

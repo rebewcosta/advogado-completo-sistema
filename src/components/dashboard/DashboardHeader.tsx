@@ -22,6 +22,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     cnpj: user?.user_metadata?.cnpj || "",
     address: user?.user_metadata?.endereco || "", 
     website: user?.user_metadata?.website || "",
+    phone: user?.user_metadata?.telefone || "",
     logo_url: user?.user_metadata?.logo_url || ""
   };
 

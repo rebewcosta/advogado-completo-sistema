@@ -7,8 +7,6 @@ import { supabase } from '@/integrations/supabase/client';
 interface ProfileSettings { 
   name: string; 
   email: string; 
-  phone: string; 
-  oab: string; 
 }
 
 interface OfficeSettings { 
@@ -16,6 +14,7 @@ interface OfficeSettings {
   cnpj: string; 
   address: string; 
   website: string; 
+  phone: string;
   logo_url?: string | null; 
 }
 
@@ -41,11 +40,11 @@ export const useConfiguracoesState = () => {
   const [isLoadingPinStatus, setIsLoadingPinStatus] = useState(true);
 
   const [profileSettings, setProfileSettings] = useState<ProfileSettings>({
-    name: "", email: "", phone: "", oab: "",
+    name: "", email: "",
   });
   
   const [officeSettings, setOfficeSettings] = useState<OfficeSettings>({
-    companyName: "Meu Escritório de Advocacia", cnpj: "", address: "", website: "", logo_url: null,
+    companyName: "Meu Escritório de Advocacia", cnpj: "", address: "", website: "", phone: "", logo_url: null,
   });
   
   const [notificationSettings, setNotificationSettings] = useState<NotificationPreferences>({
@@ -65,14 +64,13 @@ export const useConfiguracoesState = () => {
       setProfileSettings({
         name: user.user_metadata.nome || user.email?.split('@')[0] || "",
         email: user.email || "",
-        phone: user.user_metadata.telefone || "",
-        oab: user.user_metadata.oab || "",
       });
       setOfficeSettings({
         companyName: user.user_metadata.empresa || "Meu Escritório de Advocacia",
         cnpj: user.user_metadata.cnpj || "",
         address: user.user_metadata.endereco || "",
         website: user.user_metadata.website || "",
+        phone: user.user_metadata.telefone || "",
         logo_url: user.user_metadata.logo_url || null,
       });
       setNotificationSettings({
@@ -143,8 +141,8 @@ export const useConfiguracoesState = () => {
       const { error } = await supabase.auth.updateUser({
         data: { 
           nome: profileSettings.name || null,
-          telefone: profileSettings.phone || null,
-          oab: profileSettings.oab || null,
+          telefone: officeSettings.phone || null,
+          oab: officeSettings.cnpj || null,
           empresa: officeSettings.companyName || null,
           cnpj: officeSettings.cnpj || null,
           endereco: officeSettings.address || null,

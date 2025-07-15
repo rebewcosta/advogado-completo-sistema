@@ -9,6 +9,7 @@ interface OfficeData {
   cnpj?: string;
   address?: string;
   website?: string;
+  phone?: string;
   logo_url?: string;
 }
 
@@ -90,9 +91,9 @@ const OfficeInfoHeader: React.FC<OfficeInfoHeaderProps> = ({ officeData }) => {
             </h2>
             
             <div className="space-y-1">
-              {officeData.cnpj && (
+              {officeData.phone && (
                 <p className="text-sm text-gray-600">
-                  CNPJ: {officeData.cnpj}
+                  Telefone: {officeData.phone}
                 </p>
               )}
               
