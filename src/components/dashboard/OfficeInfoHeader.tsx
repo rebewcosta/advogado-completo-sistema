@@ -91,6 +91,12 @@ const OfficeInfoHeader: React.FC<OfficeInfoHeaderProps> = ({ officeData }) => {
             </h2>
             
             <div className="space-y-1 text-center sm:text-left">
+              {officeData.cnpj && (
+                <p className="text-sm text-gray-600">
+                  OAB: {officeData.cnpj}
+                </p>
+              )}
+              
               {officeData.phone && (
                 <p className="text-sm text-gray-600">
                   Telefone: {officeData.phone}
