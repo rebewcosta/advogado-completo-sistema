@@ -108,14 +108,13 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         setTimeout(() => reject(new Error('Timeout - tente novamente')), 15000)
       );
       
-      const apiPromise = supabase.functions.invoke('criar-sessao-checkout', {
+      
+      const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
         body: checkoutData,
         headers
       });
       
-      const { data, error: invokeError } = await Promise.race([apiPromise, timeoutPromise]) as any;
-
-      console.log('📨 [PAYMENT FORM] Resposta recebida:', { data, invokeError });
+      console.log('📨 [PAYMENT FORM] Resposta completa:', JSON.stringify({ data, invokeError }, null, 2));
 
       // Verificar erros da invocação
       if (invokeError) {

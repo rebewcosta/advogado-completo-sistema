@@ -187,7 +187,7 @@ serve(async (req: Request) => {
       billing_address_collection: "auto" as const
     };
 
-    console.log(`⚙️ [CHECKOUT] Configuração preparada: ${JSON.stringify(sessionConfig, null, 2)}`);
+    console.log(`⚙️ [CHECKOUT] Configuração preparada`);
 
     // Criar sessão
     console.log("🔄 [CHECKOUT] Criando sessão no Stripe...");
