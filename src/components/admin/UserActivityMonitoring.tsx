@@ -25,6 +25,15 @@ interface UserActivity {
   login_count: number;
 }
 
+interface CreatedAccount {
+  id: string;
+  email: string;
+  created_at: string;
+  confirmed_at?: string;
+  last_sign_in_at?: string;
+  raw_user_meta_data?: any;
+}
+
 interface LoginHistory {
   id: string;
   email: string;
@@ -35,10 +44,40 @@ interface LoginHistory {
 
 const UserActivityMonitoring = () => {
   const [activeUsers, setActiveUsers] = useState<UserActivity[]>([]);
+  const [createdAccounts, setCreatedAccounts] = useState<CreatedAccount[]>([]);
   const [loginHistory, setLoginHistory] = useState<LoginHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [onlineUsersCount, setOnlineUsersCount] = useState(0);
+  const [totalAccountsCount, setTotalAccountsCount] = useState(0);
   const { toast } = useToast();
+
+  const fetchCreatedAccounts = async () => {
+    try {
+      // Buscar usuários reais da tabela auth.users usando uma função edge function
+      const { data, error } = await supabase.functions.invoke('get-all-users');
+      
+      if (error) {
+        console.error('Erro ao buscar contas criadas:', error);
+        return;
+      }
+
+      if (data?.users) {
+        const accounts: CreatedAccount[] = data.users.map((user: any) => ({
+          id: user.id,
+          email: user.email,
+          created_at: user.created_at,
+          confirmed_at: user.confirmed_at,
+          last_sign_in_at: user.last_sign_in_at,
+          raw_user_meta_data: user.raw_user_meta_data
+        }));
+        
+        setCreatedAccounts(accounts);
+        setTotalAccountsCount(accounts.length);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar contas criadas:', error);
+    }
+  };
 
   const fetchUserActivity = async () => {
     setIsLoading(true);
@@ -87,6 +126,9 @@ const UserActivityMonitoring = () => {
       setLoginHistory(mockLoginHistory.sort((a, b) => 
         new Date(b.login_time).getTime() - new Date(a.login_time).getTime()
       ));
+
+      // Buscar contas criadas
+      await fetchCreatedAccounts();
 
       toast({
         title: "Dados atualizados",
@@ -138,7 +180,7 @@ const UserActivityMonitoring = () => {
   return (
     <div className="space-y-6">
       {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -162,10 +204,21 @@ const UserActivityMonitoring = () => {
         </Card>
 
         <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-purple-500" />
+              <span className="text-sm font-medium">Contas Criadas</span>
+            </div>
+            <p className="text-2xl font-bold text-purple-600">{totalAccountsCount}</p>
+            <p className="text-xs text-gray-500">Total de usuários</p>
+          </CardContent>
+        </Card>
+
+        <Card>
           <CardContent className="p-4 flex items-center justify-between">
             <div>
               <div className="flex items-center gap-2">
-                <Activity className="h-4 w-4 text-purple-500" />
+                <Activity className="h-4 w-4 text-orange-500" />
                 <span className="text-sm font-medium">Última Atualização</span>
               </div>
               <p className="text-sm text-gray-600">
@@ -185,12 +238,69 @@ const UserActivityMonitoring = () => {
       </div>
 
       {/* Tabs para diferentes visualizações */}
-      <Tabs defaultValue="online" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="accounts" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="accounts">Contas Criadas</TabsTrigger>
           <TabsTrigger value="online">Usuários Online</TabsTrigger>
           <TabsTrigger value="active">Usuários Ativos</TabsTrigger>
           <TabsTrigger value="history">Histórico de Logins</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="accounts">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Contas Criadas ({totalAccountsCount})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-96">
+                <div className="space-y-3">
+                  {createdAccounts.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">
+                      {isLoading ? 'Carregando contas...' : 'Nenhuma conta encontrada'}
+                    </p>
+                  ) : (
+                    createdAccounts.map((account, index) => (
+                      <div key={index} className="border rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-3 h-3 rounded-full ${account.confirmed_at ? 'bg-green-500' : 'bg-yellow-500'}`}></div>
+                            <div>
+                              <p className="font-medium">{account.email}</p>
+                              <p className="text-sm text-gray-500">
+                                ID: {account.id.substring(0, 8)}...
+                              </p>
+                              {account.raw_user_meta_data?.nome_completo && (
+                                <p className="text-xs text-gray-400">
+                                  Nome: {account.raw_user_meta_data.nome_completo}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className="text-xs">
+                              {account.confirmed_at ? 'Confirmado' : 'Pendente'}
+                            </Badge>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Criado: {new Date(account.created_at).toLocaleDateString('pt-BR')}
+                            </p>
+                            {account.last_sign_in_at && (
+                              <p className="text-xs text-gray-400">
+                                Último login: {new Date(account.last_sign_in_at).toLocaleDateString('pt-BR')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
         
         <TabsContent value="online">
           <Card>

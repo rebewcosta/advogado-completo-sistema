@@ -121,6 +121,9 @@ verify_jwt = false
 [functions.buscar-historico-pagamentos]
 verify_jwt = true
 
+[functions.get-all-users]
+verify_jwt = true
+
 [functions.enviar-email-assinatura]
 verify_jwt = false
 
