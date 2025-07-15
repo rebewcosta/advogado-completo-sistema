@@ -57,7 +57,7 @@ serve(async (req) => {
 
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
+      event = await stripe.webhooks.constructEventAsync(body, signature, webhookSecret);
       logStep(`✅ Evento válido recebido`, { 
         type: event.type,
         id: event.id,

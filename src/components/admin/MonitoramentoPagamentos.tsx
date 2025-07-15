@@ -6,7 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertTriangle, CheckCircle, TrendingUp, Users, CreditCard, Clock, DollarSign, Calendar } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle, TrendingUp, Users, CreditCard, Clock, DollarSign, Calendar, RefreshCw } from 'lucide-react';
 import GerenciamentoTrial from './GerenciamentoTrial';
 
 interface MonitoringData {
@@ -31,6 +31,7 @@ interface MonitoringData {
 const MonitoramentoPagamentos = () => {
   const [data, setData] = useState<MonitoringData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFixingStatus, setIsFixingStatus] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const { toast } = useToast();
 
@@ -72,6 +73,43 @@ const MonitoramentoPagamentos = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fixClientSubscriptionStatus = async (email: string) => {
+    setIsFixingStatus(true);
+    try {
+      console.log("🔧 Corrigindo status da assinatura para:", email);
+      
+      // Fazer a requisição diretamente para a edge function com os dados do admin
+      const { data: response, error } = await supabase.functions.invoke('atualizar-status-assinatura', {
+        body: { 
+          email_to_fix: email,
+          admin_action: true 
+        }
+      });
+      
+      if (error) {
+        throw new Error(error.message);
+      }
+      
+      toast({
+        title: "✅ Status Corrigido",
+        description: `Status da assinatura de ${email} foi atualizado: ${response.status}`,
+      });
+
+      // Atualizar os dados de monitoramento
+      await fetchMonitoringData();
+      
+    } catch (error) {
+      console.error("❌ Erro ao corrigir status:", error);
+      toast({
+        title: "Erro ao Corrigir Status",
+        description: error.message || "Falha ao atualizar status da assinatura",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFixingStatus(false);
     }
   };
 
@@ -154,7 +192,7 @@ const MonitoramentoPagamentos = () => {
                 </CardHeader>
                 <CardContent>
                   {data.problemas_identificados.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="space-y-4">
                       {data.alertas.criticos.length > 0 && (
                         <Alert>
                           <AlertTriangle className="h-4 w-4" />
@@ -182,6 +220,30 @@ const MonitoramentoPagamentos = () => {
                           </AlertDescription>
                         </Alert>
                       )}
+
+                      {/* Ação de Emergência para Corrigir Status */}
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <h4 className="font-medium text-amber-800 mb-3">🚨 Correção de Status de Assinatura</h4>
+                        <p className="text-sm text-amber-700 mb-3">
+                          Se um cliente pagou mas o status não foi atualizado corretamente, use o botão abaixo para forçar a sincronização com o Stripe:
+                        </p>
+                        <div className="flex items-center gap-3">
+                          <Button
+                            onClick={() => fixClientSubscriptionStatus('rlaisarolim15@gmail.com')}
+                            disabled={isFixingStatus}
+                            variant="outline"
+                            size="sm"
+                            className="border-amber-300 text-amber-700 hover:bg-amber-100"
+                          >
+                            {isFixingStatus ? (
+                              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            ) : (
+                              <RefreshCw className="h-4 w-4 mr-2" />
+                            )}
+                            Corrigir Status - rlaisarolim15@gmail.com
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <p className="text-green-700">✅ Todos os sistemas funcionando normalmente.</p>
