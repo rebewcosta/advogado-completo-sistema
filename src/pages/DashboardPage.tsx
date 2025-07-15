@@ -13,10 +13,15 @@ const DashboardPage = () => {
   const { user, signOut } = useAuth();
 
   const getUserFirstName = () => {
-    if (user?.user_metadata?.nome) {
-      const fullName = user.user_metadata.nome;
-      return fullName.split(' ')[0];
+    // Primeiro tentar pegar o nome completo dos metadados
+    if (user?.user_metadata?.nome_completo) {
+      return user.user_metadata.nome_completo;
     }
+    // Fallback para nome se não tiver nome_completo
+    if (user?.user_metadata?.nome) {
+      return user.user_metadata.nome;
+    }
+    // Último fallback para email
     return user?.email?.split('@')[0] || 'Usuário';
   };
 

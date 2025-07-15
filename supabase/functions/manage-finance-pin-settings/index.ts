@@ -101,7 +101,8 @@ serve(async (req: Request) => {
       }
     } else if (action === 'status') {
       // Retornar status atual do PIN
-      const pinEnabled = user.user_metadata?.finance_pin_enabled !== false; // Default é true
+      // Para novos usuários, o PIN deve estar desabilitado por padrão
+      const pinEnabled = user.user_metadata?.finance_pin_enabled === true; // Default é false para novos usuários
       const hasPin = !!user.user_metadata?.finance_pin_hash;
 
       return new Response(

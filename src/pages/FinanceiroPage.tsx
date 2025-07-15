@@ -56,12 +56,20 @@ const FinanceiroPage = () => {
         if (data && data.error) throw new Error(data.error);
         setPinCheckResult(data);
         if (data.pinNotSet) {
-            toast({
-                title: "Acesso ao Financeiro",
-                description: "Você ainda não configurou um PIN para esta seção. Considere adicionar um em Configurações > Segurança para maior privacidade.",
-                duration: 7000,
-                className: "bg-blue-50 border-blue-200 text-blue-700",
-            });
+            // Verificar se já mostrou o popup hoje
+            const userSpecificToastKey = `finance_pin_disabled_toast_${user.id}`;
+            const lastToastDate = localStorage.getItem(userSpecificToastKey);
+            const today = new Date().toDateString();
+            
+            if (lastToastDate !== today) {
+                toast({
+                    title: "Acesso ao Financeiro",
+                    description: "Você ainda não configurou um PIN para esta seção. Considere adicionar um em Configurações > Segurança para maior privacidade.",
+                    duration: 7000,
+                    className: "bg-blue-50 border-blue-200 text-blue-700",
+                });
+                localStorage.setItem(userSpecificToastKey, today);
+            }
         }
       } catch (err: any) {
         console.error("Erro ao verificar status do PIN na FinanceiroPage:", err);
