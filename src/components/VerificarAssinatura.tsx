@@ -44,15 +44,6 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
       setIsLoading(true);
       console.log(`🔍 Verificando acesso para rota: ${location.pathname}`);
 
-      // VERIFICAÇÃO PRIORITÁRIA: Superadmin sempre tem acesso total
-      if (user.email === 'webercostag@gmail.com') {
-        console.log("✅ SUPERADMIN DETECTADO - Acesso total concedido");
-        setAccessGranted(true);
-        setSubscriptionStatus('admin');
-        setIsLoading(false);
-        return;
-      }
-
       // Verificar se é uma rota pública permitida
       const isPublicRoute = publicRoutes.some(route =>
         location.pathname.startsWith(route)
