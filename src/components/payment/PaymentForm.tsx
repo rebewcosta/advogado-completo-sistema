@@ -84,13 +84,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         console.error('❌ [PAYMENT FORM] Erro ao obter sessão:', sessionError);
       }
 
-      // Preparar dados para envio
+      // Preparar dados para envio (simplificado)
       const checkoutData = {
-        nomePlano: 'JusGestão Premium - 7 DIAS GRATUITOS',
-        valor: 3700,
-        emailCliente: emailTrimmed,
-        dominio: window.location.origin,
-        clientReferenceId: clientReferenceId || emailTrimmed
+        emailCliente: emailTrimmed
       };
 
       console.log('📦 [PAYMENT FORM] Dados do checkout:', checkoutData);
