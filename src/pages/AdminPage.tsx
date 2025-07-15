@@ -16,6 +16,7 @@ import {
   BarChart3,
   Database
 } from 'lucide-react';
+import AdminLayout from '@/components/AdminLayout';
 
 // Importar todos os componentes necessários
 import MonitoramentoPagamentos from '@/components/admin/MonitoramentoPagamentos';
@@ -37,7 +38,8 @@ const AdminPage = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
+    <AdminLayout>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header do Painel */}
       <div className="mb-8 text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">Painel Administrativo</h1>
@@ -246,7 +248,8 @@ const AdminPage = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

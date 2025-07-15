@@ -59,16 +59,19 @@ const AvisoNotificacao = ({ aviso, onMarcarComoLido, onDismiss }: AvisoNotificac
       variant={variant}
       className={cn(
         "mb-4 border-l-4 shadow-lg animate-in slide-in-from-top-2 duration-300",
+        "w-full max-w-none", // Garante que ocupe toda a largura disponível
         prioridadeColor
       )}
     >
-      <Icon className="h-4 w-4" />
-      <div className="flex-1">
-        <AlertTitle className="flex items-center justify-between">
-          {aviso.titulo}
-          <div className="flex items-center gap-2">
+      <Icon className="h-4 w-4 flex-shrink-0" />
+      <div className="flex-1 min-w-0">
+        <AlertTitle className="flex items-start justify-between gap-2">
+          <span className="flex-1 text-sm md:text-base font-semibold leading-tight">
+            {aviso.titulo}
+          </span>
+          <div className="flex items-center gap-1 flex-shrink-0">
             <span className={cn(
-              "text-xs px-2 py-1 rounded-full",
+              "text-xs px-1.5 py-0.5 rounded-full whitespace-nowrap",
               aviso.prioridade === 'critica' && "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
               aviso.prioridade === 'alta' && "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
               aviso.prioridade === 'normal' && "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
@@ -79,21 +82,21 @@ const AvisoNotificacao = ({ aviso, onMarcarComoLido, onDismiss }: AvisoNotificac
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0"
+              className="h-6 w-6 p-0 flex-shrink-0"
               onClick={onDismiss}
             >
               <X className="h-3 w-3" />
             </Button>
           </div>
         </AlertTitle>
-        <AlertDescription className="mt-2 text-sm">
+        <AlertDescription className="mt-2 text-xs md:text-sm text-left leading-relaxed">
           {aviso.mensagem}
         </AlertDescription>
         <div className="mt-3 flex justify-end">
           <Button
             size="sm"
             onClick={() => onMarcarComoLido(aviso.id)}
-            className="text-xs"
+            className="text-xs px-3 py-1"
           >
             Marcar como lido
           </Button>
