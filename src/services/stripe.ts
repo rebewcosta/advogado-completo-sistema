@@ -7,11 +7,11 @@ const getStripePublishableKey = () => {
                 process.env.NODE_ENV === 'development';
   
   if (isDev) {
-    // Test key for development
-    return 'pk_test_51QQKXmFJ3Y1S0P0BvLd2xyYrsxcRAz76s8GgR9sjDuKB7pBAKjJfBG2OL5vZbmKWVZhTsksHw5jWMZdW6FojuHvo00VFP8gEz9';
+    // Test key for development - SUBSTITUA pela sua nova chave de teste
+    return 'pk_test_NOVA_CHAVE_DE_TESTE_AQUI';
   } else {
-    // Production key - sua chave pública de produção
-    return 'pk_live_51ROqW3Kr3xy0fCEPBH45teOEQTtIkxIi9D9nTJvDVc6VhOGoBrnAutzCwxwktMoOIaX3ySQfKzLtCD9WDcflB8Zt00AsICFdvl';
+    // Production key - SUBSTITUA pela sua nova chave de produção
+    return 'pk_live_NOVA_CHAVE_DE_PRODUCAO_AQUI';
   }
 };
 
