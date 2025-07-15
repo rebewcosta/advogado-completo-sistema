@@ -31,12 +31,12 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
       return;
     }
     
-    // Preparar dados para salvar - campos opcionais podem ficar vazios
+    // Preparar dados para salvar - enviar null para campos vazios
     const dataToSave: any = {
       nome: formData.nome.trim(),
-      telefone: formData.telefone.trim() || '',
+      telefone: formData.telefone.trim() || null,
       tipo_cliente: formData.tipo_cliente,
-      cpfCnpj: formData.cpfCnpj.trim() || '',
+      cpfCnpj: formData.cpfCnpj.trim() || null,
       status_cliente: formData.status_cliente,
       // Campos opcionais 
       endereco: '',

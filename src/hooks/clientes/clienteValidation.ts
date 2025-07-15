@@ -4,9 +4,9 @@ import type { ClienteFormData } from './types';
 export const prepareClientDataForSave = (clientData: ClienteFormData): any => {
   const dataToSave: any = {
     nome: clientData.nome,
-    telefone: clientData.telefone || '',
+    telefone: clientData.telefone || null,
     tipo_cliente: clientData.tipo_cliente,
-    cpfCnpj: clientData.cpfCnpj || '',
+    cpfCnpj: clientData.cpfCnpj || null,
     status_cliente: clientData.status_cliente,
     endereco: clientData.endereco || '',
     cidade: clientData.cidade || '',
