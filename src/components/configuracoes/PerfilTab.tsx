@@ -14,10 +14,12 @@ interface PerfilTabProps {
   profileSettings: {
     name: string;
     email: string;
+    dataNascimento: string;
   };
   setProfileSettings: React.Dispatch<React.SetStateAction<{
     name: string;
     email: string;
+    dataNascimento: string;
   }>>;
 }
 
@@ -52,6 +54,16 @@ const PerfilTab = ({ profileSettings, setProfileSettings }: PerfilTabProps) => {
               className="bg-gray-100 cursor-not-allowed border-gray-300"
             />
             <p className="text-xs text-gray-500">O e-mail de login não pode ser alterado aqui.</p>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="dataNascimento_config_perfil" className="text-sm font-medium text-gray-700">Data de Nascimento</Label>
+            <Input 
+              id="dataNascimento_config_perfil" 
+              type="date"
+              value={profileSettings.dataNascimento}
+              onChange={(e) => setProfileSettings({...profileSettings, dataNascimento: e.target.value})}
+              className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+            />
           </div>
         </div>
         {/* O botão de salvar foi movido para o ConfiguracoesHeader */}
