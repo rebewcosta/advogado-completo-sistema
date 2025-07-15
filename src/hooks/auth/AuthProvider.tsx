@@ -33,11 +33,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setAuthState(initialSession);
-      
-      // Se já tem uma sessão, atualizar o status online
-      if (initialSession?.user) {
-        updateUserPresence(initialSession.user, true);
-      }
     }).catch(error => {
       console.error("Auth: Error getting initial session");
       setAuthState(null);
@@ -46,13 +41,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, currentSession) => {
         setAuthState(currentSession);
-        
-        // Atualizar presença baseado no evento
-        if (event === 'SIGNED_IN' && currentSession?.user) {
-          updateUserPresence(currentSession.user, true);
-        } else if (event === 'SIGNED_OUT') {
-          // Não marcar como offline aqui, pois o signOut já faz isso
-        }
       }
     );
 
@@ -79,17 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden' && user) {
-        // Página ficou oculta, marcar como offline após 30 segundos
-        setTimeout(() => {
-          if (document.visibilityState === 'hidden') {
-            updateUserPresence(user, false);
-          }
-        }, 30000);
-      } else if (document.visibilityState === 'visible' && user) {
-        // Página voltou a ser visível, marcar como online
-        updateUserPresence(user, true);
-      }
+      // Remover para evitar loops - a presença já é gerenciada pelo useRealtimePresence
     };
 
     // Adicionar listeners

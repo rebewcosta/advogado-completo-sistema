@@ -49,8 +49,10 @@ const HistoricoPagamentos: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchHistoricoPagamentos();
-  }, [user]);
+    if (user?.email) {
+      fetchHistoricoPagamentos();
+    }
+  }, [user?.email]); // Apenas quando o email mudar
 
   const formatarData = (data: string) => {
     return new Date(data).toLocaleDateString('pt-BR', {

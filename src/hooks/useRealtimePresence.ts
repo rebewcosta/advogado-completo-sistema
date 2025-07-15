@@ -42,12 +42,6 @@ export const useRealtimePresence = () => {
 
         setOnlineUsers(users);
         setIsConnected(true);
-      })
-      .on('presence', { event: 'join' }, ({ newPresences }) => {
-        console.log('Novos usuários online:', newPresences);
-      })
-      .on('presence', { event: 'leave' }, ({ leftPresences }) => {
-        console.log('Usuários saíram:', leftPresences);
       });
 
     // Fazer subscribe e track da presença do usuário atual
@@ -61,27 +55,9 @@ export const useRealtimePresence = () => {
           last_seen: new Date().toISOString()
         };
 
-        const trackStatus = await presenceChannel.track(userPresence);
-        console.log('Presença rastreada:', trackStatus);
-      }
-    });
-
-    // Atualizar timestamp a cada 30 segundos para manter a presença ativa
-    const heartbeatInterval = setInterval(async () => {
-      if (presenceChannel && isConnected) {
-        await presenceChannel.track({
-          user_id: user.id,
-          email: user.email || '',
-          nome_completo: user.user_metadata?.nome_completo || '',
-          online_at: new Date().toISOString(),
-          last_seen: new Date().toISOString()
-        });
-      }
-    }, 30000); // 30 segundos
-
-    // Atualizar o status na tabela user_profiles
-    const updateUserProfile = async () => {
-      try {
+        await presenceChannel.track(userPresence);
+        
+        // Atualizar o status na tabela user_profiles apenas uma vez
         await supabase
           .from('user_profiles')
           .upsert({
@@ -91,34 +67,23 @@ export const useRealtimePresence = () => {
             last_seen: new Date().toISOString(),
             is_online: true
           }, { onConflict: 'id' });
-      } catch (error) {
-        console.error('Erro ao atualizar perfil do usuário:', error);
       }
-    };
-
-    updateUserProfile();
+    });
 
     // Cleanup
     return () => {
-      clearInterval(heartbeatInterval);
-      
       // Atualizar status para offline antes de sair
-      if (user) {
-        supabase
-          .from('user_profiles')
-          .update({
-            is_online: false,
-            last_seen: new Date().toISOString()
-          })
-          .eq('id', user.id)
-          .then(() => {
-            console.log('Status atualizado para offline');
-          });
-      }
+      supabase
+        .from('user_profiles')
+        .update({
+          is_online: false,
+          last_seen: new Date().toISOString()
+        })
+        .eq('id', user.id);
       
       supabase.removeChannel(presenceChannel);
     };
-  }, [user, isConnected]);
+  }, [user]);
 
   return {
     onlineUsers,
