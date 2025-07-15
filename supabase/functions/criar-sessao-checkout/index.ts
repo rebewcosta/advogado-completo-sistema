@@ -151,8 +151,8 @@ serve(async (req: Request) => {
             price_data: {
               currency: "brl",
               product_data: {
-                name: "JusGestão Premium",
-                description: "Sistema completo de gestão jurídica - 7 dias gratuitos"
+                name: "JusGestão Premium - Assinatura Mensal",
+                description: "Sistema completo de gestão jurídica"
               },
               unit_amount: 3700, // R$ 37,00
               recurring: {
