@@ -57,11 +57,8 @@ const UserActivityMonitoring = () => {
   // Hook para presença em tempo real
   const { onlineUsers, onlineCount, isConnected } = useRealtimePresence();
   
-  // Estado para contadores corrigidos
-  const [correctedCounts, setCorrectedCounts] = useState({
-    onlineUsers: 0,
-    activeUsers: 0
-  });
+  // Estado para contadores de usuários ativos
+  const [activeUsersCount, setActiveUsersCount] = useState(0);
 
   const fetchCreatedAccounts = async () => {
     try {
@@ -131,12 +128,7 @@ const UserActivityMonitoring = () => {
         }));
 
       setActiveUsers(activeUsersData);
-
-      // Atualizar contadores corrigidos
-      setCorrectedCounts({
-        onlineUsers: realtimeUsers.filter(u => u.is_online).length,
-        activeUsers: activeUsersData.length
-      });
+      setActiveUsersCount(activeUsersData.length);
 
       // Simular histórico de login baseado nos usuários ativos
       const mockLoginHistory: LoginHistory[] = activeUsersData.slice(0, 20).map(user => ({
@@ -233,7 +225,7 @@ const UserActivityMonitoring = () => {
                   )}
                   <span className="text-sm font-medium">Usuários Online</span>
                 </div>
-                <p className="text-2xl font-bold text-green-600">{correctedCounts.onlineUsers}</p>
+                <p className="text-2xl font-bold text-green-600">{onlineCount}</p>
                 <p className="text-xs text-gray-500">
                   {isConnected ? 'Tempo real conectado' : 'Reconectando...'}
                 </p>
@@ -249,7 +241,7 @@ const UserActivityMonitoring = () => {
               <Users className="h-4 w-4 text-blue-500" />
               <span className="text-sm font-medium">Usuários Ativos</span>
             </div>
-            <p className="text-2xl font-bold text-blue-600">{correctedCounts.activeUsers}</p>
+            <p className="text-2xl font-bold text-blue-600">{activeUsersCount}</p>
             <p className="text-xs text-gray-500">Últimas 24h</p>
           </CardContent>
         </Card>
