@@ -1,12 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, AlertTriangle, CheckCircle, TrendingUp, Users, CreditCard, Clock, DollarSign } from 'lucide-react';
+import { Loader2, AlertTriangle, CheckCircle, TrendingUp, Users, CreditCard, Clock, DollarSign, Calendar } from 'lucide-react';
+import GerenciamentoTrial from './GerenciamentoTrial';
 
 interface MonitoringData {
   timestamp: string;
@@ -102,7 +103,7 @@ const MonitoramentoPagamentos = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">Monitoramento de Pagamentos</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Administração de Pagamentos</h2>
         <div className="flex items-center gap-3">
           {lastUpdate && (
             <span className="text-sm text-gray-500">
@@ -124,145 +125,164 @@ const MonitoramentoPagamentos = () => {
         </div>
       </div>
 
-      {data && (
-        <>
-          {/* Status Geral */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                {getStatusIcon(data.status)}
-                Status do Sistema
-                <Badge className={getStatusColor(data.status)}>
-                  {data.status === 'healthy' ? 'Saudável' : 
-                   data.status === 'warning' ? 'Atenção' : 'Erro'}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {data.problemas_identificados.length > 0 ? (
-                <div className="space-y-2">
-                  {data.alertas.criticos.length > 0 && (
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Problemas Críticos:</strong>
-                        <ul className="mt-1 list-disc list-inside">
-                          {data.alertas.criticos.map((alerta, index) => (
-                            <li key={index}>{alerta}</li>
-                          ))}
-                        </ul>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  {data.alertas.avisos.length > 0 && (
-                    <Alert>
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Avisos:</strong>
-                        <ul className="mt-1 list-disc list-inside">
-                          {data.alertas.avisos.map((aviso, index) => (
-                            <li key={index}>{aviso}</li>
-                          ))}
-                        </ul>
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-              ) : (
-                <p className="text-green-700">✅ Todos os sistemas funcionando normalmente.</p>
-              )}
-            </CardContent>
-          </Card>
+      <Tabs defaultValue="monitoring" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="monitoring">
+            <TrendingUp className="h-4 w-4 mr-2" />
+            Monitoramento
+          </TabsTrigger>
+          <TabsTrigger value="trial-management">
+            <Calendar className="h-4 w-4 mr-2" />
+            Gerenciar Trial
+          </TabsTrigger>
+        </TabsList>
 
-          {/* Métricas Principais */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Assinaturas Ativas</p>
-                    <p className="text-2xl font-bold text-green-600">{data.metricas.assinaturas_ativas}</p>
-                  </div>
-                  <CheckCircle className="h-8 w-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Em Atraso</p>
-                    <p className="text-2xl font-bold text-red-600">{data.metricas.assinaturas_em_atraso}</p>
-                  </div>
-                  <AlertTriangle className="h-8 w-8 text-red-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Usuários Trial</p>
-                    <p className="text-2xl font-bold text-blue-600">{data.metricas.usuarios_trial_total}</p>
-                    <p className="text-xs text-gray-500">{data.metricas.usuarios_trial_expirando_2d} expirando</p>
-                  </div>
-                  <Users className="h-8 w-8 text-blue-500" />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Receita Mensal</p>
-                    <p className="text-2xl font-bold text-green-600">R$ {data.metricas.receita_mensal_estimada.toLocaleString()}</p>
-                  </div>
-                  <DollarSign className="h-8 w-8 text-green-500" />
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Logs Recentes */}
-          {data.logs_cancelamento_recentes.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Cancelamentos Recentes</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  {data.logs_cancelamento_recentes.slice(0, 5).map((log, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                      <div>
-                        <span className="font-medium">{log.canceled_count} cancelamentos</span>
-                        <span className="text-sm text-gray-500 ml-2">
-                          {new Date(log.executed_at).toLocaleString('pt-BR')}
-                        </span>
-                      </div>
-                      <Badge variant={log.success ? "default" : "destructive"}>
-                        {log.success ? "Sucesso" : "Erro"}
-                      </Badge>
+        <TabsContent value="monitoring" className="space-y-6">
+          {data && (
+            <>
+              {/* Status Geral */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {getStatusIcon(data.status)}
+                    Status do Sistema
+                    <Badge className={getStatusColor(data.status)}>
+                      {data.status === 'healthy' ? 'Saudável' : 
+                       data.status === 'warning' ? 'Atenção' : 'Erro'}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {data.problemas_identificados.length > 0 ? (
+                    <div className="space-y-2">
+                      {data.alertas.criticos.length > 0 && (
+                        <Alert>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>
+                            <strong>Problemas Críticos:</strong>
+                            <ul className="mt-1 list-disc list-inside">
+                              {data.alertas.criticos.map((alerta, index) => (
+                                <li key={index}>{alerta}</li>
+                              ))}
+                            </ul>
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                      
+                      {data.alertas.avisos.length > 0 && (
+                        <Alert>
+                          <AlertTriangle className="h-4 w-4" />
+                          <AlertDescription>
+                            <strong>Avisos:</strong>
+                            <ul className="mt-1 list-disc list-inside">
+                              {data.alertas.avisos.map((aviso, index) => (
+                                <li key={index}>{aviso}</li>
+                              ))}
+                            </ul>
+                          </AlertDescription>
+                        </Alert>
+                      )}
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <p className="text-green-700">✅ Todos os sistemas funcionando normalmente.</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Métricas Principais */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Assinaturas Ativas</p>
+                        <p className="text-2xl font-bold text-green-600">{data.metricas.assinaturas_ativas}</p>
+                      </div>
+                      <CheckCircle className="h-8 w-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Em Atraso</p>
+                        <p className="text-2xl font-bold text-red-600">{data.metricas.assinaturas_em_atraso}</p>
+                      </div>
+                      <AlertTriangle className="h-8 w-8 text-red-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Usuários Trial</p>
+                        <p className="text-2xl font-bold text-blue-600">{data.metricas.usuarios_trial_total}</p>
+                        <p className="text-xs text-gray-500">{data.metricas.usuarios_trial_expirando_2d} expirando</p>
+                      </div>
+                      <Users className="h-8 w-8 text-blue-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-600">Receita Mensal</p>
+                        <p className="text-2xl font-bold text-green-600">R$ {data.metricas.receita_mensal_estimada.toLocaleString()}</p>
+                      </div>
+                      <DollarSign className="h-8 w-8 text-green-500" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Logs Recentes */}
+              {data.logs_cancelamento_recentes.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Cancelamentos Recentes</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {data.logs_cancelamento_recentes.slice(0, 5).map((log, index) => (
+                        <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                          <div>
+                            <span className="font-medium">{log.canceled_count} cancelamentos</span>
+                            <span className="text-sm text-gray-500 ml-2">
+                              {new Date(log.executed_at).toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                          <Badge variant={log.success ? "default" : "destructive"}>
+                            {log.success ? "Sucesso" : "Erro"}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+
+          {isLoading && !data && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+                <p>Carregando dados de monitoramento...</p>
               </CardContent>
             </Card>
           )}
-        </>
-      )}
+        </TabsContent>
 
-      {isLoading && !data && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <p>Carregando dados de monitoramento...</p>
-          </CardContent>
-        </Card>
-      )}
+        <TabsContent value="trial-management">
+          <GerenciamentoTrial />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

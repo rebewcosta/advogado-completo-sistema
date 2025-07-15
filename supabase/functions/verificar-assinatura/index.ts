@@ -70,10 +70,21 @@ serve(async (req) => {
       });
     }
 
-    // Verificar período de trial (7 dias a partir da criação da conta)
+    // Verificar período de trial - primeiro verifica se há data customizada
     const userCreatedAt = new Date(user.created_at);
-    const trialEndDate = new Date(userCreatedAt);
-    trialEndDate.setDate(trialEndDate.getDate() + 7);
+    const customExpirationDate = user.user_metadata?.trial_expiration_date;
+    
+    let trialEndDate;
+    if (customExpirationDate) {
+      // Usar data de expiração customizada (definida pelo admin)
+      trialEndDate = new Date(customExpirationDate);
+      logStep("Using custom trial expiration", { customExpirationDate });
+    } else {
+      // Usar padrão de 7 dias a partir da criação da conta
+      trialEndDate = new Date(userCreatedAt);
+      trialEndDate.setDate(trialEndDate.getDate() + 7);
+    }
+    
     const now = new Date();
     
     const isInTrial = now < trialEndDate;
