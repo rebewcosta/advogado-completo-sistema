@@ -156,7 +156,6 @@ serve(async (req: Request) => {
         success_url: successUrl,
         cancel_url: cancelUrl,
         subscription_data: {
-          trial_period_days: 7,
           metadata: {
             email: emailTrimmed,
             environment: isProduction ? "production" : "test"
@@ -200,7 +199,6 @@ serve(async (req: Request) => {
       url: session.url,
       sessionId: session.id,
       ambiente: isProduction ? "PRODUÇÃO" : "TESTE",
-      trialDays: 7,
       message: "Sessão criada com sucesso!"
     };
 
