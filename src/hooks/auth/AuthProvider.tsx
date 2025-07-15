@@ -33,21 +33,97 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setAuthState(initialSession);
+      
+      // Se já tem uma sessão, atualizar o status online
+      if (initialSession?.user) {
+        updateUserPresence(initialSession.user, true);
+      }
     }).catch(error => {
       console.error("Auth: Error getting initial session");
       setAuthState(null);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, currentSession) => {
+      (event, currentSession) => {
         setAuthState(currentSession);
+        
+        // Atualizar presença baseado no evento
+        if (event === 'SIGNED_IN' && currentSession?.user) {
+          updateUserPresence(currentSession.user, true);
+        } else if (event === 'SIGNED_OUT') {
+          // Não marcar como offline aqui, pois o signOut já faz isso
+        }
       }
     );
 
+    // Listener para detectar quando o usuário sai da página
+    const handleBeforeUnload = () => {
+      if (user) {
+        // Usar sendBeacon para garantir que a requisição seja enviada mesmo quando a página está fechando
+        const data = new FormData();
+        data.append('user_id', user.id);
+        data.append('action', 'offline');
+        
+        // Tentar marcar como offline via API
+        navigator.sendBeacon('/api/user-offline', data);
+        
+        // Também atualizar diretamente no Supabase (melhor esforço)
+        supabase
+          .from('user_profiles')
+          .update({
+            is_online: false,
+            last_seen: new Date().toISOString()
+          })
+          .eq('id', user.id);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden' && user) {
+        // Página ficou oculta, marcar como offline após 30 segundos
+        setTimeout(() => {
+          if (document.visibilityState === 'hidden') {
+            updateUserPresence(user, false);
+          }
+        }, 30000);
+      } else if (document.visibilityState === 'visible' && user) {
+        // Página voltou a ser visível, marcar como online
+        updateUserPresence(user, true);
+      }
+    };
+
+    // Adicionar listeners
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       subscription.unsubscribe();
     };
-  }, []);
+  }, [user]);
+
+  // Função para atualizar presença do usuário
+  const updateUserPresence = async (user: User, isOnline: boolean) => {
+    try {
+      await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          nome_completo: user.user_metadata?.nome_completo || null,
+          telefone: user.user_metadata?.telefone || null,
+          oab: user.user_metadata?.oab || null,
+          last_seen: new Date().toISOString(),
+          is_online: isOnline,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+        
+      console.log(`Presença atualizada para ${user.email}: ${isOnline ? 'online' : 'offline'}`);
+    } catch (error) {
+      console.error('Erro ao atualizar presença:', error);
+    }
+  };
 
   const signIn = async (email: string, password: string) => {
     try {
@@ -102,6 +178,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // Primeiro, marcar o usuário como offline
+      if (user) {
+        await updateUserPresence(user, false);
+      }
+      
       await handleSignOut();
       setUser(null);
       setSession(null);

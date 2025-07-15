@@ -7,13 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useRealtimePresence } from '@/hooks/useRealtimePresence';
 import { 
   Users, 
   RefreshCw, 
   Clock,
   UserCheck,
   Activity,
-  Calendar
+  Calendar,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 
 interface UserActivity {
@@ -47,9 +50,12 @@ const UserActivityMonitoring = () => {
   const [createdAccounts, setCreatedAccounts] = useState<CreatedAccount[]>([]);
   const [loginHistory, setLoginHistory] = useState<LoginHistory[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [onlineUsersCount, setOnlineUsersCount] = useState(0);
   const [totalAccountsCount, setTotalAccountsCount] = useState(0);
+  const [realtimeOnlineUsers, setRealtimeOnlineUsers] = useState<any[]>([]);
   const { toast } = useToast();
+
+  // Hook para presença em tempo real
+  const { onlineUsers, onlineCount, isConnected } = useRealtimePresence();
 
   const fetchCreatedAccounts = async () => {
     try {
@@ -82,40 +88,46 @@ const UserActivityMonitoring = () => {
   const fetchUserActivity = async () => {
     setIsLoading(true);
     try {
-      // Buscar usuários com atividade recente (últimas 24h)
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, updated_at')
-        .gte('updated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
-        .order('updated_at', { ascending: false });
+      // Buscar usuários realmente online da tabela user_profiles
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .order('last_seen', { ascending: false });
 
       if (profilesError) throw profilesError;
 
-      // Para cada usuário ativo, buscar informações do auth.users através de uma função
-      const userActivities: UserActivity[] = [];
-      
-      if (profiles && profiles.length > 0) {
-        // Criar uma lista de usuários com atividade simulada baseada no ID
-        for (const profile of profiles) {
-          const emailSimulado = `user_${profile.id.substring(0, 8)}@system.local`;
-          const isOnline = new Date(profile.updated_at).getTime() > Date.now() - 5 * 60 * 1000; // Online se ativo nos últimos 5 min
-          
-          userActivities.push({
-            id: profile.id,
-            email: emailSimulado,
-            last_login: profile.updated_at,
-            is_online: isOnline,
-            last_seen: profile.updated_at,
-            login_count: Math.floor(Math.random() * 50) + 1 // Simulado
-          });
-        }
-      }
+      // Buscar contas criadas
+      await fetchCreatedAccounts();
 
-      setActiveUsers(userActivities);
-      setOnlineUsersCount(userActivities.filter(u => u.is_online).length);
+      // Processar dados dos usuários online da tabela user_profiles
+      const realtimeUsers = profilesData?.map(profile => ({
+        id: profile.id,
+        email: profile.email || `user_${profile.id.substring(0, 8)}@system.local`,
+        nome_completo: profile.nome_completo,
+        last_seen: profile.last_seen || new Date().toISOString(),
+        is_online: profile.is_online || false,
+        last_login: profile.last_seen || new Date().toISOString()
+      })) || [];
+
+      setRealtimeOnlineUsers(realtimeUsers);
+
+      // Criar mock de dados para usuários ativos (últimas 24h)
+      const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const activeUsersData = realtimeUsers
+        .filter(user => new Date(user.last_seen) > last24h)
+        .map(user => ({
+          id: user.id,
+          email: user.email,
+          last_login: user.last_login,
+          is_online: user.is_online,
+          last_seen: user.last_seen,
+          login_count: Math.floor(Math.random() * 50) + 1
+        }));
+
+      setActiveUsers(activeUsersData);
 
       // Simular histórico de login baseado nos usuários ativos
-      const mockLoginHistory: LoginHistory[] = userActivities.slice(0, 20).map(user => ({
+      const mockLoginHistory: LoginHistory[] = activeUsersData.slice(0, 20).map(user => ({
         id: user.id,
         email: user.email,
         login_time: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
@@ -127,12 +139,9 @@ const UserActivityMonitoring = () => {
         new Date(b.login_time).getTime() - new Date(a.login_time).getTime()
       ));
 
-      // Buscar contas criadas
-      await fetchCreatedAccounts();
-
       toast({
         title: "Dados atualizados",
-        description: `${userActivities.length} usuários ativos encontrados.`,
+        description: `${activeUsersData.length} usuários ativos encontrados.`,
       });
 
     } catch (error: any) {
@@ -183,12 +192,23 @@ const UserActivityMonitoring = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="p-4">
-            <div className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4 text-green-500" />
-              <span className="text-sm font-medium">Usuários Online</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  {isConnected ? (
+                    <Wifi className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <WifiOff className="h-4 w-4 text-red-500" />
+                  )}
+                  <span className="text-sm font-medium">Usuários Online</span>
+                </div>
+                <p className="text-2xl font-bold text-green-600">{onlineCount}</p>
+                <p className="text-xs text-gray-500">
+                  {isConnected ? 'Tempo real conectado' : 'Reconectando...'}
+                </p>
+              </div>
+              <div className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
             </div>
-            <p className="text-2xl font-bold text-green-600">{onlineUsersCount}</p>
-            <p className="text-xs text-gray-500">Ativos nos últimos 5min</p>
           </CardContent>
         </Card>
 
@@ -307,41 +327,53 @@ const UserActivityMonitoring = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5" />
-                Usuários Online ({onlineUsersCount})
+                Usuários Online Em Tempo Real ({onlineCount})
+                <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></div>
               </CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <p className="text-sm text-blue-800">
+                  <strong>Status de Conexão:</strong> {isConnected ? 'Conectado e monitorando em tempo real' : 'Reconectando...'}
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Dados atualizados automaticamente via WebSocket
+                </p>
+              </div>
+              
               <ScrollArea className="h-96">
                 <div className="space-y-3">
-                  {activeUsers.filter(user => user.is_online).length === 0 ? (
-                    <p className="text-gray-500 text-center py-8">Nenhum usuário online no momento</p>
+                  {onlineUsers.length === 0 ? (
+                    <p className="text-gray-500 text-center py-8">
+                      {isConnected ? 'Nenhum usuário online no momento' : 'Conectando ao sistema de presença...'}
+                    </p>
                   ) : (
-                    activeUsers.filter(user => user.is_online).map((user, index) => {
-                      const status = getOnlineStatus(user.last_seen);
-                      return (
-                        <div key={index} className="border rounded-lg p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-3 h-3 rounded-full ${status.color}`}></div>
-                              <div>
-                                <p className="font-medium">{user.email}</p>
-                                <p className="text-sm text-gray-500">
-                                  ID: {user.id.substring(0, 8)}...
-                                </p>
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <Badge variant="outline" className="text-xs">
-                                {status.text}
-                              </Badge>
-                              <p className="text-xs text-gray-500 mt-1">
-                                {formatLastSeen(user.last_seen)}
+                    onlineUsers.map((user, index) => (
+                      <div key={user.user_id} className="border rounded-lg p-3 bg-green-50 border-green-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
+                            <div>
+                              <p className="font-medium">{user.email}</p>
+                              {user.nome_completo && (
+                                <p className="text-sm text-gray-600">{user.nome_completo}</p>
+                              )}
+                              <p className="text-xs text-gray-500">
+                                ID: {user.user_id.substring(0, 8)}...
                               </p>
                             </div>
                           </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className="text-xs text-green-700 border-green-300">
+                              Online Agora
+                            </Badge>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Conectado: {new Date(user.online_at).toLocaleTimeString('pt-BR')}
+                            </p>
+                          </div>
                         </div>
-                      );
-                    })
+                      </div>
+                    ))
                   )}
                 </div>
               </ScrollArea>
