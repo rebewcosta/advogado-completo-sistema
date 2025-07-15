@@ -103,12 +103,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       console.log('📡 [PAYMENT FORM] Chamando função criar-sessao-checkout...');
       
-      // Chamar função do Supabase com timeout
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout - tente novamente')), 15000)
-      );
-      
-      
+      // Chamar função do Supabase (removendo timeout que causava problemas)
       const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
         body: checkoutData,
         headers

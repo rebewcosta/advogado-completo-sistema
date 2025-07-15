@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
-  console.log(`🚀 [CHECKOUT] ${new Date().toISOString()} - Nova requisição`);
+  console.log(`🚀 [CHECKOUT] ${new Date().toISOString()} - Nova requisição ${req.method}`);
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -45,8 +45,20 @@ serve(async (req: Request) => {
     }
 
     // Ler corpo da requisição
-    const body = await req.text();
-    console.log(`📥 [CHECKOUT] Body: ${body}`);
+    let body;
+    try {
+      body = await req.text();
+      console.log(`📥 [CHECKOUT] Body recebido: ${body}`);
+    } catch (e) {
+      console.error("❌ [CHECKOUT] Erro ao ler body:", e);
+      return new Response(
+        JSON.stringify({ error: "Erro ao ler dados da requisição" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 400 
+        }
+      );
+    }
 
     if (!body || body.trim() === "") {
       console.error("❌ [CHECKOUT] Body vazio");
@@ -63,7 +75,7 @@ serve(async (req: Request) => {
     let requestData;
     try {
       requestData = JSON.parse(body);
-      console.log(`📊 [CHECKOUT] Dados parseados:`, requestData);
+      console.log(`📊 [CHECKOUT] Dados parseados:`, JSON.stringify(requestData, null, 2));
     } catch (parseError) {
       console.error("❌ [CHECKOUT] Erro no parse JSON:", parseError);
       return new Response(
@@ -79,7 +91,7 @@ serve(async (req: Request) => {
     const emailCliente = requestData?.emailCliente;
     
     if (!emailCliente) {
-      console.error("❌ [CHECKOUT] Email não fornecido");
+      console.error("❌ [CHECKOUT] Email não fornecido. Dados recebidos:", requestData);
       return new Response(
         JSON.stringify({ error: "Email é obrigatório" }),
         { 
@@ -90,73 +102,106 @@ serve(async (req: Request) => {
     }
 
     const emailTrimmed = emailCliente.trim().toLowerCase();
-    console.log(`✅ [CHECKOUT] Email: ${emailTrimmed}`);
+    console.log(`✅ [CHECKOUT] Email válido: ${emailTrimmed}`);
 
     // Inicializar Stripe
     console.log("🔧 [CHECKOUT] Inicializando Stripe...");
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2023-10-16",
-    });
+    let stripe;
+    try {
+      stripe = new Stripe(stripeSecretKey, {
+        apiVersion: "2023-10-16",
+      });
+      console.log("✅ [CHECKOUT] Stripe inicializado com sucesso");
+    } catch (stripeError) {
+      console.error("❌ [CHECKOUT] Erro ao inicializar Stripe:", stripeError);
+      return new Response(
+        JSON.stringify({ error: "Erro na configuração do Stripe" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 500 
+        }
+      );
+    }
 
     // Detectar ambiente
     const origin = req.headers.get("origin") || req.headers.get("referer") || "";
     const isProduction = origin.includes('sisjusgestao.com.br');
     
     console.log(`🏷️ [CHECKOUT] Origin: ${origin}`);
-    console.log(`🏷️ [CHECKOUT] Produção: ${isProduction}`);
+    console.log(`🏷️ [CHECKOUT] É produção: ${isProduction}`);
 
     // URLs de redirecionamento
     const baseUrl = isProduction ? "https://sisjusgestao.com.br" : origin;
     const successUrl = `${baseUrl}/payment-success`;
     const cancelUrl = `${baseUrl}/pagamento`;
     
-    console.log(`🔗 [CHECKOUT] Success: ${successUrl}`);
-    console.log(`🔗 [CHECKOUT] Cancel: ${cancelUrl}`);
+    console.log(`🔗 [CHECKOUT] Success URL: ${successUrl}`);
+    console.log(`🔗 [CHECKOUT] Cancel URL: ${cancelUrl}`);
 
     // Criar sessão de checkout
-    console.log("🔄 [CHECKOUT] Criando sessão...");
-    const session = await stripe.checkout.sessions.create({
-      customer_email: emailTrimmed,
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "brl",
-            product_data: {
-              name: "JusGestão Premium",
-              description: "Sistema completo de gestão jurídica - 7 dias gratuitos"
+    console.log("🔄 [CHECKOUT] Criando sessão do Stripe...");
+    
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create({
+        customer_email: emailTrimmed,
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "brl",
+              product_data: {
+                name: "JusGestão Premium",
+                description: "Sistema completo de gestão jurídica - 7 dias gratuitos"
+              },
+              unit_amount: 3700, // R$ 37,00
+              recurring: {
+                interval: "month"
+              }
             },
-            unit_amount: 3700, // R$ 37,00
-            recurring: {
-              interval: "month"
-            }
-          },
-          quantity: 1
-        }
-      ],
-      mode: "subscription",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      subscription_data: {
-        trial_period_days: 7,
+            quantity: 1
+          }
+        ],
+        mode: "subscription",
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+        subscription_data: {
+          trial_period_days: 7,
+          metadata: {
+            email: emailTrimmed,
+            environment: isProduction ? "production" : "test"
+          }
+        },
         metadata: {
           email: emailTrimmed,
           environment: isProduction ? "production" : "test"
+        },
+        allow_promotion_codes: true,
+        billing_address_collection: "auto"
+      });
+      
+      console.log(`✅ [CHECKOUT] Sessão criada: ${session.id}`);
+      console.log(`🔗 [CHECKOUT] URL: ${session.url}`);
+    } catch (stripeSessionError) {
+      console.error("❌ [CHECKOUT] Erro ao criar sessão do Stripe:", stripeSessionError);
+      return new Response(
+        JSON.stringify({ error: "Erro ao criar sessão de pagamento" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 500 
         }
-      },
-      metadata: {
-        email: emailTrimmed,
-        environment: isProduction ? "production" : "test"
-      },
-      allow_promotion_codes: true,
-      billing_address_collection: "auto"
-    });
-    
-    console.log(`✅ [CHECKOUT] Sessão criada: ${session.id}`);
-    console.log(`🔗 [CHECKOUT] URL: ${session.url}`);
+      );
+    }
 
     if (!session.url) {
-      throw new Error("URL da sessão não foi gerada");
+      console.error("❌ [CHECKOUT] URL da sessão não foi gerada");
+      return new Response(
+        JSON.stringify({ error: "URL da sessão não foi gerada" }),
+        { 
+          headers: { ...corsHeaders, "Content-Type": "application/json" }, 
+          status: 500 
+        }
+      );
     }
 
     // Resposta de sucesso
@@ -169,7 +214,7 @@ serve(async (req: Request) => {
       message: "Sessão criada com sucesso!"
     };
 
-    console.log(`🎉 [CHECKOUT] Sucesso:`, response);
+    console.log(`🎉 [CHECKOUT] Resposta de sucesso:`, JSON.stringify(response, null, 2));
 
     return new Response(
       JSON.stringify(response),
@@ -180,7 +225,7 @@ serve(async (req: Request) => {
     );
 
   } catch (error) {
-    console.error("💥 [CHECKOUT] ERRO:", error);
+    console.error("💥 [CHECKOUT] ERRO GERAL:", error);
     
     const errorMessage = error instanceof Error ? error.message : "Erro interno";
     
