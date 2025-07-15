@@ -31,14 +31,14 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
       return;
     }
     
-    // Preparar dados para salvar - não incluir email se estiver vazio
+    // Preparar dados para salvar - campos opcionais podem ficar vazios
     const dataToSave: any = {
       nome: formData.nome.trim(),
-      telefone: formData.telefone.trim(),
+      telefone: formData.telefone.trim() || '',
       tipo_cliente: formData.tipo_cliente,
-      cpfCnpj: formData.cpfCnpj.trim(),
+      cpfCnpj: formData.cpfCnpj.trim() || '',
       status_cliente: formData.status_cliente,
-      // Campos obrigatórios mas que podem estar vazios no modal simples
+      // Campos opcionais 
       endereco: '',
       cidade: '',
       estado: '',

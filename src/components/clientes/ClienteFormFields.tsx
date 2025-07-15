@@ -80,7 +80,7 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
           </div>
           <div>
             <Label htmlFor="cpfCnpj" className="text-gray-700 font-medium">
-              {formData.tipo_cliente === "Pessoa Física" ? "CPF" : "CNPJ"} *
+              {formData.tipo_cliente === "Pessoa Física" ? "CPF" : "CNPJ"}
             </Label>
             <Input
               id="cpfCnpj"
@@ -88,7 +88,6 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
               onChange={(e) => onChange('cpfCnpj', e.target.value)}
               placeholder={formData.tipo_cliente === "Pessoa Física" ? "000.000.000-00" : "00.000.000/0000-00"}
               className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-              required
             />
           </div>
         </div>

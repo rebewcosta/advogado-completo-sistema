@@ -30,8 +30,8 @@ export const useClienteValidation = () => {
       observacoes: data.observacoes ? sanitizeText(data.observacoes) : ''
     };
 
-    // Definir campos obrigatórios e limites
-    const requiredFields = ['nome', 'cpfCnpj', 'telefone'];
+    // Definir campos obrigatórios e limites - apenas nome é obrigatório
+    const requiredFields = ['nome'];
     const maxLengths = {
       nome: 100,
       cpfCnpj: 18,
@@ -50,10 +50,12 @@ export const useClienteValidation = () => {
     // Validações específicas de cliente
     const customErrors: string[] = [];
 
-    // Validar CPF/CNPJ
-    const cpfCnpjClean = data.cpfCnpj.replace(/\D/g, '');
-    if (cpfCnpjClean.length !== 11 && cpfCnpjClean.length !== 14) {
-      customErrors.push('CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos');
+    // Validar CPF/CNPJ apenas se foi fornecido
+    if (data.cpfCnpj && data.cpfCnpj.trim()) {
+      const cpfCnpjClean = data.cpfCnpj.replace(/\D/g, '');
+      if (cpfCnpjClean.length !== 11 && cpfCnpjClean.length !== 14) {
+        customErrors.push('CPF deve ter 11 dígitos ou CNPJ deve ter 14 dígitos');
+      }
     }
 
     // Validar email se fornecido
@@ -61,10 +63,12 @@ export const useClienteValidation = () => {
       customErrors.push('Email deve ter formato válido');
     }
 
-    // Validar telefone
-    const telefoneClean = data.telefone.replace(/\D/g, '');
-    if (telefoneClean.length < 10 || telefoneClean.length > 11) {
-      customErrors.push('Telefone deve ter 10 ou 11 dígitos');
+    // Validar telefone apenas se foi fornecido
+    if (data.telefone && data.telefone.trim()) {
+      const telefoneClean = data.telefone.replace(/\D/g, '');
+      if (telefoneClean.length < 10 || telefoneClean.length > 11) {
+        customErrors.push('Telefone deve ter 10 ou 11 dígitos');
+      }
     }
 
     // Combinar erros

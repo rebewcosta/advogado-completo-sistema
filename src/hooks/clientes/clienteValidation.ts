@@ -6,7 +6,7 @@ export const prepareClientDataForSave = (clientData: ClienteFormData): any => {
     nome: clientData.nome,
     telefone: clientData.telefone || '',
     tipo_cliente: clientData.tipo_cliente,
-    cpfCnpj: clientData.cpfCnpj,
+    cpfCnpj: clientData.cpfCnpj || '',
     status_cliente: clientData.status_cliente,
     endereco: clientData.endereco || '',
     cidade: clientData.cidade || '',
@@ -26,6 +26,8 @@ export const prepareClientDataForSave = (clientData: ClienteFormData): any => {
 export const getErrorMessage = (error: any): string => {
   if (error.message?.includes('clientes_email_key')) {
     return "Este email já está cadastrado para outro cliente.";
+  } else if (error.message?.includes('clientes_cpfCnpj_key') || error.message?.includes('Já existe um cliente cadastrado com este CPF/CNPJ')) {
+    return "Já existe um cliente cadastrado com este CPF/CNPJ para sua conta.";
   } else if (error.message?.includes('duplicate key')) {
     return "Já existe um cliente com essas informações.";
   } else if (error.message?.includes('not-null constraint')) {
