@@ -14,14 +14,24 @@ export const useAvisos = () => {
 
   // Buscar avisos não lidos do usuário atual
   const fetchAvisosNaoLidos = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      console.log('🔔 [useAvisos] Usuário não logado, não buscando avisos');
+      return;
+    }
+
+    console.log('🔔 [useAvisos] Buscando avisos não lidos para usuário:', user.id);
 
     try {
       const { data, error } = await supabase.rpc('get_avisos_nao_lidos', {
         p_user_id: user.id
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('🔔 [useAvisos] Erro na RPC get_avisos_nao_lidos:', error);
+        throw error;
+      }
+
+      console.log('🔔 [useAvisos] Dados brutos retornados da RPC:', data);
 
       // Type cast the response to match our interface
       const typedData = (data || []).map(item => ({
@@ -30,9 +40,10 @@ export const useAvisos = () => {
         prioridade: item.prioridade as 'baixa' | 'normal' | 'alta' | 'critica'
       }));
 
+      console.log('🔔 [useAvisos] Avisos processados:', typedData);
       setAvisosNaoLidos(typedData);
     } catch (error: any) {
-      console.error('Erro ao buscar avisos não lidos:', error);
+      console.error('🔔 [useAvisos] Erro ao buscar avisos não lidos:', error);
       toast({
         title: "Erro ao carregar avisos",
         description: error.message,
