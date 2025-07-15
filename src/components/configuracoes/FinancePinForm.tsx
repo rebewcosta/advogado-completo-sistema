@@ -2,8 +2,9 @@
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, ShieldAlert } from 'lucide-react';
+import { Loader2, KeyRound, ShieldAlert, ToggleLeft, ToggleRight } from 'lucide-react';
 import {
   InputOTP,
   InputOTPGroup,
@@ -12,6 +13,7 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
+import { useFinanceVisibility } from '@/hooks/useFinanceVisibility';
 
 interface FinancePinFormProps {
   hasFinancePin: boolean;
@@ -26,11 +28,13 @@ const FinancePinForm = ({
 }: FinancePinFormProps) => {
   const { toast } = useToast();
   const { session, user } = useAuth();
+  const { pinEnabled, togglePinEnabled, clearRememberedPin } = useFinanceVisibility();
   const [pinAtualFinanceiro, setPinAtualFinanceiro] = useState("");
   const [novoPinFinanceiro, setNovoPinFinanceiro] = useState("");
   const [confirmaNovoPinFinanceiro, setConfirmaNovoPinFinanceiro] = useState("");
   const [pinErrorMessage, setPinErrorMessage] = useState("");
   const [isRequestingPinReset, setIsRequestingPinReset] = useState(false);
+  const [isTogglingPin, setIsTogglingPin] = useState(false);
 
   const handleAlterarPinFinanceiroSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,16 +97,48 @@ const FinancePinForm = ({
     }
   };
 
+  const handleTogglePin = async (enabled: boolean) => {
+    setIsTogglingPin(true);
+    const success = await togglePinEnabled(enabled);
+    if (success && !enabled) {
+      // Limpar campos do formulário se PIN foi desabilitado
+      setPinAtualFinanceiro("");
+      setNovoPinFinanceiro("");
+      setConfirmaNovoPinFinanceiro("");
+      setPinErrorMessage("");
+      // Limpar PIN lembrado no dispositivo
+      clearRememberedPin();
+    }
+    setIsTogglingPin(false);
+  };
+
   return (
     <div className="p-4 md:p-5 border border-gray-200 rounded-lg shadow-sm bg-gray-50/50">
-        <div className="flex items-center gap-2 mb-2">
-            <KeyRound className="h-5 w-5 text-lawyer-primary" />
-            <h3 className="text-lg font-medium text-gray-700">PIN de Acesso ao Financeiro</h3>
+        <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+                <KeyRound className="h-5 w-5 text-lawyer-primary" />
+                <h3 className="text-lg font-medium text-gray-700">PIN de Acesso ao Financeiro</h3>
+            </div>
+            <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">
+                    {pinEnabled ? "Ativado" : "Desativado"}
+                </span>
+                <Switch
+                    checked={pinEnabled}
+                    onCheckedChange={handleTogglePin}
+                    disabled={isTogglingPin}
+                />
+                {isTogglingPin && <Loader2 className="h-4 w-4 animate-spin text-lawyer-primary" />}
+            </div>
         </div>
       <p className="text-xs text-gray-500 mb-4">
-        {hasFinancePin ? "Altere seu PIN de 4 dígitos para acesso à área Financeiro." : "Defina um PIN de 4 dígitos para proteger o acesso à área Financeiro."}
+        {pinEnabled 
+          ? (hasFinancePin ? "Altere seu PIN de 4 dígitos para acesso à área Financeiro." : "Defina um PIN de 4 dígitos para proteger o acesso à área Financeiro.")
+          : "PIN desativado. Dados financeiros são exibidos sem proteção adicional."
+        }
       </p>
-      <form onSubmit={handleAlterarPinFinanceiroSubmit} className="space-y-4">
+      {pinEnabled && (
+        <form onSubmit={handleAlterarPinFinanceiroSubmit} className="space-y-4">
         {hasFinancePin && (
           <div className="space-y-1.5">
             <Label htmlFor="pinAtualFinanceiro_config_sec" className="text-sm font-medium text-gray-700">PIN Atual</Label>
@@ -183,9 +219,10 @@ const FinancePinForm = ({
                 >
                   {isRequestingPinReset ? <><Loader2 className="mr-1 h-3 w-3 animate-spin" /> Enviando email...</> : "Esqueci meu PIN Financeiro"}
                 </Button>
-          )}
+           )}
         </div>
       </form>
+      )}
     </div>
   );
 };

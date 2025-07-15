@@ -13,12 +13,13 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { KeyRound, Loader2 } from 'lucide-react';
 
 interface FinancePinDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onValidate: (pin: string) => Promise<boolean>;
+  onValidate: (pin: string, rememberDevice?: boolean) => Promise<boolean>;
   isValidating: boolean;
 }
 
@@ -29,12 +30,14 @@ export const FinancePinDialog: React.FC<FinancePinDialogProps> = ({
   isValidating,
 }) => {
   const [pin, setPin] = useState('');
+  const [rememberDevice, setRememberDevice] = useState(false);
 
   const handleSubmit = async () => {
     if (pin.length === 4) {
-      const success = await onValidate(pin);
+      const success = await onValidate(pin, rememberDevice);
       if (success) {
         setPin('');
+        setRememberDevice(false);
         onClose();
       } else {
         setPin('');
@@ -76,6 +79,18 @@ export const FinancePinDialog: React.FC<FinancePinDialogProps> = ({
                 <InputOTPSlot index={3} />
               </InputOTPGroup>
             </InputOTP>
+          </div>
+          
+          <div className="flex items-center space-x-2 justify-center">
+            <Checkbox
+              id="remember-device"
+              checked={rememberDevice}
+              onCheckedChange={(checked) => setRememberDevice(checked === true)}
+              disabled={isValidating}
+            />
+            <label htmlFor="remember-device" className="text-sm text-gray-600 cursor-pointer">
+              Lembrar neste dispositivo
+            </label>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose} className="flex-1">
