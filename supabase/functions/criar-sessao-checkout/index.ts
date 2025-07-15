@@ -148,17 +148,7 @@ serve(async (req: Request) => {
         payment_method_types: ["card"],
         line_items: [
           {
-            price_data: {
-              currency: "brl",
-              product_data: {
-                name: "JusGestão Premium - Assinatura Mensal",
-                description: "Sistema completo de gestão jurídica"
-              },
-              unit_amount: 3700, // R$ 37,00
-              recurring: {
-                interval: "month"
-              }
-            },
+            price: isProduction ? "price_1RfoO5Kr3xy0fCEP5COgihuw" : "price_1QQKh6FJ3Y1S0P0BSZVwNKa6",
             quantity: 1
           }
         ],
