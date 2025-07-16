@@ -17,41 +17,13 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      devOptions: {
-        enabled: true,
-        type: 'module',
-      },
-      manifest: {
-        name: 'JusGestão',
-        short_name: 'JusGestão',
-        description: 'Sistema de gestão para advogados e escritórios de advocacia.',
-        theme_color: '#0D47A1',
-        background_color: '#FFFFFF',
-        display: 'standalone',
-        scope: '/',
-        start_url: '/',
-        icons: [
-          {
-            src: '/icons/icon-192x192.png',
-            sizes: '192x192',
-            type: 'image/png'
-          },
-          {
-            src: '/icons/icon-512x512.png',
-            sizes: '512x512',
-            type: 'image/png'
-          },
-          {
-            src: '/icons/icon-512x512-maskable.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable'
-          }
-        ]
-      },
       workbox: {
+        skipWaiting: true,
+        clientsClaim: true,
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MB limit
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,json}'],
+        // Configuração para verificação mais frequente de atualizações
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/lqprcsquknlegzmzdoct\.supabase\.co\/.*/i,
@@ -94,6 +66,38 @@ export default defineConfig(({ mode }) => ({
                 statuses: [0, 200]
               }
             }
+          }
+        ]
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module',
+      },
+      manifest: {
+        name: 'JusGestão',
+        short_name: 'JusGestão',
+        description: 'Sistema de gestão para advogados e escritórios de advocacia.',
+        theme_color: '#0D47A1',
+        background_color: '#FFFFFF',
+        display: 'standalone',
+        scope: '/',
+        start_url: '/',
+        icons: [
+          {
+            src: '/icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png'
+          },
+          {
+            src: '/icons/icon-512x512-maskable.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable'
           }
         ]
       }

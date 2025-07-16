@@ -38,6 +38,7 @@ import ContaCanceladaPage from './pages/ContaCanceladaPage';
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import VerificarAssinatura from './components/VerificarAssinatura';
+import PWAUpdateToast from './components/pwa/PWAUpdateToast';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from '@/components/AppSidebar';
 
@@ -76,6 +77,7 @@ function App() {
             <AuthProvider>
               <div className="App min-h-screen">
                 <Toaster />
+                <PWAUpdateToast />
                 
                 <Routes>
                   {/* Rotas públicas (Index já tem navbar integrada) */}

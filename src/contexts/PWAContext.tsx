@@ -15,6 +15,9 @@ interface PWAContextType {
   isStandalone: boolean;
   isIOS: boolean;
   triggerInstallPrompt: () => void;
+  updateAvailable: boolean;
+  isUpdating: boolean;
+  updateApp: () => void;
 }
 
 const PWAContext = createContext<PWAContextType | undefined>(undefined);
@@ -23,13 +26,14 @@ export const PWAProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    // console.log("PWAContext: useEffect running to add listeners.");
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
-      // console.log("PWAContext: 'beforeinstallprompt' event captured.", e);
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -40,45 +44,96 @@ export const PWAProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setIsIOS(iosDetected);
     
     const handleAppInstalled = () => {
-      // console.log("PWAContext: App installed successfully via 'appinstalled' event!");
       setIsStandalone(true);
-      setDeferredPrompt(null); // Limpar o prompt após a instalação bem-sucedida
+      setDeferredPrompt(null);
     };
     window.addEventListener('appinstalled', handleAppInstalled);
+
+    // Configurar detecção de atualizações do Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((reg) => {
+        setRegistration(reg);
+        
+        // Verificar se há uma atualização aguardando
+        if (reg.waiting) {
+          setUpdateAvailable(true);
+        }
+
+        // Listener para atualizações do service worker
+        reg.addEventListener('updatefound', () => {
+          const newWorker = reg.installing;
+          if (newWorker) {
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                setUpdateAvailable(true);
+              }
+            });
+          }
+        });
+      });
+
+      // Listener para quando uma nova versão do SW toma controle
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!isUpdating) {
+          window.location.reload();
+        }
+      });
+    }
+
+    // Verificação periódica de atualizações (a cada 30 minutos)
+    const checkForUpdatesInterval = setInterval(() => {
+      if (registration) {
+        registration.update();
+      }
+    }, 30 * 60 * 1000);
+
+    // Verificar atualizações quando o app volta do background
+    const handleVisibilityChange = () => {
+      if (!document.hidden && registration) {
+        registration.update();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
-      // console.log("PWAContext: Event listeners for PWA removed.");
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(checkForUpdatesInterval);
     };
-  }, []);
+  }, [registration, isUpdating]);
   
   const triggerInstallPrompt = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then((choiceResult) => {
-        // console.log('PWAContext: User choice:', choiceResult.outcome);
-        if (choiceResult.outcome === 'accepted') {
-          // O listener 'appinstalled' deve cuidar de setar isStandalone e limpar deferredPrompt.
-          // Não é estritamente necessário limpar o deferredPrompt aqui se 'appinstalled' for confiável.
-        } else {
-          // Usuário dispensou. O deferredPrompt pode não ser reutilizável imediatamente.
-          // Para simplificar, vamos setar para null para que o botão de instalar não apareça mais
-          // até que o navegador dispare 'beforeinstallprompt' novamente.
+        if (choiceResult.outcome !== 'accepted') {
           setDeferredPrompt(null);
         }
-      }).catch(error => {
-        // console.error("PWAContext: Error during userChoice or prompt:", error);
-        // Mesmo em caso de erro, pode ser bom limpar o prompt para evitar estados estranhos.
+      }).catch(() => {
         setDeferredPrompt(null);
       });
-    } else {
-      // console.warn("PWAContext: triggerInstallPrompt called but deferredPrompt is null.");
+    }
+  };
+
+  const updateApp = () => {
+    if (registration?.waiting) {
+      setIsUpdating(true);
+      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      setUpdateAvailable(false);
     }
   };
 
   return (
-    <PWAContext.Provider value={{ deferredPrompt, isStandalone, isIOS, triggerInstallPrompt }}>
+    <PWAContext.Provider value={{ 
+      deferredPrompt, 
+      isStandalone, 
+      isIOS, 
+      triggerInstallPrompt,
+      updateAvailable,
+      isUpdating,
+      updateApp
+    }}>
       {children}
     </PWAContext.Provider>
   );
