@@ -43,7 +43,7 @@ const SegurancaTab = ({
           Segurança da Conta
         </CardTitle>
         <CardDescription className="text-sm text-gray-500 pt-1">
-          Gerencie suas senhas, PIN de acesso e outras configurações de segurança.
+          Gerencie suas senhas e PIN
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6 space-y-8">
