@@ -117,7 +117,7 @@ const FinancePinForm = ({
         <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
                 <KeyRound className="h-5 w-5 text-lawyer-primary" />
-                <h3 className="text-lg font-medium text-gray-700">PIN de Acesso ao Financeiro</h3>
+                <h3 className="text-lg font-medium text-gray-700">Pin de Acesso</h3>
             </div>
             <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-600">
