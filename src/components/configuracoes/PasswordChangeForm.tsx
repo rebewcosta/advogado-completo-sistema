@@ -23,6 +23,10 @@ const PasswordChangeForm = () => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!passwordData.currentPassword) {
+      toast({ title: "Campo obrigatório", description: "Digite sua senha atual.", variant: "destructive" });
+      return;
+    }
     if (!passwordData.newPassword) {
       toast({ title: "Campo obrigatório", description: "Digite sua nova senha.", variant: "destructive" });
       return;
@@ -36,9 +40,29 @@ const PasswordChangeForm = () => {
       return;
     }
 
+    if (!user?.email) {
+      toast({ title: "Erro", description: "Email do usuário não encontrado.", variant: "destructive" });
+      return;
+    }
+
     setChangingPassword(true);
     try {
-      // Atualizar diretamente para a nova senha usando o Supabase Auth
+      // Verificar senha atual fazendo uma re-autenticação temporária
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: passwordData.currentPassword
+      });
+
+      if (signInError) {
+        toast({ 
+          title: "Senha atual incorreta", 
+          description: "A senha atual fornecida está incorreta.", 
+          variant: "destructive" 
+        });
+        return;
+      }
+
+      // Se chegou até aqui, a senha atual está correta, então atualizar para a nova senha
       const { error } = await supabase.auth.updateUser({ password: passwordData.newPassword });
       if (error) throw error;
       
@@ -95,8 +119,21 @@ const PasswordChangeForm = () => {
         <Lock className="h-5 w-5 text-lawyer-primary" />
         <h3 className="text-lg font-medium text-gray-700">Alterar Senha do Sistema</h3>
       </div>
-      <p className="text-xs text-gray-500 mb-4">Digite uma nova senha segura. O Supabase irá confirmar sua identidade automaticamente.</p>
+      <p className="text-xs text-gray-500 mb-4">Para sua segurança, confirme sua senha atual antes de definir uma nova.</p>
       <form onSubmit={handleChangePassword} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="currentPassword_config_sec" className="text-sm font-medium text-gray-700">Senha atual</Label>
+          <Input
+            id="currentPassword_config_sec"
+            name="currentPassword"
+            type="password"
+            value={passwordData.currentPassword}
+            onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
+            required
+            className="border-gray-300 focus:border-lawyer-primary focus:ring-lawyer-primary"
+            placeholder="Digite sua senha atual"
+          />
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
             <Label htmlFor="newPassword_config_sec" className="text-sm font-medium text-gray-700">Nova senha</Label>
@@ -129,7 +166,7 @@ const PasswordChangeForm = () => {
         <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
           <Button
             type="submit"
-            disabled={changingPassword || !passwordData.newPassword || !passwordData.confirmPassword}
+            disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
             className="w-full sm:w-auto bg-lawyer-primary hover:bg-lawyer-primary/90 text-white"
             size="sm"
           >
