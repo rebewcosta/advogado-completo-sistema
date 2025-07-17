@@ -48,7 +48,8 @@ const PasswordChangeForm = () => {
       });
 
       if (verifyError) {
-        throw new Error("Erro ao verificar senha atual.");
+        console.error('Erro ao verificar senha:', verifyError);
+        throw new Error("Erro ao verificar senha atual: " + verifyError.message);
       }
 
       if (!isCurrentPasswordValid) {

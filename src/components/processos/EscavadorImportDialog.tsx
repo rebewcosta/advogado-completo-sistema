@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Download, CheckCircle2, AlertCircle, Search } from 'lucide-react';
 import { useEscavadorImport } from '@/hooks/useEscavadorImport';
+import { useToast } from '@/hooks/use-toast';
 
 interface EscavadorImportDialogProps {
   open: boolean;
@@ -34,27 +35,48 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
     resultadoConsulta,
     consultarProcessosEscavador,
     importarProcessosSelecionados,
-    limparResultados
+    limparResultados,
+    checkImportLimit
   } = useEscavadorImport();
 
   const [processosSelecionados, setProcessosSelecionados] = useState<Set<string>>(new Set());
   const [etapa, setEtapa] = useState<'inicial' | 'resultados' | 'importando'>('inicial');
   const [oabDigitada, setOabDigitada] = useState('');
+  const { toast } = useToast();
 
   const handleConsultar = async () => {
     if (!oabDigitada.trim()) {
+      return;
+    }
+
+    // Verificar limite antes de tentar buscar
+    const canImport = await checkImportLimit();
+    if (!canImport) {
+      toast({
+        title: "Limite diário atingido",
+        description: "Você já importou processos hoje. A importação automática do Escavador é limitada a 1 vez por dia. Use o botão \"Novo Processo\" para adicionar processos manualmente.",
+        variant: "destructive"
+      });
       return;
     }
     
     setEtapa('inicial');
     setProcessosSelecionados(new Set());
     
-    const resultado = await consultarProcessosEscavador(oabDigitada.trim());
-    if (resultado && resultado.success) {
-      setEtapa('resultados');
-      // Selecionar todos os processos novos por padrão
-      const todosNovos = new Set(processosEncontrados.map(p => p.numero_processo));
-      setProcessosSelecionados(todosNovos);
+    try {
+      const resultado = await consultarProcessosEscavador(oabDigitada.trim());
+      if (resultado && resultado.success) {
+        setEtapa('resultados');
+        // Selecionar todos os processos novos por padrão
+        const todosNovos = new Set(processosEncontrados.map(p => p.numero_processo));
+        setProcessosSelecionados(todosNovos);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro na consulta",
+        description: error.message,
+        variant: "destructive"
+      });
     }
   };
 

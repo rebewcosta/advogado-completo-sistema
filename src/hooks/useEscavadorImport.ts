@@ -31,7 +31,71 @@ export const useEscavadorImport = () => {
   const [processosEncontrados, setProcessosEncontrados] = useState<ProcessoEscavador[]>([]);
   const [resultadoConsulta, setResultadoConsulta] = useState<EscavadorResponse | null>(null);
 
+  const checkImportLimit = async (): Promise<boolean> => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: limitData, error } = await supabase
+        .from('escavador_import_limits')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('last_import_date', today)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao verificar limite:', error);
+        return false;
+      }
+
+      return !limitData; // Retorna true se ainda pode importar
+    } catch (error) {
+      console.error('Erro ao verificar limite de importação:', error);
+      return false;
+    }
+  };
+
+  const updateImportLimit = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { data: existingLimit } = await supabase
+        .from('escavador_import_limits')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('last_import_date', today)
+        .single();
+
+      if (existingLimit) {
+        await supabase
+          .from('escavador_import_limits')
+          .update({ import_count: existingLimit.import_count + 1 })
+          .eq('id', existingLimit.id);
+      } else {
+        await supabase
+          .from('escavador_import_limits')
+          .insert({
+            user_id: user.id,
+            last_import_date: today,
+            import_count: 1
+          });
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar limite de importação:', error);
+    }
+  };
+
   const consultarProcessosEscavador = async (oab: string): Promise<EscavadorResponse | null> => {
+    // Verificar limite diário
+    const canImport = await checkImportLimit();
+    if (!canImport) {
+      throw new Error('Você já importou processos hoje. A importação automática do Escavador é limitada a 1 vez por dia. Use o botão "Novo Processo" para adicionar processos manualmente.');
+    }
     if (!user) {
       toast({
         title: "Erro de autenticação",
@@ -81,6 +145,9 @@ export const useEscavadorImport = () => {
         title: "Consulta realizada com sucesso",
         description: `Encontrados ${data.totalEncontrados} processos. ${data.processosNovos} novos para importar.`,
       });
+
+      // Atualizar limite de importação após sucesso
+      await updateImportLimit();
 
       return data;
 
@@ -171,6 +238,7 @@ export const useEscavadorImport = () => {
     resultadoConsulta,
     consultarProcessosEscavador,
     importarProcessosSelecionados,
-    limparResultados
+    limparResultados,
+    checkImportLimit
   };
 };
