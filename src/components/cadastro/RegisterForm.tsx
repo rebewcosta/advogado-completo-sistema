@@ -113,10 +113,20 @@ const RegisterForm = () => {
         plano: formData.plano
       });
 
+      // Guardar email para a página de confirmação
+      localStorage.setItem('pendingConfirmationEmail', formData.email);
+      
+      // Toast mais detalhado
       toast({
-        title: "🎉 Conta criada com sucesso!",
-        description: "Verifique seu email para confirmar a conta. Você tem 7 dias GRÁTIS para testar!",
+        title: "🎉 Cadastro realizado com sucesso!",
+        description: "Redirecionando para instruções de confirmação do email...",
+        duration: 5000,
       });
+
+      // Redirecionar para página de confirmação depois de um delay
+      setTimeout(() => {
+        navigate('/confirmacao-email');
+      }, 2000);
 
     } catch (error: any) {
       console.error('Erro ao criar conta:', error);
@@ -135,9 +145,10 @@ const RegisterForm = () => {
       }
       
       toast({
-        title: "Erro ao criar conta",
+        title: "❌ Erro ao criar conta",
         description: errorMessage,
         variant: "destructive",
+        duration: 8000, // Duração maior para mensagens de erro
       });
     } finally {
       setIsLoading(false);

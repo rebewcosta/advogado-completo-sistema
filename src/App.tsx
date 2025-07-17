@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Index from './pages/Index';
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
+import ConfirmacaoEmailPage from './pages/ConfirmacaoEmailPage';
 import DashboardPage from './pages/DashboardPage';
 import MeusProcessosPage from './pages/MeusProcessosPage';
 import ClientesPage from './pages/ClientesPage';
@@ -84,6 +85,7 @@ function App() {
                   <Route path="/" element={<PublicLayout><Index /></PublicLayout>} />
                   <Route path="/login" element={<PublicLayout><LoginPage /></PublicLayout>} />
                   <Route path="/cadastro" element={<PublicLayout><CadastroPage /></PublicLayout>} />
+                  <Route path="/confirmacao-email" element={<PublicLayout><ConfirmacaoEmailPage /></PublicLayout>} />
                   <Route path="/recuperar-senha" element={<PublicLayout><RecuperarSenhaPage /></PublicLayout>} />
                   <Route path="/atualizar-senha" element={<PublicLayout><AtualizarSenhaPage /></PublicLayout>} />
                   <Route path="/termos-privacidade" element={<PublicLayout><TermosPrivacidadePage /></PublicLayout>} />

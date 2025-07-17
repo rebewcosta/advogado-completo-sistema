@@ -11,7 +11,8 @@ import {
   handleSignOut, 
   handleRefreshSession, 
   handleCreateSpecialAccount, 
-  handleCheckEmailExists 
+  handleCheckEmailExists,
+  handleResendConfirmationEmail 
 } from './authUtils';
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -113,22 +114,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, metadata?: object) => {
+  const signUp = async (email: string, password: string, metadata?: object): Promise<void> => {
     try {
       const { data } = await handleSignUp(email, password, metadata);
 
       if (data.user && data.session) {
+        // Login automático (quando email confirmation está desabilitado)
         toast({
           title: "Cadastro realizado com sucesso!",
           description: "Você será redirecionado para o painel."
         });
         navigate('/dashboard');
       } else if (data.user && !data.session) {
-        toast({
-          title: "Cadastro quase concluído!",
-          description: "Enviamos um email de confirmação para você. Por favor, verifique sua caixa de entrada (e spam).",
-        });
-        navigate('/login');
+        // Email confirmation necessária - não mostrar toast aqui pois será feito no RegisterForm
+        // O RegisterForm já vai redirecionar para /confirmacao-email
+        return;
       } else {
         toast({
           title: "Resposta inesperada do cadastro",
@@ -137,11 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       }
     } catch (error: any) {
-      toast({
-        title: "Erro ao criar conta",
-        description: error.message,
-        variant: "destructive"
-      });
+      // Não mostrar toast aqui pois será feito no RegisterForm
       throw error;
     }
   };
@@ -205,6 +201,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const resendConfirmationEmail = async (email: string): Promise<void> => {
+    try {
+      await handleResendConfirmationEmail(email);
+    } catch (error: any) {
+      toast({ 
+        title: "Erro ao reenviar email", 
+        description: error.message, 
+        variant: "destructive"
+      });
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -215,7 +224,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       loading,
       refreshSession,
       createSpecialAccount,
-      checkEmailExists
+      checkEmailExists,
+      resendConfirmationEmail
     }}>
       {children}
     </AuthContext.Provider>

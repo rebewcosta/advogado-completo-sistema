@@ -11,4 +11,5 @@ export interface AuthContextType {
   refreshSession: () => Promise<void>;
   createSpecialAccount: (email: string, password: string, metadata: object) => Promise<void>;
   checkEmailExists: (email: string) => Promise<boolean>;
+  resendConfirmationEmail: (email: string) => Promise<void>;
 }

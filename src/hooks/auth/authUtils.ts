@@ -106,3 +106,23 @@ export const handleCheckEmailExists = async (email: string): Promise<boolean> =>
     return false; // Em caso de erro, assume que não existe para permitir a criação
   }
 };
+
+export const handleResendConfirmationEmail = async (email: string): Promise<void> => {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: email,
+    options: {
+      emailRedirectTo: `${window.location.origin}/`
+    }
+  });
+
+  if (error) {
+    if (error.message.includes('email rate limit exceeded') || error.message.includes('429')) {
+      const customError = new Error(
+        'Muitas tentativas de reenvio. Aguarde alguns minutos antes de tentar novamente.'
+      );
+      throw customError;
+    }
+    throw error;
+  }
+};
