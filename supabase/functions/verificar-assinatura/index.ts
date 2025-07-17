@@ -8,8 +8,33 @@ const corsHeaders = {
 };
 
 const logStep = (step: string, details?: any) => {
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[VERIFICAR-ASSINATURA] ${step}${detailsStr}`);
+  // Reduzir logs em produção para otimização
+  const isProduction = Deno.env.get("DENO_ENV") === "production";
+  if (!isProduction) {
+    const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+    console.log(`[VERIFICAR-ASSINATURA] ${step}${detailsStr}`);
+  }
+};
+
+// Rate limiting simples - máximo 120 requests por minuto por usuário
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+const checkRateLimit = (userId: string): boolean => {
+  const now = Date.now();
+  const windowMs = 60000; // 1 minuto
+  const maxRequests = 120;
+
+  const current = rateLimitMap.get(userId) || { count: 0, resetTime: now + windowMs };
+  
+  if (now > current.resetTime) {
+    current.count = 1;
+    current.resetTime = now + windowMs;
+  } else {
+    current.count++;
+  }
+  
+  rateLimitMap.set(userId, current);
+  return current.count <= maxRequests;
 };
 
 serve(async (req) => {
@@ -39,6 +64,19 @@ serve(async (req) => {
     }
 
     const user = userData.user;
+    
+    // Rate limiting por usuário
+    if (!checkRateLimit(user.id)) {
+      return new Response(JSON.stringify({ 
+        subscribed: false,
+        account_type: 'rate_limited',
+        error: "Rate limit exceeded. Try again later." 
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 429,
+      });
+    }
+    
     logStep("User authenticated", { userId: user.id, email: user.email });
 
     // Verificar se é admin ou conta especial

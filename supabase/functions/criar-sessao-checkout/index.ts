@@ -7,19 +7,57 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Rate limiting simples - máximo 30 requests por minuto por IP
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+const checkRateLimit = (clientIP: string): boolean => {
+  const now = Date.now();
+  const windowMs = 60000; // 1 minuto
+  const maxRequests = 30;
+
+  const current = rateLimitMap.get(clientIP) || { count: 0, resetTime: now + windowMs };
+  
+  if (now > current.resetTime) {
+    current.count = 1;
+    current.resetTime = now + windowMs;
+  } else {
+    current.count++;
+  }
+  
+  rateLimitMap.set(clientIP, current);
+  return current.count <= maxRequests;
+};
+
 serve(async (req: Request) => {
-  console.log(`🚀 [CHECKOUT] ${new Date().toISOString()} - Nova requisição ${req.method}`);
+  const isProduction = Deno.env.get("DENO_ENV") === "production";
+  
+  if (!isProduction) {
+    console.log(`🚀 [CHECKOUT] ${new Date().toISOString()} - Nova requisição ${req.method}`);
+  }
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    console.log("✅ [CHECKOUT] CORS preflight");
+    if (!isProduction) {
+      console.log("✅ [CHECKOUT] CORS preflight");
+    }
     return new Response(null, { headers: corsHeaders });
+  }
+  
+  // Rate limiting
+  const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+  if (!checkRateLimit(clientIP)) {
+    return new Response(JSON.stringify({ error: "Rate limit exceeded" }), { 
+      status: 429, 
+      headers: { ...corsHeaders, "Content-Type": "application/json" }
+    });
   }
 
   try {
     // Verificar método
     if (req.method !== "POST") {
-      console.error("❌ [CHECKOUT] Método inválido:", req.method);
+      if (!isProduction) {
+        console.error("❌ [CHECKOUT] Método inválido:", req.method);
+      }
       return new Response(
         JSON.stringify({ error: "Apenas POST é permitido" }),
         { 
@@ -31,10 +69,14 @@ serve(async (req: Request) => {
 
     // Verificar chave do Stripe
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    console.log(`🔑 [CHECKOUT] Stripe key: ${stripeSecretKey ? 'PRESENTE' : 'AUSENTE'}`);
+    if (!isProduction) {
+      console.log(`🔑 [CHECKOUT] Stripe key: ${stripeSecretKey ? 'PRESENTE' : 'AUSENTE'}`);
+    }
     
     if (!stripeSecretKey) {
-      console.error("❌ [CHECKOUT] STRIPE_SECRET_KEY não configurada");
+      if (!isProduction) {
+        console.error("❌ [CHECKOUT] STRIPE_SECRET_KEY não configurada");
+      }
       return new Response(
         JSON.stringify({ error: "Chave do Stripe não configurada" }),
         { 

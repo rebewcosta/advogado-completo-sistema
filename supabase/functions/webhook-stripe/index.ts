@@ -10,14 +10,48 @@ const corsHeaders = {
 };
 
 const logStep = (step: string, details?: any) => {
-  const timestamp = new Date().toISOString();
-  const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
-  console.log(`[${timestamp}] [WEBHOOK-MAIN] ${step}${detailsStr}`);
+  // Reduzir logs em produção para otimização
+  const isProduction = Deno.env.get("DENO_ENV") === "production";
+  if (!isProduction) {
+    const timestamp = new Date().toISOString();
+    const detailsStr = details ? ` - ${JSON.stringify(details)}` : '';
+    console.log(`[${timestamp}] [WEBHOOK-MAIN] ${step}${detailsStr}`);
+  }
+};
+
+// Rate limiting simples - máximo 100 requests por minuto por IP
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+
+const checkRateLimit = (clientIP: string): boolean => {
+  const now = Date.now();
+  const windowMs = 60000; // 1 minuto
+  const maxRequests = 100;
+
+  const current = rateLimitMap.get(clientIP) || { count: 0, resetTime: now + windowMs };
+  
+  if (now > current.resetTime) {
+    current.count = 1;
+    current.resetTime = now + windowMs;
+  } else {
+    current.count++;
+  }
+  
+  rateLimitMap.set(clientIP, current);
+  return current.count <= maxRequests;
 };
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limiting
+  const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+  if (!checkRateLimit(clientIP)) {
+    return new Response("Rate limit exceeded", { 
+      status: 429, 
+      headers: corsHeaders 
+    });
   }
 
   const startTime = Date.now();

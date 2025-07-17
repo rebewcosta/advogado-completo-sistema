@@ -52,7 +52,12 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
   const handleSubmitPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('🚀 [PAYMENT FORM] Iniciando processo de pagamento');
+      // Reduzir logs em produção
+      const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('lovableproject.com');
+      
+      if (!isProduction) {
+        console.log('🚀 [PAYMENT FORM] Iniciando processo de pagamento');
+      }
     
     // Limpar estados de erro
     setErrorDetails('');
@@ -74,13 +79,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
     onProcessingChange(true);
 
     try {
-      console.log('📧 [PAYMENT FORM] Email:', emailTrimmed);
-      console.log('🏷️ [PAYMENT FORM] Environment:', isTestEnvironment ? 'TEST' : 'PRODUCTION');
+      if (!isProduction) {
+        console.log('📧 [PAYMENT FORM] Email:', emailTrimmed);
+        console.log('🏷️ [PAYMENT FORM] Environment:', isTestEnvironment ? 'TEST' : 'PRODUCTION');
+      }
 
       // Obter sessão atual
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      if (sessionError) {
+      if (sessionError && !isProduction) {
         console.error('❌ [PAYMENT FORM] Erro ao obter sessão:', sessionError);
       }
 
@@ -89,7 +96,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         emailCliente: emailTrimmed
       };
 
-      console.log('📦 [PAYMENT FORM] Dados do checkout:', checkoutData);
+      if (!isProduction) {
+        console.log('📦 [PAYMENT FORM] Dados do checkout:', checkoutData);
+      }
 
       // Configurar headers
       const headers: Record<string, string> = {
@@ -98,10 +107,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
       
       if (session?.access_token) {
         headers.Authorization = `Bearer ${session.access_token}`;
-        console.log('🔐 [PAYMENT FORM] Token de autenticação incluído');
+        if (!isProduction) {
+          console.log('🔐 [PAYMENT FORM] Token de autenticação incluído');
+        }
       }
 
-      console.log('📡 [PAYMENT FORM] Chamando função criar-sessao-checkout...');
+      if (!isProduction) {
+        console.log('📡 [PAYMENT FORM] Chamando função criar-sessao-checkout...');
+      }
       
       // Chamar função do Supabase (removendo timeout que causava problemas)
       const { data, error: invokeError } = await supabase.functions.invoke('criar-sessao-checkout', {
@@ -109,34 +122,46 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
         headers
       });
       
-      console.log('📨 [PAYMENT FORM] Resposta completa:', JSON.stringify({ data, invokeError }, null, 2));
+      if (!isProduction) {
+        console.log('📨 [PAYMENT FORM] Resposta completa:', JSON.stringify({ data, invokeError }, null, 2));
+      }
 
       // Verificar erros da invocação
       if (invokeError) {
-        console.error('❌ [PAYMENT FORM] Erro na invocação:', invokeError);
+        if (!isProduction) {
+          console.error('❌ [PAYMENT FORM] Erro na invocação:', invokeError);
+        }
         throw new Error(invokeError.message || 'Erro ao processar pagamento');
       }
 
       // Verificar se dados foram retornados
       if (!data) {
-        console.error('❌ [PAYMENT FORM] Nenhum dado retornado');
+        if (!isProduction) {
+          console.error('❌ [PAYMENT FORM] Nenhum dado retornado');
+        }
         throw new Error('Erro na comunicação com o servidor');
       }
 
       // Verificar erros na resposta
       if (data.error) {
-        console.error('❌ [PAYMENT FORM] Erro na resposta:', data.error);
+        if (!isProduction) {
+          console.error('❌ [PAYMENT FORM] Erro na resposta:', data.error);
+        }
         throw new Error(data.error);
       }
 
       // Verificar URL de checkout
       if (!data.url) {
-        console.error('❌ [PAYMENT FORM] URL de checkout não encontrada:', data);
+        if (!isProduction) {
+          console.error('❌ [PAYMENT FORM] URL de checkout não encontrada:', data);
+        }
         throw new Error('URL de checkout não foi gerada');
       }
 
-      console.log('✅ [PAYMENT FORM] Checkout criado com sucesso!');
-      console.log('🔗 [PAYMENT FORM] URL:', data.url);
+      if (!isProduction) {
+        console.log('✅ [PAYMENT FORM] Checkout criado com sucesso!');
+        console.log('🔗 [PAYMENT FORM] URL:', data.url);
+      }
 
       // Mostrar toast de sucesso
       toast({
@@ -147,12 +172,16 @@ const PaymentForm: React.FC<PaymentFormProps> = ({
 
       // Aguardar um pouco e redirecionar
       setTimeout(() => {
-        console.log('🔗 [PAYMENT FORM] Redirecionando para:', data.url);
+        if (!isProduction) {
+          console.log('🔗 [PAYMENT FORM] Redirecionando para:', data.url);
+        }
         window.location.href = data.url;
       }, 2000);
 
     } catch (error) {
-      console.error('💥 [PAYMENT FORM] Erro no pagamento:', error);
+      if (!isProduction) {
+        console.error('💥 [PAYMENT FORM] Erro no pagamento:', error);
+      }
       
       let errorMessage = "Erro ao processar pagamento";
       
