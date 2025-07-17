@@ -46,21 +46,20 @@ serve(async (req) => {
 
     console.log(`[ESCAVADOR] Usuário autenticado: ${user.id}`);
 
-    // Buscar OAB do usuário
-    const { data: oabData, error: oabError } = await supabase
-      .rpc('get_user_oab', { p_user_id: user.id });
-
-    if (oabError || !oabData) {
-      console.error('[ESCAVADOR] Erro ao buscar OAB do usuário:', oabError);
+    // Obter OAB do body da requisição
+    const { oab } = await req.json();
+    
+    if (!oab) {
+      console.error('[ESCAVADOR] OAB não fornecida na requisição');
       return new Response(JSON.stringify({ 
-        error: 'OAB não encontrada no perfil do usuário. Por favor, cadastre sua OAB no perfil.' 
+        error: 'OAB é obrigatória para a consulta' 
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log(`[ESCAVADOR] OAB encontrada: ${oabData}`);
+    console.log(`[ESCAVADOR] OAB fornecida: ${oab}`);
 
     // Obter token do Escavador
     const escavadorToken = Deno.env.get('ESCAVADOR_TOKEN');
@@ -73,7 +72,7 @@ serve(async (req) => {
     }
 
     // Consultar API do Escavador
-    console.log(`[ESCAVADOR] Consultando processos para OAB: ${oabData}`);
+    console.log(`[ESCAVADOR] Consultando processos para OAB: ${oab}`);
     
     const escavadorUrl = `https://api.escavador.com/api/v2/search/lawsuits-by-oab`;
     const escavadorResponse = await fetch(escavadorUrl, {
@@ -83,7 +82,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        oab: oabData,
+        oab: oab,
         page: 1,
         limit: 50
       }),
@@ -135,7 +134,7 @@ serve(async (req) => {
     // Retornar resultado da consulta
     return new Response(JSON.stringify({
       success: true,
-      oab: oabData,
+      oab: oab,
       totalEncontrados: processosEscavador.length,
       processosNovos: processosNovos.length,
       processosExistentes: numerosExistentes.size,

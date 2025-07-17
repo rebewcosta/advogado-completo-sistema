@@ -31,7 +31,7 @@ export const useEscavadorImport = () => {
   const [processosEncontrados, setProcessosEncontrados] = useState<ProcessoEscavador[]>([]);
   const [resultadoConsulta, setResultadoConsulta] = useState<EscavadorResponse | null>(null);
 
-  const consultarProcessosEscavador = async (): Promise<EscavadorResponse | null> => {
+  const consultarProcessosEscavador = async (oab: string): Promise<EscavadorResponse | null> => {
     if (!user) {
       toast({
         title: "Erro de autenticação",
@@ -47,6 +47,7 @@ export const useEscavadorImport = () => {
       console.log('[ESCAVADOR-HOOK] Iniciando consulta aos processos');
       
       const { data, error } = await supabase.functions.invoke('escavador-consulta-processos', {
+        body: { oab },
         headers: {
           Authorization: `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
         }

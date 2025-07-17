@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { FileText, Download, CheckCircle2, AlertCircle, Search } from 'lucide-react';
 import { useEscavadorImport } from '@/hooks/useEscavadorImport';
 
@@ -37,12 +39,17 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
 
   const [processosSelecionados, setProcessosSelecionados] = useState<Set<string>>(new Set());
   const [etapa, setEtapa] = useState<'inicial' | 'resultados' | 'importando'>('inicial');
+  const [oabDigitada, setOabDigitada] = useState('');
 
   const handleConsultar = async () => {
+    if (!oabDigitada.trim()) {
+      return;
+    }
+    
     setEtapa('inicial');
     setProcessosSelecionados(new Set());
     
-    const resultado = await consultarProcessosEscavador();
+    const resultado = await consultarProcessosEscavador(oabDigitada.trim());
     if (resultado && resultado.success) {
       setEtapa('resultados');
       // Selecionar todos os processos novos por padrão
@@ -94,6 +101,7 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
     limparResultados();
     setProcessosSelecionados(new Set());
     setEtapa('inicial');
+    setOabDigitada('');
     onOpenChange(false);
   };
 
@@ -110,17 +118,32 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
         <p className="text-muted-foreground mb-4">
           Conecte-se ao Escavador para buscar automaticamente todos os processos associados ao seu número da OAB.
         </p>
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800">
-            <AlertCircle className="w-4 h-4 inline mr-2" />
-            Certifique-se de que seu número da OAB está cadastrado no seu perfil.
-          </p>
+        
+        <div className="space-y-3">
+          <div className="space-y-2">
+            <Label htmlFor="oab-input">Número da OAB</Label>
+            <Input
+              id="oab-input"
+              type="text"
+              placeholder="Ex: 123456/SP"
+              value={oabDigitada}
+              onChange={(e) => setOabDigitada(e.target.value)}
+              className="w-full"
+            />
+          </div>
+          
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+            <p className="text-sm text-blue-800">
+              <AlertCircle className="w-4 h-4 inline mr-2" />
+              Digite seu número da OAB no formato: número/estado (ex: 123456/SP).
+            </p>
+          </div>
         </div>
       </div>
 
       <Button 
         onClick={handleConsultar}
-        disabled={isLoading}
+        disabled={isLoading || !oabDigitada.trim()}
         className="w-full"
         size="lg"
       >
@@ -225,7 +248,7 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
               <Button
                 variant="outline"
                 onClick={handleConsultar}
-                disabled={isLoading}
+                disabled={isLoading || !oabDigitada.trim()}
                 className="flex-1"
               >
                 <Search className="w-4 h-4 mr-2" />
@@ -245,7 +268,7 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
           <div className="text-center py-8">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600 mb-4">Nenhum processo novo encontrado para importar.</p>
-            <Button variant="outline" onClick={handleConsultar} disabled={isLoading}>
+            <Button variant="outline" onClick={handleConsultar} disabled={isLoading || !oabDigitada.trim()}>
               Consultar Novamente
             </Button>
           </div>
