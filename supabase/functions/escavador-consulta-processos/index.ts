@@ -59,7 +59,20 @@ serve(async (req) => {
       });
     }
 
-    console.log(`[ESCAVADOR] OAB fornecida: ${oab}`);
+    // Separar número e estado da OAB (formato: numero/estado)
+    const oabParts = oab.split('/');
+    if (oabParts.length !== 2) {
+      console.error('[ESCAVADOR] Formato de OAB inválido. Use: numero/estado');
+      return new Response(JSON.stringify({ 
+        error: 'Formato de OAB inválido. Use o formato: numero/estado (ex: 123456/SP)' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const [oab_numero, oab_estado] = oabParts;
+    console.log(`[ESCAVADOR] OAB fornecida: ${oab_numero}/${oab_estado}`);
 
     // Obter token do Escavador
     const escavadorToken = Deno.env.get('ESCAVADOR_TOKEN');
@@ -72,20 +85,17 @@ serve(async (req) => {
     }
 
     // Consultar API do Escavador
-    console.log(`[ESCAVADOR] Consultando processos para OAB: ${oab}`);
+    console.log(`[ESCAVADOR] Consultando processos para OAB: ${oab_numero}/${oab_estado}`);
     
-    const escavadorUrl = `https://api.escavador.com/api/v2/search/lawsuits-by-oab`;
+    const escavadorUrl = `https://api.escavador.com/api/v2/advogado/processos?oab_numero=${oab_numero}&oab_estado=${oab_estado}&limit=50`;
     const escavadorResponse = await fetch(escavadorUrl, {
-      method: 'POST',
+      method: 'GET',
       headers: {
         'Authorization': `Bearer ${escavadorToken}`,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        oab: oab,
-        page: 1,
-        limit: 50
-      }),
     });
 
     if (!escavadorResponse.ok) {
@@ -100,18 +110,18 @@ serve(async (req) => {
     }
 
     const escavadorData = await escavadorResponse.json();
-    console.log(`[ESCAVADOR] Processos encontrados: ${escavadorData.results?.length || 0}`);
+    console.log(`[ESCAVADOR] Processos encontrados: ${escavadorData.items?.length || 0}`);
 
     // Processar dados do Escavador
-    const processosEscavador = escavadorData.results || [];
+    const processosEscavador = escavadorData.items || [];
     const processosNormalizados = processosEscavador.map((processo: any) => ({
-      numero_processo: processo.lawsuit_number || processo.number || '',
-      tipo_processo: processo.lawsuit_class || processo.subject || 'Processo Judicial',
-      status_processo: processo.status || 'Importado da OAB',
-      vara_tribunal: processo.court || processo.tribunal || '',
+      numero_processo: processo.numero_cnj || '',
+      tipo_processo: processo.capa?.classe || 'Processo Judicial',
+      status_processo: processo.status_predito || 'Importado da OAB',
+      vara_tribunal: processo.unidade_origem?.nome || processo.orgao_julgador || '',
       proximo_prazo: null, // API do Escavador não fornece prazos específicos
       cliente_id: null, // Será associado manualmente pelo usuário se necessário
-      nome_cliente_text: null,
+      nome_cliente_text: processo.titulo_polo_ativo || null,
       fonte: 'Escavador'
     }));
 
