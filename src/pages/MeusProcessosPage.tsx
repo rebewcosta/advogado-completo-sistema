@@ -3,6 +3,7 @@ import React from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import { Spinner } from '@/components/ui/spinner';
 import { FileText } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import SharedPageHeader from '@/components/shared/SharedPageHeader';
 import ProcessSearchActionBar from '@/components/processos/ProcessSearchActionBar';
 import ProcessListAsCards from '@/components/processos/ProcessListAsCards';
@@ -69,6 +70,23 @@ const MeusProcessosPage = () => {
             showActionButton={false}
             isLoading={isLoadingCombined}
           />
+          
+          {/* Informação sobre importação automática */}
+          <Card className="mb-6 border-blue-200 bg-blue-50/50">
+            <CardContent className="p-4">
+              <div className="flex items-start space-x-3">
+                <FileText className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800">
+                  <p className="font-medium mb-1">💡 Importação Inteligente de Processos</p>
+                  <p>
+                    Você pode importar automaticamente todos os seus processos do Escavador de uma só vez, <strong>1 vez por mês</strong>. 
+                    Após usar a importação automática, continue adicionando processos <strong>ilimitadamente</strong> usando o botão 
+                    "Novo Processo" para cadastro manual.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <ProcessSearchActionBar

@@ -36,13 +36,15 @@ export const useEscavadorImport = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return false;
 
-      const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
       
       const { data: limitData, error } = await supabase
         .from('escavador_import_limits')
         .select('*')
         .eq('user_id', user.id)
-        .eq('last_import_date', today)
+        .gte('last_import_date', currentMonth + '-01')
+        .lt('last_import_date', new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split('T')[0])
         .single();
 
       if (error && error.code !== 'PGRST116') {
@@ -63,18 +65,21 @@ export const useEscavadorImport = () => {
       if (!user) return;
 
       const today = new Date().toISOString().split('T')[0];
+      const now = new Date();
+      const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
       
       const { data: existingLimit } = await supabase
         .from('escavador_import_limits')
         .select('*')
         .eq('user_id', user.id)
-        .eq('last_import_date', today)
+        .gte('last_import_date', currentMonth + '-01')
+        .lt('last_import_date', new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString().split('T')[0])
         .single();
 
       if (existingLimit) {
         await supabase
           .from('escavador_import_limits')
-          .update({ import_count: existingLimit.import_count + 1 })
+          .update({ import_count: existingLimit.import_count + 1, last_import_date: today })
           .eq('id', existingLimit.id);
       } else {
         await supabase
@@ -91,10 +96,9 @@ export const useEscavadorImport = () => {
   };
 
   const consultarProcessosEscavador = async (oab: string): Promise<EscavadorResponse | null> => {
-    // Verificar limite diário
     const canImport = await checkImportLimit();
     if (!canImport) {
-      throw new Error('Você já importou processos hoje. A importação automática do Escavador é limitada a 1 vez por dia. Use o botão "Novo Processo" para adicionar processos manualmente.');
+      throw new Error('Você já utilizou a importação automática este mês. A importação do Escavador é limitada a 1 vez por mês. Para adicionar mais processos, use o botão "Novo Processo" que permite cadastro manual ilimitado.');
     }
     if (!user) {
       toast({

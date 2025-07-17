@@ -200,6 +200,23 @@ const ProcessesPageContent = () => {
               onActionButtonClick={handleOpenNewProcessForm}
               isLoading={isLoadingCombined}
             />
+            
+            {/* Informação sobre importação automática */}
+            <Card className="mb-6 border-blue-200 bg-blue-50/50">
+              <CardContent className="p-4">
+                <div className="flex items-start space-x-3">
+                  <FileText className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-800">
+                    <p className="font-medium mb-1">💡 Importação Inteligente de Processos</p>
+                    <p>
+                      Você pode importar automaticamente todos os seus processos do Escavador de uma só vez, <strong>1 vez por mês</strong>. 
+                      Após usar a importação automática, continue adicionando processos <strong>ilimitadamente</strong> usando o botão 
+                      "Novo Processo" acima para cadastro manual.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           <ProcessSearchActionBar

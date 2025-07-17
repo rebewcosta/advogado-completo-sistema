@@ -53,8 +53,8 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
     const canImport = await checkImportLimit();
     if (!canImport) {
       toast({
-        title: "Limite diário atingido",
-        description: "Você já importou processos hoje. A importação automática do Escavador é limitada a 1 vez por dia. Use o botão \"Novo Processo\" para adicionar processos manualmente.",
+        title: "Limite mensal atingido",
+        description: "Você já utilizou a importação automática este mês. A importação do Escavador é limitada a 1 vez por mês. Para adicionar mais processos, use o botão \"Novo Processo\" que permite cadastro manual ilimitado.",
         variant: "destructive"
       });
       return;
@@ -158,6 +158,8 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
             <p className="text-sm text-blue-800">
               <AlertCircle className="w-4 h-4 inline mr-2" />
               Digite seu número da OAB no formato: número/estado (ex: 123456/SP).
+              <br />
+              <strong>Importante:</strong> A importação automática é limitada a 1 vez por mês. Para processos adicionais, use "Novo Processo".
             </p>
           </div>
         </div>
