@@ -115,14 +115,24 @@ export const useProcessesPage = () => {
   };
 
   const handleEditProcess = (processo: ProcessoComCliente) => {
+    // Para processos importados (sem cliente_id), preservar o nome_cliente_text original
+    const nomeCliente = processo.cliente_id 
+      ? processo.clientes?.nome || ""  // Se tem cliente associado, usar o nome do cliente
+      : processo.nome_cliente_text || "";  // Se não tem cliente, usar o texto original (casos importados)
+    
+    // Validar e mapear status para valores aceitos
+    const statusValido: ProcessoFormData['status'] = ['Em andamento', 'Concluído', 'Suspenso'].includes(processo.status_processo as any)
+      ? (processo.status_processo as ProcessoFormData['status'])
+      : "Em andamento";
+
     const formData: ProcessoFormDataParaForm = {
       id: processo.id,
       numero: processo.numero_processo || "",
       cliente_id: processo.cliente_id || null,
-      nome_cliente_text: processo.clientes?.nome || processo.nome_cliente_text || "",
+      nome_cliente_text: nomeCliente,
       tipo: processo.tipo_processo || "",
       vara: processo.vara_tribunal || "",
-      status: (processo.status_processo as ProcessoFormData['status']) || "Em andamento",
+      status: statusValido,
       prazo: processo.proximo_prazo ? new Date(processo.proximo_prazo + 'T00:00:00Z').toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : "",
     };
     setProcessoParaForm(formData);

@@ -112,18 +112,43 @@ serve(async (req) => {
     const escavadorData = await escavadorResponse.json();
     console.log(`[ESCAVADOR] Processos encontrados: ${escavadorData.items?.length || 0}`);
 
+    // Função para mapear status da API do Escavador para status válidos do sistema
+    const mapearStatus = (statusApi: string): string => {
+      if (!statusApi) return 'Em andamento';
+      
+      const statusLower = statusApi.toLowerCase();
+      if (statusLower.includes('concluí') || statusLower.includes('encerr') || statusLower.includes('final') || statusLower.includes('arquiv')) {
+        return 'Concluído';
+      }
+      if (statusLower.includes('suspend') || statusLower.includes('parad') || statusLower.includes('sobrest')) {
+        return 'Suspenso';
+      }
+      // Default para processos em tramitação
+      return 'Em andamento';
+    };
+
     // Processar dados do Escavador
     const processosEscavador = escavadorData.items || [];
-    const processosNormalizados = processosEscavador.map((processo: any) => ({
-      numero_processo: processo.numero_cnj || '',
-      tipo_processo: processo.capa?.classe || 'Processo Judicial',
-      status_processo: processo.status_predito || 'Importado da OAB',
-      vara_tribunal: processo.unidade_origem?.nome || processo.orgao_julgador || '',
-      proximo_prazo: null, // API do Escavador não fornece prazos específicos
-      cliente_id: null, // Será associado manualmente pelo usuário se necessário
-      nome_cliente_text: processo.titulo_polo_ativo || null,
-      fonte: 'Escavador'
-    }));
+    const processosNormalizados = processosEscavador.map((processo: any) => {
+      console.log(`[ESCAVADOR] Mapeando processo:`, {
+        numero_cnj: processo.numero_cnj,
+        classe: processo.capa?.classe,
+        status_predito: processo.status_predito,
+        titulo_polo_ativo: processo.titulo_polo_ativo,
+        unidade_origem: processo.unidade_origem?.nome
+      });
+      
+      return {
+        numero_processo: processo.numero_cnj || '',
+        tipo_processo: processo.capa?.classe || 'Processo Judicial',
+        status_processo: mapearStatus(processo.status_predito),
+        vara_tribunal: processo.unidade_origem?.nome || processo.orgao_julgador || '',
+        proximo_prazo: null, // API do Escavador não fornece prazos específicos
+        cliente_id: null, // Será associado manualmente pelo usuário se necessário
+        nome_cliente_text: processo.titulo_polo_ativo || null,
+        fonte: 'Escavador'
+      };
+    });
 
     // Verificar processos existentes
     const numerosProcessos = processosNormalizados.map(p => p.numero_processo).filter(Boolean);
