@@ -13,8 +13,9 @@ import PlanInfoBox from './PlanInfoBox';
 const RegisterForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp, checkEmailExists } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [lastSubmitTime, setLastSubmitTime] = useState(0);
   
   const [formData, setFormData] = useState({
     nome: '',
@@ -73,13 +74,36 @@ const RegisterForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Verificar debounce para evitar muitas tentativas seguidas (5 segundos)
+    const now = Date.now();
+    if (now - lastSubmitTime < 5000) {
+      toast({
+        title: "Aguarde um momento",
+        description: "Por favor, aguarde alguns segundos antes de tentar novamente.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!validateForm()) {
       return;
     }
 
     setIsLoading(true);
+    setLastSubmitTime(now);
     
     try {
+      // Verificar se o email já existe antes de tentar criar
+      const emailExists = await checkEmailExists(formData.email);
+      if (emailExists) {
+        toast({
+          title: "Email já cadastrado",
+          description: "Este email já está cadastrado. Tente fazer login ou use a opção 'Esqueci minha senha'.",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Criar a conta diretamente com 7 dias de trial
       await signUp(formData.email, formData.senha, {
         nome_completo: formData.nome,
@@ -96,9 +120,23 @@ const RegisterForm = () => {
 
     } catch (error: any) {
       console.error('Erro ao criar conta:', error);
+      
+      // Tratamento específico para diferentes tipos de erro
+      let errorMessage = "Houve um problema. Tente novamente.";
+      
+      if (error.message.includes('email rate limit') || error.message.includes('tentativas de cadastro')) {
+        errorMessage = error.message;
+      } else if (error.message.includes('já está cadastrado') || error.message.includes('User already registered')) {
+        errorMessage = "Este email já está cadastrado. Tente fazer login ou use a opção 'Esqueci minha senha'.";
+      } else if (error.message.includes('Invalid email')) {
+        errorMessage = "Email inválido. Verifique se digitou corretamente.";
+      } else if (error.message.includes('Password should be at least')) {
+        errorMessage = "A senha deve ter pelo menos 6 caracteres.";
+      }
+      
       toast({
         title: "Erro ao criar conta",
-        description: error.message || "Houve um problema. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

@@ -27,6 +27,22 @@ export const handleSignUp = async (email: string, password: string, metadata?: o
   });
 
   if (error) {
+    // Tratamento específico para limite de taxa de email
+    if (error.message.includes('email rate limit exceeded') || error.message.includes('429')) {
+      const customError = new Error(
+        'Muitas tentativas de cadastro detectadas. Por favor, aguarde alguns minutos antes de tentar novamente. Se você já se cadastrou, verifique seu email (incluindo a pasta de spam) para o link de confirmação.'
+      );
+      throw customError;
+    }
+    
+    // Outros tratamentos de erro
+    if (error.message.includes('User already registered')) {
+      const customError = new Error(
+        'Este email já está cadastrado. Tente fazer login ou use a opção "Esqueci minha senha".'
+      );
+      throw customError;
+    }
+    
     throw error;
   }
 
