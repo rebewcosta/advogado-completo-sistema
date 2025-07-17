@@ -40,15 +40,73 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
   } = useEscavadorImport();
 
   const [processosSelecionados, setProcessosSelecionados] = useState<Set<string>>(new Set());
-  const [etapa, setEtapa] = useState<'inicial' | 'resultados' | 'importando'>('inicial');
+  const [etapa, setEtapa] = useState<'inicial' | 'confirmacao' | 'resultados' | 'importando'>('inicial');
   const [oabDigitada, setOabDigitada] = useState('');
+  const [oabValidada, setOabValidada] = useState('');
   const { toast } = useToast();
 
-  const handleConsultar = async () => {
-    if (!oabDigitada.trim()) {
+  // Função para validar formato OAB
+  const validarFormatoOAB = (oab: string): { valido: boolean; erro?: string; oabFormatada?: string } => {
+    const oabLimpa = oab.trim().toUpperCase();
+    
+    // Regex para formato rigoroso: apenas números seguidos de / e sigla do estado (2 letras)
+    const regexOAB = /^(\d+)\/([A-Z]{2})$/;
+    const match = oabLimpa.match(regexOAB);
+    
+    if (!match) {
+      return {
+        valido: false,
+        erro: "Formato inválido. Use apenas: números/ESTADO (ex: 123456/CE). Sem pontos, sem espaços, sem letras antes dos números."
+      };
+    }
+    
+    const [, numeros, estado] = match;
+    
+    // Validar se tem pelo menos 4 dígitos
+    if (numeros.length < 4) {
+      return {
+        valido: false,
+        erro: "O número da OAB deve ter pelo menos 4 dígitos."
+      };
+    }
+    
+    // Lista de estados válidos
+    const estadosValidos = [
+      'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 
+      'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 
+      'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+    ];
+    
+    if (!estadosValidos.includes(estado)) {
+      return {
+        valido: false,
+        erro: `Estado "${estado}" não é válido. Use a sigla correta do estado (ex: CE, SP, RJ).`
+      };
+    }
+    
+    return {
+      valido: true,
+      oabFormatada: `${numeros}/${estado}`
+    };
+  };
+
+  const handleValidarOAB = () => {
+    const validacao = validarFormatoOAB(oabDigitada);
+    
+    if (!validacao.valido) {
+      toast({
+        title: "Formato OAB inválido",
+        description: validacao.erro,
+        variant: "destructive"
+      });
       return;
     }
+    
+    setOabValidada(validacao.oabFormatada!);
+    setEtapa('confirmacao');
+  };
 
+  const handleConfirmarBusca = async () => {
     // Verificar limite antes de tentar buscar
     const canImport = await checkImportLimit();
     if (!canImport) {
@@ -60,11 +118,10 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
       return;
     }
     
-    setEtapa('inicial');
     setProcessosSelecionados(new Set());
     
     try {
-      const resultado = await consultarProcessosEscavador(oabDigitada.trim());
+      const resultado = await consultarProcessosEscavador(oabValidada);
       if (resultado && resultado.success) {
         setEtapa('resultados');
         // Selecionar todos os processos novos por padrão
@@ -77,7 +134,13 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
         description: error.message,
         variant: "destructive"
       });
+      setEtapa('inicial');
     }
+  };
+
+  const handleVoltarParaInicial = () => {
+    setEtapa('inicial');
+    setOabValidada('');
   };
 
   const handleSelecionarProcesso = (numeroProcesso: string, selecionado: boolean) => {
@@ -127,6 +190,70 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
     onOpenChange(false);
   };
 
+  const renderConfirmacao = () => (
+    <div className="space-y-6 text-center">
+      <div className="flex justify-center">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+          <CheckCircle2 className="w-8 h-8 text-green-600" />
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="text-lg font-semibold mb-2">Confirmar Dados da OAB</h3>
+        <p className="text-muted-foreground mb-4">
+          Verifique se os dados estão corretos antes de prosseguir com a busca.
+        </p>
+        
+        <div className="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+          <div className="space-y-3">
+            <div>
+              <span className="text-sm font-medium text-yellow-800">OAB validada:</span>
+              <div className="text-2xl font-bold text-yellow-900 mt-1">{oabValidada}</div>
+            </div>
+            
+            <div className="bg-white p-3 rounded border border-yellow-300">
+              <p className="text-sm text-yellow-800">
+                <AlertCircle className="w-4 h-4 inline mr-2" />
+                <strong>⚠️ ATENÇÃO:</strong> Esta é sua única chance mensal de importação automática.
+                <br />
+                Confirme se a OAB <strong>{oabValidada}</strong> está correta antes de continuar.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex space-x-3">
+        <Button 
+          variant="outline"
+          onClick={handleVoltarParaInicial}
+          className="flex-1"
+          size="lg"
+        >
+          Voltar e Corrigir
+        </Button>
+        <Button 
+          onClick={handleConfirmarBusca}
+          disabled={isLoading}
+          className="flex-1"
+          size="lg"
+        >
+          {isLoading ? (
+            <>
+              <Spinner size="sm" className="mr-2" />
+              Buscando...
+            </>
+          ) : (
+            <>
+              <Search className="w-4 h-4 mr-2" />
+              Confirmar e Buscar
+            </>
+          )}
+        </Button>
+      </div>
+    </div>
+  );
+
   const renderEtapaInicial = () => (
     <div className="space-y-6 text-center">
       <div className="flex justify-center">
@@ -154,34 +281,29 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
             />
           </div>
           
-          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <p className="text-sm text-blue-800">
+          <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+            <p className="text-sm text-red-800">
               <AlertCircle className="w-4 h-4 inline mr-2" />
-              Digite seu número da OAB no formato: número/estado (ex: 123456/SP).
+              <strong>FORMATO OBRIGATÓRIO:</strong> Digite apenas números/ESTADO (ex: 123456/CE).
               <br />
-              <strong>Importante:</strong> A importação automática é limitada a 1 vez por mês. Para processos adicionais, use "Novo Processo".
+              • Sem pontos, sem espaços, sem letras antes dos números
+              <br />
+              • Use a sigla do estado em maiúsculo após a barra (/)
+              <br />
+              <strong>⚠️ Você tem apenas 1 chance por mês - confira o formato!</strong>
             </p>
           </div>
         </div>
       </div>
 
       <Button 
-        onClick={handleConsultar}
+        onClick={handleValidarOAB}
         disabled={isLoading || !oabDigitada.trim()}
         className="w-full"
         size="lg"
       >
-        {isLoading ? (
-          <>
-            <Spinner size="sm" className="mr-2" />
-            Consultando Escavador...
-          </>
-        ) : (
-          <>
-            <Search className="w-4 h-4 mr-2" />
-            Buscar Processos
-          </>
-        )}
+        <Search className="w-4 h-4 mr-2" />
+        Validar e Continuar
       </Button>
     </div>
   );
@@ -271,12 +393,12 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
             <div className="flex space-x-2 pt-2">
               <Button
                 variant="outline"
-                onClick={handleConsultar}
-                disabled={isLoading || !oabDigitada.trim()}
+                onClick={handleVoltarParaInicial}
+                disabled={isLoading}
                 className="flex-1"
               >
                 <Search className="w-4 h-4 mr-2" />
-                Consultar Novamente
+                Nova Consulta
               </Button>
               <Button
                 onClick={handleImportar}
@@ -292,8 +414,8 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
           <div className="text-center py-8">
             <FileText className="w-12 h-12 text-gray-400 mx-auto mb-3" />
             <p className="text-gray-600 mb-4">Nenhum processo novo encontrado para importar.</p>
-            <Button variant="outline" onClick={handleConsultar} disabled={isLoading || !oabDigitada.trim()}>
-              Consultar Novamente
+            <Button variant="outline" onClick={handleVoltarParaInicial} disabled={isLoading}>
+              Nova Consulta
             </Button>
           </div>
         )}
@@ -329,6 +451,7 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
         </DialogHeader>
 
         {etapa === 'inicial' && renderEtapaInicial()}
+        {etapa === 'confirmacao' && renderConfirmacao()}
         {etapa === 'resultados' && renderResultados()}
         {etapa === 'importando' && renderImportando()}
       </DialogContent>
