@@ -1182,6 +1182,10 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
+      get_user_oab: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
       get_user_storage_usage: {
         Args: { uid: string }
         Returns: number

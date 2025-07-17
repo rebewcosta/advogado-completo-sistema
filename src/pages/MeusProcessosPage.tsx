@@ -8,6 +8,7 @@ import ProcessSearchActionBar from '@/components/processos/ProcessSearchActionBa
 import ProcessListAsCards from '@/components/processos/ProcessListAsCards';
 import MeusProcessosTable from '@/components/processos/MeusProcessosTable';
 import ProcessDialogs from '@/components/processos/ProcessDialogs';
+import EscavadorImportDialog from '@/components/processos/EscavadorImportDialog';
 import { useProcessesPage } from '@/hooks/useProcessesPage';
 
 const MeusProcessosPage = () => {
@@ -23,6 +24,7 @@ const MeusProcessosPage = () => {
     filteredProcesses,
     isLoadingCombined,
     processes,
+    escavadorDialogOpen,
     handleSearchChange,
     handleOpenNewProcessForm,
     handleSaveProcess,
@@ -31,11 +33,14 @@ const MeusProcessosPage = () => {
     handleToggleStatus,
     handleDeleteProcess,
     handleManualRefresh,
+    handleOpenEscavadorImport,
+    handleEscavadorImportComplete,
     setFormDialogOpen,
     setDetailsDialogOpen,
     setProcessoParaForm,
     setIsEditing,
     setSelectedProcess,
+    setEscavadorDialogOpen,
     getProcessById,
     fetchUserClients
   } = useProcessesPage();
@@ -71,6 +76,7 @@ const MeusProcessosPage = () => {
           onSearchChange={handleSearchChange}
           onAddProcess={handleOpenNewProcessForm}
           onRefresh={handleManualRefresh}
+          onImportFromOAB={handleOpenEscavadorImport}
           isLoading={isLoadingCombined}
         />
         
@@ -119,6 +125,12 @@ const MeusProcessosPage = () => {
           clientesDoUsuario={userClients}
           isLoadingClientes={isLoadingClients}
           onClienteAdded={fetchUserClients}
+        />
+
+        <EscavadorImportDialog
+          open={escavadorDialogOpen}
+          onOpenChange={setEscavadorDialogOpen}
+          onImportComplete={handleEscavadorImportComplete}
         />
       </div>
     </AdminLayout>

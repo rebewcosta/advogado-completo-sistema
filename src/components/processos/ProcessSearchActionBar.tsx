@@ -2,13 +2,14 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Plus, RefreshCw } from 'lucide-react';
+import { Search, Plus, RefreshCw, Download } from 'lucide-react';
 
 interface ProcessSearchActionBarProps {
   searchTerm: string;
   onSearchChange: (term: string) => void;
   onAddProcess: () => void;
   onRefresh: () => void;
+  onImportFromOAB?: () => void;
   isLoading?: boolean;
 }
 
@@ -17,6 +18,7 @@ const ProcessSearchActionBar: React.FC<ProcessSearchActionBarProps> = ({
   onSearchChange,
   onAddProcess,
   onRefresh,
+  onImportFromOAB,
   isLoading = false
 }) => {
   return (
@@ -42,6 +44,17 @@ const ProcessSearchActionBar: React.FC<ProcessSearchActionBarProps> = ({
             <RefreshCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? 'Atualizando...' : 'Atualizar Lista'}
           </Button>
+          {onImportFromOAB && (
+            <Button 
+              onClick={onImportFromOAB} 
+              variant="outline"
+              disabled={isLoading}
+              className="flex-1 sm:flex-none h-12 px-6 bg-orange-600/20 border-orange-300/30 text-white hover:bg-orange-500/30 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Importar da OAB
+            </Button>
+          )}
           <Button 
             onClick={onAddProcess} 
             className="flex-1 sm:flex-none h-12 px-6 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"

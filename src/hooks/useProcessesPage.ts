@@ -43,6 +43,7 @@ export const useProcessesPage = () => {
   const [isLoadingClients, setIsLoadingClients] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRefreshingManually, setIsRefreshingManually] = useState(false);
+  const [escavadorDialogOpen, setEscavadorDialogOpen] = useState(false);
 
   const {
     processes,
@@ -162,6 +163,18 @@ export const useProcessesPage = () => {
     toast({title: "Lista de processos atualizada!"});
   };
 
+  const handleOpenEscavadorImport = () => {
+    setEscavadorDialogOpen(true);
+  };
+
+  const handleEscavadorImportComplete = async () => {
+    await fetchProcesses(); // Recarregar lista após importação
+    toast({
+      title: "Importação concluída",
+      description: "Processos importados com sucesso do Escavador"
+    });
+  };
+
   const isLoadingCombined = isLoadingProcessesStore || isRefreshingManually || isSubmitting;
 
   return {
@@ -179,6 +192,7 @@ export const useProcessesPage = () => {
     processes,
     filteredProcesses,
     isLoadingCombined,
+    escavadorDialogOpen,
     
     // Actions
     handleSearchChange,
@@ -189,11 +203,14 @@ export const useProcessesPage = () => {
     handleToggleStatus,
     handleDeleteProcess,
     handleManualRefresh,
+    handleOpenEscavadorImport,
+    handleEscavadorImportComplete,
     setFormDialogOpen,
     setDetailsDialogOpen,
     setProcessoParaForm,
     setIsEditing,
     setSelectedProcess,
+    setEscavadorDialogOpen,
     getProcessById,
     fetchUserClients
   };
