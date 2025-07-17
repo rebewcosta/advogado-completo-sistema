@@ -29,17 +29,12 @@ const checkRateLimit = (clientIP: string): boolean => {
 };
 
 serve(async (req: Request) => {
-  const isProduction = Deno.env.get("DENO_ENV") === "production";
-  
-  if (!isProduction) {
-    console.log(`🚀 [CHECKOUT] ${new Date().toISOString()} - Nova requisição ${req.method}`);
-  }
+  // Log requisição
+  console.log(`🚀 [CHECKOUT] ${new Date().toISOString()} - Nova requisição ${req.method}`);
 
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    if (!isProduction) {
-      console.log("✅ [CHECKOUT] CORS preflight");
-    }
+    console.log("✅ [CHECKOUT] CORS preflight");
     return new Response(null, { headers: corsHeaders });
   }
   
@@ -55,9 +50,7 @@ serve(async (req: Request) => {
   try {
     // Verificar método
     if (req.method !== "POST") {
-      if (!isProduction) {
-        console.error("❌ [CHECKOUT] Método inválido:", req.method);
-      }
+      console.error("❌ [CHECKOUT] Método inválido:", req.method);
       return new Response(
         JSON.stringify({ error: "Apenas POST é permitido" }),
         { 
@@ -67,16 +60,19 @@ serve(async (req: Request) => {
       );
     }
 
+    // Detectar ambiente
+    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
+    const isProduction = origin.includes('sisjusgestao.com.br');
+    
+    console.log(`🏷️ [CHECKOUT] Origin: ${origin}`);
+    console.log(`🏷️ [CHECKOUT] É produção: ${isProduction}`);
+
     // Verificar chave do Stripe
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!isProduction) {
-      console.log(`🔑 [CHECKOUT] Stripe key: ${stripeSecretKey ? 'PRESENTE' : 'AUSENTE'}`);
-    }
+    console.log(`🔑 [CHECKOUT] Stripe key: ${stripeSecretKey ? 'PRESENTE' : 'AUSENTE'}`);
     
     if (!stripeSecretKey) {
-      if (!isProduction) {
-        console.error("❌ [CHECKOUT] STRIPE_SECRET_KEY não configurada");
-      }
+      console.error("❌ [CHECKOUT] STRIPE_SECRET_KEY não configurada");
       return new Response(
         JSON.stringify({ error: "Chave do Stripe não configurada" }),
         { 
@@ -164,13 +160,6 @@ serve(async (req: Request) => {
         }
       );
     }
-
-    // Detectar ambiente
-    const origin = req.headers.get("origin") || req.headers.get("referer") || "";
-    const isProduction = origin.includes('sisjusgestao.com.br');
-    
-    console.log(`🏷️ [CHECKOUT] Origin: ${origin}`);
-    console.log(`🏷️ [CHECKOUT] É produção: ${isProduction}`);
 
     // URLs de redirecionamento
     const baseUrl = isProduction ? "https://sisjusgestao.com.br" : origin;
