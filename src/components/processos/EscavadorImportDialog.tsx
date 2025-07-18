@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Dialog,
@@ -14,7 +15,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Spinner } from "@/components/ui/spinner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { FileText, Download, CheckCircle2, AlertCircle, Search } from 'lucide-react';
+import { FileText, Download, CheckCircle2, AlertCircle, Search, Crown } from 'lucide-react';
 import { useEscavadorImport } from '@/hooks/useEscavadorImport';
 import { useToast } from '@/hooks/use-toast';
 
@@ -36,7 +37,8 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
     consultarProcessosEscavador,
     importarProcessosSelecionados,
     limparResultados,
-    checkImportLimit
+    checkImportLimit,
+    canUsePremiumFeatures
   } = useEscavadorImport();
 
   const [processosSelecionados, setProcessosSelecionados] = useState<Set<string>>(new Set());
@@ -107,6 +109,16 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
   };
 
   const handleConfirmarBusca = async () => {
+    // Verificar se pode usar recursos premium
+    if (!canUsePremiumFeatures()) {
+      toast({
+        title: "Recurso Premium",
+        description: "A importação automática está disponível apenas para assinantes. Usuários em teste podem adicionar processos manualmente usando o botão 'Novo Processo'.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Verificar limite antes de tentar buscar
     const canImport = await checkImportLimit();
     if (!canImport) {
@@ -268,6 +280,21 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
           Conecte-se ao Escavador para buscar automaticamente todos os processos associados ao seu número da OAB.
         </p>
         
+        {/* Aviso sobre recurso premium */}
+        {!canUsePremiumFeatures() && (
+          <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 mb-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Crown className="w-5 h-5 text-amber-600" />
+              <span className="font-medium text-amber-800">Recurso Premium</span>
+            </div>
+            <p className="text-sm text-amber-700">
+              A importação automática está disponível apenas para assinantes. 
+              <br />
+              <strong>Usuários em teste:</strong> Você pode adicionar processos manualmente de forma ilimitada usando o botão "Novo Processo".
+            </p>
+          </div>
+        )}
+        
         <div className="space-y-3">
           <div className="space-y-2">
             <Label htmlFor="oab-input">Número da OAB</Label>
@@ -278,6 +305,7 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
               value={oabDigitada}
               onChange={(e) => setOabDigitada(e.target.value)}
               className="w-full"
+              disabled={!canUsePremiumFeatures()}
             />
           </div>
           
@@ -298,12 +326,12 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
 
       <Button 
         onClick={handleValidarOAB}
-        disabled={isLoading || !oabDigitada.trim()}
+        disabled={isLoading || !oabDigitada.trim() || !canUsePremiumFeatures()}
         className="w-full"
         size="lg"
       >
         <Search className="w-4 h-4 mr-2" />
-        Validar e Continuar
+        {canUsePremiumFeatures() ? 'Validar e Continuar' : 'Recurso Premium - Assine para Usar'}
       </Button>
     </div>
   );
@@ -444,9 +472,13 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
           <DialogTitle className="flex items-center space-x-2">
             <FileText className="w-5 h-5 text-blue-600" />
             <span>Importação Escavador</span>
+            {!canUsePremiumFeatures() && <Crown className="w-4 h-4 text-amber-500" />}
           </DialogTitle>
           <DialogDescription>
-            Importe automaticamente processos usando sua OAB através da plataforma Escavador.
+            {canUsePremiumFeatures() 
+              ? "Importe automaticamente processos usando sua OAB através da plataforma Escavador."
+              : "Recurso premium: Disponível apenas para assinantes. Usuários em teste podem adicionar processos manualmente."
+            }
           </DialogDescription>
         </DialogHeader>
 

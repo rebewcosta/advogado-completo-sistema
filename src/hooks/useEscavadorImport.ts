@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubscriptionStatus } from '@/hooks/useSubscriptionStatus';
 
 interface ProcessoEscavador {
   numero_processo: string;
@@ -27,6 +28,7 @@ interface EscavadorResponse {
 export const useEscavadorImport = () => {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { canUsePremiumFeatures, subscriptionStatus } = useSubscriptionStatus();
   const [isLoading, setIsLoading] = useState(false);
   const [processosEncontrados, setProcessosEncontrados] = useState<ProcessoEscavador[]>([]);
   const [resultadoConsulta, setResultadoConsulta] = useState<EscavadorResponse | null>(null);
@@ -96,6 +98,28 @@ export const useEscavadorImport = () => {
   };
 
   const consultarProcessosEscavador = async (oab: string): Promise<EscavadorResponse | null> => {
+    // Verificar se o usuário pode usar recursos premium ANTES de verificar limite
+    if (!canUsePremiumFeatures()) {
+      const accountTypeMessages = {
+        'trial': 'Usuários em período de teste não podem usar a importação automática. Este é um recurso premium que consome tokens da API. Você pode adicionar processos manualmente usando o botão "Novo Processo" de forma ilimitada.',
+        'none': 'É necessário ter uma assinatura ativa para usar a importação automática.',
+        'expired_canceled': 'Sua assinatura expirou. Renove para usar a importação automática.',
+        'grace_expired': 'Período de carência expirado. Regularize seu pagamento para usar a importação automática.',
+        'pending': 'Pagamento pendente. Complete o pagamento para usar a importação automática.',
+        'error': 'Erro ao verificar status da assinatura.'
+      };
+
+      const message = accountTypeMessages[subscriptionStatus?.account_type as keyof typeof accountTypeMessages] 
+        || 'Você precisa de uma assinatura ativa para usar este recurso premium.';
+
+      toast({
+        title: "Recurso Premium Restrito",
+        description: message,
+        variant: "destructive"
+      });
+      return null;
+    }
+
     const canImport = await checkImportLimit();
     if (!canImport) {
       throw new Error('Você já utilizou a importação automática este mês. A importação do Escavador é limitada a 1 vez por mês. Para adicionar mais processos, use o botão "Novo Processo" que permite cadastro manual ilimitado.');
@@ -243,6 +267,7 @@ export const useEscavadorImport = () => {
     consultarProcessosEscavador,
     importarProcessosSelecionados,
     limparResultados,
-    checkImportLimit
+    checkImportLimit,
+    canUsePremiumFeatures
   };
 };
