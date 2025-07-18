@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { CalendarIcon } from 'lucide-react';
@@ -85,12 +85,16 @@ const EquipeTarefaForm: React.FC<EquipeTarefaFormProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px] bg-lawyer-dark border border-blue-600">
-        <EquipeTarefaFormHeader isEdit={isEdit} />
-        <DialogDescription className="text-blue-200">
-          {isEdit 
-            ? "Atualize as informações da tarefa."
-            : "Crie uma nova tarefa para a equipe com prazo e responsável definidos."}
-        </DialogDescription>
+        <DialogHeader>
+          <DialogTitle>
+            {isEdit ? 'Editar Tarefa da Equipe' : 'Nova Tarefa da Equipe'}
+          </DialogTitle>
+          <DialogDescription className="text-blue-200">
+            {isEdit 
+              ? "Atualize as informações da tarefa."
+              : "Crie uma nova tarefa para a equipe com prazo e responsável definidos."}
+          </DialogDescription>
+        </DialogHeader>
         
         <form onSubmit={handleSubmit}>
           <div className="grid gap-6 py-4">

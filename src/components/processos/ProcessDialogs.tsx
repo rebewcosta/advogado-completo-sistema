@@ -6,6 +6,8 @@ import ProcessDetails from '@/components/processos/ProcessDetails';
 import {
   Dialog,
   DialogContent,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import type { Database } from '@/integrations/supabase/types';
 import { ProcessoComCliente } from '@/stores/useProcessesStore';
@@ -56,6 +58,9 @@ const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
       {/* Process Form Dialog */}
       <Dialog open={formDialogOpen} onOpenChange={onFormDialogOpenChange}>
         <DialogContent className="p-0 max-w-2xl md:max-w-3xl lg:max-w-4xl overflow-auto max-h-[90vh]">
+          <DialogHeader className="sr-only">
+            <DialogTitle>{isEditing ? 'Editar Processo' : 'Novo Processo'}</DialogTitle>
+          </DialogHeader>
           <ProcessForm
             onSave={onSaveProcess as any}
             onCancel={() => onFormDialogOpenChange(false)}
@@ -72,6 +77,9 @@ const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
       {/* Process Details Dialog */}
       <Dialog open={detailsDialogOpen} onOpenChange={onDetailsDialogOpenChange}>
         <DialogContent className="p-6 max-w-lg md:max-w-2xl">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Detalhes do Processo</DialogTitle>
+          </DialogHeader>
           {selectedProcess && detailsDialogOpen && (
             <ProcessDetails
               process={selectedProcess as ProcessoComCliente}

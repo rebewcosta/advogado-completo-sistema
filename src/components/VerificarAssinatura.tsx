@@ -5,6 +5,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Spinner } from './ui/spinner';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { shouldSkipAuthChecks, getEnvironmentInfo } from '@/utils/environment';
 
 interface VerificarAssinaturaProps {
   children?: React.ReactNode;
@@ -57,19 +58,37 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
       }
 
       try {
-        console.log("🔄 Verificando status de assinatura via edge function...");
+        const envInfo = getEnvironmentInfo();
+        console.log("🔄 Verificando status de assinatura via edge function...", envInfo);
+        
+        // Em ambiente de desenvolvimento/preview, permitir acesso sem verificação
+        if (shouldSkipAuthChecks()) {
+          console.log("🚀 Ambiente de desenvolvimento/preview detectado - permitindo acesso");
+          setAccessGranted(true);
+          setSubscriptionStatus(envInfo.isLovablePreview ? 'preview' : 'development');
+          setIsLoading(false);
+          return;
+        }
         
         const { data: funcResponse, error: funcError } = await supabase.functions.invoke('verificar-assinatura');
 
         if (funcError) {
           console.error("❌ Erro ao verificar assinatura:", funcError);
-          toast({ 
-            title: "Erro de Verificação", 
-            description: "Não foi possível verificar sua assinatura. Acesso negado por segurança.", 
-            variant: "destructive" 
-          });
-          setAccessGranted(false);
-          setSubscriptionStatus('error');
+          
+          // Em ambientes de desenvolvimento, sempre permitir acesso mesmo com erro
+          if (envInfo.isDevelopment) {
+            console.log("🔧 Modo desenvolvimento - permitindo acesso apesar do erro");
+            setAccessGranted(true);
+            setSubscriptionStatus('development');
+          } else {
+            toast({ 
+              title: "Erro de Verificação", 
+              description: "Não foi possível verificar sua assinatura. Acesso negado por segurança.", 
+              variant: "destructive" 
+            });
+            setAccessGranted(false);
+            setSubscriptionStatus('error');
+          }
         } else {
           console.log("📊 Resposta da verificação:", funcResponse);
           
@@ -150,15 +169,24 @@ const VerificarAssinatura: React.FC<VerificarAssinaturaProps> = ({ children }) =
           }
         }
       } catch (e) {
+        const envInfo = getEnvironmentInfo();
         console.error("❌ Erro crítico de comunicação:", e);
-        toast({ 
-          title: "Erro Crítico", 
-          description: "Falha na comunicação com o servidor. Acesso negado por segurança.", 
-          variant: "destructive",
-          duration: 10000
-        });
-        setAccessGranted(false);
-        setSubscriptionStatus('error');
+        
+        // Em ambientes de desenvolvimento, sempre permitir acesso mesmo com erro crítico
+        if (envInfo.isDevelopment) {
+          console.log("🔧 Erro crítico em modo desenvolvimento - permitindo acesso");
+          setAccessGranted(true);
+          setSubscriptionStatus('development');
+        } else {
+          toast({ 
+            title: "Erro Crítico", 
+            description: "Falha na comunicação com o servidor. Acesso negado por segurança.", 
+            variant: "destructive",
+            duration: 10000
+          });
+          setAccessGranted(false);
+          setSubscriptionStatus('error');
+        }
       } finally {
         setIsLoading(false);
       }
