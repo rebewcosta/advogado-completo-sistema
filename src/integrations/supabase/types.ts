@@ -729,47 +729,200 @@ export type Database = {
         }
         Relationships: []
       }
+      processo_financeiro: {
+        Row: {
+          created_at: string
+          custas_processuais: number | null
+          honorarios_contratuais: number | null
+          honorarios_sucumbenciais: number | null
+          id: string
+          moeda: string | null
+          numero_processo: string
+          processo_id: string | null
+          updated_at: string
+          user_id: string
+          valor_causa: number | null
+        }
+        Insert: {
+          created_at?: string
+          custas_processuais?: number | null
+          honorarios_contratuais?: number | null
+          honorarios_sucumbenciais?: number | null
+          id?: string
+          moeda?: string | null
+          numero_processo: string
+          processo_id?: string | null
+          updated_at?: string
+          user_id: string
+          valor_causa?: number | null
+        }
+        Update: {
+          created_at?: string
+          custas_processuais?: number | null
+          honorarios_contratuais?: number | null
+          honorarios_sucumbenciais?: number | null
+          id?: string
+          moeda?: string | null
+          numero_processo?: string
+          processo_id?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_causa?: number | null
+        }
+        Relationships: []
+      }
+      processo_movimentacoes: {
+        Row: {
+          created_at: string
+          data_movimentacao: string | null
+          descricao_movimentacao: string | null
+          id: string
+          magistrado: string | null
+          numero_processo: string
+          orgao: string | null
+          processo_id: string | null
+          tipo_movimentacao: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_movimentacao?: string | null
+          descricao_movimentacao?: string | null
+          id?: string
+          magistrado?: string | null
+          numero_processo: string
+          orgao?: string | null
+          processo_id?: string | null
+          tipo_movimentacao?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data_movimentacao?: string | null
+          descricao_movimentacao?: string | null
+          id?: string
+          magistrado?: string | null
+          numero_processo?: string
+          orgao?: string | null
+          processo_id?: string | null
+          tipo_movimentacao?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      processo_partes: {
+        Row: {
+          created_at: string
+          documento: string | null
+          id: string
+          nome_parte: string
+          numero_processo: string
+          processo_id: string | null
+          qualificacao: string | null
+          tipo_parte: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          documento?: string | null
+          id?: string
+          nome_parte: string
+          numero_processo: string
+          processo_id?: string | null
+          qualificacao?: string | null
+          tipo_parte?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          documento?: string | null
+          id?: string
+          nome_parte?: string
+          numero_processo?: string
+          processo_id?: string | null
+          qualificacao?: string | null
+          tipo_parte?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       processos: {
         Row: {
+          assunto_processo: string | null
+          classe_judicial: string | null
           cliente_id: string | null
           created_at: string
+          data_distribuicao: string | null
+          escavador_id: string | null
           id: string
+          instancia: string | null
           lembrete_prazo_amanha_enviado_em: string | null
           nome_cliente_text: string | null
           numero_processo: string
+          origem_dados: string | null
           proximo_prazo: string | null
+          segredo_justica: boolean | null
+          situacao_processo: string | null
           status_processo: string
           tipo_processo: string
+          ultima_atualizacao_escavador: string | null
           updated_at: string
           user_id: string
+          valor_causa: number | null
           vara_tribunal: string | null
         }
         Insert: {
+          assunto_processo?: string | null
+          classe_judicial?: string | null
           cliente_id?: string | null
           created_at?: string
+          data_distribuicao?: string | null
+          escavador_id?: string | null
           id?: string
+          instancia?: string | null
           lembrete_prazo_amanha_enviado_em?: string | null
           nome_cliente_text?: string | null
           numero_processo: string
+          origem_dados?: string | null
           proximo_prazo?: string | null
+          segredo_justica?: boolean | null
+          situacao_processo?: string | null
           status_processo?: string
           tipo_processo: string
+          ultima_atualizacao_escavador?: string | null
           updated_at?: string
           user_id?: string
+          valor_causa?: number | null
           vara_tribunal?: string | null
         }
         Update: {
+          assunto_processo?: string | null
+          classe_judicial?: string | null
           cliente_id?: string | null
           created_at?: string
+          data_distribuicao?: string | null
+          escavador_id?: string | null
           id?: string
+          instancia?: string | null
           lembrete_prazo_amanha_enviado_em?: string | null
           nome_cliente_text?: string | null
           numero_processo?: string
+          origem_dados?: string | null
           proximo_prazo?: string | null
+          segredo_justica?: boolean | null
+          situacao_processo?: string | null
           status_processo?: string
           tipo_processo?: string
+          ultima_atualizacao_escavador?: string | null
           updated_at?: string
           user_id?: string
+          valor_causa?: number | null
           vara_tribunal?: string | null
         }
         Relationships: [

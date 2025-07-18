@@ -84,10 +84,10 @@ serve(async (req) => {
       });
     }
 
-    // Consultar API do Escavador
+    // Consultar API do Escavador com limite maior para maximizar valor do token
     console.log(`[ESCAVADOR] Consultando processos para OAB: ${oab_numero}/${oab_estado}`);
     
-    const escavadorUrl = `https://api.escavador.com/api/v2/advogado/processos?oab_numero=${oab_numero}&oab_estado=${oab_estado}&limit=50`;
+    const escavadorUrl = `https://api.escavador.com/api/v2/advogado/processos?oab_numero=${oab_numero}&oab_estado=${oab_estado}&limit=200&include_movements=true&include_parties=true&include_financial=true`;
     const escavadorResponse = await fetch(escavadorUrl, {
       method: 'GET',
       headers: {
@@ -127,28 +127,89 @@ serve(async (req) => {
       return 'Em andamento';
     };
 
-    // Processar dados do Escavador
+    // Processar dados enriquecidos do Escavador
     const processosEscavador = escavadorData.items || [];
-    const processosNormalizados = processosEscavador.map((processo: any) => {
-      console.log(`[ESCAVADOR] Mapeando processo:`, {
+    const processosNormalizados = [];
+    const movimentacoesToInsert = [];
+    const partesToInsert = [];
+    const financeirosToInsert = [];
+
+    for (const processo of processosEscavador) {
+      console.log(`[ESCAVADOR] Mapeando processo enriquecido:`, {
         numero_cnj: processo.numero_cnj,
         classe: processo.capa?.classe,
         status_predito: processo.status_predito,
         titulo_polo_ativo: processo.titulo_polo_ativo,
-        unidade_origem: processo.unidade_origem?.nome
+        unidade_origem: processo.unidade_origem?.nome,
+        valor_causa: processo.valor_causa,
+        movimentacoes: processo.movimentos?.length || 0,
+        partes: processo.partes?.length || 0
       });
       
-      return {
+      const processoNormalizado = {
         numero_processo: processo.numero_cnj || '',
         tipo_processo: processo.capa?.classe || 'Processo Judicial',
         status_processo: mapearStatus(processo.status_predito),
         vara_tribunal: processo.unidade_origem?.nome || processo.orgao_julgador || '',
-        proximo_prazo: null, // API do Escavador não fornece prazos específicos
-        cliente_id: null, // Será associado manualmente pelo usuário se necessário
+        proximo_prazo: null,
+        cliente_id: null,
         nome_cliente_text: processo.titulo_polo_ativo || null,
-        fonte: 'Escavador'
+        // Campos enriquecidos
+        assunto_processo: processo.capa?.assunto || null,
+        classe_judicial: processo.capa?.classe || null,
+        instancia: processo.grau || null,
+        data_distribuicao: processo.data_ajuizamento ? new Date(processo.data_ajuizamento).toISOString().split('T')[0] : null,
+        segredo_justica: processo.segredo_justica || false,
+        valor_causa: processo.valor_causa || null,
+        situacao_processo: processo.situacao || null,
+        origem_dados: 'Escavador',
+        escavador_id: processo.id?.toString() || null,
+        ultima_atualizacao_escavador: new Date().toISOString()
       };
-    });
+      
+      processosNormalizados.push(processoNormalizado);
+
+      // Extrair movimentações
+      if (processo.movimentos && Array.isArray(processo.movimentos)) {
+        for (const movimento of processo.movimentos.slice(0, 20)) { // Limitar a 20 movimentos mais recentes
+          movimentacoesToInsert.push({
+            user_id: user.id,
+            numero_processo: processo.numero_cnj || '',
+            data_movimentacao: movimento.data ? new Date(movimento.data).toISOString().split('T')[0] : null,
+            tipo_movimentacao: movimento.tipo || null,
+            descricao_movimentacao: movimento.descricao || movimento.texto || null,
+            orgao: movimento.orgao || null,
+            magistrado: movimento.magistrado || null
+          });
+        }
+      }
+
+      // Extrair partes do processo
+      if (processo.partes && Array.isArray(processo.partes)) {
+        for (const parte of processo.partes) {
+          partesToInsert.push({
+            user_id: user.id,
+            numero_processo: processo.numero_cnj || '',
+            nome_parte: parte.nome || '',
+            tipo_parte: parte.polo || null, // 'Polo Ativo', 'Polo Passivo'
+            documento: parte.documento || null,
+            qualificacao: parte.qualificacao || null
+          });
+        }
+      }
+
+      // Extrair informações financeiras
+      if (processo.valor_causa || processo.honorarios) {
+        financeirosToInsert.push({
+          user_id: user.id,
+          numero_processo: processo.numero_cnj || '',
+          valor_causa: processo.valor_causa || null,
+          honorarios_contratuais: processo.honorarios?.contratuais || null,
+          honorarios_sucumbenciais: processo.honorarios?.sucumbenciais || null,
+          custas_processuais: processo.custas || null
+        });
+      }
+    }
 
     // Verificar processos existentes
     const numerosProcessos = processosNormalizados.map(p => p.numero_processo).filter(Boolean);
@@ -165,15 +226,32 @@ serve(async (req) => {
 
     console.log(`[ESCAVADOR] Processos novos para importar: ${processosNovos.length}`);
     console.log(`[ESCAVADOR] Processos já existentes: ${numerosExistentes.size}`);
+    console.log(`[ESCAVADOR] Dados enriquecidos coletados:`, {
+      movimentacoes: movimentacoesToInsert.length,
+      partes: partesToInsert.length,
+      financeiros: financeirosToInsert.length
+    });
 
-    // Retornar resultado da consulta
+    // Retornar resultado da consulta com dados enriquecidos
     return new Response(JSON.stringify({
       success: true,
       oab: oab,
       totalEncontrados: processosEscavador.length,
       processosNovos: processosNovos.length,
       processosExistentes: numerosExistentes.size,
-      processos: processosNovos
+      processos: processosNovos,
+      // Dados enriquecidos que serão importados junto com os processos
+      dadosEnriquecidos: {
+        movimentacoes: movimentacoesToInsert.filter(m => 
+          processosNovos.some(p => p.numero_processo === m.numero_processo)
+        ),
+        partes: partesToInsert.filter(p => 
+          processosNovos.some(proc => proc.numero_processo === p.numero_processo)
+        ),
+        financeiros: financeirosToInsert.filter(f => 
+          processosNovos.some(proc => proc.numero_processo === f.numero_processo)
+        )
+      }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
