@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Edit, MoreVertical, ExternalLink, Circle, Trash2, FileText as ProcessIcon, User, Briefcase, Landmark, CalendarDays } from 'lucide-react';
+import { Edit, MoreVertical, ExternalLink, Circle, Trash2, FileText as ProcessIcon, Search } from 'lucide-react';
 import { ProcessoComCliente } from '@/stores/useProcessesStore';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Spinner } from '@/components/ui/spinner';
@@ -18,6 +18,7 @@ interface ProcessListAsCardsProps {
   onView: (processo: ProcessoComCliente) => void;
   onToggleStatus: (processo: ProcessoComCliente) => void;
   onDelete: (processoId: string) => void;
+  onViewDetails: (processo: ProcessoComCliente) => void;
   isLoading: boolean;
   searchTerm: string;
 }
@@ -28,6 +29,7 @@ const ProcessListAsCards: React.FC<ProcessListAsCardsProps> = ({
   onView,
   onToggleStatus,
   onDelete,
+  onViewDetails,
   isLoading,
   searchTerm
 }) => {
@@ -68,17 +70,14 @@ const ProcessListAsCards: React.FC<ProcessListAsCardsProps> = ({
   }
 
   // Definição das colunas para cabeçalho e itens do card.
-  // Usaremos classes Flexbox para o layout interno dos cards e para o cabeçalho.
-  // O padding horizontal (px-4) será consistente.
   const columnConfig = [
     { id: 'processo', label: "Processo / Vara", headerClass: "flex-1 min-w-0 px-4 text-left", itemClass: "flex-1 min-w-0 px-4 text-left" },
     { id: 'cliente', label: "Cliente", headerClass: "w-3/12 min-w-0 px-4 text-left", itemClass: "w-full md:w-3/12 min-w-0 px-4 text-left" },
     { id: 'tipo', label: "Tipo", headerClass: "w-2/12 min-w-0 px-4 text-left hidden md:flex items-center", itemClass: "w-full md:w-2/12 min-w-0 px-4 text-left hidden md:block" },
     { id: 'status', label: "Status", headerClass: "w-[160px] flex-shrink-0 px-4 text-left flex items-center", itemClass: "w-full md:w-[160px] flex-shrink-0 px-4 text-left" },
     { id: 'prazo', label: "Próximo Prazo", headerClass: "w-[150px] flex-shrink-0 px-4 text-left hidden sm:flex items-center", itemClass: "w-full md:w-[150px] flex-shrink-0 px-4 text-left hidden sm:block" },
-    { id: 'acoes', label: "Ações", headerClass: "w-[80px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[80px] flex-shrink-0 flex justify-start md:justify-end items-start" }
+    { id: 'acoes', label: "Ações", headerClass: "w-[120px] flex-shrink-0 px-4 text-right flex items-center justify-end", itemClass: "w-full md:w-[120px] flex-shrink-0 flex justify-start md:justify-end items-start" }
   ];
-
 
   return (
     <div className="mt-2">
@@ -150,28 +149,39 @@ const ProcessListAsCards: React.FC<ProcessListAsCardsProps> = ({
 
                   {/* Ações */}
                   <div className={cn(columnConfig[5].itemClass, "mt-2 md:mt-0 md:py-1")}> 
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all duration-200">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl">
-                        <DropdownMenuItem onClick={() => onView(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-all duration-200">
-                          <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-blue-600" /> Ver Detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onEdit(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-all duration-200">
-                          <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-blue-600" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-gray-200/60"/>
-                        <DropdownMenuItem
-                          onClick={() => onDelete(processo.id)}
-                          className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 rounded-lg transition-all duration-200"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="flex items-center justify-start md:justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-all duration-200"
+                        onClick={() => onViewDetails(processo)}
+                        title="Ver detalhes atualizados (DataJud)"
+                      >
+                        <Search className="h-4 w-4" />
+                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-gray-600 hover:bg-white/60 rounded-lg backdrop-blur-sm transition-all duration-200">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 bg-white/95 backdrop-blur-lg border border-white/20 shadow-xl rounded-xl">
+                          <DropdownMenuItem onClick={() => onView(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-all duration-200">
+                            <ExternalLink className="mr-2 h-4 w-4 text-gray-500 group-hover:text-blue-600" /> Ver Detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onEdit(processo)} className="cursor-pointer text-sm group flex items-center px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 rounded-lg transition-all duration-200">
+                            <Edit className="mr-2 h-4 w-4 text-gray-500 group-hover:text-blue-600" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator className="bg-gray-200/60"/>
+                          <DropdownMenuItem
+                            onClick={() => onDelete(processo.id)}
+                            className="text-red-600 hover:!bg-red-50 focus:!bg-red-50 focus:!text-red-600 cursor-pointer text-sm group flex items-center px-3 py-2 rounded-lg transition-all duration-200"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4 text-red-500 group-hover:text-red-600" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </div>
               </Card>

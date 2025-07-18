@@ -36,7 +36,9 @@ export const useProcessesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [processDetailsModalOpen, setProcessDetailsModalOpen] = useState(false);
   const [selectedProcess, setSelectedProcess] = useState<ProcessoComCliente | null>(null);
+  const [selectedProcessForDetails, setSelectedProcessForDetails] = useState<ProcessoComCliente | null>(null);
   const [processoParaForm, setProcessoParaForm] = useState<ProcessoFormDataParaForm | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [userClients, setUserClients] = useState<ClienteParaSelect[]>([]);
@@ -149,6 +151,11 @@ export const useProcessesPage = () => {
     setFormDialogOpen(false);
   };
 
+  const handleViewProcessDetails = (processo: ProcessoComCliente) => {
+    setSelectedProcessForDetails(processo);
+    setProcessDetailsModalOpen(true);
+  };
+
   const handleToggleStatus = async (processo: ProcessoComCliente) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
@@ -192,7 +199,9 @@ export const useProcessesPage = () => {
     searchTerm,
     formDialogOpen,
     detailsDialogOpen,
+    processDetailsModalOpen,
     selectedProcess,
+    selectedProcessForDetails,
     processoParaForm,
     isEditing,
     userClients,
@@ -210,6 +219,7 @@ export const useProcessesPage = () => {
     handleSaveProcess,
     handleEditProcess,
     handleViewProcess,
+    handleViewProcessDetails,
     handleToggleStatus,
     handleDeleteProcess,
     handleManualRefresh,
@@ -217,9 +227,11 @@ export const useProcessesPage = () => {
     handleEscavadorImportComplete,
     setFormDialogOpen,
     setDetailsDialogOpen,
+    setProcessDetailsModalOpen,
     setProcessoParaForm,
     setIsEditing,
     setSelectedProcess,
+    setSelectedProcessForDetails,
     setEscavadorDialogOpen,
     getProcessById,
     fetchUserClients

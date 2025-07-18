@@ -10,6 +10,7 @@ import ProcessListAsCards from '@/components/processos/ProcessListAsCards';
 import MeusProcessosTable from '@/components/processos/MeusProcessosTable';
 import ProcessDialogs from '@/components/processos/ProcessDialogs';
 import EscavadorImportDialog from '@/components/processos/EscavadorImportDialog';
+import ProcessDetailsModal from '@/components/processos/ProcessDetailsModal';
 import { useProcessesPage } from '@/hooks/useProcessesPage';
 
 const MeusProcessosPage = () => {
@@ -17,7 +18,9 @@ const MeusProcessosPage = () => {
     searchTerm,
     formDialogOpen,
     detailsDialogOpen,
+    processDetailsModalOpen,
     selectedProcess,
+    selectedProcessForDetails,
     processoParaForm,
     isEditing,
     userClients,
@@ -31,6 +34,7 @@ const MeusProcessosPage = () => {
     handleSaveProcess,
     handleEditProcess,
     handleViewProcess,
+    handleViewProcessDetails,
     handleToggleStatus,
     handleDeleteProcess,
     handleManualRefresh,
@@ -38,9 +42,11 @@ const MeusProcessosPage = () => {
     handleEscavadorImportComplete,
     setFormDialogOpen,
     setDetailsDialogOpen,
+    setProcessDetailsModalOpen,
     setProcessoParaForm,
     setIsEditing,
     setSelectedProcess,
+    setSelectedProcessForDetails,
     setEscavadorDialogOpen,
     getProcessById,
     fetchUserClients
@@ -78,10 +84,13 @@ const MeusProcessosPage = () => {
                 <FileText className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
                   <p className="font-medium mb-1">💡 Importação Inteligente de Processos</p>
-                  <p>
+                  <p className="mb-2">
                     Você pode importar automaticamente todos os seus processos do Escavador de uma só vez, <strong>1 vez por mês</strong>. 
                     Após usar a importação automática, continue adicionando processos <strong>ilimitadamente</strong> usando o botão 
                     "Novo Processo" para cadastro manual.
+                  </p>
+                  <p className="text-xs bg-green-100 text-green-700 p-2 rounded border border-green-200">
+                    🔍 <strong>Novo:</strong> Use o botão de lupa azul ao lado de cada processo para consultar detalhes atualizados via DataJud (CNJ) - <strong>Consulta 100% gratuita!</strong>
                   </p>
                 </div>
               </div>
@@ -104,6 +113,7 @@ const MeusProcessosPage = () => {
             processes={filteredProcesses}
             onEdit={handleEditProcess}
             onView={handleViewProcess}
+            onViewDetails={handleViewProcessDetails}
             onToggleStatus={handleToggleStatus}
             onDelete={handleDeleteProcess}
             isLoading={isLoadingCombined}
@@ -115,6 +125,7 @@ const MeusProcessosPage = () => {
             processes={filteredProcesses}
             onEdit={handleEditProcess}
             onView={handleViewProcess}
+            onViewDetails={handleViewProcessDetails}
             onToggleStatus={handleToggleStatus}
             onDelete={handleDeleteProcess}
             isLoading={isLoadingCombined}
@@ -143,6 +154,12 @@ const MeusProcessosPage = () => {
           clientesDoUsuario={userClients}
           isLoadingClientes={isLoadingClients}
           onClienteAdded={fetchUserClients}
+        />
+
+        <ProcessDetailsModal
+          open={processDetailsModalOpen}
+          onOpenChange={setProcessDetailsModalOpen}
+          processo={selectedProcessForDetails}
         />
 
         <EscavadorImportDialog

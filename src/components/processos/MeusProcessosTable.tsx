@@ -11,6 +11,7 @@ interface MeusProcessosTableProps {
   onView: (processo: ProcessoComCliente) => void;
   onToggleStatus: (processo: ProcessoComCliente) => void;
   onDelete: (processoId: string) => void;
+  onViewDetails: (processo: ProcessoComCliente) => void;
   isLoading: boolean;
   searchTerm: string;
 }
@@ -21,6 +22,7 @@ const MeusProcessosTable: React.FC<MeusProcessosTableProps> = ({
   onView,
   onToggleStatus,
   onDelete,
+  onViewDetails,
   isLoading,
   searchTerm
 }) => {
@@ -33,6 +35,7 @@ const MeusProcessosTable: React.FC<MeusProcessosTableProps> = ({
           onView={onView}
           onToggleStatus={onToggleStatus}
           onDelete={onDelete}
+          onViewDetails={onViewDetails}
           isLoading={isLoading}
           searchTerm={searchTerm}
         />
