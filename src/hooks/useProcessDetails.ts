@@ -60,9 +60,9 @@ export const useProcessDetails = () => {
       
       const { data, error } = await supabase.functions.invoke('consultar-datajud', {
         body: { 
-          numeroProcesso: numeroProcesso.replace(/\D/g, ''), // Remove formatação
-          incluirMovimentacoes: true,
-          incluirJurimetria: true
+          tipo: 'numero',
+          termo: numeroProcesso.replace(/\D/g, ''), // Remove formatação
+          tribunal: 'principais' // Busca nos principais tribunais (TJSP, TJRJ, TJMG)
         }
       });
 
@@ -87,15 +87,25 @@ export const useProcessDetails = () => {
         return null;
       }
 
-      const detalhes = data.processo;
-      setProcessDetails(detalhes);
+      if (!data.data || data.data.length === 0) {
+        toast({
+          title: "Processo não encontrado",
+          description: "Não foi possível encontrar informações atualizadas para este processo nos tribunais consultados",
+          variant: "destructive"
+        });
+        return null;
+      }
+
+      // Pegar o primeiro resultado (mais relevante)
+      const primeiroResultado = data.data[0];
+      setProcessDetails(primeiroResultado);
 
       toast({
         title: "Consulta realizada com sucesso",
-        description: `Detalhes atualizados do processo ${numeroProcesso} obtidos via DataJud`,
+        description: `Detalhes atualizados do processo obtidos via DataJud (${data.tribunais_consultados?.join(', ') || 'CNJ'})`,
       });
 
-      return detalhes;
+      return primeiroResultado;
 
     } catch (error: any) {
       console.error('[PROCESS-DETAILS] Erro na consulta:', error);
