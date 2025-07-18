@@ -606,20 +606,55 @@ function extrairUltimaMovimentacao(movimentos: any[]): string {
 
 function determinarStatus(movimentos: any[]): string {
   if (!movimentos || !Array.isArray(movimentos) || movimentos.length === 0) {
+    console.log('📊 Status: Sem movimentações - Em andamento');
     return 'Em andamento';
   }
   
   const ultimaMovimentacao = movimentos[movimentos.length - 1];
   const nomeMovimento = ultimaMovimentacao.nome?.toLowerCase() || '';
   
-  if (nomeMovimento.includes('arquivamento') || nomeMovimento.includes('baixa')) {
+  console.log(`📊 Analisando status - Última movimentação: "${nomeMovimento}"`);
+  
+  // Verificar arquivamento/baixa/extinção
+  if (nomeMovimento.includes('arquivamento') || 
+      nomeMovimento.includes('baixa') ||
+      nomeMovimento.includes('extinção') ||
+      nomeMovimento.includes('extincao') ||
+      nomeMovimento.includes('arquivo')) {
+    console.log('📊 Status determinado: Arquivado');
     return 'Arquivado';
-  } else if (nomeMovimento.includes('sentença') || nomeMovimento.includes('sentenca')) {
+  }
+  
+  // Verificar sentença/julgamento
+  if (nomeMovimento.includes('sentença') || 
+      nomeMovimento.includes('sentenca') ||
+      nomeMovimento.includes('decisão') ||
+      nomeMovimento.includes('decisao') ||
+      nomeMovimento.includes('julgamento') ||
+      nomeMovimento.includes('procedente') ||
+      nomeMovimento.includes('improcedente')) {
+    console.log('📊 Status determinado: Sentenciado');
     return 'Sentenciado';
-  } else if (nomeMovimento.includes('suspensão') || nomeMovimento.includes('suspensao')) {
+  }
+  
+  // Verificar suspensão
+  if (nomeMovimento.includes('suspensão') || 
+      nomeMovimento.includes('suspensao') ||
+      nomeMovimento.includes('suspenso')) {
+    console.log('📊 Status determinado: Suspenso');
     return 'Suspenso';
   }
   
+  // Verificar citação/distribuição (início do processo)
+  if (nomeMovimento.includes('distribuição') || 
+      nomeMovimento.includes('distribuicao') ||
+      nomeMovimento.includes('citação') ||
+      nomeMovimento.includes('citacao')) {
+    console.log('📊 Status determinado: Aguardando citação');
+    return 'Aguardando citação';
+  }
+  
+  console.log('📊 Status determinado: Em andamento (padrão)');
   return 'Em andamento';
 }
 
