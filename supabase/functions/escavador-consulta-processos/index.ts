@@ -108,7 +108,7 @@ serve(async (req) => {
     const escavadorResponse = await fetch(escavadorUrlBase, {
       method: 'GET',
       headers: {
-        'Authorization': `Token ${escavadorToken}`,
+        'Authorization': `Bearer ${escavadorToken}`,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
@@ -117,10 +117,25 @@ serve(async (req) => {
     if (!escavadorResponse.ok) {
       const errorText = await escavadorResponse.text();
       console.error('[ESCAVADOR] Erro na API do Escavador:', escavadorResponse.status, errorText);
+      
+      // Retorna erro específico com status 200 para o frontend processar
+      if (escavadorResponse.status === 401) {
+        return new Response(JSON.stringify({ 
+          error: 'Token do Escavador inválido ou expirado. Verifique a configuração.',
+          status: 401,
+          success: false
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+      
       return new Response(JSON.stringify({ 
-        error: `Erro na consulta Escavador: ${escavadorResponse.status} - ${errorText}` 
+        error: `Erro na consulta Escavador: ${escavadorResponse.status} - ${errorText}`,
+        status: escavadorResponse.status,
+        success: false
       }), {
-        status: 500,
+        status: 200,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
