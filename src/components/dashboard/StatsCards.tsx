@@ -13,7 +13,7 @@ interface DashboardStats {
   receitaMes: number;
   despesaMes: number;
   saldoMes: number;
-  totalProcessosAtivos: number;
+  totalProcessos: number;
   eventosHoje: number;
   tarefasPendentes: number;
 }
@@ -25,7 +25,7 @@ const StatsCards: React.FC = () => {
     receitaMes: 0,
     despesaMes: 0,
     saldoMes: 0,
-    totalProcessosAtivos: 0,
+    totalProcessos: 0,
     eventosHoje: 0,
     tarefasPendentes: 0,
   });
@@ -65,12 +65,11 @@ const StatsCards: React.FC = () => {
         }
       });
 
-      // Processos ativos
+      // Processos totais
       const { data: processos } = await supabase
         .from('processos')
         .select('id')
-        .eq('user_id', user.id)
-        .eq('status_processo', 'Em andamento');
+        .eq('user_id', user.id);
 
       // Eventos hoje
       const { data: eventos } = await supabase
@@ -91,7 +90,7 @@ const StatsCards: React.FC = () => {
         receitaMes,
         despesaMes,
         saldoMes: receitaMes - despesaMes,
-        totalProcessosAtivos: processos?.length || 0,
+        totalProcessos: processos?.length || 0,
         eventosHoje: eventos?.length || 0,
         tarefasPendentes: tarefas?.length || 0,
       });
@@ -168,12 +167,12 @@ const StatsCards: React.FC = () => {
 
       <Card className="bg-gradient-to-br from-purple-500 to-violet-600 text-white shadow-xl border-0 hover:shadow-2xl transition-all duration-300">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-purple-100">Processos Ativos</CardTitle>
+          <CardTitle className="text-sm font-medium text-purple-100">Processos Totais</CardTitle>
           <Briefcase className="h-4 w-4 sm:h-5 sm:w-5 text-purple-200" />
         </CardHeader>
         <CardContent className="p-4 sm:p-6 pt-0">
-          <div className="text-xl sm:text-2xl font-bold">{stats.totalProcessosAtivos}</div>
-          <p className="text-xs text-purple-100 mt-1">Em andamento</p>
+          <div className="text-xl sm:text-2xl font-bold">{stats.totalProcessos}</div>
+          <p className="text-xs text-purple-100 mt-1">Todos os processos</p>
         </CardContent>
       </Card>
 
