@@ -87,7 +87,7 @@ serve(async (req) => {
     // Consultar API do Escavador com limite maior para maximizar valor do token
     console.log(`[ESCAVADOR] Consultando processos para OAB: ${oab_numero}/${oab_estado}`);
     
-    const escavadorUrl = `https://api.escavador.com/api/v2/advogado/processos?oab_numero=${oab_numero}&oab_estado=${oab_estado}&limit=200&include_movements=true&include_parties=true&include_financial=true`;
+    const escavadorUrl = `https://api.escavador.com/api/v2/advogado/processos?oab_numero=${oab_numero}&oab_estado=${oab_estado}&limit=100&include_movements=true&include_parties=true&include_financial=true`;
     const escavadorResponse = await fetch(escavadorUrl, {
       method: 'GET',
       headers: {
