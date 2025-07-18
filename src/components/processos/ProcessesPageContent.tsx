@@ -233,6 +233,7 @@ const ProcessesPageContent = () => {
               processes={filteredProcesses}
               onEdit={handleEditProcess}
               onView={handleViewProcess}
+              onViewDetails={() => {}}
               onToggleStatus={handleToggleStatus}
               onDelete={handleDeleteProcess}
               isLoading={isLoadingCombined}
@@ -244,6 +245,7 @@ const ProcessesPageContent = () => {
               processes={filteredProcesses}
               onEdit={handleEditProcess}
               onView={handleViewProcess}
+              onViewDetails={() => {}}
               onToggleStatus={handleToggleStatus}
               onDelete={handleDeleteProcess}
               isLoading={isLoadingCombined}
