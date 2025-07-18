@@ -84,15 +84,17 @@ serve(async (req) => {
       });
     }
 
-    // Consultar API do Escavador com limite maior para maximizar valor do token
+    // Testar diferentes parâmetros para maximizar dados capturados
     console.log(`[ESCAVADOR] Consultando processos para OAB: ${oab_numero}/${oab_estado}`);
     
-    const escavadorUrl = `https://api.escavador.com/api/v2/advogado/processos?oab_numero=${oab_numero}&oab_estado=${oab_estado}&limit=100&include_movements=true&include_parties=true&include_financial=true`;
-    const escavadorResponse = await fetch(escavadorUrl, {
+    // Primeiro teste: sem parâmetros de inclusão para verificar resposta base
+    const escavadorUrlBase = `https://api.escavador.com/api/v2/advogado/processos?oab_numero=${oab_numero}&oab_estado=${oab_estado}&limit=100`;
+    console.log(`[ESCAVADOR] URL base (teste 1): ${escavadorUrlBase}`);
+    
+    const escavadorResponse = await fetch(escavadorUrlBase, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${escavadorToken}`,
-        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Token ${escavadorToken}`,
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
@@ -110,7 +112,72 @@ serve(async (req) => {
     }
 
     const escavadorData = await escavadorResponse.json();
-    console.log(`[ESCAVADOR] Processos encontrados: ${escavadorData.items?.length || 0}`);
+    
+    // LOG DETALHADO: Estrutura completa da resposta
+    console.log(`[ESCAVADOR] === RESPOSTA COMPLETA DA API ===`);
+    console.log(`[ESCAVADOR] Response status: ${escavadorResponse.status}`);
+    console.log(`[ESCAVADOR] Response headers:`, Object.fromEntries(escavadorResponse.headers.entries()));
+    console.log(`[ESCAVADOR] Resposta JSON completa:`, JSON.stringify(escavadorData, null, 2));
+    console.log(`[ESCAVADOR] Chaves disponíveis no root:`, Object.keys(escavadorData));
+    console.log(`[ESCAVADOR] Tipo da resposta:`, typeof escavadorData);
+    
+    // Verificar diferentes possíveis estruturas de resposta
+    const possibleArrays = ['items', 'results', 'data', 'processos', 'processes'];
+    let processArray = null;
+    let arrayKey = null;
+    
+    for (const key of possibleArrays) {
+      if (escavadorData[key] && Array.isArray(escavadorData[key])) {
+        processArray = escavadorData[key];
+        arrayKey = key;
+        console.log(`[ESCAVADOR] Array de processos encontrado em '${key}' com ${processArray.length} itens`);
+        break;
+      }
+    }
+    
+    if (!processArray && Array.isArray(escavadorData)) {
+      processArray = escavadorData;
+      arrayKey = 'root';
+      console.log(`[ESCAVADOR] Resposta é array direto com ${processArray.length} itens`);
+    }
+    
+    if (processArray && processArray.length > 0) {
+      console.log(`[ESCAVADOR] === ANÁLISE DO PRIMEIRO PROCESSO ===`);
+      const firstProcess = processArray[0];
+      console.log(`[ESCAVADOR] Primeiro processo completo:`, JSON.stringify(firstProcess, null, 2));
+      console.log(`[ESCAVADOR] Chaves no primeiro processo:`, Object.keys(firstProcess));
+      
+      // Verificar dados enriquecidos específicos
+      const enrichmentFields = [
+        'movements', 'movimentos', 'movimentacoes',
+        'parties', 'partes', 
+        'financial', 'financeiro', 'financeiros',
+        'class', 'classe', 'classe_judicial',
+        'subject', 'assunto', 'assunto_processo',
+        'value', 'valor', 'valor_causa',
+        'instance', 'instancia', 'grau',
+        'capa', 'details', 'detalhes'
+      ];
+      
+      console.log(`[ESCAVADOR] === VERIFICAÇÃO DE CAMPOS DE ENRIQUECIMENTO ===`);
+      enrichmentFields.forEach(field => {
+        if (firstProcess[field] !== undefined) {
+          console.log(`[ESCAVADOR] ✅ Campo '${field}':`, typeof firstProcess[field], firstProcess[field]);
+        } else {
+          console.log(`[ESCAVADOR] ❌ Campo '${field}': não encontrado`);
+        }
+      });
+      
+      // Verificar campos aninhados
+      if (firstProcess.capa) {
+        console.log(`[ESCAVADOR] Dados em 'capa':`, JSON.stringify(firstProcess.capa, null, 2));
+      }
+      if (firstProcess.processo) {
+        console.log(`[ESCAVADOR] Dados em 'processo':`, JSON.stringify(firstProcess.processo, null, 2));
+      }
+    }
+    
+    console.log(`[ESCAVADOR] Total de processos: ${processArray?.length || 0} (campo: ${arrayKey})`);
 
     // Função para mapear status da API do Escavador para status válidos do sistema
     const mapearStatus = (statusApi: string): string => {
@@ -127,12 +194,14 @@ serve(async (req) => {
       return 'Em andamento';
     };
 
-    // Processar dados enriquecidos do Escavador
-    const processosEscavador = escavadorData.items || [];
+    // Processar dados enriquecidos do Escavador - usando o array descoberto dinamicamente
+    const processosEscavador = processArray || [];
     const processosNormalizados = [];
     const movimentacoesToInsert = [];
     const partesToInsert = [];
     const financeirosToInsert = [];
+    
+    console.log(`[ESCAVADOR] === INICIANDO PROCESSAMENTO DE ${processosEscavador.length} PROCESSOS ===`);
 
     for (const processo of processosEscavador) {
       console.log(`[ESCAVADOR] Mapeando processo enriquecido:`, {
