@@ -47,7 +47,21 @@ serve(async (req) => {
     console.log(`[ESCAVADOR] Usuário autenticado: ${user.id}`);
 
     // Obter OAB do body da requisição
-    const { oab } = await req.json();
+    let requestBody;
+    try {
+      requestBody = await req.json();
+      console.log('[ESCAVADOR] Request body recebido:', requestBody);
+    } catch (error) {
+      console.error('[ESCAVADOR] Erro ao fazer parse do JSON:', error);
+      return new Response(JSON.stringify({ 
+        error: 'Formato de requisição inválido. JSON esperado.' 
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { oab } = requestBody;
     
     if (!oab) {
       console.error('[ESCAVADOR] OAB não fornecida na requisição');
