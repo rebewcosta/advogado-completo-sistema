@@ -21,7 +21,9 @@ import AdminLayout from '@/components/AdminLayout';
 // Importar todos os componentes necessários
 import MonitoramentoPagamentos from '@/components/admin/MonitoramentoPagamentos';
 import SystemMonitoring from '@/components/admin/SystemMonitoring';
-import UserActivityMonitoring from '@/components/admin/UserActivityMonitoring';
+import UsuariosOnline from '@/components/admin/UsuariosOnline';
+import UsuariosTrial from '@/components/admin/UsuariosTrial';
+import UsuariosCriados from '@/components/admin/UsuariosCriados';
 import SystemTesting from '@/components/admin/SystemTesting';
 import CreateUserAccount from '@/components/admin/CreateUserAccount';
 import CriarContaEspecial from '@/components/admin/CriarContaEspecial';
@@ -51,26 +53,36 @@ const AdminPage = () => {
       </div>
 
       {/* Tabs principais organizadas */}
-      <Tabs defaultValue="monitoramento" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-8 gap-2 h-auto p-2 bg-gray-50 rounded-lg">
-          <TabsTrigger value="monitoramento" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
-            <BarChart3 className="h-5 w-5" />
-            <span className="text-xs">Monitoramento</span>
+      <Tabs defaultValue="usuarios-online" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 lg:grid-cols-10 gap-2 h-auto p-2 bg-gray-50 rounded-lg">
+          <TabsTrigger value="usuarios-online" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-green-500 data-[state=active]:text-white">
+            <Users className="h-5 w-5" />
+            <span className="text-xs">Online</span>
           </TabsTrigger>
           
-          <TabsTrigger value="sistema" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-green-500 data-[state=active]:text-white">
+          <TabsTrigger value="usuarios-criados" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+            <Users className="h-5 w-5" />
+            <span className="text-xs">Criados</span>
+          </TabsTrigger>
+          
+          <TabsTrigger value="usuarios-trial" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-purple-500 data-[state=active]:text-white">
+            <Users className="h-5 w-5" />
+            <span className="text-xs">Trial</span>
+          </TabsTrigger>
+          
+          <TabsTrigger value="monitoramento" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+            <BarChart3 className="h-5 w-5" />
+            <span className="text-xs">Pagamentos</span>
+          </TabsTrigger>
+          
+          <TabsTrigger value="sistema" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-teal-500 data-[state=active]:text-white">
             <Activity className="h-5 w-5" />
             <span className="text-xs">Sistema</span>
           </TabsTrigger>
           
-          <TabsTrigger value="usuarios-online" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-purple-500 data-[state=active]:text-white">
-            <Users className="h-5 w-5" />
-            <span className="text-xs">Usuários Online</span>
-          </TabsTrigger>
-          
-          <TabsTrigger value="teste-sistema" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+          <TabsTrigger value="teste-sistema" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-amber-500 data-[state=active]:text-white">
             <TestTube2 className="h-5 w-5" />
-            <span className="text-xs">Teste de Sistema</span>
+            <span className="text-xs">Testes</span>
           </TabsTrigger>
           
           <TabsTrigger value="criar-conta" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-indigo-500 data-[state=active]:text-white">
@@ -80,7 +92,7 @@ const AdminPage = () => {
           
           <TabsTrigger value="conta-especial" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-pink-500 data-[state=active]:text-white">
             <Users className="h-5 w-5" />
-            <span className="text-xs">Conta Especial</span>
+            <span className="text-xs">Especial</span>
           </TabsTrigger>
           
           <TabsTrigger value="seguranca" className="flex flex-col items-center gap-1 p-3 data-[state=active]:bg-red-500 data-[state=active]:text-white">
@@ -95,11 +107,62 @@ const AdminPage = () => {
         </TabsList>
 
         {/* Conteúdo das Tabs */}
+        <TabsContent value="usuarios-online" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-6 w-6 text-green-500" />
+                Usuários Online
+              </CardTitle>
+              <CardDescription>
+                Monitoramento em tempo real de usuários conectados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UsuariosOnline />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="usuarios-criados" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-6 w-6 text-blue-500" />
+                Usuários Criados
+              </CardTitle>
+              <CardDescription>
+                Todas as contas criadas no sistema e seu status
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UsuariosCriados />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="usuarios-trial" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-6 w-6 text-purple-500" />
+                Usuários Trial
+              </CardTitle>
+              <CardDescription>
+                Gerenciamento de usuários em período trial e suas expirações
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UsuariosTrial />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="monitoramento" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-6 w-6 text-blue-500" />
+                <BarChart3 className="h-6 w-6 text-orange-500" />
                 Monitoramento de Pagamentos
               </CardTitle>
               <CardDescription>
@@ -116,7 +179,7 @@ const AdminPage = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Activity className="h-6 w-6 text-green-500" />
+                <Activity className="h-6 w-6 text-teal-500" />
                 Monitoramento do Sistema
               </CardTitle>
               <CardDescription>
@@ -129,28 +192,11 @@ const AdminPage = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="usuarios-online" className="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-6 w-6 text-purple-500" />
-                Usuários Online
-              </CardTitle>
-              <CardDescription>
-                Monitoramento de atividade e usuários conectados
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <UserActivityMonitoring />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value="teste-sistema" className="mt-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <TestTube2 className="h-6 w-6 text-orange-500" />
+                <TestTube2 className="h-6 w-6 text-amber-500" />
                 Teste de Sistema
               </CardTitle>
               <CardDescription>

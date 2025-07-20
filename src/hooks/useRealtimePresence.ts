@@ -16,6 +16,7 @@ export const useRealtimePresence = () => {
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<any>(null);
   const hasInitialized = useRef(false);
+  const heartbeatInterval = useRef<NodeJS.Timeout | null>(null);
 
   const updatePresence = useCallback(async () => {
     if (!user) return;
@@ -35,15 +36,32 @@ export const useRealtimePresence = () => {
     }
   }, [user]);
 
+  const startHeartbeat = useCallback(() => {
+    if (heartbeatInterval.current) {
+      clearInterval(heartbeatInterval.current);
+    }
+    
+    // Atualizar presença a cada 2 minutos
+    heartbeatInterval.current = setInterval(updatePresence, 2 * 60 * 1000);
+  }, [updatePresence]);
+
   useEffect(() => {
     if (!user || hasInitialized.current) return;
 
+    console.log('🟢 Inicializando presença em tempo real para:', user.email);
     hasInitialized.current = true;
-    const channelName = `user_presence_${Date.now()}`;
-    const presenceChannel = supabase.channel(channelName);
+    
+    const channelName = `user_presence_global`;
+    const presenceChannel = supabase.channel(channelName, {
+      config: {
+        presence: {
+          key: user.id
+        }
+      }
+    });
     channelRef.current = presenceChannel;
 
-    // Configurar apenas o listener essencial
+    // Configurar listeners de presença
     presenceChannel
       .on('presence', { event: 'sync' }, () => {
         const presenceState = presenceChannel.presenceState();
@@ -52,22 +70,34 @@ export const useRealtimePresence = () => {
         Object.keys(presenceState).forEach(presenceKey => {
           const presences = presenceState[presenceKey];
           presences.forEach((presence: any) => {
-            users.push({
-              user_id: presence.user_id,
-              email: presence.email,
-              nome_completo: presence.nome_completo,
-              online_at: presence.online_at,
-              last_seen: presence.last_seen || new Date().toISOString()
-            });
+            // Evitar duplicatas
+            if (!users.find(u => u.user_id === presence.user_id)) {
+              users.push({
+                user_id: presence.user_id,
+                email: presence.email,
+                nome_completo: presence.nome_completo,
+                online_at: presence.online_at,
+                last_seen: presence.last_seen || new Date().toISOString()
+              });
+            }
           });
         });
 
+        console.log('🔄 Presença sincronizada:', users.length, 'usuários online');
         setOnlineUsers(users);
         setIsConnected(true);
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('✅ Usuário entrou:', key, newPresences);
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('❌ Usuário saiu:', key, leftPresences);
       });
 
-    // Subscribe e track apenas uma vez
+    // Subscribe ao canal
     presenceChannel.subscribe(async (status) => {
+      console.log('📡 Status da conexão:', status);
+      
       if (status === 'SUBSCRIBED') {
         const userPresence = {
           user_id: user.id,
@@ -77,16 +107,31 @@ export const useRealtimePresence = () => {
           last_seen: new Date().toISOString()
         };
 
+        console.log('🚀 Trackando presença:', userPresence);
         await presenceChannel.track(userPresence);
         await updatePresence();
+        startHeartbeat();
+      } else if (status === 'CHANNEL_ERROR') {
+        console.error('❌ Erro no canal de presença');
+        setIsConnected(false);
+      } else if (status === 'TIMED_OUT') {
+        console.warn('⏰ Timeout no canal de presença');
+        setIsConnected(false);
       }
     });
 
     // Cleanup
     return () => {
+      console.log('🔄 Limpando presença em tempo real');
       hasInitialized.current = false;
+      
+      if (heartbeatInterval.current) {
+        clearInterval(heartbeatInterval.current);
+        heartbeatInterval.current = null;
+      }
+      
       if (channelRef.current) {
-        // Marcar como offline
+        // Marcar como offline na base de dados
         if (user) {
           supabase
             .from('user_profiles')
@@ -100,8 +145,11 @@ export const useRealtimePresence = () => {
         supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
+      
+      setIsConnected(false);
+      setOnlineUsers([]);
     };
-  }, [user, updatePresence]);
+  }, [user, updatePresence, startHeartbeat]);
 
   return {
     onlineUsers,
