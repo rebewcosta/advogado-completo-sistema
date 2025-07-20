@@ -45,8 +45,19 @@ const UsuariosTrial = () => {
 
       if (error) throw error;
 
-      if (data?.success && data?.trial_users) {
-        setTrialUsers(data.trial_users);
+      if (data?.users) {
+        const formattedUsers = data.users.map((user: any) => ({
+          id: user.id,
+          email: user.email,
+          created_at: user.created_at,
+          trial_expires_at: user.trial_end_date,
+          custom_trial_expiration: user.has_custom_expiration ? user.trial_end_date : null,
+          days_remaining: user.days_remaining,
+          status: user.is_expired ? 'expired' : (user.days_remaining <= 3 ? 'expiring_soon' : 'active'),
+          subscription_status: user.subscription_status,
+          special_access: false
+        }));
+        setTrialUsers(formattedUsers);
       }
     } catch (error: any) {
       console.error('Erro ao buscar usuários trial:', error);
