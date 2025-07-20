@@ -294,32 +294,62 @@ const UsuariosTrial = () => {
         </CardContent>
       </Card>
 
-      {/* Lista de Usuários Trial */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Usuários em Trial ({trialUsers.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-96">
-            <div className="space-y-3">
-              {trialUsers.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">
-                  {isLoading ? 'Carregando usuários trial...' : 'Nenhum usuário trial encontrado'}
-                </p>
-              ) : (
-                trialUsers.map((user) => (
-                  <div key={user.id} className="border rounded-lg p-4">
+      {/* Usuários por Categoria */}
+      <div className="space-y-6">
+        {/* Assinantes Ativos */}
+        {trialUsers.filter(u => u.subscription_status === 'active').length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Assinantes Ativos ({trialUsers.filter(u => u.subscription_status === 'active').length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {trialUsers.filter(u => u.subscription_status === 'active').map((user) => (
+                  <div key={user.id} className="border rounded-lg p-4 bg-green-50">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {getStatusIcon(user)}
                         <div>
                           <p className="font-medium">{user.email}</p>
-                          <p className="text-sm text-gray-500">
-                            ID: {user.id.substring(0, 8)}...
+                          <p className="text-sm text-gray-500">ID: {user.id.substring(0, 8)}...</p>
+                          <p className="text-xs text-gray-400">
+                            Criado: {new Date(user.created_at).toLocaleDateString('pt-BR')}
                           </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {getStatusBadge(user)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Trials Ativos */}
+        {activeTrials.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Timer className="h-5 w-5 text-blue-500" />
+                Trials Ativos ({activeTrials.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {activeTrials.map((user) => (
+                  <div key={user.id} className="border rounded-lg p-4 bg-blue-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(user)}
+                        <div>
+                          <p className="font-medium">{user.email}</p>
+                          <p className="text-sm text-gray-500">ID: {user.id.substring(0, 8)}...</p>
                           <p className="text-xs text-gray-400">
                             Criado: {new Date(user.created_at).toLocaleDateString('pt-BR')}
                           </p>
@@ -338,7 +368,7 @@ const UsuariosTrial = () => {
                       <div className="text-right">
                         {getStatusBadge(user)}
                         <p className="text-sm font-medium mt-2">
-                          {user.days_remaining > 0 ? `${user.days_remaining} dias restantes` : 'Expirado'}
+                          {user.days_remaining} dias restantes
                         </p>
                         {user.custom_trial_expiration && (
                           <Button
@@ -353,12 +383,139 @@ const UsuariosTrial = () => {
                       </div>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Trials Expirando */}
+        {expiringTrials.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                Expirando em Breve ({expiringTrials.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {expiringTrials.map((user) => (
+                  <div key={user.id} className="border rounded-lg p-4 bg-yellow-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(user)}
+                        <div>
+                          <p className="font-medium">{user.email}</p>
+                          <p className="text-sm text-gray-500">ID: {user.id.substring(0, 8)}...</p>
+                          <p className="text-xs text-gray-400">
+                            Criado: {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                          {user.trial_expires_at && (
+                            <p className="text-xs text-gray-400">
+                              Trial expira: {new Date(user.trial_expires_at).toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
+                          {user.custom_trial_expiration && (
+                            <p className="text-xs text-purple-600 font-medium">
+                              Expiração personalizada: {new Date(user.custom_trial_expiration).toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {getStatusBadge(user)}
+                        <p className="text-sm font-medium mt-2">
+                          {user.days_remaining} dias restantes
+                        </p>
+                        {user.custom_trial_expiration && (
+                          <Button
+                            onClick={() => removeCustomExpiration(user.id)}
+                            variant="outline"
+                            size="sm"
+                            className="mt-2 text-red-600"
+                          >
+                            Remover Data Personalizada
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Trials Expirados */}
+        {expiredTrials.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <XCircle className="h-5 w-5 text-red-500" />
+                Trials Expirados ({expiredTrials.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {expiredTrials.map((user) => (
+                  <div key={user.id} className="border rounded-lg p-4 bg-red-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {getStatusIcon(user)}
+                        <div>
+                          <p className="font-medium">{user.email}</p>
+                          <p className="text-sm text-gray-500">ID: {user.id.substring(0, 8)}...</p>
+                          <p className="text-xs text-gray-400">
+                            Criado: {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                          {user.trial_expires_at && (
+                            <p className="text-xs text-gray-400">
+                              Trial expirou: {new Date(user.trial_expires_at).toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
+                          {user.custom_trial_expiration && (
+                            <p className="text-xs text-purple-600 font-medium">
+                              Expiração personalizada: {new Date(user.custom_trial_expiration).toLocaleDateString('pt-BR')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        {getStatusBadge(user)}
+                        <p className="text-sm font-medium mt-2 text-red-600">
+                          Expirado
+                        </p>
+                        {user.custom_trial_expiration && (
+                          <Button
+                            onClick={() => removeCustomExpiration(user.id)}
+                            variant="outline"
+                            size="sm"
+                            className="mt-2 text-red-600"
+                          >
+                            Remover Data Personalizada
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Caso não haja usuários */}
+        {trialUsers.length === 0 && (
+          <Card>
+            <CardContent className="p-8">
+              <p className="text-gray-500 text-center">
+                {isLoading ? 'Carregando usuários trial...' : 'Nenhum usuário trial encontrado'}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 };
