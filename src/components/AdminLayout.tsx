@@ -4,16 +4,13 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Toaster } from "@/components/ui/toaster";
 import ListaAvisos from './avisos/ListaAvisos';
-import { useActivityTracker } from '@/hooks/useActivityTracker';
+
 
 type AdminLayoutProps = {
   children: React.ReactNode;
 };
 
 const AdminLayout = ({ children }: AdminLayoutProps) => {
-  // Track user activity for presence detection
-  useActivityTracker();
-  
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full bg-gray-50 relative">

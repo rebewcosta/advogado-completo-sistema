@@ -47,6 +47,7 @@ import { AppSidebar } from '@/components/AppSidebar';
 import { PWAProvider } from './contexts/PWAContext';
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from '@/hooks/useAuth';
+import { useActivityTracker } from '@/hooks/useActivityTracker';
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,9 @@ const PublicLayout = ({ children }: { children: React.ReactNode }) => {
 
 // Layout para páginas protegidas (apenas sidebar)
 const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
+  // Hook para rastrear atividade do usuário e atualizar presença
+  useActivityTracker();
+  
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-gray-50">
