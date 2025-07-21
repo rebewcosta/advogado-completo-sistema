@@ -182,10 +182,12 @@ const RedefinirPinFinanceiroPage = () => {
                 </div>
               </div>
               {errorMessage && <p className="text-sm text-red-500 text-center">{errorMessage}</p>}
-              <Button type="submit" className="w-full" disabled={isResetting || newPin.length !== 4 || confirmNewPin.length !== 4}>
-                {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isResetting ? 'Redefinindo...' : 'Redefinir PIN'}
-              </Button>
+              <div className="mobile-sticky-button">
+                <Button type="submit" className="w-full h-12 text-base font-semibold" disabled={isResetting || newPin.length !== 4 || confirmNewPin.length !== 4}>
+                  {isResetting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {isResetting ? 'Redefinindo...' : 'Redefinir PIN'}
+                </Button>
+              </div>
             </form>
           )}
         </CardContent>
