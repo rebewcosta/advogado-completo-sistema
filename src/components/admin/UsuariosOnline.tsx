@@ -65,8 +65,8 @@ const UsuariosOnline = () => {
   useEffect(() => {
     fetchOnlineUsersFromDatabase();
     
-    // Atualizar a cada 2 minutos
-    const interval = setInterval(fetchOnlineUsersFromDatabase, 2 * 60 * 1000);
+    // Atualizar a cada 30 segundos para melhor detecção
+    const interval = setInterval(fetchOnlineUsersFromDatabase, 30 * 1000);
     
     return () => clearInterval(interval);
   }, []);

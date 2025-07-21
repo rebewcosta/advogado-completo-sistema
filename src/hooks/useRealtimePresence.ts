@@ -22,7 +22,8 @@ export const useRealtimePresence = () => {
     if (!user) return;
 
     try {
-      await supabase
+      console.log('📊 Atualizando presença para:', user.email);
+      const { data, error } = await supabase
         .from('user_profiles')
         .upsert({
           id: user.id,
@@ -31,8 +32,14 @@ export const useRealtimePresence = () => {
           last_seen: new Date().toISOString(),
           is_online: true
         }, { onConflict: 'id' });
+        
+      if (error) {
+        console.error('❌ Erro ao atualizar presença:', error);
+      } else {
+        console.log('✅ Presença atualizada com sucesso para:', user.email);
+      }
     } catch (error) {
-      console.error('Erro ao atualizar presença:', error);
+      console.error('❌ Erro ao atualizar presença:', error);
     }
   }, [user]);
 
@@ -41,8 +48,8 @@ export const useRealtimePresence = () => {
       clearInterval(heartbeatInterval.current);
     }
     
-    // Atualizar presença a cada 2 minutos
-    heartbeatInterval.current = setInterval(updatePresence, 2 * 60 * 1000);
+    // Atualizar presença a cada 30 segundos para melhor detecção
+    heartbeatInterval.current = setInterval(updatePresence, 30 * 1000);
   }, [updatePresence]);
 
   useEffect(() => {
@@ -108,9 +115,13 @@ export const useRealtimePresence = () => {
         };
 
         console.log('🚀 Trackando presença:', userPresence);
-        await presenceChannel.track(userPresence);
+        const trackResult = await presenceChannel.track(userPresence);
+        console.log('📡 Resultado do track:', trackResult);
         await updatePresence();
         startHeartbeat();
+        
+        // Atualizar presença imediatamente para garantir
+        setTimeout(updatePresence, 1000);
       } else if (status === 'CHANNEL_ERROR') {
         console.error('❌ Erro no canal de presença');
         setIsConnected(false);
