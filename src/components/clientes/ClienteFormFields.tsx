@@ -40,7 +40,8 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
+      <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="nome" className="text-gray-700 font-medium">Nome *</Label>
@@ -178,6 +179,7 @@ const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
             className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
           />
         </div>
+      </div>
     </div>
   );
 };
