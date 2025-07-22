@@ -11,7 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useEquipeTarefaSave } from '@/hooks/useEquipeTarefaSave';
+import EquipeTarefaFormHeader from './EquipeTarefaFormHeader';
 
 interface Tarefa {
   id?: string;
@@ -26,18 +26,18 @@ interface Tarefa {
 interface EquipeTarefaFormProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (tarefa: Omit<Tarefa, 'id'>) => void;
   tarefa?: Tarefa | null;
+  isEdit?: boolean;
 }
 
 const EquipeTarefaForm: React.FC<EquipeTarefaFormProps> = ({
   isOpen,
   onClose,
   onSave,
-  tarefa
+  tarefa,
+  isEdit = false
 }) => {
-  const isEdit = !!tarefa;
-  const { saveTarefa, isSubmitting } = useEquipeTarefaSave();
   const [formData, setFormData] = useState<Omit<Tarefa, 'id'>>({
     titulo: '',
     descricao: '',
@@ -69,27 +69,10 @@ const EquipeTarefaForm: React.FC<EquipeTarefaFormProps> = ({
     }
   }, [isEdit, tarefa, isOpen]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.titulo.trim()) {
-      console.error('❌ Título é obrigatório');
-      return;
-    }
-    
-    if (!formData.responsavel.trim()) {
-      console.error('❌ Responsável é obrigatório');
-      return;
-    }
-    
-    console.log('📝 Enviando formulário de tarefa:', formData);
-    
-    const success = await saveTarefa(formData, tarefa?.id);
-    if (success) {
-      console.log('✅ Tarefa salva, chamando refresh');
-      onSave(); // Chama refresh
-      onClose();
-    }
+    onSave(formData);
+    onClose();
   };
 
   const handleChange = (field: keyof Omit<Tarefa, 'id'>, value: any) => {
@@ -244,11 +227,11 @@ const EquipeTarefaForm: React.FC<EquipeTarefaFormProps> = ({
           </div>
           
           <DialogFooter className="border-t border-blue-600 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Salvando...' : (isEdit ? 'Salvar Alterações' : 'Criar Tarefa')}
+            <Button type="submit">
+              {isEdit ? 'Salvar Alterações' : 'Criar Tarefa'}
             </Button>
           </DialogFooter>
         </form>

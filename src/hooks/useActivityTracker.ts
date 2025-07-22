@@ -12,24 +12,15 @@ export const useActivityTracker = () => {
 
     try {
       console.log('🔄 Atualizando atividade para:', user.email);
-      
-      // Usar apenas uma operação upsert limpa
-      const { error: profileError } = await supabase
+      await supabase
         .from('user_profiles')
         .upsert({
           id: user.id,
           email: user.email,
           nome_completo: user.user_metadata?.nome_completo,
-          is_online: true,
           last_seen: new Date().toISOString(),
-          updated_at: new Date().toISOString()
+          is_online: true
         }, { onConflict: 'id' });
-
-      if (profileError) {
-        console.error('❌ Erro ao atualizar user_profiles:', profileError);
-      } else {
-        console.log('✅ user_profiles atualizado com sucesso para:', user.email);
-      }
       
       lastActivityRef.current = new Date();
     } catch (error) {
