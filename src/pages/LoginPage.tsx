@@ -175,7 +175,7 @@ const LoginPage = () => {
             <Button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-lawyer-primary hover:bg-lawyer-primary/90 text-white py-3 text-base rounded-md h-12 sm:h-14 text-lg font-semibold"
+              className="w-full bg-lawyer-primary hover:bg-lawyer-primary/90 text-white py-3 text-base rounded-md h-12"
             >
               {isLoading ? (
                 <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

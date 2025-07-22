@@ -222,12 +222,10 @@ const SuportePage = () => {
                   ></textarea>
                 </div>
                 
-                <div className="mobile-sticky-button">
-                  <Button className="w-full h-12 bg-lawyer-primary hover:bg-lawyer-primary/90 text-base font-semibold" type="submit">
-                    <Send className="h-4 w-4 mr-2" />
-                    Enviar Mensagem
-                  </Button>
-                </div>
+                <Button className="w-full bg-lawyer-primary hover:bg-lawyer-primary/90" type="submit">
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar Mensagem
+                </Button>
               </div>
             </form>
           </div>
