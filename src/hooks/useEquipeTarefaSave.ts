@@ -28,10 +28,11 @@ export const useEquipeTarefaSave = () => {
       // Mapear os dados do formulário para o formato do banco
       const tarefaData = {
         titulo: data.titulo,
-        descricao_detalhada: data.descricao,
-        responsavel_id: null, // Por enquanto não vamos associar com membros específicos
+        descricao_detalhada: data.descricao || '',
+        responsavel_id: null, // Por enquanto não vamos associar com membros específicos  
         data_vencimento: data.prazo ? data.prazo.toISOString().split('T')[0] : null,
-        prioridade: data.prioridade.charAt(0).toUpperCase() + data.prioridade.slice(1),
+        prioridade: data.prioridade === 'baixa' ? 'Baixa' : 
+                   data.prioridade === 'media' ? 'Média' : 'Alta',
         status: data.status === 'em_andamento' ? 'Em Andamento' : 
                 data.status === 'concluida' ? 'Concluída' : 'Pendente',
         user_id: user.id,

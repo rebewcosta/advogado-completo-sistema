@@ -71,10 +71,22 @@ const EquipeTarefaForm: React.FC<EquipeTarefaFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!formData.titulo.trim()) {
+      console.error('❌ Título é obrigatório');
+      return;
+    }
+    
+    if (!formData.responsavel.trim()) {
+      console.error('❌ Responsável é obrigatório');
+      return;
+    }
+    
     console.log('📝 Enviando formulário de tarefa:', formData);
     
     const success = await saveTarefa(formData, tarefa?.id);
     if (success) {
+      console.log('✅ Tarefa salva, chamando refresh');
       onSave(); // Chama refresh
       onClose();
     }

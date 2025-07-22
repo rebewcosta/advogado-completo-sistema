@@ -13,42 +13,23 @@ export const useActivityTracker = () => {
     try {
       console.log('🔄 Atualizando atividade para:', user.email);
       
-      // Atualizar tanto user_profiles quanto a função update_user_online_status
+      // Usar apenas uma operação upsert limpa
       const { error: profileError } = await supabase
         .from('user_profiles')
         .upsert({
           id: user.id,
           email: user.email,
+          nome_completo: user.user_metadata?.nome_completo,
           is_online: true,
           last_seen: new Date().toISOString(),
           updated_at: new Date().toISOString()
-        });
+        }, { onConflict: 'id' });
 
       if (profileError) {
         console.error('❌ Erro ao atualizar user_profiles:', profileError);
       } else {
-        console.log('✅ user_profiles atualizado com sucesso');
+        console.log('✅ user_profiles atualizado com sucesso para:', user.email);
       }
-
-      // Também chamar a função do banco para garantir consistência
-      const { error: functionError } = await supabase.rpc('update_user_online_status', {
-        user_uuid: user.id
-      });
-
-      if (functionError) {
-        console.error('❌ Erro na função update_user_online_status:', functionError);
-      } else {
-        console.log('✅ Função update_user_online_status executada com sucesso');
-      }
-      await supabase
-        .from('user_profiles')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          nome_completo: user.user_metadata?.nome_completo,
-          last_seen: new Date().toISOString(),
-          is_online: true
-        }, { onConflict: 'id' });
       
       lastActivityRef.current = new Date();
     } catch (error) {
