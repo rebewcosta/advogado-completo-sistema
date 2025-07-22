@@ -4,6 +4,7 @@ import ClienteFormHeader from '@/components/clientes/ClienteFormHeader';
 import ClienteFormFields from '@/components/clientes/ClienteFormFields';
 import ClienteFormActions from '@/components/clientes/ClienteFormActions';
 import { useClienteValidation } from '@/components/clientes/ClienteFormValidation';
+import { MobileFormWrapper } from '@/components/MobileFormWrapper';
 
 interface ClienteFormProps {
   onSave: (cliente: any) => void;
@@ -81,26 +82,26 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
-      <div className="p-6">
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl mb-6">
+    <MobileFormWrapper className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
+      <div className="p-4 md:p-6 pb-20 md:pb-6">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-4 md:p-6 rounded-xl shadow-xl mb-4 md:mb-6">
           <ClienteFormHeader isEdit={isEdit} onClose={onCancel} />
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+        <form onSubmit={handleSubmit} className="relative">
+          <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-4 md:mb-6">
             <ClienteFormFields
               formData={formData}
               onChange={handleFieldChange}
             />
           </div>
 
-          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl">
+          <div className="mobile-sticky-button bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-4 md:p-6 rounded-xl shadow-xl">
             <ClienteFormActions isEdit={isEdit} onCancel={onCancel} />
           </div>
         </form>
       </div>
-    </div>
+    </MobileFormWrapper>
   );
 };
 

@@ -12,6 +12,34 @@ export const useActivityTracker = () => {
 
     try {
       console.log('🔄 Atualizando atividade para:', user.email);
+      
+      // Atualizar tanto user_profiles quanto a função update_user_online_status
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          is_online: true,
+          last_seen: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) {
+        console.error('❌ Erro ao atualizar user_profiles:', profileError);
+      } else {
+        console.log('✅ user_profiles atualizado com sucesso');
+      }
+
+      // Também chamar a função do banco para garantir consistência
+      const { error: functionError } = await supabase.rpc('update_user_online_status', {
+        user_uuid: user.id
+      });
+
+      if (functionError) {
+        console.error('❌ Erro na função update_user_online_status:', functionError);
+      } else {
+        console.log('✅ Função update_user_online_status executada com sucesso');
+      }
       await supabase
         .from('user_profiles')
         .upsert({
