@@ -230,9 +230,11 @@ const CriarContaEspecial = () => {
             <Label htmlFor="skipConfirmation">Pular confirmação de email</Label>
           </div>
           
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? 'Criando...' : 'Criar Conta Especial'}
-          </Button>
+          <div className="mobile-sticky-button">
+            <Button type="submit" disabled={isLoading} className="w-full h-12 sm:h-10 text-base font-semibold">
+              {isLoading ? 'Criando...' : 'Criar Conta Especial'}
+            </Button>
+          </div>
         </form>
         
         {createdAccounts.length > 0 && (
