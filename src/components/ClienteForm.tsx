@@ -83,24 +83,29 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
 
   return (
     <MobileFormWrapper className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
-      <div className="p-4 md:p-6 pb-32 md:pb-6 max-h-screen overflow-y-auto">
+      <div className="flex flex-col h-screen">
+        <div className="flex-shrink-0">
         <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-4 md:p-6 rounded-xl shadow-xl mb-4 md:mb-6">
           <ClienteFormHeader isEdit={isEdit} onClose={onCancel} />
         </div>
 
-        <form onSubmit={handleSubmit} className="relative">
-          <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6 md:mb-6">
-            <ClienteFormFields
-              formData={formData}
-              onChange={handleFieldChange}
-            />
-          </div>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-4 md:p-6">
+          <form onSubmit={handleSubmit} className="h-full flex flex-col">
+            <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 flex-1 overflow-y-auto">
+              <ClienteFormFields
+                formData={formData}
+                onChange={handleFieldChange}
+              />
+            </div>
+          </form>
+        </div>
 
-          {/* Botão fixo no mobile */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-2xl z-50 md:relative md:bg-gradient-to-r md:from-blue-600 md:via-indigo-600 md:to-purple-600 md:p-4 md:rounded-xl md:shadow-xl">
-            <ClienteFormActions isEdit={isEdit} onCancel={onCancel} />
-          </div>
-        </form>
+        {/* Botão fixo no mobile */}
+        <div className="flex-shrink-0 p-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 shadow-2xl">
+          <ClienteFormActions isEdit={isEdit} onCancel={onCancel} />
+        </div>
       </div>
     </MobileFormWrapper>
   );

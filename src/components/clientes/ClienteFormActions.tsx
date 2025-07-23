@@ -14,8 +14,7 @@ const ClienteFormActions: React.FC<ClienteFormActionsProps> = ({
   isLoading = false 
 }) => {
   return (
-    <div className="p-6">
-      <div className="flex justify-end gap-3">
+    <div className="flex justify-end gap-3">
         <Button 
           type="button" 
           variant="outline" 
@@ -32,7 +31,6 @@ const ClienteFormActions: React.FC<ClienteFormActionsProps> = ({
         >
           {isEdit ? 'Salvar Alterações' : 'Cadastrar Cliente'}
         </Button>
-      </div>
     </div>
   );
 };
