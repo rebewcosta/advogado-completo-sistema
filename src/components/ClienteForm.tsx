@@ -80,20 +80,41 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
   };
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
-      <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-4 md:p-6 rounded-xl shadow-xl m-4 md:m-6">
+    <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg, #0f172a, #1e293b)' }}>
+      {/* Header */}
+      <div style={{ 
+        background: 'linear-gradient(90deg, #2563eb, #4f46e5, #7c3aed)', 
+        padding: '16px', 
+        margin: '16px', 
+        borderRadius: '12px',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+      }}>
         <ClienteFormHeader isEdit={isEdit} onClose={onCancel} />
       </div>
 
-      <form onSubmit={handleSubmit} className="px-4 md:px-6">
-        <div className="bg-white p-4 md:p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+      {/* Form */}
+      <form onSubmit={handleSubmit} style={{ padding: '0 16px' }}>
+        <div style={{ 
+          background: 'white', 
+          padding: '24px', 
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+          marginBottom: '24px'
+        }}>
           <ClienteFormFields
             formData={formData}
             onChange={handleFieldChange}
           />
         </div>
 
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-4 md:p-6 rounded-xl shadow-xl mb-6">
+        {/* Actions */}
+        <div style={{ 
+          background: 'linear-gradient(90deg, #2563eb, #4f46e5, #7c3aed)', 
+          padding: '16px', 
+          borderRadius: '12px',
+          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+          marginBottom: '24px'
+        }}>
           <ClienteFormActions isEdit={isEdit} onCancel={onCancel} />
         </div>
       </form>
