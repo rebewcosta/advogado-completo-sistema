@@ -99,10 +99,10 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
           <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
           
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            <div className="flex-1 overflow-y-auto">
+            <div className="bg-white m-6 rounded-xl p-6 flex-1 max-h-[60vh] overflow-y-auto">
               <ClienteFormFields formData={formData} onChange={handleFieldChange} />
             </div>
-            <div className="sticky bottom-0 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 border-t border-white/20">
+            <div className="p-6">
               <ClienteFormActions isEdit={!!cliente} onCancel={onClose} isLoading={isLoading} />
             </div>
           </form>

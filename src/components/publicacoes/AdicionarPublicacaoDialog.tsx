@@ -116,24 +116,29 @@ const AdicionarPublicacaoDialog: React.FC<AdicionarPublicacaoDialogProps> = ({ o
             Adicionar Publicação
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              Adicionar Nova Publicação
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Info className="h-4 w-4 text-blue-500 cursor-help" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="max-w-xs">
-                    Adicione informações precisas para facilitar futuras buscas. 
-                    Número da OAB e nome do escritório ajudam na identificação.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+          <div className="h-full flex flex-col rounded-xl overflow-hidden">
+            {/* Header */}
+            <div className="p-6">
+              <div className="flex items-center gap-2">
+                <h2 className="text-white text-xl font-semibold">Adicionar Nova Publicação</h2>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-4 w-4 text-blue-200 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs">
+                      Adicione informações precisas para facilitar futuras buscas. 
+                      Número da OAB e nome do escritório ajudam na identificação.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+              <div className="bg-white m-6 rounded-xl p-6 flex-1 max-h-[60vh] overflow-y-auto">
+                <div className="space-y-4">
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
               <h3 className="font-medium text-blue-800 mb-1">📋 Informações do Advogado</h3>
               <p className="text-xs text-blue-700">
@@ -305,15 +310,30 @@ const AdicionarPublicacaoDialog: React.FC<AdicionarPublicacaoDialogProps> = ({ o
               <Label htmlFor="segredo_justica">Processo em segredo de justiça</Label>
             </div>
 
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading ? 'Adicionando...' : 'Adicionar Publicação'}
-              </Button>
-            </div>
-          </form>
+                </div>
+              </div>
+
+              <div className="p-6">
+                <div className="flex justify-end gap-3">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={() => setOpen(false)}
+                    className="px-6 py-3 h-12 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button 
+                    type="submit"
+                    disabled={isLoading}
+                    className="px-6 py-3 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+                  >
+                    {isLoading ? 'Adicionando...' : 'Adicionar Publicação'}
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </div>
         </DialogContent>
       </Dialog>
     </TooltipProvider>

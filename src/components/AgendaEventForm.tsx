@@ -166,8 +166,8 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
           </div>
 
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            {/* Campos do formulário com fundo branco */}
-            <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
+            {/* Campos do formulário com fundo branco e scroll */}
+            <div className="bg-white m-6 rounded-xl p-6 flex-1 max-h-[60vh] overflow-y-auto">
               <div className="space-y-6">
                 <div>
                   <Label htmlFor="titulo" className="text-gray-700 font-medium">Título *</Label>

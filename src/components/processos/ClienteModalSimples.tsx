@@ -41,15 +41,19 @@ const ClienteModalSimples: React.FC<ClienteModalSimplesProps> = ({
           <ClienteModalHeader onClose={handleClose} />
 
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            <ClienteModalFields
-              formData={formData}
-              onFieldChange={handleFieldChange}
-            />
+            <div className="bg-white m-6 rounded-xl p-6 flex-1 max-h-[60vh] overflow-y-auto">
+              <ClienteModalFields
+                formData={formData}
+                onFieldChange={handleFieldChange}
+              />
+            </div>
 
-            <ClienteModalActions
-              onCancel={handleClose}
-              isSaving={isSaving}
-            />
+            <div className="p-6">
+              <ClienteModalActions
+                onCancel={handleClose}
+                isSaving={isSaving}
+              />
+            </div>
           </form>
         </div>
       </DialogContent>

@@ -29,8 +29,7 @@ const ClienteModalFields: React.FC<ClienteModalFieldsProps> = ({
   onFieldChange
 }) => {
   return (
-    <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <Label htmlFor="nome" className="text-gray-700 font-medium">Nome *</Label>
@@ -108,7 +107,6 @@ const ClienteModalFields: React.FC<ClienteModalFieldsProps> = ({
             </Select>
           </div>
         </div>
-      </div>
     </div>
   );
 };
