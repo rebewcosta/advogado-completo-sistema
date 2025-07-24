@@ -130,14 +130,14 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+      <DialogContent className="w-[95vw] max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
         <div className="h-full flex flex-col rounded-xl overflow-hidden">
           {/* Header com gradiente azul */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <TooltipProvider>
               <div className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-white text-xl font-semibold">
+                  <h2 className="text-white text-lg sm:text-xl font-semibold">
                     {initialEventData ? 'Editar Evento' : 'Novo Evento'}
                   </h2>
                   <Tooltip>
@@ -165,27 +165,28 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
             </TooltipProvider>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
             {/* Campos do formulário com fundo branco e scroll */}
-            <div className="bg-white m-6 rounded-xl p-6 flex-1 max-h-[60vh] overflow-y-auto">
-              <div className="space-y-6">
+            <div className="bg-white mx-3 sm:mx-6 mb-3 sm:mb-6 rounded-xl p-4 sm:p-6 flex-1 overflow-y-auto">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <Label htmlFor="titulo" className="text-gray-700 font-medium">Título *</Label>
+                  <Label htmlFor="titulo" className="text-gray-700 font-medium text-sm sm:text-base">Título *</Label>
                   <Input
                     id="titulo"
                     value={formData.titulo}
                     onChange={(e) => setFormData({...formData, titulo: e.target.value})}
                     placeholder="Título do evento"
-                    className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                    className="mt-2 h-10 sm:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base"
                     required
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <Label htmlFor="tipo_evento" className="text-gray-700 font-medium">Tipo *</Label>
+                    <Label htmlFor="tipo_evento" className="text-gray-700 font-medium text-sm sm:text-base">Tipo *</Label>
                     <Select value={formData.tipo_evento} onValueChange={(value) => setFormData({...formData, tipo_evento: value})}>
-                      <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                      <SelectTrigger className="mt-2 h-10 sm:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base">
                         <SelectValue placeholder="Selecione o tipo" />
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
@@ -197,9 +198,9 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                     </Select>
                   </div>
                   <div>
-                    <Label htmlFor="status_evento" className="text-gray-700 font-medium">Status *</Label>
+                    <Label htmlFor="status_evento" className="text-gray-700 font-medium text-sm sm:text-base">Status *</Label>
                     <Select value={formData.status_evento} onValueChange={(value) => setFormData({...formData, status_evento: value})}>
-                      <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+                      <SelectTrigger className="mt-2 h-10 sm:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base">
                         <SelectValue placeholder="Selecione o status" />
                       </SelectTrigger>
                       <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
@@ -212,69 +213,73 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                   <div>
-                    <Label htmlFor="data_hora_inicio" className="text-gray-700 font-medium">Data/Hora de Início *</Label>
+                    <Label htmlFor="data_hora_inicio" className="text-gray-700 font-medium text-sm sm:text-base">Data/Hora de Início *</Label>
                     <Input
                       id="data_hora_inicio"
                       type="datetime-local"
                       value={formData.data_hora_inicio}
                       onChange={(e) => setFormData({...formData, data_hora_inicio: e.target.value})}
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                      className="mt-2 h-10 sm:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base"
                       required
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="duracao_minutos" className="text-gray-700 font-medium">Duração (minutos)</Label>
+                    <Label htmlFor="duracao_minutos" className="text-gray-700 font-medium text-sm sm:text-base">Duração (minutos)</Label>
                     <Input
                       id="duracao_minutos"
                       type="number"
                       value={formData.duracao_minutos}
                       onChange={(e) => setFormData({...formData, duracao_minutos: parseInt(e.target.value) || 60})}
-                      className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                      className="mt-2 h-10 sm:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base"
+                      style={{ fontSize: '16px' }}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="local_evento" className="text-gray-700 font-medium">Local do Evento</Label>
+                  <Label htmlFor="local_evento" className="text-gray-700 font-medium text-sm sm:text-base">Local do Evento</Label>
                   <Input
                     id="local_evento"
                     value={formData.local_evento}
                     onChange={(e) => setFormData({...formData, local_evento: e.target.value})}
                     placeholder="Local onde ocorrerá o evento"
-                    className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                    className="mt-2 h-10 sm:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="descricao_evento" className="text-gray-700 font-medium">Descrição</Label>
+                  <Label htmlFor="descricao_evento" className="text-gray-700 font-medium text-sm sm:text-base">Descrição</Label>
                   <Textarea
                     id="descricao_evento"
                     value={formData.descricao_evento}
                     onChange={(e) => setFormData({...formData, descricao_evento: e.target.value})}
                     placeholder="Descrição detalhada do evento"
-                    rows={4}
-                    className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+                    rows={3}
+                    className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base resize-none"
+                    style={{ fontSize: '16px' }}
                   />
                 </div>
               </div>
             </div>
 
             {/* Footer com gradiente azul e botões */}
-            <div className="p-6">
-              <div className="flex justify-end gap-3">
+            <div className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row justify-end gap-3">
                 <Button 
                   type="button" 
                   variant="outline" 
                   onClick={() => onOpenChange(false)}
-                  className="px-6 py-3 h-12 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 hover:scale-105"
+                  className="px-4 sm:px-6 py-3 h-10 sm:h-12 bg-white/10 border-white/20 text-white hover:bg-white/20 hover:text-white rounded-lg backdrop-blur-sm transition-all duration-300 text-sm sm:text-base order-2 sm:order-1"
                 >
                   Cancelar
                 </Button>
                 <Button 
                   type="submit"
-                  className="px-6 py-3 h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 hover:scale-105"
+                  className="px-4 sm:px-6 py-3 h-10 sm:h-12 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-300 text-sm sm:text-base order-1 sm:order-2"
                 >
                   {initialEventData ? 'Salvar Alterações' : 'Cadastrar Evento'}
                 </Button>
