@@ -6,7 +6,8 @@ interface ConsultaCepProps {
   onAddressFound: (address: any) => void
 }
 
-const ConsultaCep = ({ onAddressFound }: ConsultaCepProps) => {
+// O componente é definido como uma constante
+export const ConsultaCep = ({ onAddressFound }: ConsultaCepProps) => {
   const [cep, setCep] = useState('')
 
   const handleCepChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,5 +46,3 @@ const ConsultaCep = ({ onAddressFound }: ConsultaCepProps) => {
     </div>
   )
 }
-
-export default ConsultaCep
