@@ -134,8 +134,8 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
           </div>
 
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            {/* Campos do formulário com fundo branco e scroll */}
-            <div className="bg-white m-6 rounded-xl p-6 flex-1 max-h-[60vh] overflow-y-auto">
+            {/* Campos do formulário com fundo branco */}
+            <div className="bg-white mx-6 rounded-xl p-6 flex-1 overflow-y-auto">
               <LowStorageWarning espacoDisponivel={espacoDisponivel} />
               
               <div className="space-y-6">

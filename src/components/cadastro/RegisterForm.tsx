@@ -156,11 +156,11 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12 mobile-form-container">
+    <div className="container mx-auto px-3 sm:px-4 pb-8 sm:pb-12">
       <div className="max-w-2xl mx-auto">
-        <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl overflow-visible">
+        <Card className="bg-white/95 backdrop-blur-lg border-0 shadow-2xl">
           <CardContent className="p-4 sm:p-6 lg:p-8">
-            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
               
               {/* Informações Pessoais */}
               <div className="space-y-4 sm:space-y-6">
@@ -310,16 +310,16 @@ const RegisterForm = () => {
                 <PlanInfoBox />
               </div>
 
-              {/* Botão de Submissão - Otimizado para mobile */}
-              <div className="mobile-sticky-button sm:pt-6 sm:border-t sm:border-gray-200">
+              {/* Botão de Submissão */}
+              <div className="pt-4 sm:pt-6 border-t border-gray-200">
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full h-14 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-lg sm:text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-75 disabled:cursor-not-allowed"
+                  className="w-full h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-semibold text-base sm:text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] disabled:opacity-75 disabled:cursor-not-allowed"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 sm:h-5 sm:w-5 animate-spin" />
                       Processando...
                     </>
                   ) : (

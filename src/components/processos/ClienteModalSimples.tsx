@@ -5,7 +5,6 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { useClienteModalSimples } from '@/hooks/useClienteModalSimples';
-import { useMobileOptimization } from '@/hooks/useMobileOptimization';
 import ClienteModalHeader from './ClienteModalHeader';
 import ClienteModalFields from './ClienteModalFields';
 import ClienteModalActions from './ClienteModalActions';
@@ -23,8 +22,6 @@ const ClienteModalSimples: React.FC<ClienteModalSimplesProps> = ({
   onSaveCliente,
   isSaving
 }) => {
-  useMobileOptimization();
-  
   const {
     formData,
     handleFieldChange,
@@ -39,21 +36,15 @@ const ClienteModalSimples: React.FC<ClienteModalSimplesProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-full max-w-[95vw] md:max-w-3xl h-[95vh] md:h-[90vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
-        <div className="h-full flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+        <div className="h-full flex flex-col rounded-xl overflow-hidden">
           <ClienteModalHeader onClose={handleClose} />
 
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-            <div className="flex-1 overflow-hidden">
-              <div className="bg-white mx-2 md:mx-4 rounded-xl h-full flex flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto p-3 md:p-4" style={{ WebkitOverflowScrolling: 'touch' }}>
-                  <ClienteModalFields
-                    formData={formData}
-                    onFieldChange={handleFieldChange}
-                  />
-                </div>
-              </div>
-            </div>
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+            <ClienteModalFields
+              formData={formData}
+              onFieldChange={handleFieldChange}
+            />
 
             <ClienteModalActions
               onCancel={handleClose}

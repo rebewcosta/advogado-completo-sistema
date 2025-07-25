@@ -87,20 +87,16 @@ const TransacaoModal: React.FC<TransacaoModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
-        <div className="flex flex-col rounded-xl max-h-[95vh]">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+        <div className="h-full flex flex-col rounded-xl overflow-hidden">
           <TransacaoFormHeader isEdit={!!transacao} onClose={onClose} />
           
           <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            <div className="bg-white m-6 rounded-xl p-6 flex-1 max-h-[60vh] overflow-y-auto">
-              <TransacaoFormFields 
-                formData={formData} 
-                onChange={handleFieldChange}
-              />
-            </div>
-            <div className="p-6">
-              <TransacaoFormActions isEdit={!!transacao} onCancel={onClose} isLoading={isLoading} />
-            </div>
+            <TransacaoFormFields 
+              formData={formData} 
+              onChange={handleFieldChange}
+            />
+            <TransacaoFormActions isEdit={!!transacao} onCancel={onClose} isLoading={isLoading} />
           </form>
         </div>
       </DialogContent>

@@ -467,7 +467,7 @@ const EscavadorImportDialog: React.FC<EscavadorImportDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleFecharDialog}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center space-x-2">
             <FileText className="w-5 h-5 text-blue-600" />

@@ -48,7 +48,6 @@ import { PWAProvider } from './contexts/PWAContext';
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from '@/hooks/useAuth';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
-import { useMobileOptimization } from '@/hooks/useMobileOptimization';
 
 const queryClient = new QueryClient();
 
@@ -75,9 +74,6 @@ const ProtectedLayout = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  // Aplicar otimizações para mobile globalmente
-  useMobileOptimization();
-  
   return (
     <QueryClientProvider client={queryClient}>
       <PWAProvider>

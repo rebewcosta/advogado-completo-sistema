@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import ClienteFormHeader from '@/components/clientes/ClienteFormHeader';
 import ClienteFormFields from '@/components/clientes/ClienteFormFields';
@@ -81,22 +82,19 @@ const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormP
 
   return (
     <div className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
-      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl">
+      <div className="p-6">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl mb-6">
           <ClienteFormHeader isEdit={isEdit} onClose={onCancel} />
         </div>
 
-        {/* Form Content */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 max-h-[70vh] overflow-y-auto">
+        <form onSubmit={handleSubmit}>
+          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
             <ClienteFormFields
               formData={formData}
               onChange={handleFieldChange}
             />
           </div>
 
-          {/* Actions */}
           <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl">
             <ClienteFormActions isEdit={isEdit} onCancel={onCancel} />
           </div>

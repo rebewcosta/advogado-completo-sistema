@@ -234,29 +234,27 @@ const HeroSection: React.FC<HeroSectionProps> = ({
                             Esqueceu sua senha?
                           </Link>
                         </div>
-                       </div>
-                       <div className="mobile-sticky-button">
-                         <Button
-                           type="submit"
-                           disabled={isLoading}
-                           className="w-full h-12 sm:h-11 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:from-blue-500 hover:to-purple-500 disabled:opacity-75 disabled:cursor-not-allowed"
-                         >
-                           {isLoading ? (
-                             <>
-                               <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                               </svg>
-                               Entrando...
-                             </>
-                           ) : (
-                             <>
-                               <Shield className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
-                               Entrar no Sistema
-                             </>
-                           )}
-                         </Button>
-                       </div>
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full h-11 sm:h-12 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] hover:from-blue-500 hover:to-purple-500 disabled:opacity-75 disabled:cursor-not-allowed"
+                      >
+                        {isLoading ? (
+                          <>
+                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Entrando...
+                          </>
+                        ) : (
+                          <>
+                            <Shield className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                            Entrar no Sistema
+                          </>
+                        )}
+                      </Button>
                       <div className="text-center text-sm pt-3 sm:pt-4 border-t border-gray-200">
                         <span className="text-gray-600">Não tem uma conta? </span>
                         <Link to="/cadastro" className="text-blue-600 hover:text-blue-500 font-semibold transition-colors">
