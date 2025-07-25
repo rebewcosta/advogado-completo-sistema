@@ -1,12 +1,9 @@
-// src/components/clientes/ClienteFormDialog.tsx
-
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
 import { useClientesState } from '@/hooks/clientes/useClientesState';
 import ClienteFormHeader from './ClienteFormHeader';
 import ClienteFormFields from './ClienteFormFields';
@@ -22,13 +19,21 @@ const ClienteFormDialog = ({ children }: ClienteFormDialogProps) => {
   return (
     <Dialog open={isModalOpen} onOpenChange={handleModalOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
+      {/* A chave da correção está aqui:
+        - flex flex-col: Organiza o conteúdo em uma coluna (cabeçalho, corpo, rodapé).
+        - max-h-[90vh]: Garante que a altura do modal nunca passe de 90% da altura da tela.
+        - p-0: Remove o padding padrão para termos controle total.
+      */}
       <DialogContent className="sm:max-w-[600px] flex flex-col max-h-[90vh] p-0">
-        <div className="p-6">
+        <div className="p-6 border-b">
           <ClienteFormHeader />
         </div>
         
-        {/* Essa div é a chave da correção: ela permite que apenas esta área seja rolável */}
-        <div className="flex-grow overflow-y-auto px-6">
+        {/* - flex-1: Faz esta área crescer para ocupar o espaço disponível.
+          - overflow-y-auto: Adiciona a barra de rolagem vertical apenas quando necessário.
+          - p-6: Adiciona o espaçamento interno de volta.
+        */}
+        <div className="flex-1 overflow-y-auto p-6">
           <ClienteFormFields />
         </div>
 
