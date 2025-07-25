@@ -1,183 +1,194 @@
+// src/components/clientes/ClienteFormFields.tsx
+
 import React from 'react';
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useClientesState } from '@/hooks/clientes/useClientesState';
 
-interface ClienteFormData {
-  nome: string;
-  email: string;
-  telefone: string;
-  tipo_cliente: string;
-  cpfCnpj: string;
-  endereco: string;
-  cidade: string;
-  estado: string;
-  cep: string;
-  observacoes: string;
-  status_cliente: string;
-}
-
-interface ClienteFormFieldsProps {
-  formData: ClienteFormData;
-  onChange: (field: string, value: string) => void;
-}
-
-const ClienteFormFields: React.FC<ClienteFormFieldsProps> = ({
-  formData,
-  onChange
-}) => {
-  const estados = [
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", 
-    "MT", "MS", "MG", "PA", "PB", "PR", "PE", "PI", "RJ", "RN", 
-    "RS", "RO", "RR", "SC", "SP", "SE", "TO"
-  ];
+const ClienteFormFields = () => {
+  const {
+    selectedCliente,
+    errors,
+    handleFieldChange,
+    handleCepChange,
+    isSubmitting,
+  } = useClientesState();
 
   return (
-    <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="nome" className="text-gray-700 font-medium">Nome *</Label>
-            <Input
-              id="nome"
-              value={formData.nome}
-              onChange={(e) => onChange('nome', e.target.value)}
-              placeholder="Nome completo ou Razão Social"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="email" className="text-gray-700 font-medium">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => onChange('email', e.target.value)}
-              placeholder="cliente@exemplo.com"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone</Label>
-            <Input
-              id="telefone"
-              value={formData.telefone}
-              onChange={(e) => onChange('telefone', e.target.value)}
-              placeholder="(00) 00000-0000"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-            />
-          </div>
-          <div>
-            <Label htmlFor="cpfCnpj" className="text-gray-700 font-medium">
-              {formData.tipo_cliente === "Pessoa Física" ? "CPF" : "CNPJ"}
-            </Label>
-            <Input
-              id="cpfCnpj"
-              value={formData.cpfCnpj}
-              onChange={(e) => onChange('cpfCnpj', e.target.value)}
-              placeholder={formData.tipo_cliente === "Pessoa Física" ? "000.000.000-00" : "00.000.000/0000-00"}
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label htmlFor="tipo_cliente" className="text-gray-700 font-medium">Tipo de Cliente *</Label>
-            <Select value={formData.tipo_cliente} onValueChange={(value) => onChange('tipo_cliente', value)}>
-              <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
-                <SelectItem value="Pessoa Física">Pessoa Física</SelectItem>
-                <SelectItem value="Pessoa Jurídica">Pessoa Jurídica</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="status_cliente" className="text-gray-700 font-medium">Status</Label>
-            <Select value={formData.status_cliente} onValueChange={(value) => onChange('status_cliente', value)}>
-              <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
-                <SelectItem value="Ativo">Ativo</SelectItem>
-                <SelectItem value="Inativo">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div>
-          <Label htmlFor="endereco" className="text-gray-700 font-medium">Endereço</Label>
+    <div className="grid gap-4 py-4">
+      {/* Nome Completo */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="nome" className="text-right">
+          Nome
+        </Label>
+        <div className="col-span-3">
           <Input
-            id="endereco"
-            value={formData.endereco}
-            onChange={(e) => onChange('endereco', e.target.value)}
-            placeholder="Rua, número, complemento"
-            className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+            id="nome"
+            name="nome"
+            value={selectedCliente?.nome || ''}
+            onChange={handleFieldChange}
+            className={errors.nome ? 'border-red-500' : ''}
+            disabled={isSubmitting}
+          />
+          {errors.nome && <p className="text-red-500 text-xs mt-1">{errors.nome}</p>}
+        </div>
+      </div>
+
+      {/* Email */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="email" className="text-right">
+          Email
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="email"
+            name="email"
+            type="email"
+            value={selectedCliente?.email || ''}
+            onChange={handleFieldChange}
+            className={errors.email ? 'border-red-500' : ''}
+            disabled={isSubmitting}
+          />
+          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+        </div>
+      </div>
+
+      {/* Telefone */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="telefone" className="text-right">
+          Telefone
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="telefone"
+            name="telefone"
+            value={selectedCliente?.telefone || ''}
+            onChange={handleFieldChange}
+            disabled={isSubmitting}
           />
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <Label htmlFor="cidade" className="text-gray-700 font-medium">Cidade</Label>
-            <Input
-              id="cidade"
-              value={formData.cidade}
-              onChange={(e) => onChange('cidade', e.target.value)}
-              placeholder="Cidade"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-            />
-          </div>
-          <div>
-            <Label htmlFor="estado" className="text-gray-700 font-medium">Estado</Label>
-            <Select value={formData.estado} onValueChange={(value) => onChange('estado', value)}>
-              <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
-                <SelectValue placeholder="UF" />
-              </SelectTrigger>
-              <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
-                {estados.map(estado => (
-                  <SelectItem key={estado} value={estado}>
-                    {estado}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label htmlFor="cep" className="text-gray-700 font-medium">CEP</Label>
-            <Input
-              id="cep"
-              value={formData.cep}
-              onChange={(e) => onChange('cep', e.target.value)}
-              placeholder="00000-000"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
-            />
-          </div>
+      {/* CPF/CNPJ */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="cpf_cnpj" className="text-right">
+          CPF/CNPJ
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="cpf_cnpj"
+            name="cpf_cnpj"
+            value={selectedCliente?.cpf_cnpj || ''}
+            onChange={handleFieldChange}
+            className={errors.cpf_cnpj ? 'border-red-500' : ''}
+            disabled={isSubmitting}
+          />
+          {errors.cpf_cnpj && <p className="text-red-500 text-xs mt-1">{errors.cpf_cnpj}</p>}
         </div>
+      </div>
 
-        <div>
-          <Label htmlFor="observacoes" className="text-gray-700 font-medium">Observações</Label>
+      {/* Endereço */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="cep" className="text-right">
+          CEP
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="cep"
+            name="cep"
+            value={selectedCliente?.cep || ''}
+            onChange={handleCepChange}
+            disabled={isSubmitting}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="rua" className="text-right">
+          Rua
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="rua"
+            name="rua"
+            value={selectedCliente?.rua || ''}
+            onChange={handleFieldChange}
+            disabled={isSubmitting}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="numero" className="text-right">
+          Número
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="numero"
+            name="numero"
+            value={selectedCliente?.numero || ''}
+            onChange={handleFieldChange}
+            disabled={isSubmitting}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="bairro" className="text-right">
+          Bairro
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="bairro"
+            name="bairro"
+            value={selectedCliente?.bairro || ''}
+            onChange={handleFieldChange}
+            disabled={isSubmitting}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="cidade" className="text-right">
+          Cidade
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="cidade"
+            name="cidade"
+            value={selectedCliente?.cidade || ''}
+            onChange={handleFieldChange}
+            disabled={isSubmitting}
+          />
+        </div>
+      </div>
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="estado" className="text-right">
+          Estado
+        </Label>
+        <div className="col-span-3">
+          <Input
+            id="estado"
+            name="estado"
+            value={selectedCliente?.estado || ''}
+            onChange={handleFieldChange}
+            disabled={isSubmitting}
+          />
+        </div>
+      </div>
+
+      {/* Observações */}
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor="observacoes" className="text-right">
+          Observações
+        </Label>
+        <div className="col-span-3">
           <Textarea
             id="observacoes"
-            value={formData.observacoes}
-            onChange={(e) => onChange('observacoes', e.target.value)}
-            placeholder="Observações adicionais sobre o cliente"
-            rows={3}
-            className="mt-2 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+            name="observacoes"
+            value={selectedCliente?.observacoes || ''}
+            onChange={handleFieldChange}
+            disabled={isSubmitting}
           />
         </div>
+      </div>
     </div>
   );
 };
