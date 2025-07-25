@@ -10,14 +10,12 @@ import { Cliente } from '@/hooks/clientes/types'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
-// --- Componente ConsultaCep movido para dentro deste arquivo ---
-const ConsultaCepComponent = ({ onAddressFound }: { onAddressFound: (address: any) => void }) => {
+// Componente de busca de CEP (movido para cá para evitar erros de importação)
+const ConsultaCep = ({ onAddressFound }: { onAddressFound: (address: any) => void }) => {
   const [cep, setCep] = useState('')
-
   const handleCepChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setCep(event.target.value)
   }
-
   const handleSearchCep = async () => {
     if (cep.length === 8) {
       try {
@@ -34,23 +32,15 @@ const ConsultaCepComponent = ({ onAddressFound }: { onAddressFound: (address: an
       }
     }
   }
-
   return (
     <div className="flex w-full max-w-sm items-center space-x-2">
-      <Input
-        type="text"
-        placeholder="CEP"
-        value={cep}
-        onChange={handleCepChange}
-        maxLength={8}
-      />
+      <Input type="text" placeholder="CEP" value={cep} onChange={handleCepChange} maxLength={8} />
       <Button type="button" onClick={handleSearchCep}>
         Buscar
       </Button>
     </div>
   )
 }
-// --- Fim do componente ConsultaCep ---
 
 interface ClienteFormProps {
   clienteInicial: Cliente | null
@@ -64,7 +54,7 @@ const ClienteForm = ({ clienteInicial, onSave }: ClienteFormProps) => {
     formState: { errors },
     setValue,
   } = useForm<ClienteFormValidation>({
-    resolver: zodResolver(clienteSchema),
+    resolver: zodResolver(clienteSchema), // Agora vai funcionar
     defaultValues: clienteInicial || {
       nome: '',
       email: '',
@@ -91,13 +81,9 @@ const ClienteForm = ({ clienteInicial, onSave }: ClienteFormProps) => {
   }
 
   return (
-    <form
-      id="cliente-form"
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 py-1"
-    >
+    <form id="cliente-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-1">
       <ClienteFormFields control={control} errors={errors} />
-      <ConsultaCepComponent onAddressFound={handleAddressFound} />
+      <ConsultaCep onAddressFound={handleAddressFound} />
     </form>
   )
 }

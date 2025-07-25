@@ -1,39 +1,18 @@
+import { z } from 'zod'
 
-import type { ClienteFormData } from './types';
+// Exportando 'clienteSchema' para que outros arquivos possam usá-lo
+export const clienteSchema = z.object({
+  nome: z.string().min(1, 'Nome é obrigatório'),
+  email: z.string().email('Email inválido').optional().or(z.literal('')),
+  telefone: z.string().optional(),
+  cpf: z.string().optional(),
+  cep: z.string().optional(),
+  endereco: z.string().optional(),
+  numero: z.string().optional(),
+  bairro: z.string().optional(),
+  cidade: z.string().optional(),
+  estado: z.string().optional(),
+})
 
-export const prepareClientDataForSave = (clientData: ClienteFormData): any => {
-  const dataToSave: any = {
-    nome: clientData.nome,
-    telefone: clientData.telefone || null,
-    tipo_cliente: clientData.tipo_cliente,
-    cpfCnpj: clientData.cpfCnpj || null,
-    status_cliente: clientData.status_cliente,
-    endereco: clientData.endereco || '',
-    cidade: clientData.cidade || '',
-    estado: clientData.estado || '',
-    cep: clientData.cep || '',
-    observacoes: clientData.observacoes || ''
-  };
-
-  // Só incluir email se não estiver vazio - agora o campo permite null no banco
-  if (clientData.email && clientData.email.trim()) {
-    dataToSave.email = clientData.email.trim();
-  }
-
-  return dataToSave;
-};
-
-export const getErrorMessage = (error: any): string => {
-  if (error.message?.includes('clientes_email_key')) {
-    return "Este email já está cadastrado para outro cliente.";
-  } else if (error.message?.includes('clientes_cpfCnpj_key') || error.message?.includes('Já existe um cliente cadastrado com este CPF/CNPJ')) {
-    return "Já existe um cliente cadastrado com este CPF/CNPJ para sua conta.";
-  } else if (error.message?.includes('duplicate key')) {
-    return "Já existe um cliente com essas informações.";
-  } else if (error.message?.includes('not-null constraint')) {
-    return "Todos os campos obrigatórios devem ser preenchidos.";
-  } else if (error.message) {
-    return error.message;
-  }
-  return "Ocorreu um erro inesperado. Tente novamente.";
-};
+// Exportando o 'tipo' para ser usado em outras partes do código
+export type ClienteFormValidation = z.infer<typeof clienteSchema>
