@@ -8,7 +8,7 @@ interface ClienteFormActionsProps {
 
 export const ClienteFormActions: React.FC<ClienteFormActionsProps> = ({ isSubmitting, onCancel }) => {
   return (
-    <div className="flex justify-end space-x-2">
+    <div className="flex justify-end space-x-2 pt-4">
       <Button type="button" variant="outline" onClick={onCancel}>
         Cancelar
       </Button>
