@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
@@ -5,8 +6,54 @@ import {
   ClienteFormValidation,
 } from '@/hooks/clientes/clienteValidation'
 import ClienteFormFields from './clientes/ClienteFormFields'
-import { ConsultaCep } from './correios/ConsultaCep' // Importação correta com chaves { }
 import { Cliente } from '@/hooks/clientes/types'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+
+// --- Componente ConsultaCep movido para dentro deste arquivo ---
+interface ConsultaCepProps {
+  onAddressFound: (address: any) => void
+}
+const ConsultaCep = ({ onAddressFound }: ConsultaCepProps) => {
+  const [cep, setCep] = useState('')
+
+  const handleCepChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setCep(event.target.value)
+  }
+
+  const handleSearchCep = async () => {
+    if (cep.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        const data = await response.json()
+        if (!data.erro) {
+          onAddressFound(data)
+        } else {
+          alert('CEP não encontrado.')
+        }
+      } catch (error) {
+        console.error('Erro ao buscar CEP:', error)
+        alert('Erro ao buscar CEP.')
+      }
+    }
+  }
+
+  return (
+    <div className="flex w-full max-w-sm items-center space-x-2">
+      <Input
+        type="text"
+        placeholder="CEP"
+        value={cep}
+        onChange={handleCepChange}
+        maxLength={8}
+      />
+      <Button type="button" onClick={handleSearchCep}>
+        Buscar
+      </Button>
+    </div>
+  )
+}
+// --- Fim do componente ConsultaCep ---
 
 interface ClienteFormProps {
   clienteInicial: Cliente | null
