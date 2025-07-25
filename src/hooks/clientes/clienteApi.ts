@@ -1,66 +1,51 @@
+import { supabase } from '@/integrations/supabase'
+import { prepareClientDataForSave } from './clienteValidation'
+import { Cliente } from './types'
 
-import { supabase } from '@/integrations/supabase/client';
-import type { Cliente, ClienteFormData } from './types';
-import { prepareClientDataForSave } from './clienteValidation';
+export const fetchClientes = async (searchTerm: string = '') => {
+  let query = supabase.from('clientes').select('*')
 
-export const fetchClientsList = async (userId: string): Promise<Cliente[]> => {
-  const { data, error } = await supabase
-    .from('clientes')
-    .select('*')
-    .eq('user_id', userId)
-    .order('nome', { ascending: true });
-  
-  if (error) throw error;
-  return data || [];
-};
-
-export const createClient = async (clientData: ClienteFormData, userId: string): Promise<void> => {
-  const dataToSave = prepareClientDataForSave(clientData);
-  
-  const { error } = await supabase
-    .from('clientes')
-    .insert({
-      ...dataToSave,
-      user_id: userId
-    });
-  
-  if (error) {
-    console.error('Erro ao inserir cliente:', error);
-    throw error;
+  if (searchTerm) {
+    query = query.or(
+      `nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,cpf.ilike.%${searchTerm}%`,
+    )
   }
-};
 
-export const updateClient = async (clientData: ClienteFormData, clientId: string): Promise<void> => {
-  const dataToSave = prepareClientDataForSave(clientData);
-  
-  const { error } = await supabase
-    .from('clientes')
-    .update({
-      ...dataToSave,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', clientId);
-  
+  const { data, error } = await query.order('id', { ascending: false })
+
   if (error) {
-    console.error('Erro ao atualizar cliente:', error);
-    throw error;
+    console.error('Erro ao buscar clientes:', error)
+    throw error
   }
-};
+  return data
+}
 
-export const toggleClientStatus = async (clientId: string, newStatus: string): Promise<void> => {
-  const { error } = await supabase
-    .from('clientes')
-    .update({ status_cliente: newStatus })
-    .eq('id', clientId);
-  
-  if (error) throw error;
-};
+export const saveCliente = async (cliente: Cliente) => {
+  const preparedCliente = prepareClientDataForSave(cliente)
 
-export const deleteClient = async (clientId: string): Promise<void> => {
-  const { error } = await supabase
-    .from('clientes')
-    .delete()
-    .eq('id', clientId);
-  
-  if (error) throw error;
-};
+  if (cliente.id) {
+    // Atualizar cliente existente
+    const { data, error } = await supabase
+      .from('clientes')
+      .update(preparedCliente)
+      .eq('id', cliente.id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  } else {
+    // Inserir novo cliente
+    const { data, error } = await supabase
+      .from('clientes')
+      .insert(preparedCliente)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  }
+}
+
+export const deleteCliente = async (id: number) => {
+  const { error } = await supabase.from('clientes').delete().eq('id', id)
+  if (error) throw error
+}

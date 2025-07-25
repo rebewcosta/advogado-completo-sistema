@@ -16,3 +16,17 @@ export const clienteSchema = z.object({
 
 // Exportando o 'tipo' para ser usado em outras partes do código
 export type ClienteFormValidation = z.infer<typeof clienteSchema>
+
+/**
+ * Prepara os dados do cliente para salvar no banco de dados.
+ * Converte campos de string vazia ('') para null.
+ */
+export const prepareClientDataForSave = (cliente: Partial<ClienteFormValidation>) => {
+  const preparedData: { [key: string]: any } = { ...cliente }
+  Object.keys(preparedData).forEach(key => {
+    if (preparedData[key] === '') {
+      preparedData[key] = null
+    }
+  })
+  return preparedData
+}

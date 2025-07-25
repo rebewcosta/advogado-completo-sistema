@@ -54,7 +54,7 @@ const ClienteForm = ({ clienteInicial, onSave }: ClienteFormProps) => {
     formState: { errors },
     setValue,
   } = useForm<ClienteFormValidation>({
-    resolver: zodResolver(clienteSchema), // Agora vai funcionar
+    resolver: zodResolver(clienteSchema),
     defaultValues: clienteInicial || {
       nome: '',
       email: '',
