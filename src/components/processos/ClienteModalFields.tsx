@@ -29,8 +29,8 @@ const ClienteModalFields: React.FC<ClienteModalFieldsProps> = ({
   onFieldChange
 }) => {
   return (
-    <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="space-y-4 md:space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div>
             <Label htmlFor="nome" className="text-gray-700 font-medium">Nome *</Label>
             <Input
@@ -38,7 +38,7 @@ const ClienteModalFields: React.FC<ClienteModalFieldsProps> = ({
               value={formData.nome}
               onChange={(e) => onFieldChange('nome', e.target.value)}
               placeholder="Nome completo ou Razão Social"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+              className="mt-1 md:mt-2 h-10 md:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base"
               required
             />
           </div>
@@ -51,12 +51,12 @@ const ClienteModalFields: React.FC<ClienteModalFieldsProps> = ({
               value={formData.email}
               onChange={(e) => onFieldChange('email', e.target.value)}
               placeholder="cliente@exemplo.com"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+              className="mt-1 md:mt-2 h-10 md:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div>
             <Label htmlFor="telefone" className="text-gray-700 font-medium">Telefone</Label>
             <Input
@@ -64,7 +64,7 @@ const ClienteModalFields: React.FC<ClienteModalFieldsProps> = ({
               value={formData.telefone}
               onChange={(e) => onFieldChange('telefone', e.target.value)}
               placeholder="(00) 00000-0000"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+              className="mt-1 md:mt-2 h-10 md:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base"
             />
           </div>
 
@@ -75,16 +75,16 @@ const ClienteModalFields: React.FC<ClienteModalFieldsProps> = ({
               value={formData.cpfCnpj}
               onChange={(e) => onFieldChange('cpfCnpj', e.target.value)}
               placeholder="000.000.000-00"
-              className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg"
+              className="mt-1 md:mt-2 h-10 md:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
           <div>
             <Label htmlFor="tipo_cliente" className="text-gray-700 font-medium">Tipo de Cliente *</Label>
             <Select value={formData.tipo_cliente} onValueChange={(value) => onFieldChange('tipo_cliente', value)}>
-              <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+              <SelectTrigger className="mt-1 md:mt-2 h-10 md:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
@@ -97,7 +97,7 @@ const ClienteModalFields: React.FC<ClienteModalFieldsProps> = ({
           <div>
             <Label htmlFor="status_cliente" className="text-gray-700 font-medium">Status</Label>
             <Select value={formData.status_cliente} onValueChange={(value) => onFieldChange('status_cliente', value)}>
-              <SelectTrigger className="mt-2 h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg">
+              <SelectTrigger className="mt-1 md:mt-2 h-10 md:h-12 border-gray-300 focus:border-blue-500 focus:ring-blue-500 rounded-lg text-base">
                 <SelectValue placeholder="Selecione o status" />
               </SelectTrigger>
               <SelectContent className="bg-white border border-gray-200 shadow-lg rounded-lg">
