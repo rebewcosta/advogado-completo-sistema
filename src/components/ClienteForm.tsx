@@ -5,7 +5,7 @@ import {
   ClienteFormValidation,
 } from '@/hooks/clientes/clienteValidation'
 import ClienteFormFields from './clientes/ClienteFormFields'
-import { ConsultaCep } from './correios/ConsultaCep' // Correção Definitiva: Importação nomeada
+import { ConsultaCep } from './correios/ConsultaCep' // Importação correta com chaves { }
 import { Cliente } from '@/hooks/clientes/types'
 
 interface ClienteFormProps {

@@ -6,7 +6,6 @@ interface ConsultaCepProps {
   onAddressFound: (address: any) => void
 }
 
-// O componente é definido como uma constante
 export const ConsultaCep = ({ onAddressFound }: ConsultaCepProps) => {
   const [cep, setCep] = useState('')
 
