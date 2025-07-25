@@ -11,10 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 
 // --- Componente ConsultaCep movido para dentro deste arquivo ---
-interface ConsultaCepProps {
-  onAddressFound: (address: any) => void
-}
-const ConsultaCep = ({ onAddressFound }: ConsultaCepProps) => {
+const ConsultaCepComponent = ({ onAddressFound }: { onAddressFound: (address: any) => void }) => {
   const [cep, setCep] = useState('')
 
   const handleCepChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -100,7 +97,7 @@ const ClienteForm = ({ clienteInicial, onSave }: ClienteFormProps) => {
       className="space-y-4 py-1"
     >
       <ClienteFormFields control={control} errors={errors} />
-      <ConsultaCep onAddressFound={handleAddressFound} />
+      <ConsultaCepComponent onAddressFound={handleAddressFound} />
     </form>
   )
 }
