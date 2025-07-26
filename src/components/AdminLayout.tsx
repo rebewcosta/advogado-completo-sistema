@@ -11,13 +11,16 @@ type AdminLayoutProps = {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   return (
     <SidebarProvider>
-      {/* A div principal agora não força uma altura fixa, permitindo que o conteúdo interno cresça */}
       <div className="flex w-full bg-gray-50 relative">
         <AppSidebar />
-        {/* O 'main' agora é responsável pelo scroll de seu próprio conteúdo */}
-        <div className="flex-1 overflow-y-auto min-w-0 h-screen">
+        {/*
+          MUDANÇA CRÍTICA:
+          - 'h-screen' foi movido para cá para fazer desta a área de rolagem principal da página.
+          - 'overflow-y-auto' garante que o conteúdo normal da página (como a lista de clientes) possa rolar.
+        */}
+        <main className="flex-1 h-screen overflow-y-auto min-w-0">
           {children}
-        </div>
+        </main>
         <Toaster />
         <ListaAvisos />
       </div>
