@@ -121,7 +121,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
       <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
       
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-100/50">
+          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-100/50" style={{ overscrollBehavior: 'contain' }}>
               <ClienteFormFields formData={formData} onChange={handleFieldChange} />
           </div>
           <div className="flex-shrink-0 border-t border-white/20 px-6 pb-6 pt-4">
