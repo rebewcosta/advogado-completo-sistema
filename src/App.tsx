@@ -39,7 +39,7 @@ function App() {
       <PWAProvider>
         <Router>
           <Routes>
-            {/* Rotas Públicas */}
+            {/* Rotas Públicas: Acessíveis por todos */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro" element={<CadastroPage />} />
@@ -47,13 +47,16 @@ function App() {
             <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
             <Route path="/confirmacao-email" element={<ConfirmacaoEmailPage />} />
             <Route path="/termos-e-privacidade" element={<TermosPrivacidadePage />} />
-            
-            {/* Rotas Protegidas */}
+
+            {/* Rotas Protegidas: Exigem login */}
             <Route element={<ProtectedRoute />}>
+              
+              {/* Rotas que precisam de login, mas não necessariamente de assinatura ativa */}
               <Route path="/pagamento" element={<PagamentoPage />} />
               <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
               <Route path="/conta-cancelada" element={<ContaCanceladaPage />} />
-              
+
+              {/* Rotas que precisam de login E de assinatura ativa */}
               <Route element={<VerificarAssinatura />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/clientes" element={<ClientesPage />} />
@@ -77,7 +80,7 @@ function App() {
               </Route>
             </Route>
             
-            {/* Rota "Não Encontrado" */}
+            {/* Rota para páginas não encontradas */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
