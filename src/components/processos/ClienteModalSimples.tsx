@@ -37,7 +37,10 @@ const ClienteModalSimples: React.FC<ClienteModalSimplesProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl h-[100dvh] sm:h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-none sm:rounded-xl">
+      <DialogContent 
+        className="max-w-2xl h-[100dvh] sm:h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-none sm:rounded-xl"
+        style={{ touchAction: 'pan-y' }}
+      >
         <MobileFormWrapper>
           <MobileFormHeader>
             <ClienteModalHeader onClose={handleClose} />

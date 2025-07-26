@@ -108,6 +108,26 @@
       font-size: inherit !important;
     }
   }
+
+  /* Enable smooth scrolling on mobile */
+  .touch-pan-y {
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Fix mobile scroll issues */
+  @media (max-width: 767px) {
+    body {
+      overflow-x: hidden;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Ensure dialogs can scroll on mobile */
+    [data-radix-portal] {
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
+    }
+  }
   
   /* Tamanhos de fonte */
   .text-small {
