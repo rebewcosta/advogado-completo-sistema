@@ -1,17 +1,16 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
-import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from './hooks/auth/AuthProvider.tsx' // 1. IMPORTAR O AUTHPROVIDER
+
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+import { ThemeProvider } from './contexts/ThemeContext.tsx';
+import { Toaster } from '@/components/ui/toaster';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    {/* 2. ENVOLVER TUDO COM O AUTHPROVIDER */}
-    <AuthProvider> 
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
-        <App />
-      </ThemeProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <App />
+      <Toaster />
+    </ThemeProvider>
   </React.StrictMode>,
-)
+);
