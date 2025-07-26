@@ -33,7 +33,7 @@ const ClienteFormDialog = ({
               ? 'Atualize os dados do cliente.'
               : 'Preencha os dados do novo cliente.'}
           </DialogDescription>
-        </Header>
+        </DialogHeader>
         <div className="flex-grow overflow-y-auto pr-4">
           <ClienteForm clienteInicial={cliente} onSave={onSave} />
         </div>
