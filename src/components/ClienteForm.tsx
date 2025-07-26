@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { clienteSchema, ClienteFormValidation } from '@/hooks/clientes/clienteValidation'
+import { clienteSchema, ClienteFormValidation } from '../hooks/clientes/clienteValidation' // Caminho direto
 import ClienteFormFields from './clientes/ClienteFormFields'
-import { Cliente } from '@/hooks/clientes/types'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
+import { Cliente } from '../hooks/clientes/types' // Caminho direto
+import { Input } from './ui/input' // Caminho direto
+import { Button } from './ui/button' // Caminho direto
 
 const ConsultaCep = ({ onAddressFound }: { onAddressFound: (address: any) => void }) => {
   const [cep, setCep] = useState('')

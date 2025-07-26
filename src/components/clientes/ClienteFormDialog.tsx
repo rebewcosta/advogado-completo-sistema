@@ -1,7 +1,7 @@
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import ClienteForm from '@/components/ClienteForm'
-import { Cliente } from '@/hooks/clientes/types'
-import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog' // Caminho direto
+import ClienteForm from '../ClienteForm' // Caminho direto
+import { Cliente } from '../../hooks/clientes/types' // Caminho direto
+import { Button } from '../ui/button' // Caminho direto
 
 interface ClienteFormDialogProps {
   isOpen: boolean

@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase'
+import { supabase } from '../../integrations/supabase' // CORREÇÃO DEFINITIVA AQUI
 import { prepareClientDataForSave } from './clienteValidation'
 import { Cliente } from './types'
 
