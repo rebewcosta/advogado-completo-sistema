@@ -6,7 +6,7 @@ import LoginPage from "@/pages/LoginPage";
 import CadastroPage from "@/pages/CadastroPage";
 import DashboardPage from "@/pages/DashboardPage";
 import ClientesPage from "@/pages/ClientesPage";
-import ClienteFormPage from "@/pages/ClienteFormPage"; // IMPORTAÇÃO DA NOVA PÁGINA
+import ClienteFormPage from "@/pages/ClienteFormPage";
 import ProcessosPage from "@/pages/MeusProcessosPage";
 import AgendaPage from "@/pages/AgendaPage";
 import FinanceiroPage from "@/pages/FinanceiroPage";
@@ -39,6 +39,7 @@ function App() {
       <PWAProvider>
         <Router>
           <Routes>
+            {/* Rotas Públicas */}
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/cadastro" element={<CadastroPage />} />
@@ -46,17 +47,18 @@ function App() {
             <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
             <Route path="/confirmacao-email" element={<ConfirmacaoEmailPage />} />
             <Route path="/termos-e-privacidade" element={<TermosPrivacidadePage />} />
-            <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
-            <Route path="/conta-cancelada" element={<ContaCanceladaPage />} />
             
+            {/* Rotas Protegidas */}
             <Route element={<ProtectedRoute />}>
+              <Route path="/pagamento" element={<PagamentoPage />} />
+              <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
+              <Route path="/conta-cancelada" element={<ContaCanceladaPage />} />
+              
               <Route element={<VerificarAssinatura />}>
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/clientes" element={<ClientesPage />} />
-                {/* NOVAS ROTAS PARA O FORMULÁRIO */}
                 <Route path="/clientes/novo" element={<ClienteFormPage />} />
                 <Route path="/clientes/editar/:id" element={<ClienteFormPage />} />
-                
                 <Route path="/processos" element={<ProcessosPage />} />
                 <Route path="/agenda" element={<AgendaPage />} />
                 <Route path="/prazos" element={<PrazosPage />} />
@@ -70,11 +72,12 @@ function App() {
                 <Route path="/configuracoes" element={<ConfiguracoesPage />} />
                 <Route path="/suporte" element={<SuportePage />} />
                 <Route path="/perfil" element={<PerfilUsuarioPage />} />
-                <Route path="/pagamento" element={<PagamentoPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="/redefinir-pin" element={<RedefinirPinFinanceiroPage />} />
               </Route>
             </Route>
+            
+            {/* Rota "Não Encontrado" */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Router>
