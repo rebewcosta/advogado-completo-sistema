@@ -1,232 +1,68 @@
-
-import { useEffect, useState, ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { createContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Session, User } from '@supabase/supabase-js';
-import { useToast } from '@/hooks/use-toast';
-import { AuthContext } from './AuthContext';
-import { 
-  handleSignIn, 
-  handleSignUp, 
-  handleSignOut, 
-  handleRefreshSession, 
-  handleCreateSpecialAccount, 
-  handleCheckEmailExists,
-  handleResendConfirmationEmail 
-} from './authUtils';
+import type { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
+import { Spinner } from '@/components/ui/spinner'; // Importar o Spinner
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+// Definindo o tipo para o valor do contexto
+interface AuthContextType {
+  user: User | null;
+  session: Session | null;
+  loading: boolean; // Adicionar estado de loading
+}
+
+// Criando o contexto com um valor inicial que corresponde ao tipo
+export const AuthContext = createContext<AuthContextType>({
+  user: null,
+  session: null,
+  loading: true, // Inicia como true
+});
+
+// Componente Provedor
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
 
   useEffect(() => {
-    setLoading(true);
-
-    const setAuthState = (newSession: Session | null) => {
-      setSession(newSession);
-      setUser(newSession?.user ?? null);
-      setLoading(false);
+    const getSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setSession(session);
+      setUser(session?.user ?? null);
+      setLoading(false); // Finaliza o loading após verificar a sessão
     };
 
-    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
-      setAuthState(initialSession);
-    }).catch(error => {
-      console.error("Auth: Error getting initial session");
-      setAuthState(null);
-    });
+    getSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
-        setAuthState(currentSession);
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event: AuthChangeEvent, session: Session | null) => {
+        setSession(session);
+        setUser(session?.user ?? null);
       }
     );
 
-    // Listener para detectar quando o usuário sai da página
-    const handleBeforeUnload = () => {
-      // Simplificado - apenas marcar como offline
-      if (user) {
-        supabase
-          .from('user_profiles')
-          .update({
-            is_online: false,
-            last_seen: new Date().toISOString()
-          })
-          .eq('id', user.id);
-      }
-    };
-
-    const handleVisibilityChange = () => {
-      // Remover para evitar loops - a presença já é gerenciada pelo useRealtimePresence
-    };
-
-    // Adicionar listeners
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
     return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      subscription.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
-  }, []); // Dependência vazia para evitar loops
+  }, []);
 
-  // Função para atualizar presença do usuário
-  const updateUserPresence = async (user: User, isOnline: boolean) => {
-    try {
-      await supabase
-        .from('user_profiles')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          nome_completo: user.user_metadata?.nome_completo || null,
-          telefone: user.user_metadata?.telefone || null,
-          oab: user.user_metadata?.oab || null,
-          last_seen: new Date().toISOString(),
-          is_online: isOnline,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'id' });
-        
-      console.log(`Presença atualizada para ${user.email}: ${isOnline ? 'online' : 'offline'}`);
-    } catch (error) {
-      console.error('Erro ao atualizar presença:', error);
-    }
-  };
+  // Se estiver carregando, mostra uma tela de loading em vez de renderizar o app
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen w-full bg-background">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
-  const signIn = async (email: string, password: string) => {
-    try {
-      const { data } = await handleSignIn(email, password);
-
-      if (data.user && data.session) {
-        const from = (location.state as any)?.from?.pathname || "/dashboard";
-        navigate(from, { replace: true });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Erro de autenticação",
-        description: error.message,
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const signUp = async (email: string, password: string, metadata?: object): Promise<void> => {
-    try {
-      const { data } = await handleSignUp(email, password, metadata);
-
-      if (data.user && data.session) {
-        // Login automático (quando email confirmation está desabilitado)
-        toast({
-          title: "Cadastro realizado com sucesso!",
-          description: "Você será redirecionado para o painel."
-        });
-        navigate('/dashboard');
-      } else if (data.user && !data.session) {
-        // Email confirmation necessária - não mostrar toast aqui pois será feito no RegisterForm
-        // O RegisterForm já vai redirecionar para /confirmacao-email
-        return;
-      } else {
-        toast({
-          title: "Resposta inesperada do cadastro",
-          description: "Por favor, tente novamente ou contate o suporte.",
-          variant: "destructive"
-        });
-      }
-    } catch (error: any) {
-      // Não mostrar toast aqui pois será feito no RegisterForm
-      throw error;
-    }
-  };
-
-  const signOut = async () => {
-    try {
-      // Primeiro, marcar o usuário como offline
-      if (user) {
-        await updateUserPresence(user, false);
-      }
-      
-      await handleSignOut();
-      setUser(null);
-      setSession(null);
-      navigate('/', { replace: true });
-    } catch (error: any) {
-      toast({
-        title: "Erro ao desconectar",
-        description: error.message || "Ocorreu um erro no servidor ao tentar sair.",
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const refreshSession = async () => {
-    try {
-      await handleRefreshSession();
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const createSpecialAccount = async (email: string, password: string, metadata: object): Promise<void> => {
-    try {
-      const functionResponse = await handleCreateSpecialAccount(email, password, metadata);
-      toast({ 
-        title: "Conta Especial Criada", 
-        description: functionResponse?.message || `Conta para ${email} criada.`
-      });
-    } catch (error: any) {
-      toast({ 
-        title: "Erro ao Criar Conta Especial", 
-        description: error.message, 
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const checkEmailExists = async (email: string): Promise<boolean> => {
-    try {
-      return await handleCheckEmailExists(email);
-    } catch (error: any) {
-      toast({ 
-        title: "Erro ao verificar email", 
-        description: error.message, 
-        variant: "destructive"
-      });
-      throw error;
-    }
-  };
-
-  const resendConfirmationEmail = async (email: string): Promise<void> => {
-    try {
-      await handleResendConfirmationEmail(email);
-    } catch (error: any) {
-      toast({ 
-        title: "Erro ao reenviar email", 
-        description: error.message, 
-        variant: "destructive"
-      });
-      throw error;
-    }
+  // O valor fornecido agora inclui o loading
+  const value = {
+    user,
+    session,
+    loading,
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      session,
-      signIn,
-      signUp,
-      signOut,
-      loading,
-      refreshSession,
-      createSpecialAccount,
-      checkEmailExists,
-      resendConfirmationEmail
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
