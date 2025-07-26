@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
@@ -5,18 +6,24 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+<<<<<<< HEAD
 import {
   Drawer,
   DrawerContent,
   DrawerTitle,
   DrawerDescription,
 } from "@/components/ui/drawer";
+=======
+>>>>>>> 6a375dbde2e89861b62c48a1f0418baf946d5558
 import ClienteFormHeader from './ClienteFormHeader';
 import ClienteFormFields from './ClienteFormFields';
 import ClienteFormActions from './ClienteFormActions';
 import type { Database } from '@/integrations/supabase/types';
+<<<<<<< HEAD
 import { useIsMobile } from '@/hooks/use-mobile';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'; // Importa o componente para esconder visualmente
+=======
+>>>>>>> 6a375dbde2e89861b62c48a1f0418baf946d5558
 
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 
@@ -47,7 +54,6 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
     observacoes: ''
   });
   const [isLoading, setIsLoading] = useState(false);
-  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (cliente) {
@@ -102,6 +108,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
     }
   };
 
+<<<<<<< HEAD
   const FormContent = ({ isMobile = false }) => (
     <div className="flex h-full flex-col rounded-t-lg bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
       {/* Título e Descrição para Acessibilidade */}
@@ -146,6 +153,19 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-transparent border-0 rounded-xl overflow-hidden">
         <FormContent isMobile={false}/>
+=======
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+        <div className="h-full flex flex-col rounded-xl overflow-hidden">
+          <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
+          
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
+            <ClienteFormFields formData={formData} onChange={handleFieldChange} />
+            <ClienteFormActions isEdit={!!cliente} onCancel={onClose} isLoading={isLoading} />
+          </form>
+        </div>
+>>>>>>> 6a375dbde2e89861b62c48a1f0418baf946d5558
       </DialogContent>
     </Dialog>
   );
