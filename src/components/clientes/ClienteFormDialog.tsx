@@ -12,6 +12,7 @@ import ClienteFormFields from './ClienteFormFields';
 import ClienteFormActions from './ClienteFormActions';
 import type { Database } from '@/integrations/supabase/types';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils'; // Importe a função 'cn'
 
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 
@@ -98,23 +99,25 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
   };
 
   const FormContent = (
-    // Contêiner principal que define o layout de coluna e a altura total
     <div className="flex h-full flex-col rounded-t-lg bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
-        <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
-        
-        {/* O formulário ocupa o espaço restante e gerencia o overflow */}
-        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
-            
-            {/* Esta div interna é a única área que pode rolar */}
-            <div className="flex-1 overflow-y-auto p-6">
-                <ClienteFormFields formData={formData} onChange={handleFieldChange} />
-            </div>
+      <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
+      
+      {/* O formulário agora ocupa o espaço restante sem esconder o overflow */}
+      <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
+          
+          {/* ESTA É A MUDANÇA PRINCIPAL:
+            - `overflow-y-auto` garante que a rolagem só apareça quando necessário.
+            - `scrollbar-thin` e as outras classes `scrollbar-*` estilizam a barra de rolagem (opcional, mas melhora a aparência).
+          */}
+          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-100/50">
+              <ClienteFormFields formData={formData} onChange={handleFieldChange} />
+          </div>
 
-            {/* A área de ações fica fixa na parte inferior, não rola */}
-            <div className="flex-shrink-0 px-6 pb-6 pt-4">
-                <ClienteFormActions isEdit={!!cliente} onCancel={onClose} isLoading={isLoading} />
-            </div>
-        </form>
+          {/* A área de ações fica fixa na parte inferior */}
+          <div className="flex-shrink-0 border-t border-white/20 px-6 pb-6 pt-4">
+              <ClienteFormActions isEdit={!!cliente} onCancel={onClose} isLoading={isLoading} />
+          </div>
+      </form>
     </div>
   );
 
