@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import { AuthProvider } from "@/hooks/auth/AuthProvider";
+// O AuthProvider NÃO É MAIS IMPORTADO AQUI
 import { PWAProvider } from "@/contexts/PWAContext";
 import Index from "@/pages/Index";
 import LoginPage from "@/pages/LoginPage";
@@ -35,57 +35,53 @@ import PrazosPage from "@/pages/PrazosPage";
 
 function App() {
   return (
-    <AuthProvider>
-      <PWAProvider>
-        <Router>
-          <Routes>
-            {/* Rotas Públicas: Acessíveis por todos */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/cadastro" element={<CadastroPage />} />
-            <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
-            <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
-            <Route path="/confirmacao-email" element={<ConfirmacaoEmailPage />} />
-            <Route path="/termos-e-privacidade" element={<TermosPrivacidadePage />} />
+    // O AuthProvider NÃO É MAIS USADO AQUI
+    <PWAProvider>
+      <Router>
+        <Routes>
+          {/* Rotas Públicas */}
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/cadastro" element={<CadastroPage />} />
+          <Route path="/recuperar-senha" element={<RecuperarSenhaPage />} />
+          <Route path="/atualizar-senha" element={<AtualizarSenhaPage />} />
+          <Route path="/confirmacao-email" element={<ConfirmacaoEmailPage />} />
+          <Route path="/termos-e-privacidade" element={<TermosPrivacidadePage />} />
 
-            {/* Rotas Protegidas: Exigem login */}
-            <Route element={<ProtectedRoute />}>
-              
-              {/* Rotas que precisam de login, mas não necessariamente de assinatura ativa */}
-              <Route path="/pagamento" element={<PagamentoPage />} />
-              <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
-              <Route path="/conta-cancelada" element={<ContaCanceladaPage />} />
-
-              {/* Rotas que precisam de login E de assinatura ativa */}
-              <Route element={<VerificarAssinatura />}>
-                <Route path="/dashboard" element={<DashboardPage />} />
-                <Route path="/clientes" element={<ClientesPage />} />
-                <Route path="/clientes/novo" element={<ClienteFormPage />} />
-                <Route path="/clientes/editar/:id" element={<ClienteFormPage />} />
-                <Route path="/processos" element={<ProcessosPage />} />
-                <Route path="/agenda" element={<AgendaPage />} />
-                <Route path="/prazos" element={<PrazosPage />} />
-                <Route path="/financeiro" element={<FinanceiroPage />} />
-                <Route path="/documentos" element={<DocumentosPage />} />
-                <Route path="/publicacoes" element={<PublicacoesPage />} />
-                <Route path="/datajud" element={<DataJudPage />} />
-                <Route path="/equipe" element={<EquipePage />} />
-                <Route path="/relatorios" element={<RelatoriosPage />} />
-                <Route path="/ferramentas" element={<FerramentasPage />} />
-                <Route path="/configuracoes" element={<ConfiguracoesPage />} />
-                <Route path="/suporte" element={<SuportePage />} />
-                <Route path="/perfil" element={<PerfilUsuarioPage />} />
-                <Route path="/admin" element={<AdminPage />} />
-                <Route path="/redefinir-pin" element={<RedefinirPinFinanceiroPage />} />
-              </Route>
-            </Route>
+          {/* Rotas Protegidas */}
+          <Route element={<ProtectedRoute />}>
             
-            {/* Rota para páginas não encontradas */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Router>
-      </PWAProvider>
-    </AuthProvider>
+            <Route path="/pagamento" element={<PagamentoPage />} />
+            <Route path="/pagamento-sucesso" element={<PaymentSuccessPage />} />
+            <Route path="/conta-cancelada" element={<ContaCanceladaPage />} />
+
+            <Route element={<VerificarAssinatura />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/clientes" element={<ClientesPage />} />
+              <Route path="/clientes/novo" element={<ClienteFormPage />} />
+              <Route path="/clientes/editar/:id" element={<ClienteFormPage />} />
+              <Route path="/processos" element={<ProcessosPage />} />
+              <Route path="/agenda" element={<AgendaPage />} />
+              <Route path="/prazos" element={<PrazosPage />} />
+              <Route path="/financeiro" element={<FinanceiroPage />} />
+              <Route path="/documentos" element={<DocumentosPage />} />
+              <Route path="/publicacoes" element={<PublicacoesPage />} />
+              <Route path="/datajud" element={<DataJudPage />} />
+              <Route path="/equipe" element={<EquipePage />} />
+              <Route path="/relatorios" element={<RelatoriosPage />} />
+              <Route path="/ferramentas" element={<FerramentasPage />} />
+              <Route path="/configuracoes" element={<ConfiguracoesPage />} />
+              <Route path="/suporte" element={<SuportePage />} />
+              <Route path="/perfil" element={<PerfilUsuarioPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/redefinir-pin" element={<RedefinirPinFinanceiroPage />} />
+            </Route>
+          </Route>
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Router>
+    </PWAProvider>
   );
 }
 
