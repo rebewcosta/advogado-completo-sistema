@@ -1,10 +1,8 @@
-
 import React from 'react';
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from './AppSidebar';
 import { Toaster } from "@/components/ui/toaster";
 import ListaAvisos from './avisos/ListaAvisos';
-
 
 type AdminLayoutProps = {
   children: React.ReactNode;
@@ -13,14 +11,14 @@ type AdminLayoutProps = {
 const AdminLayout = ({ children }: AdminLayoutProps) => {
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-gray-50 relative">
+      {/* A div principal agora não força uma altura fixa, permitindo que o conteúdo interno cresça */}
+      <div className="flex w-full bg-gray-50 relative">
         <AppSidebar />
-        <div className="flex-1 overflow-auto min-w-0">
+        {/* O 'main' agora é responsável pelo scroll de seu próprio conteúdo */}
+        <div className="flex-1 overflow-y-auto min-w-0 h-screen">
           {children}
         </div>
         <Toaster />
-        
-        {/* Lista de avisos - aparece sempre no canto superior direito */}
         <ListaAvisos />
       </div>
     </SidebarProvider>
