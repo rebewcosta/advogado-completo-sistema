@@ -98,13 +98,20 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
   };
 
   const FormContent = (
-    <div className="flex flex-col h-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-t-lg">
+    // Contêiner principal que define o layout de coluna e a altura total
+    <div className="flex h-full flex-col rounded-t-lg bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
         <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
-        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+        
+        {/* O formulário ocupa o espaço restante e gerencia o overflow */}
+        <form onSubmit={handleSubmit} className="flex flex-1 flex-col overflow-hidden">
+            
+            {/* Esta div interna é a única área que pode rolar */}
             <div className="flex-1 overflow-y-auto p-6">
                 <ClienteFormFields formData={formData} onChange={handleFieldChange} />
             </div>
-            <div className="px-6 pb-6">
+
+            {/* A área de ações fica fixa na parte inferior, não rola */}
+            <div className="flex-shrink-0 px-6 pb-6 pt-4">
                 <ClienteFormActions isEdit={!!cliente} onCancel={onClose} isLoading={isLoading} />
             </div>
         </form>
@@ -114,7 +121,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
   if (isMobile) {
       return (
           <Drawer open={isOpen} onOpenChange={onClose}>
-              <DrawerContent className="p-0 bg-transparent border-0 max-h-[95vh]">
+              <DrawerContent className="max-h-[90vh] border-0 bg-transparent p-0">
                   {FormContent}
               </DrawerContent>
           </Drawer>
