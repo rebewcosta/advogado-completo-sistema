@@ -1,6 +1,5 @@
 import { z } from 'zod'
 
-// Exportando 'clienteSchema' para que outros arquivos possam usá-lo
 export const clienteSchema = z.object({
   nome: z.string().min(1, 'Nome é obrigatório'),
   email: z.string().email('Email inválido').optional().or(z.literal('')),
@@ -14,13 +13,8 @@ export const clienteSchema = z.object({
   estado: z.string().optional(),
 })
 
-// Exportando o 'tipo' para ser usado em outras partes do código
 export type ClienteFormValidation = z.infer<typeof clienteSchema>
 
-/**
- * Prepara os dados do cliente para salvar no banco de dados.
- * Converte campos de string vazia ('') para null.
- */
 export const prepareClientDataForSave = (cliente: Partial<ClienteFormValidation>) => {
   const preparedData: { [key: string]: any } = { ...cliente }
   Object.keys(preparedData).forEach(key => {
