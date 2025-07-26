@@ -1,13 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
 } from "@/components/ui/dialog";
+import {
+  Drawer,
+  DrawerContent,
+} from "@/components/ui/drawer";
 import ClienteFormHeader from './ClienteFormHeader';
 import ClienteFormFields from './ClienteFormFields';
 import ClienteFormActions from './ClienteFormActions';
 import type { Database } from '@/integrations/supabase/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 
@@ -38,6 +42,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
     observacoes: ''
   });
   const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (cliente) {
@@ -92,17 +97,34 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
     }
   };
 
+  const FormContent = (
+    <div className="flex flex-col h-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 rounded-t-lg">
+        <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
+        <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto p-6">
+                <ClienteFormFields formData={formData} onChange={handleFieldChange} />
+            </div>
+            <div className="px-6 pb-6">
+                <ClienteFormActions isEdit={!!cliente} onCancel={onClose} isLoading={isLoading} />
+            </div>
+        </form>
+    </div>
+  );
+
+  if (isMobile) {
+      return (
+          <Drawer open={isOpen} onOpenChange={onClose}>
+              <DrawerContent className="p-0 bg-transparent border-0 max-h-[95vh]">
+                  {FormContent}
+              </DrawerContent>
+          </Drawer>
+      );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
-        <div className="h-full flex flex-col rounded-xl overflow-hidden">
-          <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
-          
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            <ClienteFormFields formData={formData} onChange={handleFieldChange} />
-            <ClienteFormActions isEdit={!!cliente} onCancel={onClose} isLoading={isLoading} />
-          </form>
-        </div>
+      <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-transparent border-0 rounded-xl overflow-hidden">
+        {FormContent}
       </DialogContent>
     </Dialog>
   );
