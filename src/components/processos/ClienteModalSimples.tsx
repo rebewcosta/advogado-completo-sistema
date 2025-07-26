@@ -5,6 +5,7 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { useClienteModalSimples } from '@/hooks/useClienteModalSimples';
+import { MobileFormWrapper, MobileFormHeader, MobileFormContent, MobileFormFooter } from '@/components/ui/mobile-form-wrapper';
 import ClienteModalHeader from './ClienteModalHeader';
 import ClienteModalFields from './ClienteModalFields';
 import ClienteModalActions from './ClienteModalActions';
@@ -36,22 +37,28 @@ const ClienteModalSimples: React.FC<ClienteModalSimplesProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
-        <div className="h-full flex flex-col rounded-xl overflow-hidden">
-          <ClienteModalHeader onClose={handleClose} />
+      <DialogContent className="max-w-2xl h-[100dvh] sm:h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-none sm:rounded-xl">
+        <MobileFormWrapper>
+          <MobileFormHeader>
+            <ClienteModalHeader onClose={handleClose} />
+          </MobileFormHeader>
 
-          <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-            <ClienteModalFields
-              formData={formData}
-              onFieldChange={handleFieldChange}
-            />
+          <form onSubmit={handleSubmit} className="flex-1 flex flex-col min-h-0">
+            <MobileFormContent>
+              <ClienteModalFields
+                formData={formData}
+                onFieldChange={handleFieldChange}
+              />
+            </MobileFormContent>
 
-            <ClienteModalActions
-              onCancel={handleClose}
-              isSaving={isSaving}
-            />
+            <MobileFormFooter>
+              <ClienteModalActions
+                onCancel={handleClose}
+                isSaving={isSaving}
+              />
+            </MobileFormFooter>
           </form>
-        </div>
+        </MobileFormWrapper>
       </DialogContent>
     </Dialog>
   );

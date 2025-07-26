@@ -8,6 +8,11 @@ interface ClienteFormData {
   tipo_cliente: string;
   cpfCnpj: string;
   status_cliente: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  observacoes: string;
 }
 
 export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void) => {
@@ -17,7 +22,12 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
     telefone: '',
     tipo_cliente: 'Pessoa Física',
     cpfCnpj: '',
-    status_cliente: 'Ativo'
+    status_cliente: 'Ativo',
+    endereco: '',
+    cidade: '',
+    estado: '',
+    cep: '',
+    observacoes: ''
   });
 
   const handleFieldChange = (field: keyof ClienteFormData, value: string) => {
@@ -38,12 +48,11 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
       tipo_cliente: formData.tipo_cliente,
       cpfCnpj: formData.cpfCnpj.trim() || null,
       status_cliente: formData.status_cliente,
-      // Campos opcionais 
-      endereco: '',
-      cidade: '',
-      estado: '',
-      cep: '',
-      observacoes: ''
+      endereco: formData.endereco.trim() || null,
+      cidade: formData.cidade.trim() || null,
+      estado: formData.estado.trim() || null,
+      cep: formData.cep.trim() || null,
+      observacoes: formData.observacoes.trim() || null
     };
     
     // Só incluir email se não estiver vazio - agora funciona com campo nullable
@@ -62,7 +71,12 @@ export const useClienteModalSimples = (onSaveCliente: (clienteData: any) => void
       telefone: '',
       tipo_cliente: 'Pessoa Física',
       cpfCnpj: '',
-      status_cliente: 'Ativo'
+      status_cliente: 'Ativo',
+      endereco: '',
+      cidade: '',
+      estado: '',
+      cep: '',
+      observacoes: ''
     });
   };
 

@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from "@/components/ui/button";
+import { DialogTitle } from "@/components/ui/dialog";
 import { X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -10,7 +11,8 @@ interface ClienteModalHeaderProps {
 
 const ClienteModalHeader: React.FC<ClienteModalHeaderProps> = ({ onClose }) => {
   return (
-    <div className="p-6">
+    <>
+      <DialogTitle className="sr-only">Novo Cliente</DialogTitle>
       <TooltipProvider>
         <div className="flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
@@ -28,13 +30,13 @@ const ClienteModalHeader: React.FC<ClienteModalHeaderProps> = ({ onClose }) => {
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="text-white hover:bg-white/20 -mr-2 -mt-2"
+            className="text-white hover:bg-white/20 -mr-2 -mt-2 min-h-[48px] min-w-[48px]"
           >
             <X className="h-5 w-5" />
           </Button>
         </div>
       </TooltipProvider>
-    </div>
+    </>
   );
 };
 

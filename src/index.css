@@ -79,6 +79,35 @@
   html {
     scroll-behavior: smooth;
   }
+
+  /* Mobile optimizations */
+  @supports (height: 100dvh) {
+    .mobile-vh {
+      height: 100dvh;
+    }
+  }
+
+  @supports not (height: 100dvh) {
+    .mobile-vh {
+      height: 100vh;
+    }
+  }
+
+  /* Safe area insets for iOS */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Touch optimizations */
+  input, select, textarea {
+    font-size: 16px !important; /* Prevent iOS zoom */
+  }
+
+  @media (min-width: 768px) {
+    input, select, textarea {
+      font-size: inherit !important;
+    }
+  }
   
   /* Tamanhos de fonte */
   .text-small {
