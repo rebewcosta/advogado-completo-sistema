@@ -55,19 +55,23 @@ export const MobileFormContent: React.FC<MobileFormContentProps> = ({
   className 
 }) => {
   return (
-    <div className={cn(
-      "flex-1 overflow-y-auto overflow-x-hidden bg-white mx-4 sm:mx-6 rounded-xl",
-      "min-h-0", // Important for flex child to allow scrolling
-      "touch-pan-y", // Enable vertical touch scrolling
-      "-webkit-overflow-scrolling: touch", // iOS smooth scrolling
-      className
-    )}
-    style={{
-      WebkitOverflowScrolling: 'touch', // iOS smooth scrolling
-      touchAction: 'pan-y' // Enable only vertical touch panning
-    }}
+    <div 
+      className={cn(
+        "flex-1 bg-white mx-4 sm:mx-6 rounded-xl",
+        "min-h-0", // Important for flex child to allow scrolling
+        "overflow-y-scroll overflow-x-hidden", // Use scroll instead of auto
+        "[&::-webkit-scrollbar]:hidden", // Hide scrollbar
+        className
+      )}
+      style={{
+        WebkitOverflowScrolling: 'touch', // iOS smooth scrolling
+        touchAction: 'pan-y', // Enable only vertical touch panning
+        overscrollBehavior: 'contain', // Prevent scroll chaining
+        scrollbarWidth: 'none', // Hide scrollbar on Firefox
+        msOverflowStyle: 'none' // Hide scrollbar on IE/Edge
+      }}
     >
-      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+      <div className="p-4 sm:p-6 space-y-4 sm:space-y-6 pb-8">
         {children}
       </div>
     </div>
