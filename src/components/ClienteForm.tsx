@@ -1,49 +1,107 @@
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { clienteSchema, ClienteFormValidation } from '../hooks/clientes/clienteValidation' // Caminho direto
-import ClienteFormFields from './clientes/ClienteFormFields'
-import { Cliente } from '../hooks/clientes/types' // Caminho direto
-import { Input } from './ui/input' // Caminho direto
-import { Button } from './ui/button' // Caminho direto
 
-const ConsultaCep = ({ onAddressFound }: { onAddressFound: (address: any) => void }) => {
-  const [cep, setCep] = useState('')
-  const handleCepChange = (event: React.ChangeEvent<HTMLInputElement>) => { setCep(event.target.value) }
-  const handleSearchCep = async () => {
-    if (cep.length === 8) {
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
-        const data = await response.json()
-        if (!data.erro) { onAddressFound(data) } else { alert('CEP não encontrado.') }
-      } catch (error) { console.error('Erro ao buscar CEP:', error); alert('Erro ao buscar CEP.') }
+import React, { useState, useEffect } from 'react';
+import ClienteFormHeader from '@/components/clientes/ClienteFormHeader';
+import ClienteFormFields from '@/components/clientes/ClienteFormFields';
+import ClienteFormActions from '@/components/clientes/ClienteFormActions';
+import { useClienteValidation } from '@/components/clientes/ClienteFormValidation';
+
+interface ClienteFormProps {
+  onSave: (cliente: any) => void;
+  onCancel: () => void;
+  cliente?: any; 
+  isEdit?: boolean;
+}
+
+const ClienteForm = ({ onSave, onCancel, cliente, isEdit = false }: ClienteFormProps) => {
+  const { validateCliente } = useClienteValidation();
+  const [formData, setFormData] = useState({
+    nome: '',
+    email: '',
+    telefone: '',
+    tipo: 'Pessoa Física',
+    tipo_cliente: 'Pessoa Física', 
+    cpfCnpj: '',
+    endereco: '',
+    cidade: '',
+    estado: '',
+    cep: '',
+    observacoes: '',
+    status_cliente: 'Ativo' 
+  });
+
+  useEffect(() => {
+    if (isEdit && cliente) {
+      setFormData({
+        nome: cliente.nome || '',
+        email: cliente.email || '',
+        telefone: cliente.telefone || '',
+        tipo: cliente.tipo_cliente || 'Pessoa Física',
+        tipo_cliente: cliente.tipo_cliente || 'Pessoa Física',
+        cpfCnpj: cliente.cpfCnpj || '', 
+        endereco: cliente.endereco || '',
+        cidade: cliente.cidade || '',
+        estado: cliente.estado || '',
+        cep: cliente.cep || '',
+        observacoes: cliente.observacoes || '',
+        status_cliente: cliente.status_cliente || 'Ativo'
+      });
+    } else {
+      setFormData({
+        nome: '',
+        email: '',
+        telefone: '',
+        tipo: 'Pessoa Física',
+        tipo_cliente: 'Pessoa Física',
+        cpfCnpj: '',
+        endereco: '',
+        cidade: '',
+        estado: '',
+        cep: '',
+        observacoes: '',
+        status_cliente: 'Ativo'
+      });
     }
-  }
-  return (
-    <div className="flex w-full max-w-sm items-center space-x-2">
-      <Input type="text" placeholder="CEP" value={cep} onChange={handleCepChange} maxLength={8} />
-      <Button type="button" onClick={handleSearchCep}>Buscar</Button>
-    </div>
-  )
-}
+  }, [cliente, isEdit]);
 
-const ClienteForm = ({ clienteInicial, onSave }: { clienteInicial: Cliente | null, onSave: (data: Cliente) => void }) => {
-  const { control, handleSubmit, formState: { errors }, setValue } = useForm<ClienteFormValidation>({
-    resolver: zodResolver(clienteSchema),
-    defaultValues: clienteInicial || { nome: '', email: '', telefone: '', cpf: '', cep: '', endereco: '', numero: '', bairro: '', cidade: '', estado: '' },
-  })
-  const onSubmit = (data: ClienteFormValidation) => { onSave({ ...(clienteInicial || {}), ...data }) }
-  const handleAddressFound = (address: any) => {
-    setValue('endereco', address.logradouro)
-    setValue('bairro', address.bairro)
-    setValue('cidade', address.localidade)
-    setValue('estado', address.uf)
-  }
+  const handleFieldChange = (field: string, value: string) => {
+    if (field === 'tipo_cliente') {
+      setFormData(prev => ({ ...prev, [field]: value, tipo: value }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const validation = await validateCliente(formData);
+    if (!validation.valid) return;
+
+    onSave(validation.data);
+  };
+
   return (
-    <form id="cliente-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-1">
-      <ClienteFormFields control={control} errors={errors} />
-      <ConsultaCep onAddressFound={handleAddressFound} />
-    </form>
-  )
-}
-export default ClienteForm
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 min-h-screen">
+      <div className="p-6">
+        <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl mb-6">
+          <ClienteFormHeader isEdit={isEdit} onClose={onCancel} />
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-6">
+            <ClienteFormFields
+              formData={formData}
+              onChange={handleFieldChange}
+            />
+          </div>
+
+          <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 rounded-xl shadow-xl">
+            <ClienteFormActions isEdit={isEdit} onCancel={onCancel} />
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default ClienteForm;
