@@ -2,17 +2,21 @@ import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Drawer,
   DrawerContent,
+  DrawerTitle,
+  DrawerDescription,
 } from "@/components/ui/drawer";
 import ClienteFormHeader from './ClienteFormHeader';
 import ClienteFormFields from './ClienteFormFields';
 import ClienteFormActions from './ClienteFormActions';
 import type { Database } from '@/integrations/supabase/types';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { cn } from '@/lib/utils'; // Importe a função 'cn'
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden'; // Importa o componente para esconder visualmente
 
 type Cliente = Database['public']['Tables']['clientes']['Row'];
 
@@ -98,22 +102,29 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
     }
   };
 
-  const FormContent = (
+  const FormContent = ({ isMobile = false }) => (
     <div className="flex h-full flex-col rounded-t-lg bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600">
+      {/* Título e Descrição para Acessibilidade */}
+      <VisuallyHidden>
+        {isMobile ? (
+          <>
+            <DrawerTitle>{cliente ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}</DrawerTitle>
+            <DrawerDescription>Preencha ou modifique os dados do cliente e clique em salvar.</DrawerDescription>
+          </>
+        ) : (
+          <>
+            <DialogTitle>{cliente ? 'Editar Cliente' : 'Cadastrar Novo Cliente'}</DialogTitle>
+            <DialogDescription>Preencha ou modifique os dados do cliente e clique em salvar.</DialogDescription>
+          </>
+        )}
+      </VisuallyHidden>
+
       <ClienteFormHeader isEdit={!!cliente} onClose={onClose} />
       
-      {/* O formulário agora ocupa o espaço restante sem esconder o overflow */}
       <form onSubmit={handleSubmit} className="flex flex-1 flex-col">
-          
-          {/* ESTA É A MUDANÇA PRINCIPAL:
-            - `overflow-y-auto` garante que a rolagem só apareça quando necessário.
-            - `scrollbar-thin` e as outras classes `scrollbar-*` estilizam a barra de rolagem (opcional, mas melhora a aparência).
-          */}
           <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-blue-100/50">
               <ClienteFormFields formData={formData} onChange={handleFieldChange} />
           </div>
-
-          {/* A área de ações fica fixa na parte inferior */}
           <div className="flex-shrink-0 border-t border-white/20 px-6 pb-6 pt-4">
               <ClienteFormActions isEdit={!!cliente} onCancel={onClose} isLoading={isLoading} />
           </div>
@@ -125,7 +136,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
       return (
           <Drawer open={isOpen} onOpenChange={onClose}>
               <DrawerContent className="max-h-[90vh] border-0 bg-transparent p-0">
-                  {FormContent}
+                  <FormContent isMobile={true} />
               </DrawerContent>
           </Drawer>
       );
@@ -134,7 +145,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[95vh] p-0 bg-transparent border-0 rounded-xl overflow-hidden">
-        {FormContent}
+        <FormContent isMobile={false}/>
       </DialogContent>
     </Dialog>
   );
