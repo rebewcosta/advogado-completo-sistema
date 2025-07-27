@@ -23,7 +23,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Plus, X, Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from "@/lib/utils";
-import ClienteModalSimples from '@/components/processos/ClienteModalSimples';
+// Removida a importação que causava o erro
+// import ClienteModalSimples from '@/components/processos/ClienteModalSimples';
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -45,6 +46,7 @@ interface ProcessFormProps {
   clientesDoUsuario: ClienteParaSelect[] | undefined;
   isLoadingClientes?: boolean;
   onClienteAdded?: () => void;
+  onAddNewCliente: () => void; // Adicionando uma prop para abrir o modal de cliente
 }
 
 const ProcessForm: React.FC<ProcessFormProps> = ({
@@ -54,7 +56,8 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   isEdit,
   clientesDoUsuario = [],
   isLoadingClientes = false,
-  onClienteAdded
+  onClienteAdded,
+  onAddNewCliente // Recebendo a função para abrir o modal
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -64,8 +67,10 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   const [vara, setVara] = useState("");
   const [status, setStatus] = useState<'Em andamento' | 'Concluído' | 'Suspenso'>("Em andamento");
   const [prazoDate, setPrazoDate] = useState<Date | undefined>(undefined);
-  const [showClienteModal, setShowClienteModal] = useState(false);
-  const [isSavingCliente, setIsSavingCliente] = useState(false);
+  
+  // O estado para o modal de cliente será gerenciado no componente pai (ProcessosPage.tsx)
+  // const [showClienteModal, setShowClienteModal] = useState(false);
+  // const [isSavingCliente, setIsSavingCliente] = useState(false);
 
   const stringToDate = (dateString?: string): Date | undefined => {
     if (!dateString || dateString.trim() === "") return undefined;
@@ -119,44 +124,10 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
     onSave(processData);
   };
 
-  const handleSaveCliente = async (clienteData: any) => {
-    if (!user || isSavingCliente) return false;
-    
-    setIsSavingCliente(true);
-    try {
-      const { data, error } = await supabase
-        .from('clientes')
-        .insert({
-          ...clienteData,
-          user_id: user.id
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      toast({
-        title: "Cliente cadastrado",
-        description: `O cliente ${data.nome} foi cadastrado com sucesso.`,
-      });
-
-      if (onClienteAdded) {
-        onClienteAdded();
-      }
-      setClienteIdSelecionado(data.id);
-      setShowClienteModal(false);
-      return true;
-    } catch (error: any) {
-      toast({
-        title: "Erro ao cadastrar cliente",
-        description: error.message || "Não foi possível cadastrar o cliente.",
-        variant: "destructive",
-      });
-      return false;
-    } finally {
-      setIsSavingCliente(false);
-    }
-  };
+  // A função handleSaveCliente será movida para o componente pai (ProcessosPage.tsx)
+  /*
+  const handleSaveCliente = async (clienteData: any) => { ... };
+  */
 
   return (
     <>
@@ -231,7 +202,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
                       </Select>
                       <Button
                         type="button"
-                        onClick={() => setShowClienteModal(true)}
+                        onClick={onAddNewCliente} // Usando a prop para chamar a função do pai
                         className="bg-blue-600 hover:bg-blue-700 text-white h-12 px-4 rounded-lg transition-all duration-300 hover:scale-105"
                         size="icon"
                       >
@@ -343,12 +314,15 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
         </div>
       </DialogContent>
 
+      {/* Removido o componente que causava o erro */}
+      {/*
       <ClienteModalSimples
         open={showClienteModal}
         onOpenChange={setShowClienteModal}
         onSaveCliente={handleSaveCliente}
         isSaving={isSavingCliente}
       />
+      */}
     </>
   );
 };
