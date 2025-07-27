@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
   onSave,
   membro
 }) => {
+  const isMobile = useIsMobile();
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -73,9 +75,82 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
     }
   };
 
+  
+  // Mobile full-screen dialog
+  if (isMobile) {
+    return (
+      <>
+        {isOpen && (
+          <div 
+            className="fixed inset-0 z-[9999] bg-white"
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: '100dvh',
+              overscrollBehavior: 'contain',
+              touchAction: 'manipulation'
+            }}
+          >
+            {/* Header */}
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-white">
+                  {membro ? 'Editar Membro' : 'Novo Membro'}
+                </h2>
+                <button onClick={() => onClose()} className="text-white">
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            {/* Scrollable Content */}
+            <div 
+              className="flex-1 overflow-y-auto bg-gray-50 p-4"
+              style={{
+                height: 'calc(100dvh - 140px)',
+                WebkitOverflowScrolling: 'touch',
+                touchAction: 'pan-y',
+                overscrollBehavior: 'contain'
+              }}
+            >
+              {/* Copy form content here */}
+            </div>
+
+            {/* Footer */}
+            <div className="bg-white border-t p-4 flex-shrink-0">
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => onClose()}
+                  className="px-4 py-2 border rounded-lg"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSubmit}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg"
+                >
+                  {membro ? 'Salvar' : 'Cadastrar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    );
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl">
+      <DialogContent 
+        className="max-w-4xl max-h-[95vh] overflow-hidden p-0 bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 border-0 rounded-xl"
+        style={{
+          touchAction: 'manipulation',
+          overscrollBehavior: 'contain'
+        }}
+      >
         <div className="h-full flex flex-col rounded-xl overflow-hidden">
           {/* Header com gradiente azul */}
           <div className="p-6">

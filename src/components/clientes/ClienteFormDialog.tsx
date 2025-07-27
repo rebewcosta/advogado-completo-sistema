@@ -3,6 +3,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { createClient } from '@/hooks/clientes/clienteApi';
 import { useToast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 import ClienteFormFields from './ClienteFormFields';
 import ClienteFormActions from './ClienteFormActions';
 import ClienteFormHeader from './ClienteFormHeader';
@@ -108,12 +109,22 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({ isOpen, onClose, 
 
             {/* Footer */}
             <div className="bg-white border-t p-4 flex-shrink-0">
-              <ClienteFormActions
-                isEdit={false}
-                onCancel={handleClose}
-                isLoading={isSaving}
-                onSave={handleSave}
-              />
+              <div className="flex justify-end gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={handleClose}
+                  disabled={isSaving}
+                >
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  Cadastrar Cliente
+                </Button>
+              </div>
             </div>
           </div>
         )}
