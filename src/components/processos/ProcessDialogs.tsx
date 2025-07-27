@@ -69,7 +69,8 @@ const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
             isEdit={isEditing}
             clientesDoUsuario={clientesDoUsuario}
             isLoadingClientes={isLoadingClientes}
-            onClienteAdded={onClienteAdded} // Passar callback
+            onClienteAdded={onClienteAdded}
+            onAddNewCliente={() => {}} // Adicionar prop obrigatória
           />
         </DialogContent>
       </Dialog>

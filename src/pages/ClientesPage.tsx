@@ -1,48 +1,78 @@
-import React, { useEffect } from 'react';
-// Importando o Provider e o hook do NOVO arquivo de contexto
-import { ClientesProvider, useClientes } from '../contexts/ClientesContext'; 
+import React, { useEffect, useState } from 'react';
 import ClienteFormDialog from '@/components/clientes/ClienteFormDialog';
-import ClientesTable from '@/components/clientes/ClientesTable';
+import ClienteTable from '@/components/clientes/ClienteTable';
 import ClientesPageHeader from '@/components/clientes/ClientesPageHeader';
 import { useAuth } from '@/hooks/useAuth';
 import ClienteListAsCards from '@/components/clientes/ClienteListAsCards';
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from '@/hooks/use-mobile';
+import { fetchClientsList } from '@/hooks/clientes/clienteApi';
+import type { Cliente } from '@/hooks/clientes/types';
 
-// Componente de conteúdo que usa o hook useClientes
-const ClientesPageContent = () => {
+// Componente principal
+const ClientesPage = () => {
   const { user } = useAuth();
-  // Agora usamos um único hook para obter todo o estado e ações
-  const { clients, isLoading, error, loadClientes } = useClientes();
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const [clients, setClients] = useState<Cliente[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const isMobile = useIsMobile();
+
+  const loadClientes = async () => {
+    if (!user?.id) return;
+    
+    setIsLoading(true);
+    try {
+      const data = await fetchClientsList(user.id);
+      setClients(data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (user?.id) {
-      // @ts-ignore
-      loadClientes(user.id);
+      loadClientes();
     }
-  }, [user?.id, loadClientes]);
+  }, [user?.id]);
+
+  const handleOpenModal = () => setIsModalOpen(true);
+  const handleCloseModal = () => setIsModalOpen(false);
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 text-gray-800 dark:text-gray-200">
       <div className="space-y-6">
-        <ClientesPageHeader />
+        <ClientesPageHeader onAddClient={handleOpenModal} />
         {isMobile ? (
-          <ClienteListAsCards clients={clients} isLoading={isLoading} error={error} />
+          <ClienteListAsCards 
+            clients={clients} 
+            isLoading={isLoading} 
+            searchTerm=""
+            onEdit={() => {}}
+            onView={() => {}}
+            onToggleStatus={() => {}}
+            onDelete={() => {}}
+          />
         ) : (
-          <ClientesTable clients={clients} isLoading={isLoading} error={error} />
+          <ClienteTable 
+            clients={clients} 
+            isLoading={isLoading} 
+            searchTerm=""
+            onEdit={() => {}}
+            onView={() => {}}
+            onToggleStatus={() => {}}
+            onDelete={() => {}}
+          />
         )}
       </div>
-      <ClienteFormDialog />
+      <ClienteFormDialog 
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSave={loadClientes}
+      />
     </div>
-  );
-};
-
-// Componente principal que apenas fornece o contexto
-const ClientesPage = () => {
-  return (
-    <ClientesProvider>
-      <ClientesPageContent />
-    </ClientesProvider>
   );
 };
 

@@ -1,37 +1,73 @@
-import React from 'react';
-import { useClientes } from '@/contexts/ClientesContext';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { createClient } from '@/hooks/clientes/clienteApi';
+import { useToast } from '@/hooks/use-toast';
 import ClienteFormFields from './ClienteFormFields';
 import ClienteFormActions from './ClienteFormActions';
 import ClienteFormHeader from './ClienteFormHeader';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import type { ClienteFormData } from '@/hooks/clientes/types';
 
-const ClienteFormDialog = () => {
+interface ClienteFormDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: () => void;
+}
+
+const initialClienteData: ClienteFormData = {
+  nome: '',
+  email: '',
+  telefone: '',
+  cpfCnpj: '',
+  cep: '',
+  endereco: '',
+  cidade: '',
+  estado: '',
+  observacoes: '',
+  tipo_cliente: 'Pessoa Física',
+  status_cliente: 'Ativo'
+};
+
+const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({ isOpen, onClose, onSave }) => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   
-  const {
-    isModalOpen,
-    isEditing,
-    clienteData,
-    isSaving,
-    handleCloseModal,
-    handleInputChange,
-    handleSave,
-  } = useClientes();
+  const [clienteData, setClienteData] = useState<ClienteFormData>(initialClienteData);
+  const [isSaving, setIsSaving] = useState(false);
 
-  const onSave = async () => {
-    if (user) {
-      await handleSave();
+  const handleInputChange = (field: keyof ClienteFormData, value: any) => {
+    setClienteData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    
+    setIsSaving(true);
+    try {
+      await createClient(clienteData, user.id);
+      toast({ title: "Sucesso!", description: "Cliente cadastrado com sucesso." });
+      setClienteData(initialClienteData);
+      onClose();
+      onSave();
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: 'destructive' });
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleClose = () => {
+    setClienteData(initialClienteData);
+    onClose();
   };
 
   // Mobile full-screen dialog
   if (isMobile) {
     return (
       <>
-        {isModalOpen && (
+        {isOpen && (
           <div 
             className="fixed inset-0 z-[9999] bg-white"
             style={{
@@ -47,7 +83,7 @@ const ClienteFormDialog = () => {
           >
             {/* Header */}
             <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
-              <ClienteFormHeader isEdit={isEditing} onClose={handleCloseModal} />
+              <ClienteFormHeader isEdit={false} onClose={handleClose} />
             </div>
             
             {/* Scrollable Content */}
@@ -61,7 +97,7 @@ const ClienteFormDialog = () => {
               }}
             >
               <div className="p-4">
-                <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="space-y-6">
+                <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
                   <ClienteFormFields
                     formData={clienteData}
                     onChange={handleInputChange}
@@ -73,9 +109,10 @@ const ClienteFormDialog = () => {
             {/* Footer */}
             <div className="bg-white border-t p-4 flex-shrink-0">
               <ClienteFormActions
-                isEdit={isEditing}
-                onCancel={handleCloseModal}
+                isEdit={false}
+                onCancel={handleClose}
                 isLoading={isSaving}
+                onSave={handleSave}
               />
             </div>
           </div>
@@ -86,7 +123,7 @@ const ClienteFormDialog = () => {
 
   // Desktop dialog
   return (
-    <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent 
         className="
           max-w-4xl w-[95%] sm:w-full 
@@ -96,10 +133,10 @@ const ClienteFormDialog = () => {
           max-h-[90vh] h-full
         "
       >
-        <ClienteFormHeader isEdit={isEditing} onClose={handleCloseModal} />
+        <ClienteFormHeader isEdit={false} onClose={handleClose} />
         
         <div className="flex-grow overflow-y-auto px-6 py-2 -mx-6 custom-scrollbar">
-          <form onSubmit={(e) => { e.preventDefault(); onSave(); }} className="space-y-6">
+          <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-6">
             <ClienteFormFields
               formData={clienteData}
               onChange={handleInputChange}
@@ -109,9 +146,10 @@ const ClienteFormDialog = () => {
 
         <div className="px-6 pt-4 pb-6 -mx-6 -mb-6 bg-gray-900/50 rounded-b-xl">
            <ClienteFormActions
-            isEdit={isEditing}
-            onCancel={handleCloseModal}
+            isEdit={false}
+            onCancel={handleClose}
             isLoading={isSaving}
+            onSave={handleSave}
           />
         </div>
       </DialogContent>
