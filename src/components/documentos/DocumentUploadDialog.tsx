@@ -141,7 +141,11 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
                 overscrollBehavior: 'contain'
               }}
             >
-              {/* Copy form content here */}
+              <div className="space-y-6">
+                <div className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors cursor-pointer">
+                  <p className="text-gray-600">Clique ou arraste arquivos aqui para fazer upload</p>
+                </div>
+              </div>
             </div>
 
             {/* Footer */}

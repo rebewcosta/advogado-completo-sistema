@@ -128,7 +128,12 @@ const TransacaoModal: React.FC<TransacaoModalProps> = ({
                 overscrollBehavior: 'contain'
               }}
             >
-              {/* Copy form content here */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <TransacaoFormFields 
+                  formData={formData} 
+                  onChange={handleFieldChange}
+                />
+              </form>
             </div>
 
             {/* Footer */}

@@ -127,7 +127,68 @@ const TarefaFormDialog: React.FC<TarefaFormDialogProps> = ({
               }}
             >
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Copy form fields content here */}
+                <div>
+                  <Label htmlFor="titulo" className="text-gray-700 font-medium">Título *</Label>
+                  <Input
+                    id="titulo"
+                    value={formData.titulo}
+                    onChange={(e) => setFormData({...formData, titulo: e.target.value})}
+                    placeholder="Título da tarefa"
+                    className="mt-2 h-12"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="status" className="text-gray-700 font-medium">Status *</Label>
+                  <Select value={formData.status} onValueChange={(value: any) => setFormData({...formData, status: value})}>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pendente">Pendente</SelectItem>
+                      <SelectItem value="Em Andamento">Em Andamento</SelectItem>
+                      <SelectItem value="Concluída">Concluída</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="prioridade" className="text-gray-700 font-medium">Prioridade *</Label>
+                  <Select value={formData.prioridade} onValueChange={(value: any) => setFormData({...formData, prioridade: value})}>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Selecione a prioridade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Baixa">Baixa</SelectItem>
+                      <SelectItem value="Média">Média</SelectItem>
+                      <SelectItem value="Alta">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="data_conclusao" className="text-gray-700 font-medium">Data de Conclusão</Label>
+                  <Input
+                    id="data_conclusao"
+                    type="date"
+                    value={formData.data_conclusao}
+                    onChange={(e) => setFormData({...formData, data_conclusao: e.target.value})}
+                    className="mt-2 h-12"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="descricao" className="text-gray-700 font-medium">Descrição</Label>
+                  <Textarea
+                    id="descricao"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+                    placeholder="Descrição da tarefa"
+                    rows={4}
+                    className="mt-2"
+                  />
+                </div>
               </form>
             </div>
 

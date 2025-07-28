@@ -171,9 +171,53 @@ const AgendaEventForm: React.FC<AgendaEventFormProps> = ({
                 overscrollBehavior: 'contain'
               }}
             >
-              {/* Form content will go here - keeping existing form */}
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Copy existing form fields here */}
+                <div>
+                  <Label htmlFor="titulo" className="text-gray-700 font-medium">Título *</Label>
+                  <Input
+                    id="titulo"
+                    value={formData.titulo}
+                    onChange={(e) => setFormData({...formData, titulo: e.target.value})}
+                    placeholder="Título do evento"
+                    className="mt-2 h-12"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="data_hora_inicio" className="text-gray-700 font-medium">Data/Hora *</Label>
+                  <Input
+                    id="data_hora_inicio"
+                    type="datetime-local"
+                    value={formData.data_hora_inicio}
+                    onChange={(e) => setFormData({...formData, data_hora_inicio: e.target.value})}
+                    className="mt-2 h-12"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="local_evento" className="text-gray-700 font-medium">Local</Label>
+                  <Input
+                    id="local_evento"
+                    value={formData.local_evento}
+                    onChange={(e) => setFormData({...formData, local_evento: e.target.value})}
+                    placeholder="Local do evento"
+                    className="mt-2 h-12"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="descricao_evento" className="text-gray-700 font-medium">Descrição</Label>
+                  <Textarea
+                    id="descricao_evento"
+                    value={formData.descricao_evento}
+                    onChange={(e) => setFormData({...formData, descricao_evento: e.target.value})}
+                    placeholder="Descrição do evento"
+                    rows={4}
+                    className="mt-2"
+                  />
+                </div>
               </form>
             </div>
 

@@ -7,6 +7,7 @@ import ClienteListAsCards from '@/components/clientes/ClienteListAsCards';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { fetchClientsList } from '@/hooks/clientes/clienteApi';
 import type { Cliente } from '@/hooks/clientes/types';
+import MobileHeader from '@/components/MobileHeader';
 
 // Componente principal
 const ClientesPage = () => {
@@ -42,36 +43,39 @@ const ClientesPage = () => {
   const handleCloseModal = () => setIsModalOpen(false);
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 text-gray-800 dark:text-gray-200">
-      <div className="space-y-6">
-        <ClientesPageHeader onAddClient={handleOpenModal} />
-        {isMobile ? (
-          <ClienteListAsCards 
-            clients={clients} 
-            isLoading={isLoading} 
-            searchTerm=""
-            onEdit={() => {}}
-            onView={() => {}}
-            onToggleStatus={() => {}}
-            onDelete={() => {}}
-          />
-        ) : (
-          <ClienteTable 
-            clients={clients} 
-            isLoading={isLoading} 
-            searchTerm=""
-            onEdit={() => {}}
-            onView={() => {}}
-            onToggleStatus={() => {}}
-            onDelete={() => {}}
-          />
-        )}
+    <div className="min-h-screen bg-gray-50">
+      {isMobile && <MobileHeader />}
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8 text-gray-800 dark:text-gray-200">
+        <div className="space-y-6">
+          <ClientesPageHeader onAddClient={handleOpenModal} />
+          {isMobile ? (
+            <ClienteListAsCards 
+              clients={clients} 
+              isLoading={isLoading} 
+              searchTerm=""
+              onEdit={() => {}}
+              onView={() => {}}
+              onToggleStatus={() => {}}
+              onDelete={() => {}}
+            />
+          ) : (
+            <ClienteTable 
+              clients={clients} 
+              isLoading={isLoading} 
+              searchTerm=""
+              onEdit={() => {}}
+              onView={() => {}}
+              onToggleStatus={() => {}}
+              onDelete={() => {}}
+            />
+          )}
+        </div>
+        <ClienteFormDialog 
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          onSave={loadClientes}
+        />
       </div>
-      <ClienteFormDialog 
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSave={loadClientes}
-      />
     </div>
   );
 };

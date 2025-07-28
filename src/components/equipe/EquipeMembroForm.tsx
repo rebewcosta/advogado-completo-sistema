@@ -116,7 +116,12 @@ const EquipeMembroForm: React.FC<EquipeMembroFormProps> = ({
                 overscrollBehavior: 'contain'
               }}
             >
-              {/* Copy form content here */}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <EquipeMembroFormFields
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </form>
             </div>
 
             {/* Footer */}

@@ -3,6 +3,7 @@ import { format, parse, isValid } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useIsMobile } from '@/hooks/use-mobile';
 import type { Database } from '@/integrations/supabase/types';
 import {
   Dialog,
@@ -128,6 +129,189 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   /*
   const handleSaveCliente = async (clienteData: any) => { ... };
   */
+
+  const isMobile = useIsMobile();
+
+  // Mobile full-screen dialog
+  if (isMobile) {
+    return (
+      <>
+        {/* Mobile Dialog */}
+        <div 
+          className="fixed inset-0 z-[9999] bg-white"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: '100dvh',
+            overscrollBehavior: 'contain',
+            touchAction: 'manipulation'
+          }}
+        >
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white">
+                {isEdit ? 'Editar Processo' : 'Novo Processo'}
+              </h2>
+              <button onClick={onCancel} className="text-white">
+                ✕
+              </button>
+            </div>
+          </div>
+          
+          {/* Scrollable Content */}
+          <div 
+            className="flex-1 overflow-y-auto bg-gray-50"
+            style={{
+              height: 'calc(100dvh - 140px)',
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
+              overscrollBehavior: 'contain'
+            }}
+          >
+            <div className="p-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <Label htmlFor="numero" className="text-gray-700 font-medium">Número do Processo *</Label>
+                  <Input
+                    id="numero"
+                    type="text"
+                    value={numero}
+                    onChange={(e) => setNumero(e.target.value)}
+                    placeholder="Ex: 1234567-89.2023.8.12.3456"
+                    className="mt-2 h-12"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cliente" className="text-gray-700 font-medium">Cliente</Label>
+                  <div className="flex gap-2 mt-2">
+                    <Select value={clienteIdSelecionado || "sem_cliente"} onValueChange={(value) => setClienteIdSelecionado(value === "sem_cliente" ? null : value)}>
+                      <SelectTrigger className="flex-1 h-12">
+                        <SelectValue placeholder={isLoadingClientes ? "Carregando clientes..." : "Selecione um cliente"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="sem_cliente">Sem cliente associado</SelectItem>
+                        {clientesDoUsuario?.map((cliente) => (
+                          <SelectItem key={cliente.id} value={cliente.id}>
+                            {cliente.nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      type="button"
+                      onClick={onAddNewCliente}
+                      className="bg-blue-600 hover:bg-blue-700 text-white h-12 px-4"
+                      size="icon"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <Label htmlFor="tipo" className="text-gray-700 font-medium">Tipo de Processo *</Label>
+                  <Select value={tipo} onValueChange={setTipo}>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cível">Cível</SelectItem>
+                      <SelectItem value="Criminal">Criminal</SelectItem>
+                      <SelectItem value="Trabalhista">Trabalhista</SelectItem>
+                      <SelectItem value="Tributário">Tributário</SelectItem>
+                      <SelectItem value="Administrativo">Administrativo</SelectItem>
+                      <SelectItem value="Família">Família</SelectItem>
+                      <SelectItem value="Empresarial">Empresarial</SelectItem>
+                      <SelectItem value="Previdenciário">Previdenciário</SelectItem>
+                      <SelectItem value="Consumidor">Consumidor</SelectItem>
+                      <SelectItem value="Outros">Outros</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="vara" className="text-gray-700 font-medium">Vara/Tribunal</Label>
+                  <Input
+                    id="vara"
+                    type="text"
+                    value={vara}
+                    onChange={(e) => setVara(e.target.value)}
+                    placeholder="Ex: 1ª Vara Cível de São Paulo"
+                    className="mt-2 h-12"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="status" className="text-gray-700 font-medium">Status *</Label>
+                  <Select value={status} onValueChange={(value: 'Em andamento' | 'Concluído' | 'Suspenso') => setStatus(value)}>
+                    <SelectTrigger className="mt-2 h-12">
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Em andamento">Em andamento</SelectItem>
+                      <SelectItem value="Concluído">Concluído</SelectItem>
+                      <SelectItem value="Suspenso">Suspenso</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-gray-700 font-medium">Próximo Prazo</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal mt-2 h-12",
+                          !prazoDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {prazoDate ? format(prazoDate, "dd/MM/yyyy") : "Selecione uma data"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={prazoDate}
+                        onSelect={setPrazoDate}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="bg-white border-t p-4 flex-shrink-0">
+            <div className="flex justify-end gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onCancel}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                {isEdit ? 'Salvar' : 'Cadastrar'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
