@@ -25,7 +25,7 @@ import UsuariosOnline from '@/components/admin/UsuariosOnline';
 import UsuariosTrial from '@/components/admin/UsuariosTrial';
 import UsuariosCriados from '@/components/admin/UsuariosCriados';
 import SystemTesting from '@/components/admin/SystemTesting';
-import CreateUserAccount from '@/components/admin/CreateUserAccount';
+// import CreateUserAccount from '@/components/admin/CreateUserAccount'; // Removed - deprecated component
 import CriarContaEspecial from '@/components/admin/CriarContaEspecial';
 import SecurityMonitoring from '@/components/admin/SecurityMonitoring';
 import StripeWebhookConfig from '@/components/admin/StripeWebhookConfig';
@@ -221,7 +221,9 @@ const AdminPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <CreateUserAccount />
+              <div className="text-center text-gray-500 p-8">
+                Componente removido - funcionalidade migrada para "Criar Conta Especial"
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

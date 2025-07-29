@@ -1,7 +1,6 @@
 
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import ClienteForm from "@/components/ClienteForm";
+import ClienteFormDialog from "@/components/clientes/ClienteFormDialog";
 
 interface ClienteModalProps {
   open: boolean;
@@ -17,18 +16,14 @@ const ClienteModal: React.FC<ClienteModalProps> = ({
   isSaving
 }) => {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
-        <DialogHeader>
-          <DialogTitle>Cadastrar Novo Cliente</DialogTitle>
-        </DialogHeader>
-        <ClienteForm
-          onSave={onSaveCliente}
-          onCancel={() => onOpenChange(false)}
-          isEdit={false}
-        />
-      </DialogContent>
-    </Dialog>
+    <ClienteFormDialog
+      isOpen={open}
+      onClose={() => onOpenChange(false)}
+      onSave={async () => {
+        await onSaveCliente({});
+        onOpenChange(false);
+      }}
+    />
   );
 };
 
