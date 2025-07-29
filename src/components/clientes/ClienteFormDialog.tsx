@@ -108,7 +108,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({ isOpen, onClose, 
             </div>
 
             {/* Footer */}
-            <div className="bg-white border-t p-4 flex-shrink-0 pb-16 pt-8">
+            <div className="bg-white border-t p-4 flex-shrink-0 pb-8 pt-4 fixed bottom-0 left-0 right-0">
               <div className="flex justify-end gap-3">
                 <Button 
                   variant="outline" 
