@@ -83,7 +83,7 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({ isOpen, onClose, 
             }}
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
+            <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0 flex items-center justify-between">
               <ClienteFormHeader isEdit={false} onClose={handleClose} />
             </div>
             
