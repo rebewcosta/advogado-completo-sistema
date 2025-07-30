@@ -7,7 +7,7 @@ import ClienteListAsCards from '@/components/clientes/ClienteListAsCards';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { fetchClientsList } from '@/hooks/clientes/clienteApi';
 import type { Cliente } from '@/hooks/clientes/types';
-import MobileHeader from '@/components/MobileHeader';
+
 import { Button } from "@/components/ui/button";
 import { Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -68,32 +68,52 @@ const ClientesPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {isMobile && (
-        <div className="flex items-center justify-between p-4 bg-white border-b">
-          <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-72">
-              <div className="p-4">
-                <h3 className="text-lg font-semibold mb-6">Menu de Navegação</h3>
-                <div className="space-y-2">
-                  {menuItems.map((item) => (
-                    <Button
-                      key={item.path}
-                      variant="ghost"
-                      className="w-full justify-start text-left"
-                      onClick={() => handleNavigate(item.path)}
-                    >
-                      {item.label}
-                    </Button>
-                  ))}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg">
+          <div className="flex items-center justify-between p-4">
+            <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
+              <SheetTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  className="text-white hover:bg-white/20 rounded-lg p-2"
+                >
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-80 p-0">
+                <div className="bg-gradient-to-b from-blue-600 to-purple-600 p-6 text-white">
+                  <h3 className="text-xl font-bold mb-2">JusGestão</h3>
+                  <p className="text-blue-100 text-sm">Sistema Jurídico Completo</p>
                 </div>
+                <div className="p-6">
+                  <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-4">
+                    Navegação
+                  </h4>
+                  <div className="space-y-1">
+                    {menuItems.map((item) => (
+                      <Button
+                        key={item.path}
+                        variant="ghost"
+                        className="w-full justify-start text-left h-12 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
+                        onClick={() => handleNavigate(item.path)}
+                      >
+                        {item.label}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+            
+            <div className="flex items-center gap-3">
+              <div className="text-white text-center">
+                <h1 className="font-bold text-lg">Clientes</h1>
+                <p className="text-blue-100 text-xs">Gestão de Clientes</p>
               </div>
-            </SheetContent>
-          </Sheet>
-          <MobileHeader />
+            </div>
+            
+            <div className="w-10"></div>
+          </div>
         </div>
       )}
       <div className="container mx-auto p-4 sm:p-6 lg:p-8 text-gray-800 dark:text-gray-200">
