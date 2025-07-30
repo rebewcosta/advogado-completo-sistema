@@ -135,21 +135,19 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   // Mobile full-screen dialog
   if (isMobile) {
     return (
-      <>
-        {/* Mobile Dialog */}
-        <div 
-          className="fixed inset-0 z-[9999] bg-white"
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            height: '100dvh',
-            overscrollBehavior: 'contain',
-            touchAction: 'manipulation'
-          }}
-        >
+      <div 
+        className="fixed inset-0 z-[9999] bg-white flex flex-col"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: '100dvh',
+          overscrollBehavior: 'contain',
+          touchAction: 'manipulation'
+        }}
+      >
           {/* Header */}
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white p-4 flex-shrink-0">
             <div className="flex items-center justify-between">
@@ -309,8 +307,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
             </div>
           </div>
         </div>
-      </>
-    );
+      );
   }
 
   return (
