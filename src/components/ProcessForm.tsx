@@ -188,11 +188,11 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
                 <div>
                   <Label htmlFor="cliente" className="text-gray-700 font-medium">Cliente</Label>
                   <div className="flex gap-2 mt-2">
-                    <Select value={clienteIdSelecionado || "sem_cliente"} onValueChange={(value) => setClienteIdSelecionado(value === "sem_cliente" ? null : value)}>
+                     <Select value={clienteIdSelecionado || "sem_cliente"} onValueChange={(value) => setClienteIdSelecionado(value === "sem_cliente" ? null : value)}>
                       <SelectTrigger className="flex-1 h-12">
                         <SelectValue placeholder={isLoadingClientes ? "Carregando clientes..." : "Selecione um cliente"} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" side="bottom" align="start" className="z-[10000] bg-white border border-gray-200 shadow-lg rounded-lg max-h-[200px] overflow-auto">
                         <SelectItem value="sem_cliente">Sem cliente associado</SelectItem>
                         {clientesDoUsuario?.map((cliente) => (
                           <SelectItem key={cliente.id} value={cliente.id}>
@@ -214,11 +214,11 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
 
                 <div>
                   <Label htmlFor="tipo" className="text-gray-700 font-medium">Tipo de Processo *</Label>
-                  <Select value={tipo} onValueChange={setTipo}>
+                   <Select value={tipo} onValueChange={setTipo}>
                     <SelectTrigger className="mt-2 h-12">
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" side="bottom" align="start" className="z-[10000] bg-white border border-gray-200 shadow-lg rounded-lg max-h-[200px] overflow-auto">
                       <SelectItem value="Cível">Cível</SelectItem>
                       <SelectItem value="Criminal">Criminal</SelectItem>
                       <SelectItem value="Trabalhista">Trabalhista</SelectItem>
@@ -247,11 +247,11 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
 
                 <div>
                   <Label htmlFor="status" className="text-gray-700 font-medium">Status *</Label>
-                  <Select value={status} onValueChange={(value: 'Em andamento' | 'Concluído' | 'Suspenso') => setStatus(value)}>
+                   <Select value={status} onValueChange={(value: 'Em andamento' | 'Concluído' | 'Suspenso') => setStatus(value)}>
                     <SelectTrigger className="mt-2 h-12">
                       <SelectValue placeholder="Selecione o status" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" side="bottom" align="start" className="z-[10000] bg-white border border-gray-200 shadow-lg rounded-lg max-h-[200px] overflow-auto">
                       <SelectItem value="Em andamento">Em andamento</SelectItem>
                       <SelectItem value="Concluído">Concluído</SelectItem>
                       <SelectItem value="Suspenso">Suspenso</SelectItem>
@@ -261,7 +261,7 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
 
                 <div>
                   <Label className="text-gray-700 font-medium">Próximo Prazo</Label>
-                  <Popover>
+                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
@@ -274,12 +274,13 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
                         {prazoDate ? format(prazoDate, "dd/MM/yyyy") : "Selecione uma data"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
+                    <PopoverContent className="w-auto p-0 z-[10000] bg-white border border-gray-200 shadow-lg rounded-lg" side="bottom" align="start">
                       <Calendar
                         mode="single"
                         selected={prazoDate}
                         onSelect={setPrazoDate}
                         initialFocus
+                        className="pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
