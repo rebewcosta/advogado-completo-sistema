@@ -58,15 +58,17 @@ export const useRealtimePresence = () => {
     console.log('🟢 Inicializando presença em tempo real para:', user.email);
     hasInitialized.current = true;
     
-    const channelName = `user_presence_global`;
-    const presenceChannel = supabase.channel(channelName, {
-      config: {
-        presence: {
-          key: user.id
+    // Adicionar delay para evitar múltiplas conexões simultâneas
+    const initTimer = setTimeout(() => {
+      const channelName = `user_presence_global`;
+      const presenceChannel = supabase.channel(channelName, {
+        config: {
+          presence: {
+            key: user.id
+          }
         }
-      }
-    });
-    channelRef.current = presenceChannel;
+      });
+      channelRef.current = presenceChannel;
 
     // Configurar listeners de presença
     presenceChannel
@@ -101,35 +103,53 @@ export const useRealtimePresence = () => {
         console.log('❌ Usuário saiu:', key, leftPresences);
       });
 
-    // Subscribe ao canal
-    presenceChannel.subscribe(async (status) => {
-      console.log('📡 Status da conexão:', status);
-      
-      if (status === 'SUBSCRIBED') {
-        const userPresence = {
-          user_id: user.id,
-          email: user.email || '',
-          nome_completo: user.user_metadata?.nome_completo || '',
-          online_at: new Date().toISOString(),
-          last_seen: new Date().toISOString()
-        };
-
-        console.log('🚀 Trackando presença:', userPresence);
-        const trackResult = await presenceChannel.track(userPresence);
-        console.log('📡 Resultado do track:', trackResult);
-        await updatePresence();
-        startHeartbeat();
+    // Subscribe ao canal com tratamento de erro
+    try {
+      presenceChannel.subscribe(async (status) => {
+        console.log('📡 Status da conexão:', status);
         
-        // Atualizar presença imediatamente para garantir
-        setTimeout(updatePresence, 1000);
-      } else if (status === 'CHANNEL_ERROR') {
-        console.error('❌ Erro no canal de presença');
-        setIsConnected(false);
-      } else if (status === 'TIMED_OUT') {
-        console.warn('⏰ Timeout no canal de presença');
-        setIsConnected(false);
-      }
-    });
+        if (status === 'SUBSCRIBED') {
+          try {
+            const userPresence = {
+              user_id: user.id,
+              email: user.email || '',
+              nome_completo: user.user_metadata?.nome_completo || '',
+              online_at: new Date().toISOString(),
+              last_seen: new Date().toISOString()
+            };
+
+            console.log('🚀 Trackando presença:', userPresence);
+            const trackResult = await presenceChannel.track(userPresence);
+            console.log('📡 Resultado do track:', trackResult);
+            await updatePresence();
+            startHeartbeat();
+            
+            // Atualizar presença imediatamente para garantir
+            setTimeout(updatePresence, 1000);
+          } catch (error) {
+            console.warn('⚠️ Erro ao configurar presença, funcionando em modo fallback:', error);
+            await updatePresence(); // Apenas atualizar no banco sem realtime
+          }
+        } else if (status === 'CHANNEL_ERROR') {
+          console.warn('⚠️ Erro no canal de presença, funcionando em modo fallback');
+          setIsConnected(false);
+          await updatePresence(); // Fallback para atualização direta no banco
+        } else if (status === 'TIMED_OUT') {
+          console.warn('⏰ Timeout no canal de presença, funcionando em modo fallback');
+          setIsConnected(false);
+          await updatePresence(); // Fallback para atualização direta no banco
+        } else if (status === 'CLOSED') {
+          console.warn('🔒 Canal de presença fechado');
+          setIsConnected(false);
+        }
+      });
+    } catch (error) {
+      console.warn('⚠️ Erro na conexão WebSocket inicial, funcionando em modo fallback:', error);
+      setIsConnected(false);
+      updatePresence(); // Fallback para atualização direta no banco
+    }
+
+    }, 1000); // delay de 1 segundo para evitar múltiplas conexões
 
     // Cleanup
     return () => {
@@ -159,6 +179,9 @@ export const useRealtimePresence = () => {
       
       setIsConnected(false);
       setOnlineUsers([]);
+      
+      // Limpar o timer se existir
+      clearTimeout(initTimer);
     };
   }, [user, updatePresence, startHeartbeat]);
 
