@@ -51,9 +51,9 @@ const FeaturesSection = () => {
     },
     {
       icon: <BookOpen className="h-8 w-8" />,
-      title: "Publicações Oficiais",
-      description: "Monitore automaticamente publicações nos diários oficiais.",
-      link: "/publicacoes",
+      title: "Importação Automática OAB",
+      description: "Importe automaticamente todos os processos via número da OAB.",
+      link: "/datajud",
       highlight: "Popular"
     },
     {
