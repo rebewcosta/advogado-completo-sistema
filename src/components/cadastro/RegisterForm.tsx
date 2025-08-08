@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent } from "@/components/ui/card";
@@ -329,13 +329,13 @@ const RegisterForm = () => {
                 
                 <p className="text-center text-xs sm:text-sm text-gray-600 mt-3 sm:mt-4 px-2">
                   Ao continuar, você concorda com nossos{' '}
-                  <a href="/termos" className="text-blue-600 hover:text-blue-700 font-medium">
+                  <Link to="/termos-privacidade" className="text-blue-600 hover:text-blue-700 font-medium">
                     Termos de Uso
-                  </a>{' '}
+                  </Link>{' '}
                   e{' '}
-                  <a href="/privacidade" className="text-blue-600 hover:text-blue-700 font-medium">
+                  <Link to="/termos-privacidade" className="text-blue-600 hover:text-blue-700 font-medium">
                     Política de Privacidade
-                  </a>
+                  </Link>
                 </p>
               </div>
             </form>
