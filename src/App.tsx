@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { Toaster } from 'sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 // Pages
@@ -80,7 +79,7 @@ function App() {
           <Router>
             <AuthProvider>
               <div className="App min-h-screen">
-                <Toaster />
+                
                 <PWAUpdateToast />
                 
                 <Routes>
