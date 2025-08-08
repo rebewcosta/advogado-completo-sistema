@@ -45,7 +45,6 @@ import { AppSidebar } from '@/components/AppSidebar';
 
 // Contexts
 import { PWAProvider } from './contexts/PWAContext';
-import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from '@/hooks/useAuth';
 import { useActivityTracker } from '@/hooks/useActivityTracker';
 
@@ -77,7 +76,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <PWAProvider>
-        <ThemeProvider>
+        
           <Router>
             <AuthProvider>
               <div className="App min-h-screen">
@@ -127,7 +126,7 @@ function App() {
               </div>
             </AuthProvider>
           </Router>
-        </ThemeProvider>
+        
       </PWAProvider>
     </QueryClientProvider>
   );
