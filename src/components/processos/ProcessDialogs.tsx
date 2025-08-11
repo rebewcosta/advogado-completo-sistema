@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import ProcessForm from '@/components/ProcessForm';
 import ProcessDetails from '@/components/processos/ProcessDetails';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import type { Database } from '@/integrations/supabase/types';
 import { ProcessoComCliente } from '@/stores/useProcessesStore';
+import ClienteFormDialog from '@/components/clientes/ClienteFormDialog';
+import type { Cliente } from '@/hooks/clientes/types';
 
 type ClienteParaSelect = Pick<Database['public']['Tables']['clientes']['Row'], 'id' | 'nome'>;
 
@@ -55,6 +57,8 @@ const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
   onClienteAdded // Adicionar prop
 }) => {
   const isMobile = useIsMobile();
+  const [clienteDialogOpen, setClienteDialogOpen] = useState(false);
+  const [preselectClienteId, setPreselectClienteId] = useState<string | undefined>(undefined);
 
   return (
     <>
@@ -71,7 +75,8 @@ const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
             clientesDoUsuario={clientesDoUsuario}
             isLoadingClientes={isLoadingClientes}
             onClienteAdded={onClienteAdded}
-            onAddNewCliente={() => {}} // Adicionar prop obrigatória
+            onAddNewCliente={() => setClienteDialogOpen(true)}
+            preselectClienteId={preselectClienteId}
           />
         )
       ) : (
@@ -119,6 +124,19 @@ const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Cliente Form Dialog for quick add */}
+      <ClienteFormDialog
+        isOpen={clienteDialogOpen}
+        onClose={() => setClienteDialogOpen(false)}
+        onSave={(created) => {
+          if (created?.id) {
+            setPreselectClienteId(created.id);
+          }
+          onClienteAdded?.();
+          setClienteDialogOpen(false);
+        }}
+      />
     </>
   );
 };

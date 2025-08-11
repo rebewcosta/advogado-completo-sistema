@@ -48,6 +48,7 @@ interface ProcessFormProps {
   isLoadingClientes?: boolean;
   onClienteAdded?: () => void;
   onAddNewCliente: () => void; // Adicionando uma prop para abrir o modal de cliente
+  preselectClienteId?: string;
 }
 
 const ProcessForm: React.FC<ProcessFormProps> = ({
@@ -58,7 +59,8 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
   clientesDoUsuario = [],
   isLoadingClientes = false,
   onClienteAdded,
-  onAddNewCliente // Recebendo a função para abrir o modal
+  onAddNewCliente, // Recebendo a função para abrir o modal
+  preselectClienteId
 }) => {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -103,6 +105,12 @@ const ProcessForm: React.FC<ProcessFormProps> = ({
       setPrazoDate(undefined);
     }
   }, [processoParaEditar, isEdit]);
+
+  useEffect(() => {
+    if (preselectClienteId) {
+      setClienteIdSelecionado(preselectClienteId);
+    }
+  }, [preselectClienteId]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

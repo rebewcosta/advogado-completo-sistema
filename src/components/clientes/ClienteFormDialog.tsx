@@ -8,12 +8,12 @@ import ClienteFormFields from './ClienteFormFields';
 import ClienteFormActions from './ClienteFormActions';
 import ClienteFormHeader from './ClienteFormHeader';
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import type { ClienteFormData } from '@/hooks/clientes/types';
+import type { Cliente, ClienteFormData } from '@/hooks/clientes/types';
 
 interface ClienteFormDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (created?: Cliente) => void;
 }
 
 const initialClienteData: ClienteFormData = {
@@ -47,11 +47,11 @@ const ClienteFormDialog: React.FC<ClienteFormDialogProps> = ({ isOpen, onClose, 
     
     setIsSaving(true);
     try {
-      await createClient(clienteData, user.id);
+      const created = await createClient(clienteData, user.id);
       toast({ title: "Sucesso!", description: "Cliente cadastrado com sucesso." });
       setClienteData(initialClienteData);
       onClose();
-      onSave();
+      onSave(created);
     } catch (err: any) {
       toast({ title: "Erro", description: err.message, variant: 'destructive' });
     } finally {

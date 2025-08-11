@@ -14,20 +14,23 @@ export const fetchClientsList = async (userId: string): Promise<Cliente[]> => {
   return data || [];
 };
 
-export const createClient = async (clientData: ClienteFormData, userId: string): Promise<void> => {
+export const createClient = async (clientData: ClienteFormData, userId: string): Promise<Cliente> => {
   const dataToSave = prepareClientDataForSave(clientData);
   
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from('clientes')
     .insert({
       ...dataToSave,
       user_id: userId
-    });
+    })
+    .select()
+    .single();
   
   if (error) {
     console.error('Erro ao inserir cliente:', error);
     throw error;
   }
+  return data as Cliente;
 };
 
 export const updateClient = async (clientData: ClienteFormData, clientId: string): Promise<void> => {
