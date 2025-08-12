@@ -98,7 +98,8 @@ const ProcessDialogs: React.FC<ProcessDialogsProps> = ({
               clientesDoUsuario={clientesDoUsuario}
               isLoadingClientes={isLoadingClientes}
               onClienteAdded={onClienteAdded}
-              onAddNewCliente={() => {}} // Adicionar prop obrigatória
+              onAddNewCliente={() => setClienteDialogOpen(true)}
+              preselectClienteId={preselectClienteId}
             />
           </DialogContent>
         </Dialog>
